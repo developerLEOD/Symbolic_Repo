@@ -4,7 +4,7 @@
  */
 
 import { useState, useEffect } from "react";
-import { AnimatePresence } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "./lib/firebase";
 import { Product, CartItem, Category } from "./types";
@@ -151,19 +151,48 @@ function StorefrontApp() {
 
   if (isLoading) {
     return (
-      <div className="h-screen w-full flex flex-col items-center justify-center bg-brand-bg">
-        <div className="w-12 h-12 mb-4 shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505] animate-pulse">
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-brand-bg px-4 select-none">
+        <motion.div 
+          initial={{ scale: 0.95, opacity: 0.9 }}
+          animate={{ scale: [0.97, 1.03, 0.97], opacity: [0.9, 1, 0.9] }}
+          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
+          className="w-14 h-14 mb-4 shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505]"
+        >
           <img 
             src="/Logo_NoName.jpg" 
             alt="SYMBOLIC" 
             referrerPolicy="no-referrer"
             className="w-full h-full object-contain p-1"
           />
+        </motion.div>
+
+        <div className="text-center mb-6">
+          <div className="flex items-center justify-center gap-2">
+            <span className="text-base sm:text-lg font-mono font-black tracking-[0.25em] uppercase text-brand-text pl-[0.25em]">
+              SYMBOLIC
+            </span>
+            <span className="text-xs sm:text-sm font-mono font-bold tracking-[0.2em] text-brand-accent uppercase pl-[0.2em]">
+              MUSLIMS
+            </span>
+          </div>
+          <p className="text-[9px] font-mono tracking-[0.25em] text-brand-text/60 uppercase mt-1.5 pl-[0.25em]">
+            POSSESSION &amp; IDENTITY STUDIO
+          </p>
         </div>
-        <h1 className="text-sm font-mono font-black tracking-[0.4em] uppercase text-brand-text mb-2">
-          SYMBOLIC <sub className="text-[9px] tracking-normal font-normal opacity-80">Muslims</sub>
-        </h1>
-        <p className="text-[10px] tracking-[0.4em] font-bold text-brand-accent uppercase">LOADING CATALOG</p>
+
+        {/* Brutalist loading progress bar */}
+        <div className="w-44 h-1.5 bg-brand-surface border border-brand-text overflow-hidden shadow-[2px_2px_0px_#050505] mb-3">
+          <motion.div 
+            className="h-full bg-brand-accent"
+            initial={{ x: "-100%" }}
+            animate={{ x: "100%" }}
+            transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
+          />
+        </div>
+
+        <p className="text-[10px] tracking-[0.3em] font-mono font-bold text-brand-accent uppercase pl-[0.3em]">
+          LOADING CATALOG
+        </p>
       </div>
     );
   }
