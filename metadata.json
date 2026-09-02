@@ -1,0 +1,7 @@
+{
+  "name": "SYMBOLIC",
+  "description": "SYMBOLIC / Muslims — Self-representation through what we possess and wear. Heavyweight garments, headwear, and stoneware vessels built for personal conviction, not corporate promotion.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
+

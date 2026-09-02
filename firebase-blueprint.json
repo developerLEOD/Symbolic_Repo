@@ -1,0 +1,116 @@
+{
+  "entities": {
+    "category": {
+      "title": "Category",
+      "description": "Product categories like T-Shirts, Caps, Mugs",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "label": { "type": "string", "description": "WEAR, CARRY, GATHER" },
+        "order": { "type": "number" }
+      },
+      "required": ["name", "label", "order"]
+    },
+    "product": {
+      "title": "Product",
+      "description": "Store products with editorial details",
+      "type": "object",
+      "properties": {
+        "name": { "type": "string" },
+        "description": { "type": "string" },
+        "price": { "type": "number" },
+        "categoryId": { "type": "string" },
+        "sku": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "color": { "type": "string" },
+        "capacity": { "type": "string" },
+        "material": { "type": "string" },
+        "dimensions": { "type": "string" },
+        "weight": { "type": "string" },
+        "inventory": { "type": "number" },
+        "availability": { "type": "boolean" },
+        "careInstructions": { "type": "string" },
+        "collectionName": { "type": "string" },
+        "finish": { "type": "string" },
+        "symbolicTagline": { "type": "string" }
+      },
+      "required": ["name", "description", "price", "categoryId", "sku", "inventory", "availability"]
+    },
+    "variant": {
+      "title": "ProductVariant",
+      "description": "Specific variations of a product (Size, Color, etc.)",
+      "type": "object",
+      "properties": {
+        "productId": { "type": "string" },
+        "sku": { "type": "string" },
+        "price": { "type": "number" },
+        "inventoryQuantity": { "type": "number" },
+        "option1Name": { "type": "string" },
+        "option1Value": { "type": "string" },
+        "option2Name": { "type": "string" },
+        "option2Value": { "type": "string" },
+        "option3Name": { "type": "string" },
+        "option3Value": { "type": "string" }
+      },
+      "required": ["productId", "sku", "price", "inventoryQuantity"]
+    },
+    "order": {
+      "title": "Order",
+      "description": "Customer purchase records",
+      "type": "object",
+      "properties": {
+        "userId": { "type": "string" },
+        "items": { "type": "array" },
+        "subtotal": { "type": "number" },
+        "shipping": { "type": "number" },
+        "discount": { "type": "number" },
+        "total": { "type": "number" },
+        "status": { "type": "string", "enum": ["pending", "processing", "shipped", "delivered", "cancelled"] },
+        "createdAt": { "type": "number" },
+        "customerInfo": { "type": "object" }
+      },
+      "required": ["items", "subtotal", "total", "status", "createdAt", "customerInfo"]
+    },
+    "user": {
+      "title": "UserProfile",
+      "description": "User profile with saved shipping and contact details",
+      "type": "object",
+      "properties": {
+        "uid": { "type": "string" },
+        "email": { "type": "string" },
+        "displayName": { "type": "string" },
+        "photoURL": { "type": "string" },
+        "phone": { "type": "string" },
+        "address": { "type": "string" },
+        "city": { "type": "string" },
+        "postalCode": { "type": "string" },
+        "role": { "type": "string", "enum": ["customer", "admin"] },
+        "createdAt": { "type": "number" },
+        "lastLoginAt": { "type": "number" }
+      },
+      "required": ["uid", "email"]
+    }
+  },
+  "firestore": {
+    "/categories/{categoryId}": {
+      "schema": "category",
+      "description": "Collection of product categories"
+    },
+    "/products/{productId}": {
+      "schema": "product",
+      "description": "Main product catalog"
+    },
+    "/products/{productId}/variants/{variantId}": {
+      "schema": "variant",
+      "description": "Product variants (size, color, etc.)"
+    },
+    "/orders/{orderId}": {
+      "schema": "order",
+      "description": "Customer orders"
+    },
+    "/users/{userId}": {
+      "schema": "user",
+      "description": "User account profiles"
+    }
+  }
+}

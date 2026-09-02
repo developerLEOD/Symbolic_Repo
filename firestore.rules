@@ -1,0 +1,58 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Helper function to verify if the authenticated user is a designated owner
+    function isOwner() {
+      return request.auth != null && (
+        request.auth.token.email == 'araizhasan00@gmail.com' ||
+        request.auth.token.email == 'developertwl@gmail.com' ||
+        request.auth.token.email == 'araizhasan41@gmail.com' ||
+        request.auth.token.email == 'thewisdomlounge1@gmail.com'
+      );
+    }
+
+    // Categories and Products are publicly readable, owner writeable
+    match /categories/{categoryId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    
+    // Connection health check path
+    match /test/{docId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    
+    match /products/{productId} {
+      allow read: if true;
+      allow write: if isOwner();
+      
+      match /variants/{variantId} {
+        allow read: if true;
+        allow write: if isOwner();
+      }
+    }
+    
+    // User profile documents: user can read and update their own document, owners can read
+    match /users/{userId} {
+      allow read: if request.auth != null && (request.auth.uid == userId || isOwner());
+      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow delete: if request.auth != null && (request.auth.uid == userId || isOwner());
+    }
+    
+    // Orders: anyone can create, authenticated users can read their own orders, owners can read/manage all
+    match /orders/{orderId} {
+      allow create: if true;
+      allow read: if isOwner();
+      allow read: if request.auth != null && resource.data.userId == request.auth.uid;
+      allow read: if request.auth != null && request.auth.token.email != null && resource.data.customerInfo.email == request.auth.token.email;
+      allow update, delete: if isOwner();
+    }
+
+    // Default catch-all
+    match /{document=**} {
+      allow read, write: if isOwner();
+    }
+  }
+}
+
