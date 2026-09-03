@@ -27,6 +27,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
   const [isHovered, setIsHovered] = useState(false);
   const [isAutoRevealed, setIsAutoRevealed] = useState(false);
   const [showBelow, setShowBelow] = useState(false);
+  const [showAngleArrows, setShowAngleArrows] = useState(false);
   const [hoveredThumbIndex, setHoveredThumbIndex] = useState<number | null>(null);
   const hoverTriggerTimerRef = useRef<NodeJS.Timeout | null>(null);
   const hoverDismissTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -40,6 +41,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
     : [product.thumbnailImage || "/placeholder.png"];
 
   const isRevealed = isHovered || isAutoRevealed;
+  const areArrowsVisible = isRevealed || showAngleArrows;
   const isAutoRevealedRef = useRef(false);
   isAutoRevealedRef.current = isAutoRevealed;
   const isDwellingInViewRef = useRef(false);
@@ -141,11 +143,13 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setShowAngleArrows(true);
     setActiveImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    setShowAngleArrows(true);
     setActiveImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
@@ -177,7 +181,10 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
     setActiveImageIndex(idx);
     setHoveredThumbIndex(null);
 
-    // 2. Immediately close the tooltip without waiting for the cross button
+    // 2. Keep the angle navigation arrows visible so the user can easily cycle through angles
+    setShowAngleArrows(true);
+
+    // 3. Immediately close the tooltip without waiting for the cross button
     setIsAutoRevealed(false);
     setIsHovered(false);
 
@@ -299,21 +306,21 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
                   type="button"
                   onClick={handlePrevImage}
                   aria-label="Previous preview"
-                  className={`pointer-events-auto transition-opacity duration-200 p-1.5 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
-                    isRevealed ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  className={`pointer-events-auto transition-opacity duration-200 p-2 sm:p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+                    areArrowsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  <ChevronLeft size={14} />
+                  <ChevronLeft size={16} />
                 </button>
                 <button
                   type="button"
                   onClick={handleNextImage}
                   aria-label="Next preview"
-                  className={`pointer-events-auto transition-opacity duration-200 p-1.5 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
-                    isRevealed ? 'opacity-100' : 'opacity-0 pointer-events-none'
+                  className={`pointer-events-auto transition-opacity duration-200 p-2 sm:p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+                    areArrowsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
-                  <ChevronRight size={14} />
+                  <ChevronRight size={16} />
                 </button>
               </div>
 

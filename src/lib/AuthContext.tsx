@@ -179,6 +179,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return "Sign-in popup was closed before completing.";
       case "auth/popup-blocked":
         return "Sign-in popup was blocked by your browser. Please allow popups.";
+      case "auth/unauthorized-domain":
+        return `Domain not authorized (${window.location.hostname}). Add this domain in Firebase Console > Authentication > Settings > Authorized domains.`;
       case "auth/network-request-failed":
         return "Network connection issue. Please check your internet connection.";
       case "auth/too-many-requests":
