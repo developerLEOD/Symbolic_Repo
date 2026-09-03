@@ -117,52 +117,103 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
 
         {/* Category Filters + Search & Sort Controls Bar */}
         <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-4 border-t border-brand-text/20">
-          {/* Taxonomy Pills */}
-          {onCategoryChange && (
-            <div className="flex flex-wrap gap-2">
-              <button
-                onClick={() => onCategoryChange(null)}
-                className={`px-4 py-2 font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text transition-all cursor-pointer ${
-                  activeCategoryId === null 
-                    ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]" 
-                    : "bg-brand-surface text-brand-text hover:bg-brand-mute"
-                }`}
-              >
-                ALL OBJECTS
-              </button>
-              {categories.map((cat) => {
+          {/* Taxonomy Structural Index: Joined Monolithic Rectangle */}
+          {onCategoryChange && (() => {
+            const allItems = [
+              { id: null, label: "ALL OBJECTS", count: activeProducts.length, isAll: true },
+              ...categories.map(cat => {
                 const count = activeProducts.filter(p => {
                   if (cat.id === 'corpus') return p.categoryId === 'corpus' || p.categoryId === 'wear' || p.categoryId === 't-shirts';
                   if (cat.id === 'apparatus') return p.categoryId === 'apparatus' || p.categoryId === 'carry' || p.categoryId === 'caps';
                   if (cat.id === 'vessels') return p.categoryId === 'vessels' || p.categoryId === 'gather' || p.categoryId === 'mugs';
                   return p.categoryId === cat.id;
                 }).length;
-                const isSelected = activeCategoryId === cat.id;
-                return (
-                  <button
-                    key={cat.id}
-                    onClick={() => onCategoryChange(cat.id)}
-                    className={`px-4 py-2 font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text transition-all cursor-pointer flex items-center gap-2 ${
-                      isSelected 
-                        ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]" 
-                        : "bg-brand-surface text-brand-text hover:bg-brand-mute"
-                    }`}
-                  >
-                    <span>{cat.label || cat.name}</span>
-                    {count === 0 && (
-                      <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 uppercase border ${
-                        isSelected 
-                          ? "border-brand-bg/40 text-brand-bg bg-brand-bg/20" 
-                          : "border-brand-accent/60 text-brand-accent bg-brand-accent/10"
-                      }`}>
-                        COMING SOON
-                      </span>
-                    )}
-                  </button>
-                );
-              })}
-            </div>
-          )}
+                return {
+                  id: cat.id,
+                  label: cat.label || cat.name,
+                  count,
+                  isAll: false
+                };
+              })
+            ];
+
+            // Assign structural grid spans and borders so the buttons join seamlessly into 1 perfect rectangle
+            const getItemLayoutClasses = (index: number, total: number) => {
+              if (total === 5) {
+                switch (index) {
+                  case 0: return "col-span-7 border-b-2 border-r-2 border-brand-text";
+                  case 1: return "col-span-5 border-b-2 border-brand-text";
+                  case 2: return "col-span-4 border-r-2 border-brand-text";
+                  case 3: return "col-span-4 border-r-2 border-brand-text";
+                  case 4: return "col-span-4";
+                  default: return "col-span-4";
+                }
+              }
+              if (total === 4) {
+                switch (index) {
+                  case 0: return "col-span-6 border-b-2 border-r-2 border-brand-text";
+                  case 1: return "col-span-6 border-b-2 border-brand-text";
+                  case 2: return "col-span-6 border-r-2 border-brand-text";
+                  case 3: return "col-span-6";
+                  default: return "col-span-6";
+                }
+              }
+              if (total <= 3) {
+                const span = Math.floor(12 / total);
+                const isLast = index === total - 1;
+                return `col-span-${span} ${!isLast ? "border-r-2 border-brand-text" : ""}`;
+              }
+              // Generic fallback for > 5 items (2 equal rows)
+              const half = Math.ceil(total / 2);
+              const isFirstRow = index < half;
+              const rowItems = isFirstRow ? half : total - half;
+              const colSpan = Math.floor(12 / rowItems);
+              const isLastInRow = isFirstRow ? index === half - 1 : index === total - 1;
+              return `col-span-${colSpan} ${isFirstRow ? "border-b-2 border-brand-text" : ""} ${!isLastInRow ? "border-r-2 border-brand-text" : ""}`;
+            };
+
+            return (
+              <div className="w-full md:w-auto">
+                <div className="grid grid-cols-12 md:inline-flex md:divide-x-2 md:divide-brand-text border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] overflow-hidden select-none">
+                  {allItems.map((item, idx) => {
+                    const isSelected = activeCategoryId === item.id;
+                    const cellLayout = getItemLayoutClasses(idx, allItems.length);
+
+                    return (
+                      <button
+                        key={item.id ?? "all"}
+                        onClick={() => onCategoryChange(item.id)}
+                        className={`group relative py-2.5 px-2.5 sm:px-3.5 md:py-2 md:px-4 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap text-center md:border-none md:w-auto ${cellLayout} ${
+                          isSelected
+                            ? "bg-brand-text text-brand-bg"
+                            : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
+                        }`}
+                        title={item.label}
+                      >
+                        <span className="truncate">{item.label}</span>
+
+                        {item.count > 0 ? (
+                          <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 py-0.2 shrink-0 ${
+                            isSelected ? "text-brand-bg/75" : "text-brand-text/50 group-hover:text-brand-text/80"
+                          }`}>
+                            [{item.count < 10 ? `0${item.count}` : item.count}]
+                          </span>
+                        ) : (
+                          <span className={`text-[7px] sm:text-[8px] font-mono font-bold tracking-tight px-1 py-0.2 border shrink-0 uppercase ${
+                            isSelected
+                              ? "border-brand-bg/40 text-brand-bg bg-brand-bg/20"
+                              : "border-brand-accent/60 text-brand-accent bg-brand-accent/10"
+                          }`}>
+                            <span className="hidden xs:inline">COMING </span>SOON
+                          </span>
+                        )}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            );
+          })()}
 
           {/* Search & Sort */}
           <div className="flex flex-wrap items-center gap-3">

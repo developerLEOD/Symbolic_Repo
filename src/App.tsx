@@ -23,6 +23,7 @@ import OwnerProductManager from "./components/OwnerProductManager";
 import CheckoutModal from "./components/CheckoutModal";
 import AuthModal from "./components/AuthModal";
 import UserProfileModal from "./components/UserProfileModal";
+import LoadingScreen from "./components/LoadingScreen";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants } from "./lib/productService";
 
@@ -162,51 +163,7 @@ function StorefrontApp() {
   };
 
   if (isLoading) {
-    return (
-      <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-brand-bg px-4 select-none">
-        <motion.div 
-          initial={{ scale: 0.95, opacity: 0.9 }}
-          animate={{ scale: [0.97, 1.03, 0.97], opacity: [0.9, 1, 0.9] }}
-          transition={{ repeat: Infinity, duration: 2, ease: "easeInOut" }}
-          className="w-14 h-14 mb-4 shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505]"
-        >
-          <img 
-            src="/Logo_NoName.jpg" 
-            alt="SYMBOLIC" 
-            referrerPolicy="no-referrer"
-            className="w-full h-full object-contain p-1"
-          />
-        </motion.div>
-
-        <div className="text-center mb-6 flex flex-col items-center">
-          <div className="inline-flex flex-col items-end">
-            <span className="text-base sm:text-lg font-mono font-black tracking-[0.25em] uppercase text-brand-text pl-[0.25em] leading-none">
-              SYMBOLIC
-            </span>
-            <span className="text-xs sm:text-sm font-mono font-bold italic tracking-[0.18em] text-brand-accent uppercase leading-none mt-1">
-              MUSLIMS
-            </span>
-          </div>
-          <p className="text-[9px] font-mono tracking-[0.25em] text-brand-text/60 uppercase mt-2 pl-[0.25em]">
-            POSSESSION &amp; IDENTITY STUDIO
-          </p>
-        </div>
-
-        {/* Brutalist loading progress bar */}
-        <div className="w-44 h-1.5 bg-brand-surface border border-brand-text overflow-hidden shadow-[2px_2px_0px_#050505] mb-3">
-          <motion.div 
-            className="h-full bg-brand-accent"
-            initial={{ x: "-100%" }}
-            animate={{ x: "100%" }}
-            transition={{ repeat: Infinity, duration: 1.2, ease: "easeInOut" }}
-          />
-        </div>
-
-        <p className="text-[10px] tracking-[0.3em] font-mono font-bold text-brand-accent uppercase pl-[0.3em]">
-          LOADING CATALOG
-        </p>
-      </div>
-    );
+    return <LoadingScreen />;
   }
 
   return (

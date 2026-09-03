@@ -25,7 +25,10 @@ import {
   Mail,
   LogIn,
   LogOut,
-  Key
+  Key,
+  Search,
+  X,
+  Filter
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../lib/AuthContext";
@@ -132,6 +135,8 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
 
   const [activeTab, setActiveTab] = useState<"upload" | "catalog">("upload");
   const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "list">("grid");
+  const [catalogSearch, setCatalogSearch] = useState("");
+  const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("all");
   const [existingProducts, setExistingProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -787,83 +792,164 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     );
   }
 
+  const filteredCatalogProducts = existingProducts.filter(p => {
+    const matchesCat = catalogCategoryFilter === "all" || p.categoryId === catalogCategoryFilter;
+    const q = catalogSearch.toLowerCase().trim();
+    const matchesQuery = !q || 
+      p.name.toLowerCase().includes(q) || 
+      (p.sku || "").toLowerCase().includes(q) || 
+      (p.collectionName || "").toLowerCase().includes(q) ||
+      (p.description || "").toLowerCase().includes(q);
+    return matchesCat && matchesQuery;
+  });
+
+  const liveCount = existingProducts.filter(p => p.availability).length;
+  const draftCount = existingProducts.filter(p => !p.availability).length;
+
   return (
-    <div className="fixed inset-0 z-[100] bg-brand-bg text-brand-text flex flex-col overflow-hidden font-sans">
+    <div className="fixed inset-0 z-[100] bg-brand-bg text-brand-text flex flex-col overflow-hidden font-mono selection:bg-brand-text selection:text-brand-bg">
       {/* Top Bar */}
-      <header className="h-20 border-b border-brand-text/10 bg-brand-bg/90 backdrop-blur-md px-6 md:px-12 flex items-center justify-between shrink-0">
-        <div className="flex items-center gap-6">
+      <header className="h-16 border-b-2 border-brand-text bg-brand-bg/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-20 select-none">
+        {/* Left: Merged Symbolic Brand & Exit Button */}
+        <div className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0">
           <button 
+            type="button"
             onClick={onClose}
-            className="flex items-center gap-2 text-xs font-bold uppercase tracking-tight text-brand-text hover:text-brand-accent transition-colors"
+            title="Exit Studio & Return to Storefront"
+            className="group flex items-center gap-2 sm:gap-2.5 px-2.5 sm:px-3 py-1.5 border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-brand-bg shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 transition-all text-left shrink-0 cursor-pointer"
           >
-            <ArrowLeft size={16} /> Storefront
+            <div className="w-6 h-6 sm:w-7 sm:h-7 shrink-0 overflow-hidden bg-brand-bg flex items-center justify-center border border-brand-text group-hover:border-brand-bg transition-colors">
+              <img 
+                src="/Logo_NoName.jpg" 
+                alt="SYMBOLIC" 
+                referrerPolicy="no-referrer"
+                className="w-full h-full object-contain p-0.5"
+              />
+            </div>
+            <div className="flex flex-col items-end leading-none">
+              <div className="flex items-center gap-1">
+                <ArrowLeft size={11} className="text-brand-accent group-hover:text-brand-bg transition-transform group-hover:-translate-x-0.5 shrink-0" />
+                <span className="font-mono font-black text-xs sm:text-sm tracking-tight leading-tight">SYMBOLIC</span>
+              </div>
+              <span className="font-mono text-[8px] sm:text-[9px] font-bold italic text-brand-accent group-hover:text-brand-bg leading-tight -mt-0.5">MUSLIMS</span>
+            </div>
           </button>
 
-          <div className="h-5 w-px bg-brand-text/15 hidden sm:block" />
-
-          <div>
-            <div className="flex items-center gap-2">
-              <span className="text-[9px] font-bold tracking-tight uppercase text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded">
-                Owner Access
-              </span>
-              <h1 className="text-sm font-bold tracking-tight uppercase">
-                {editingProductId ? `Edit Object: ${name || "Untitled"}` : "Product Upload & Catalog Studio"}
-              </h1>
-            </div>
-            <p className="text-[11px] text-brand-text/50 hidden md:block">
-              Archival specifications, editorial philosophy & inventory for SYMBOLIC
-            </p>
+          <div className="hidden xl:flex items-center gap-2 shrink-0">
+            <span className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-accent bg-brand-accent/10 px-2 py-0.5 border border-brand-accent/30 whitespace-nowrap">
+              STUDIO REGISTRY
+            </span>
+            <span className="text-[10px] font-mono font-bold uppercase text-brand-text/60 truncate max-w-[180px] whitespace-nowrap">
+              {editingProductId ? `// EDIT: ${name || "SPECIMEN"}` : "// CATALOG CONTROL"}
+            </span>
           </div>
         </div>
 
-        {/* Tab switcher */}
-        <div className="flex items-center gap-3">
-          <div className="flex bg-brand-text/5 p-1 rounded border border-brand-text/10">
-            <button
-              onClick={() => setActiveTab("upload")}
-              className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-tight rounded transition-all ${activeTab === "upload" ? "bg-brand-text text-white shadow-sm" : "text-brand-text/70 hover:text-brand-text"}`}
-            >
-              {editingProductId ? "Edit Form" : "+ Upload Object"}
-            </button>
-            <button
-              onClick={() => setActiveTab("catalog")}
-              className={`px-4 py-1.5 text-[10px] font-bold uppercase tracking-tight rounded transition-all ${activeTab === "catalog" ? "bg-brand-text text-white shadow-sm" : "text-brand-text/70 hover:text-brand-text"}`}
-            >
-              Catalog ({existingProducts.length || categories.length * 3}+)
-            </button>
-          </div>
+        {/* Center: Clean Segmented Mode Switcher */}
+        <div className="flex items-center bg-brand-surface border-2 border-brand-text p-1 shadow-[2px_2px_0px_#050505] shrink-0">
+          <button
+            type="button"
+            onClick={() => setActiveTab("upload")}
+            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === "upload" 
+                ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
+                : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+            }`}
+          >
+            {editingProductId ? (
+              <>
+                <Edit3 size={12} className="shrink-0 hidden xs:inline" />
+                <span>EDIT SPECIMEN</span>
+              </>
+            ) : (
+              <>
+                <Plus size={12} className="shrink-0 hidden xs:inline" />
+                <span>NEW OBJECT</span>
+              </>
+            )}
+          </button>
+          <button
+            type="button"
+            onClick={() => { setActiveTab("catalog"); loadExistingProducts(); }}
+            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === "catalog" 
+                ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
+                : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+            }`}
+          >
+            <Package size={12} className="shrink-0 hidden xs:inline" />
+            <span>CATALOG ({existingProducts.length})</span>
+          </button>
+        </div>
 
-          {activeTab === "upload" && (
-            <div className="flex items-center gap-2">
+        {/* Right: Action Buttons */}
+        <div className="flex items-center gap-2 shrink-0">
+          {activeTab === "upload" ? (
+            <>
               {editingProductId && (
-                <button
-                  type="button"
-                  onClick={() => {
-                    const prod = existingProducts.find(p => p.id === editingProductId);
-                    if (prod) handleDeleteProduct(prod.id, prod.name);
-                  }}
-                  className="bg-red-600 text-white px-4 py-2 text-[10px] font-bold uppercase tracking-tight hover:opacity-90 transition-all flex items-center gap-1.5 shadow-sm"
-                >
-                  <Trash2 size={13} /> Delete Product
-                </button>
+                <>
+                  <button
+                    type="button"
+                    onClick={resetForm}
+                    className="hidden md:flex items-center gap-1 px-2.5 py-1.5 border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-brand-bg text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-all shadow-[2px_2px_0px_#050505] whitespace-nowrap shrink-0"
+                    title="Start a new blank product"
+                  >
+                    <Plus size={12} className="shrink-0" />
+                    <span>NEW</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const prod = existingProducts.find(p => p.id === editingProductId);
+                      if (prod) handleDeleteProduct(prod.id, prod.name);
+                    }}
+                    className="flex items-center gap-1 bg-red-50 text-red-600 hover:bg-red-600 hover:text-white px-2.5 sm:px-3 py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:border-red-700 transition-all whitespace-nowrap shrink-0"
+                    title="Delete product"
+                  >
+                    <Trash2 size={12} className="shrink-0" />
+                    <span className="hidden sm:inline">DELETE</span>
+                  </button>
+                </>
               )}
               <button
                 type="submit"
                 form="owner-product-form"
                 disabled={isSubmitting}
-                className="bg-brand-accent text-white px-5 py-2 text-[10px] font-bold uppercase tracking-tight hover:opacity-95 transition-all flex items-center gap-1.5 shadow-sm disabled:opacity-50"
+                className="bg-brand-accent text-white px-3.5 sm:px-5 py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:brightness-110 active:translate-x-0.5 active:translate-y-0.5 transition-all flex items-center gap-1.5 disabled:opacity-50 whitespace-nowrap shrink-0"
               >
-                <Check size={13} /> {editingProductId ? "Update Product" : "Publish to Store"}
+                {isSubmitting ? (
+                  <>
+                    <RefreshCw size={12} className="animate-spin shrink-0" />
+                    <span>SAVING...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check size={13} className="shrink-0" />
+                    <span>{editingProductId ? "SAVE CHANGES" : "PUBLISH LIVE"}</span>
+                  </>
+                )}
               </button>
-            </div>
+            </>
+          ) : (
+            <>
+              <button
+                type="button"
+                onClick={loadExistingProducts}
+                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-brand-bg text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-all shadow-[2px_2px_0px_#050505] whitespace-nowrap shrink-0"
+              >
+                <RefreshCw size={12} className={`shrink-0 ${loadingProducts ? "animate-spin" : ""}`} />
+                <span>REFRESH</span>
+              </button>
+              <button
+                type="button"
+                onClick={() => { resetForm(); setActiveTab("upload"); }}
+                className="bg-brand-text text-brand-bg px-3.5 sm:px-4 py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:bg-neutral-800 transition-all flex items-center gap-1.5 whitespace-nowrap shrink-0"
+              >
+                <Plus size={12} className="shrink-0" />
+                <span>+ NEW OBJECT</span>
+              </button>
+            </>
           )}
-
-          <button
-            onClick={onClose}
-            className="bg-brand-text text-white px-5 py-2 text-[10px] font-bold uppercase tracking-tight hover:bg-neutral-800 transition-colors hidden sm:flex items-center gap-2"
-          >
-            <ExternalLink size={13} /> View Live Store
-          </button>
         </div>
       </header>
 
@@ -874,7 +960,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
             initial={{ opacity: 0, y: -20 }}
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -20 }}
-            className={`absolute top-24 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 rounded shadow-xl flex items-center gap-3 text-xs font-bold uppercase tracking-tight ${notification.type === "success" ? "bg-brand-text text-white" : "bg-red-600 text-white"}`}
+            className={`absolute top-24 left-1/2 -translate-x-1/2 z-[110] px-6 py-3 border-2 border-brand-text shadow-[6px_6px_0px_#050505] flex items-center gap-3 text-xs font-black uppercase tracking-wider ${notification.type === "success" ? "bg-brand-text text-brand-bg" : "bg-red-600 text-white"}`}
           >
             {notification.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
             {notification.message}
@@ -886,122 +972,240 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
       <div className="flex-grow overflow-y-auto">
         {activeTab === "catalog" ? (
           /* Catalog View */
-          <div className="max-w-7xl mx-auto px-6 md:px-12 py-12 space-y-10">
-            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b border-brand-text/10 pb-6">
-              <div>
-                <span className="text-[10px] uppercase font-bold tracking-tight text-brand-accent">Live Database</span>
-                <h2 className="text-3xl font-mono font-black uppercase tracking-tight text-brand-text">Merchandise Catalog</h2>
-                <p className="text-xs text-brand-text/60 mt-1">
-                  Manage availability, stock, and specifications for all objects in the store.
-                </p>
-              </div>
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
+            {/* Header and Stats */}
+            <div className="space-y-6">
+              <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 border-b-2 border-brand-text pb-6">
+                <div>
+                  <div className="flex items-center gap-2 mb-1">
+                    <span className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-accent bg-brand-accent/10 px-2 py-0.5 border border-brand-accent/20">
+                      LIVE ARCHIVE
+                    </span>
+                    <span className="text-[10px] text-brand-text/60">FIRESTORE ENGINE</span>
+                  </div>
+                  <h2 className="text-2xl sm:text-3xl font-mono font-black uppercase tracking-tight text-brand-text">
+                    MERCHANDISE ARCHIVE CATALOG
+                  </h2>
+                  <p className="text-xs text-brand-text/70 mt-1">
+                    Control publication state, inventory levels, and editorial specifications across all specimens.
+                  </p>
+                </div>
 
-              <div className="flex flex-wrap items-center gap-3">
-                <div className="flex bg-brand-text/5 p-1 rounded border border-brand-text/10">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
                   <button
-                    onClick={() => setCatalogViewMode("grid")}
-                    className={`px-3 py-1.5 text-[9px] font-bold uppercase tracking-tight rounded transition-all ${catalogViewMode === "grid" ? "bg-brand-text text-white shadow-sm" : "text-brand-text/70 hover:text-brand-text"}`}
+                    onClick={loadExistingProducts}
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-brand-text bg-brand-surface text-[10px] font-mono font-black uppercase tracking-wider hover:bg-brand-text hover:text-brand-bg transition-all shadow-[2px_2px_0px_#050505]"
                   >
-                    Grid View
+                    <RefreshCw size={12} className={loadingProducts ? "animate-spin" : ""} />
+                    <span>REFRESH</span>
                   </button>
                   <button
-                    onClick={() => setCatalogViewMode("list")}
-                    className={`px-3 py-1.5 text-[9px] font-bold uppercase tracking-tight rounded transition-all ${catalogViewMode === "list" ? "bg-brand-text text-white shadow-sm" : "text-brand-text/70 hover:text-brand-text"}`}
+                    onClick={() => { resetForm(); setActiveTab("upload"); }}
+                    className="flex items-center gap-2 bg-brand-text text-brand-bg px-4 sm:px-5 py-2 text-[10px] font-mono font-black uppercase tracking-wider hover:bg-neutral-800 transition-all border-2 border-brand-text shadow-[3px_3px_0px_#050505]"
                   >
-                    List View (All Active)
+                    <Plus size={13} />
+                    <span>+ NEW OBJECT</span>
                   </button>
                 </div>
-                <button
-                  onClick={loadExistingProducts}
-                  className="flex items-center gap-2 px-4 py-2 border border-brand-text/15 text-[10px] font-bold uppercase tracking-tight hover:border-brand-text transition-colors"
-                >
-                  <RefreshCw size={12} className={loadingProducts ? "animate-spin" : ""} /> Refresh
-                </button>
-                <button
-                  onClick={() => { resetForm(); setActiveTab("upload"); }}
-                  className="flex items-center gap-2 bg-brand-text text-white px-5 py-2 text-[10px] font-bold uppercase tracking-tight hover:bg-neutral-800 transition-colors"
-                >
-                  <Plus size={14} /> New Object
-                </button>
+              </div>
+
+              {/* Metrics Summary Strip */}
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+                <div className="border-2 border-brand-text bg-brand-surface p-4 shadow-[3px_3px_0px_#050505]">
+                  <p className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-text/60">TOTAL OBJECTS</p>
+                  <p className="text-2xl sm:text-3xl font-mono font-black text-brand-text mt-1">{existingProducts.length}</p>
+                </div>
+                <div className="border-2 border-brand-text bg-brand-surface p-4 shadow-[3px_3px_0px_#050505]">
+                  <p className="text-[9px] font-mono font-black uppercase tracking-wider text-emerald-700">LIVE ON STORE</p>
+                  <p className="text-2xl sm:text-3xl font-mono font-black text-emerald-700 mt-1">{liveCount}</p>
+                </div>
+                <div className="border-2 border-brand-text bg-brand-surface p-4 shadow-[3px_3px_0px_#050505]">
+                  <p className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-text/60">DRAFTS / HIDDEN</p>
+                  <p className="text-2xl sm:text-3xl font-mono font-black text-brand-text mt-1">{draftCount}</p>
+                </div>
+                <div className="border-2 border-brand-text bg-brand-surface p-4 shadow-[3px_3px_0px_#050505]">
+                  <p className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-accent">CATEGORIES</p>
+                  <p className="text-2xl sm:text-3xl font-mono font-black text-brand-accent mt-1">{categories.length}</p>
+                </div>
+              </div>
+
+              {/* Command Filter & Search Bar */}
+              <div className="border-2 border-brand-text bg-brand-surface p-3 sm:p-4 shadow-[4px_4px_0px_#050505] flex flex-col md:flex-row md:items-center justify-between gap-3">
+                {/* Search */}
+                <div className="relative flex-1">
+                  <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text/50" />
+                  <input
+                    type="text"
+                    value={catalogSearch}
+                    onChange={(e) => setCatalogSearch(e.target.value)}
+                    placeholder="SEARCH SPECIMEN BY NAME, SKU, ETHOS..."
+                    className="w-full bg-brand-bg border-2 border-brand-text pl-9 pr-8 py-2 text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent"
+                  />
+                  {catalogSearch && (
+                    <button
+                      onClick={() => setCatalogSearch("")}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-brand-text/50 hover:text-brand-text"
+                    >
+                      <X size={14} />
+                    </button>
+                  )}
+                </div>
+
+                {/* Category Pills & View Switcher */}
+                <div className="flex flex-wrap items-center gap-2">
+                  <div className="flex items-center gap-1 overflow-x-auto pb-1 md:pb-0">
+                    <button
+                      onClick={() => setCatalogCategoryFilter("all")}
+                      className={`px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text transition-all ${
+                        catalogCategoryFilter === "all"
+                          ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
+                          : "bg-brand-bg text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+                      }`}
+                    >
+                      ALL
+                    </button>
+                    {categories.map(cat => (
+                      <button
+                        key={cat.id}
+                        onClick={() => setCatalogCategoryFilter(cat.id)}
+                        className={`px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text transition-all whitespace-nowrap ${
+                          catalogCategoryFilter === cat.id
+                            ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
+                            : "bg-brand-bg text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+                        }`}
+                      >
+                        {cat.name}
+                      </button>
+                    ))}
+                  </div>
+
+                  <div className="h-6 w-[2px] bg-brand-text/20 hidden lg:block" />
+
+                  {/* View Mode */}
+                  <div className="flex border-2 border-brand-text bg-brand-bg p-0.5">
+                    <button
+                      onClick={() => setCatalogViewMode("grid")}
+                      className={`px-2.5 py-1 text-[9px] font-mono font-black uppercase tracking-wider transition-all ${
+                        catalogViewMode === "grid" ? "bg-brand-text text-brand-bg" : "text-brand-text/60 hover:text-brand-text"
+                      }`}
+                      title="Grid Tiles View"
+                    >
+                      GRID
+                    </button>
+                    <button
+                      onClick={() => setCatalogViewMode("list")}
+                      className={`px-2.5 py-1 text-[9px] font-mono font-black uppercase tracking-wider transition-all ${
+                        catalogViewMode === "list" ? "bg-brand-text text-brand-bg" : "text-brand-text/60 hover:text-brand-text"
+                      }`}
+                      title="Ledger Table View"
+                    >
+                      LEDGER
+                    </button>
+                  </div>
+                </div>
               </div>
             </div>
 
             {loadingProducts ? (
-              <div className="py-24 flex justify-center">
-                <div className="w-8 h-8 border border-brand-text/20 border-t-brand-text rounded-full animate-spin" />
+              <div className="py-24 flex flex-col items-center justify-center space-y-3">
+                <div className="w-8 h-8 border-2 border-brand-text border-t-brand-accent rounded-full animate-spin" />
+                <p className="text-xs font-mono uppercase tracking-wider text-brand-text/60">SYNCHRONIZING WITH ARCHIVE...</p>
               </div>
-            ) : existingProducts.length === 0 ? (
-              <div className="p-16 border border-dashed border-brand-text/20 text-center space-y-4">
+            ) : filteredCatalogProducts.length === 0 ? (
+              <div className="p-16 border-2 border-dashed border-brand-text/30 bg-brand-surface text-center space-y-4 shadow-[4px_4px_0px_#050505]">
                 <Package size={36} className="mx-auto text-brand-text/30" />
-                <p className="text-base font-mono font-bold uppercase text-brand-text opacity-70">[ No custom products found in database yet ]</p>
-                <p className="text-xs text-brand-text/60">Products published from the studio will appear here.</p>
-                <button
-                  onClick={() => setActiveTab("upload")}
-                  className="bg-brand-text text-white px-6 py-2.5 text-[10px] font-bold uppercase tracking-tight"
-                >
-                  Upload First Product
-                </button>
+                <p className="text-sm font-mono font-black uppercase tracking-wider text-brand-text">
+                  {catalogSearch || catalogCategoryFilter !== "all" 
+                    ? "[ NO SPECIMENS MATCH CURRENT SEARCH CRITERIA ]"
+                    : "[ NO SPECIMENS REGISTERED IN DATABASE YET ]"}
+                </p>
+                <p className="text-xs text-brand-text/60 max-w-md mx-auto">
+                  {catalogSearch || catalogCategoryFilter !== "all"
+                    ? "Try clearing the search query or adjusting the category filter."
+                    : "Create and publish your first archival object using the Studio upload engine."}
+                </p>
+                <div className="flex justify-center gap-3 pt-2">
+                  {catalogSearch || catalogCategoryFilter !== "all" ? (
+                    <button
+                      onClick={() => { setCatalogSearch(""); setCatalogCategoryFilter("all"); }}
+                      className="border-2 border-brand-text bg-brand-text text-brand-bg px-5 py-2 text-[10px] font-mono font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505]"
+                    >
+                      CLEAR FILTERS
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => setActiveTab("upload")}
+                      className="border-2 border-brand-text bg-brand-text text-brand-bg px-6 py-2.5 text-[10px] font-mono font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505]"
+                    >
+                      + UPLOAD FIRST SPECIMEN
+                    </button>
+                  )}
+                </div>
               </div>
             ) : catalogViewMode === "list" ? (
-              <div className="bg-brand-surface border border-brand-text/10 overflow-hidden shadow-sm">
+              <div className="bg-brand-surface border-2 border-brand-text overflow-hidden shadow-[4px_4px_0px_#050505]">
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left border-collapse font-mono">
                     <thead>
-                      <tr className="border-b border-brand-text/10 bg-brand-text/5 text-[9px] uppercase tracking-wider font-bold text-brand-text/70">
-                        <th className="p-4">Object</th>
-                        <th className="p-4">SKU / Collection</th>
-                        <th className="p-4">Category</th>
-                        <th className="p-4">Price</th>
-                        <th className="p-4">Inventory</th>
-                        <th className="p-4">Status</th>
-                        <th className="p-4 text-right">Actions</th>
+                      <tr className="border-b-2 border-brand-text bg-brand-bg text-[9px] uppercase tracking-wider font-black text-brand-text">
+                        <th className="p-3.5">OBJECT</th>
+                        <th className="p-3.5">SKU / COLLECTION</th>
+                        <th className="p-3.5">CATEGORY</th>
+                        <th className="p-3.5">PRICE</th>
+                        <th className="p-3.5">STOCK</th>
+                        <th className="p-3.5">PUBLICATION</th>
+                        <th className="p-3.5 text-right">CONTROLS</th>
                       </tr>
                     </thead>
-                    <tbody className="divide-y divide-brand-text/10 text-xs">
-                      {existingProducts.map(prod => (
-                        <tr key={prod.id} className="hover:bg-brand-text/[0.02] transition-colors">
-                          <td className="p-4 flex items-center gap-3">
+                    <tbody className="divide-y-2 divide-brand-text/10 text-xs">
+                      {filteredCatalogProducts.map(prod => (
+                        <tr key={prod.id} className="hover:bg-brand-text/[0.03] transition-colors">
+                          <td className="p-3.5 flex items-center gap-3">
                             <img 
                               src={prod.thumbnailImage || prod.images?.[0] || PRESET_IMAGES[0].url} 
                               alt={prod.name} 
-                              className="w-10 h-10 object-cover border border-brand-text/10 flex-shrink-0"
+                              className="w-12 h-12 object-cover border-2 border-brand-text shrink-0 bg-brand-bg"
                             />
                             <div>
-                              <p className="font-mono font-bold uppercase text-brand-text">{prod.name}</p>
-                              <p className="text-[10px] text-brand-text/50 truncate max-w-xs">{prod.description}</p>
+                              <p className="font-mono font-black uppercase text-brand-text">{prod.name}</p>
+                              <p className="text-[10px] text-brand-text/60 truncate max-w-xs">{prod.description}</p>
                             </div>
                           </td>
-                          <td className="p-4">
-                            <p className="font-mono text-[10px]">{prod.sku}</p>
-                            <p className="text-[9px] text-brand-accent uppercase tracking-tight">{prod.collectionName || "Be Symbolic"}</p>
+                          <td className="p-3.5">
+                            <p className="font-mono text-[11px] font-bold text-brand-text">{prod.sku}</p>
+                            <p className="text-[9px] text-brand-accent uppercase font-bold tracking-tight">{prod.collectionName || "BE SYMBOLIC"}</p>
                           </td>
-                          <td className="p-4 uppercase text-[10px] font-bold">{prod.categoryId}</td>
-                          <td className="p-4 font-bold">Rs. {prod.price?.toLocaleString()}</td>
-                          <td className="p-4">
-                            <span className={`px-2 py-0.5 text-[10px] font-bold ${prod.inventory < 10 ? "bg-amber-100 text-amber-800" : "bg-neutral-100 text-neutral-800"}`}>
-                              {prod.inventory} units
+                          <td className="p-3.5 uppercase text-[10px] font-bold">{prod.categoryId}</td>
+                          <td className="p-3.5 font-black text-brand-text">Rs. {prod.price?.toLocaleString()}</td>
+                          <td className="p-3.5">
+                            <span className={`px-2 py-0.5 text-[10px] font-black uppercase border ${prod.inventory < 10 ? "border-amber-500 bg-amber-50 text-amber-900" : "border-brand-text/20 bg-brand-bg text-brand-text"}`}>
+                              {prod.inventory} UNITS
                             </span>
                           </td>
-                          <td className="p-4">
+                          <td className="p-3.5">
                             <button
                               onClick={() => handleToggleAvailability(prod.id, Boolean(prod.availability))}
-                              className={`text-[9px] font-bold uppercase tracking-tight px-2.5 py-1 rounded transition-colors ${prod.availability ? "bg-emerald-100 text-emerald-800" : "bg-neutral-200 text-neutral-700"}`}
+                              className={`text-[9px] font-mono font-black uppercase tracking-wider px-2.5 py-1 border-2 border-brand-text shadow-[1px_1px_0px_#050505] transition-all ${
+                                prod.availability 
+                                  ? "bg-emerald-600 text-white" 
+                                  : "bg-brand-bg text-brand-text/70"
+                              }`}
                             >
-                              {prod.availability ? "Live" : "Draft"}
+                              {prod.availability ? "LIVE" : "DRAFT"}
                             </button>
                           </td>
-                          <td className="p-4 text-right space-x-2">
+                          <td className="p-3.5 text-right space-x-2">
                             <button
                               onClick={() => startEditProduct(prod)}
-                              className="px-2.5 py-1 bg-brand-text text-white text-[9px] font-bold uppercase tracking-tight hover:bg-neutral-800"
+                              className="px-2.5 py-1 bg-brand-text text-brand-bg text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[1px_1px_0px_#050505] hover:bg-neutral-800"
                             >
-                              Edit
+                              EDIT
                             </button>
                             <button
                               onClick={() => handleDeleteProduct(prod.id, prod.name)}
-                              className="px-2.5 py-1 bg-red-600 text-white text-[9px] font-bold uppercase tracking-tight hover:opacity-90"
+                              className="px-2.5 py-1 bg-red-600 text-white text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[1px_1px_0px_#050505] hover:bg-red-700"
                             >
-                              Delete
+                              DELETE
                             </button>
                           </td>
                         </tr>
@@ -1011,36 +1215,36 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                 </div>
               </div>
             ) : (
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-                {existingProducts.map(prod => (
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {filteredCatalogProducts.map(prod => (
                   <div 
                     key={prod.id} 
-                    className="border border-brand-text/10 bg-brand-surface p-5 flex flex-col justify-between space-y-4 transition-all hover:border-brand-text/30"
+                    className="border-2 border-brand-text bg-brand-surface p-4 flex flex-col justify-between space-y-4 shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] transition-all"
                   >
                     <div className="space-y-3">
-                      <div className="relative aspect-square w-full bg-brand-bg overflow-hidden border border-brand-text/5">
+                      <div className="relative aspect-square w-full bg-brand-bg overflow-hidden border-2 border-brand-text">
                         <img 
                           src={prod.thumbnailImage || prod.images?.[0] || PRESET_IMAGES[0].url} 
                           alt={prod.name} 
                           className="w-full h-full object-cover" 
                         />
                         <div className="absolute top-2 left-2">
-                          <span className="text-[8px] font-bold bg-brand-text text-white px-2 py-0.5 uppercase tracking-tight">
+                          <span className="text-[8px] font-mono font-black bg-brand-text text-brand-bg px-2 py-0.5 uppercase tracking-wider border border-brand-text">
                             {prod.categoryId}
                           </span>
                         </div>
                         <div className="absolute top-2 right-2">
-                          <span className={`text-[8px] font-bold px-2 py-0.5 uppercase tracking-tight ${prod.availability ? "bg-emerald-800 text-white" : "bg-neutral-600 text-white"}`}>
-                            {prod.availability ? "Active" : "Draft"}
+                          <span className={`text-[8px] font-mono font-black px-2 py-0.5 uppercase tracking-wider border border-brand-text ${prod.availability ? "bg-emerald-600 text-white" : "bg-neutral-800 text-white"}`}>
+                            {prod.availability ? "LIVE" : "DRAFT"}
                           </span>
                         </div>
                       </div>
 
                       <div>
-                        <p className="text-[9px] font-bold text-brand-accent uppercase tracking-tight">{prod.collectionName || "BE SYMBOLIC"}</p>
+                        <p className="text-[9px] font-mono font-black text-brand-accent uppercase tracking-wider">{prod.collectionName || "BE SYMBOLIC"}</p>
                         <h3 className="text-base font-mono font-black uppercase tracking-tight text-brand-text line-clamp-1">{prod.name}</h3>
-                        <p className="text-xs font-bold text-brand-text mt-1">Rs. {prod.price?.toLocaleString()}</p>
-                        <p className="text-[10px] text-brand-text/50 uppercase tracking-tight mt-0.5">SKU: {prod.sku} • Stock: {prod.inventory}</p>
+                        <p className="text-sm font-mono font-black text-brand-text mt-1">Rs. {prod.price?.toLocaleString()}</p>
+                        <p className="text-[10px] text-brand-text/60 uppercase tracking-wider mt-0.5">SKU: {prod.sku} • STOCK: {prod.inventory}</p>
                       </div>
 
                       <p className="text-xs text-brand-text/70 line-clamp-2 leading-relaxed">
@@ -1048,26 +1252,31 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       </p>
                     </div>
 
-                    <div className="pt-3 border-t border-brand-text/10 flex items-center justify-between">
+                    <div className="pt-3 border-t-2 border-brand-text/15 flex items-center justify-between">
                       <button
                         onClick={() => handleToggleAvailability(prod.id, Boolean(prod.availability))}
-                        className={`text-[9px] font-bold uppercase tracking-tight px-3 py-1 border transition-colors ${prod.availability ? "border-brand-text/20 text-brand-text hover:border-brand-text" : "border-emerald-700 text-emerald-800 bg-emerald-50"}`}
+                        className={`text-[9px] font-mono font-black uppercase tracking-wider px-3 py-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] transition-all ${
+                          prod.availability 
+                            ? "bg-brand-bg text-brand-text hover:bg-brand-text hover:text-brand-bg" 
+                            : "bg-emerald-600 text-white hover:bg-emerald-700"
+                        }`}
                       >
-                        {prod.availability ? "Set to Draft" : "Make Live"}
+                        {prod.availability ? "SET TO DRAFT" : "MAKE LIVE"}
                       </button>
 
                       <div className="flex items-center gap-2">
                         <button
                           onClick={() => startEditProduct(prod)}
-                          className="p-1.5 text-brand-text/60 hover:text-brand-text border border-brand-text/10 hover:border-brand-text rounded transition-colors"
-                          title="Edit Product"
+                          className="px-2.5 py-1.5 bg-brand-text text-brand-bg text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:bg-neutral-800 transition-all flex items-center gap-1"
+                          title="Edit Specimen"
                         >
-                          <Edit3 size={13} />
+                          <Edit3 size={11} />
+                          <span>EDIT</span>
                         </button>
                         <button
                           onClick={() => handleDeleteProduct(prod.id, prod.name)}
-                          className="p-1.5 text-red-600/70 hover:text-red-700 border border-red-200 hover:border-red-400 rounded transition-colors"
-                          title="Delete Product"
+                          className="p-1.5 bg-red-600 text-white border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:bg-red-700 transition-all"
+                          title="Delete Specimen"
                         >
                           <Trash2 size={13} />
                         </button>
@@ -1080,14 +1289,16 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
           </div>
         ) : (
           /* Upload Form + Live Preview Split Layout */
-          <div className="max-w-7xl mx-auto px-6 md:px-12 py-10">
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
             {/* Quick Templates Bar */}
-            <div className="mb-10 p-5 bg-brand-surface border border-brand-text/10 rounded-sm">
+            <div className="p-4 sm:p-5 bg-brand-surface border-2 border-brand-text shadow-[4px_4px_0px_#050505]">
               <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="space-y-1">
                   <div className="flex items-center gap-2">
                     <Sparkles size={14} className="text-brand-accent" />
-                    <span className="text-[10px] font-bold uppercase tracking-tight text-brand-accent">Quick Editorial Templates</span>
+                    <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                      QUICK EDITORIAL TEMPLATES
+                    </span>
                   </div>
                   <p className="text-xs text-brand-text/70">
                     Instantly load authentic specifications, philosophy copy, and size variations:
@@ -1098,31 +1309,31 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                   <button
                     type="button"
                     onClick={() => applyTemplate("tshirt")}
-                    className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-tight border border-brand-text/20 hover:border-brand-text hover:bg-brand-text hover:text-white transition-all"
+                    className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-all shadow-[1px_1px_0px_#050505]"
                   >
-                    + T-Shirt Template
+                    + T-SHIRT (240 GSM)
                   </button>
                   <button
                     type="button"
                     onClick={() => applyTemplate("mug")}
-                    className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-tight border border-brand-text/20 hover:border-brand-text hover:bg-brand-text hover:text-white transition-all"
+                    className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-all shadow-[1px_1px_0px_#050505]"
                   >
-                    + Ceramic Mug Template
+                    + CERAMIC VESSEL (350ML)
                   </button>
                   <button
                     type="button"
                     onClick={() => applyTemplate("cap")}
-                    className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-tight border border-brand-text/20 hover:border-brand-text hover:bg-brand-text hover:text-white transition-all"
+                    className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-all shadow-[1px_1px_0px_#050505]"
                   >
-                    + Archival Cap Template
+                    + ARCHIVAL CAP (6-PANEL)
                   </button>
                   {editingProductId && (
                     <button
                       type="button"
                       onClick={resetForm}
-                      className="px-3 py-1.5 text-[9px] font-bold uppercase tracking-tight border border-red-300 text-red-600 hover:bg-red-50 transition-all"
+                      className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-red-600 text-red-600 bg-brand-bg hover:bg-red-600 hover:text-white transition-all shadow-[1px_1px_0px_#050505]"
                     >
-                      Clear / New Form
+                      CLEAR / NEW FORM
                     </button>
                   )}
                 </div>
@@ -1130,68 +1341,78 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
             </div>
 
             {/* Main Form & Preview Grid */}
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-12">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
               {/* Form Column */}
-              <form id="owner-product-form" onSubmit={handleSubmit} className="lg:col-span-7 space-y-12">
+              <form id="owner-product-form" onSubmit={handleSubmit} className="lg:col-span-7 space-y-6">
                 
                 {/* Prominent Publish Callout Banner */}
-                <div className="bg-brand-surface border-2 border-brand-accent p-6 flex items-center justify-between shadow-sm rounded-sm">
+                <div className="bg-brand-surface border-2 border-brand-accent p-4 sm:p-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 shadow-[4px_4px_0px_#050505]">
                   <div className="space-y-1">
-                    <span className="text-[10px] font-bold uppercase tracking-tight text-brand-accent bg-brand-accent/10 px-2 py-0.5 rounded">Ready to Release?</span>
-                    <h4 className="text-base font-mono font-black uppercase tracking-tight text-brand-text">Publish Object to Live Storefront</h4>
-                    <p className="text-xs text-brand-text/60">Instantly deploy this product to the customer catalog with all specifications.</p>
+                    <span className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-accent bg-brand-accent/10 px-2 py-0.5 border border-brand-accent/30">
+                      STATUS: {availability ? "READY TO DEPLOY" : "DRAFT STAGED"}
+                    </span>
+                    <h4 className="text-base font-mono font-black uppercase tracking-tight text-brand-text">
+                      {editingProductId ? `UPDATE "${name || "OBJECT"}"` : "DEPLOY SPECIMEN TO CATALOG"}
+                    </h4>
+                    <p className="text-xs text-brand-text/70">
+                      Sync changes directly with Firestore database and customer storefront.
+                    </p>
                   </div>
                   <button
                     type="submit"
                     disabled={isSubmitting}
-                    className="bg-brand-text text-white px-8 py-3.5 text-xs font-bold uppercase tracking-tight hover:bg-neutral-800 transition-all flex items-center gap-2 shadow-lg disabled:opacity-50 shrink-0"
+                    className="bg-brand-accent text-white px-6 py-3 text-xs font-mono font-black uppercase tracking-wider hover:opacity-95 transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[3px_3px_0px_#050505] disabled:opacity-50 shrink-0"
                   >
                     {isSubmitting ? (
                       <>
-                        <RefreshCw size={14} className="animate-spin" /> Saving...
+                        <RefreshCw size={13} className="animate-spin" />
+                        <span>SAVING...</span>
                       </>
                     ) : (
                       <>
-                        <Check size={14} /> {editingProductId ? "Update Product" : "Publish Product Now"}
+                        <Check size={14} />
+                        <span>{editingProductId ? "SAVE SPECIMEN" : "PUBLISH TO STORE"}</span>
                       </>
                     )}
                   </button>
                 </div>
 
                 {/* 1. Identity & Classification */}
-                <div className="space-y-6 border-b border-brand-text/10 pb-10">
-                  <div className="border-b border-brand-text/10 pb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-brand-text text-white text-[10px] font-bold flex items-center justify-center">1</span>
-                      <h3 className="text-xs font-bold uppercase tracking-tight text-brand-text">Identity & Classification</h3>
+                <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
+                  <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">1</span>
+                      <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
+                        IDENTITY & CLASSIFICATION
+                      </h3>
                     </div>
-                    <span className="text-[9px] text-brand-text/50 uppercase tracking-tight">Core Metadata</span>
+                    <span className="text-[9px] font-mono text-brand-text/60 uppercase tracking-wider">CORE METADATA</span>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                        Product Name *
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                        SPECIMEN NAME *
                       </label>
                       <input 
                         type="text"
                         value={name}
                         onChange={e => handleNameChange(e.target.value)}
-                        placeholder="e.g. Seek Wisdom Minimalist Tee"
+                        placeholder="e.g. Seek Wisdom Heavyweight Tee"
                         required
-                        className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                        className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-sm font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                       />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Collection / Ethos Line
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          COLLECTION / ETHOS LINE
                         </label>
                         <select
                           value={collectionName}
                           onChange={e => setCollectionName(e.target.value)}
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         >
                           <option value="Be Symbolic">Be Symbolic (Core Ethos)</option>
                           <option value="Seek Wisdom">Seek Wisdom (The Reader)</option>
@@ -1202,13 +1423,13 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Category *
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          CATEGORY *
                         </label>
                         <select
                           value={categoryId}
                           onChange={e => handleCategoryChange(e.target.value)}
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         >
                           {categories.map(cat => (
                             <option key={cat.id} value={cat.id}>
@@ -1221,8 +1442,8 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          SKU *
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          SKU IDENTIFIER *
                         </label>
                         <input 
                           type="text"
@@ -1230,13 +1451,13 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                           onChange={e => setSku(e.target.value)}
                           placeholder="TWL-TSH-001"
                           required
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm font-mono focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Base Price (Rs.) *
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          BASE PRICE (RS.) *
                         </label>
                         <input 
                           type="number"
@@ -1245,13 +1466,13 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                           min="0"
                           step="10"
                           required
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Inventory Count *
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          INVENTORY UNITS *
                         </label>
                         <input 
                           type="number"
@@ -1259,60 +1480,66 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                           onChange={e => setInventory(Number(e.target.value))}
                           min="0"
                           required
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
                     </div>
 
-                    {/* Stock Status */}
-                    <div className="pt-2 flex items-center justify-between p-4 bg-brand-surface border border-brand-text/10">
+                    {/* Publication Status */}
+                    <div className="pt-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 p-3.5 bg-brand-bg border-2 border-brand-text">
                       <div>
-                        <span className="text-xs font-bold uppercase tracking-tight">Publication Status</span>
-                        <p className="text-[11px] text-brand-text/60">
-                          {availability ? "Product will be immediately available for customers to order." : "Product will be stored as draft (hidden from public storefront)."}
+                        <span className="text-xs font-mono font-black uppercase tracking-wider">PUBLICATION VISIBILITY</span>
+                        <p className="text-[11px] text-brand-text/60 mt-0.5">
+                          {availability ? "Item will immediately appear live in the customer storefront." : "Item will be archived as a draft (hidden from customers)."}
                         </p>
                       </div>
                       <button
                         type="button"
                         onClick={() => setAvailability(!availability)}
-                        className={`px-4 py-2 text-[10px] font-bold uppercase tracking-tight transition-colors ${availability ? "bg-brand-text text-white" : "border border-brand-text/20 text-brand-text/60"}`}
+                        className={`px-4 py-2 text-[10px] font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] transition-all ${
+                          availability 
+                            ? "bg-emerald-600 text-white" 
+                            : "bg-brand-surface text-brand-text/70 hover:text-brand-text"
+                        }`}
                       >
-                        {availability ? "Active (Live)" : "Draft (Hidden)"}
+                        {availability ? "LIVE (STOREFRONT)" : "DRAFT (ARCHIVED)"}
                       </button>
                     </div>
                   </div>
                 </div>
 
                 {/* 2. Editorial Philosophy */}
-                <div className="space-y-6 border-b border-brand-text/10 pb-10">
-                  <div className="border-b border-brand-text/10 pb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-brand-text text-white text-[10px] font-bold flex items-center justify-center">2</span>
-                      <h3 className="text-xs font-bold uppercase tracking-tight text-brand-text">Editorial Philosophy & Story</h3>
+                <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
+                  <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">2</span>
+                      <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
+                        EDITORIAL PHILOSOPHY & STORY
+                      </h3>
                     </div>
-                    <span className="text-[9px] text-brand-text/50 uppercase tracking-tight">The Soul of the Object</span>
+                    <span className="text-[9px] font-mono text-brand-text/60 uppercase tracking-wider">THE SOUL OF THE OBJECT</span>
                   </div>
 
                   <div className="space-y-4">
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                        Symbolic Tagline / Micro-Manifesto
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                        SYMBOLIC TAGLINE / MICRO-MANIFESTO
                       </label>
                       <input 
                         type="text"
                         value={symbolicTagline}
                         onChange={e => setSymbolicTagline(e.target.value)}
                         placeholder="e.g. A symbol of reflective culture."
-                        className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors font-mono"
+                        className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                       />
                     </div>
 
                     <div>
-                      <div className="flex justify-between items-baseline mb-2">
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent">
-                          Editorial Description *
+                      <div className="flex justify-between items-baseline mb-1.5">
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                          EDITORIAL DESCRIPTION *
                         </label>
-                        <span className="text-[10px] text-brand-text/40">{description.length} characters</span>
+                        <span className="text-[10px] font-mono text-brand-text/50">{description.length} CHARACTERS</span>
                       </div>
                       <textarea 
                         value={description}
@@ -1320,27 +1547,29 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                         rows={4}
                         placeholder="Describe the intellectual, symbolic, and aesthetic context of this piece. Explain how it relates to reading, reflection, or knowledge..."
                         required
-                        className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors leading-relaxed"
+                        className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors leading-relaxed"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* 3. Media & Photography */}
-                <div className="space-y-6 border-b border-brand-text/10 pb-10">
-                  <div className="border-b border-brand-text/10 pb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-brand-text text-white text-[10px] font-bold flex items-center justify-center">3</span>
-                      <h3 className="text-xs font-bold uppercase tracking-tight text-brand-text">Product Photography & Visuals</h3>
+                <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
+                  <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">3</span>
+                      <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
+                        PHOTOGRAPHY & VISUAL REGISTRY
+                      </h3>
                     </div>
-                    <span className="text-[9px] text-brand-text/50 uppercase tracking-tight">{images.length} Image(s) Selected</span>
+                    <span className="text-[9px] font-mono text-brand-text/60 uppercase tracking-wider">{images.length} IMAGES SELECTED</span>
                   </div>
 
                   <div className="space-y-5">
                     {/* Presets Selector */}
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                        Quick Select SYMBOLIC Photography
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-2">
+                        QUICK SELECT SYMBOLIC PHOTOGRAPHY
                       </label>
                       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                         {PRESET_IMAGES.map((img, idx) => (
@@ -1354,11 +1583,15 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                                 handleSetPrimaryImage(images.indexOf(img.url));
                               }
                             }}
-                            className={`group relative aspect-square border overflow-hidden p-1 transition-all ${images[0] === img.url ? "border-brand-text ring-1 ring-brand-text" : "border-brand-text/15 hover:border-brand-text/50"}`}
+                            className={`group relative aspect-square border-2 overflow-hidden p-1 transition-all ${
+                              images[0] === img.url 
+                                ? "border-brand-text ring-2 ring-brand-text bg-brand-bg" 
+                                : "border-brand-text/20 hover:border-brand-text"
+                            }`}
                           >
                             <img src={img.url} alt={img.name} className="w-full h-full object-cover" />
-                            <div className="absolute inset-0 bg-brand-text/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-white text-[9px] font-bold uppercase tracking-tight p-1 text-center">
-                              {images[0] === img.url ? "Primary Cover" : "Select Photo"}
+                            <div className="absolute inset-0 bg-brand-text/70 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-opacity text-brand-bg text-[9px] font-mono font-black uppercase tracking-wider p-1 text-center">
+                              {images[0] === img.url ? "PRIMARY COVER" : "SELECT PHOTO"}
                             </div>
                           </button>
                         ))}
@@ -1366,12 +1599,12 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                     </div>
 
                     {/* Local File Upload Box */}
-                    <div className="p-6 border-2 border-dashed border-brand-text/20 hover:border-brand-text/50 transition-colors text-center space-y-3 bg-white">
+                    <div className="p-6 border-2 border-dashed border-brand-text bg-brand-bg hover:border-brand-accent transition-colors text-center space-y-3">
                       <ImageIcon size={28} className="mx-auto text-brand-text/40" />
                       <div>
-                        <p className="text-xs font-bold uppercase tracking-tight">Upload Images from Computer</p>
-                        <p className="text-[11px] text-brand-text/50 mt-0.5">
-                          Supports PNG, JPG, WEBP. Files are loaded instantaneously into the store.
+                        <p className="text-xs font-mono font-black uppercase tracking-wider">UPLOAD IMAGES FROM DEVICE</p>
+                        <p className="text-[11px] text-brand-text/60 mt-0.5">
+                          SUPPORTS PNG, JPG, WEBP • DRAG AND DROP OR SELECT
                         </p>
                       </div>
                       <input 
@@ -1385,75 +1618,76 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       />
                       <label 
                         htmlFor="owner-file-upload"
-                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-text text-white text-[10px] font-bold uppercase tracking-tight cursor-pointer hover:bg-neutral-800 transition-colors"
+                        className="inline-flex items-center gap-2 px-5 py-2.5 bg-brand-text text-brand-bg text-[10px] font-mono font-black uppercase tracking-wider cursor-pointer hover:bg-neutral-800 transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505]"
                       >
-                        <Upload size={12} /> Choose Image Files
+                        <Upload size={12} />
+                        <span>CHOOSE FILES</span>
                       </label>
                     </div>
 
-                    {/* Or URL input */}
+                    {/* External URL Input */}
                     <div className="flex gap-2">
                       <input 
                         type="url"
                         value={customImageUrl}
                         onChange={e => setCustomImageUrl(e.target.value)}
-                        placeholder="Or paste external image URL (https://...)"
-                        className="flex-grow px-4 py-2.5 bg-white border border-brand-text/15 text-xs focus:border-brand-text focus:outline-none transition-colors"
+                        placeholder="OR PASTE EXTERNAL IMAGE URL (HTTPS://...)"
+                        className="flex-grow px-3.5 py-2 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                       />
                       <button
                         type="button"
                         onClick={handleAddImageUrl}
-                        className="px-4 py-2.5 border border-brand-text text-brand-text text-[10px] font-bold uppercase tracking-tight hover:bg-brand-text hover:text-white transition-colors"
+                        className="px-4 py-2 border-2 border-brand-text bg-brand-surface text-brand-text text-[10px] font-mono font-black uppercase tracking-wider hover:bg-brand-text hover:text-brand-bg transition-all shadow-[2px_2px_0px_#050505]"
                       >
-                        Add URL
+                        ADD URL
                       </button>
                     </div>
 
-                    {/* Selected Images List */}
+                    {/* Attached Images List */}
                     {images.length > 0 && (
                       <div className="space-y-2">
-                        <span className="text-[10px] font-bold uppercase tracking-tight text-brand-accent">
-                          Attached Imagery (First image is primary card cover):
+                        <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                          ATTACHED IMAGERY (FIRST IMAGE IS CARD COVER):
                         </span>
                         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                           {images.map((imgUrl, i) => (
-                            <div key={i} className="relative aspect-square border border-brand-text/15 bg-neutral-100 group overflow-hidden">
+                            <div key={i} className="relative aspect-square border-2 border-brand-text bg-brand-bg group overflow-hidden">
                               <img src={imgUrl} alt={`Product view ${i + 1}`} className="w-full h-full object-cover" />
                               {i === 0 && (
-                                <span className="absolute top-1 left-1 bg-brand-text text-white text-[8px] font-bold uppercase tracking-tight px-1.5 py-0.5">
-                                  Primary
+                                <span className="absolute top-1 left-1 bg-brand-text text-brand-bg text-[8px] font-mono font-black uppercase tracking-wider px-1.5 py-0.5 border border-brand-text">
+                                  PRIMARY
                                 </span>
                               )}
                               {(thumbnailImage === imgUrl || (!thumbnailImage && i === 0)) && (
-                                <span className="absolute top-1 right-1 bg-brand-accent text-white text-[8px] font-bold uppercase tracking-tight px-1.5 py-0.5">
-                                  Thumbnail
+                                <span className="absolute top-1 right-1 bg-brand-accent text-white text-[8px] font-mono font-black uppercase tracking-wider px-1.5 py-0.5 border border-brand-text">
+                                  THUMB
                                 </span>
                               )}
-                              <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1.5 transition-opacity p-2 text-white">
+                              <div className="absolute inset-0 bg-black/75 opacity-0 group-hover:opacity-100 flex flex-col items-center justify-center gap-1.5 transition-opacity p-2 text-white">
                                 {thumbnailImage !== imgUrl && (
                                   <button
                                     type="button"
                                     onClick={() => setThumbnailImage(imgUrl)}
-                                    className="text-[8px] font-bold uppercase tracking-tight px-2 py-1 bg-brand-accent text-white"
+                                    className="text-[8px] font-mono font-black uppercase tracking-wider px-2 py-1 bg-brand-accent text-white border border-brand-text"
                                   >
-                                    Tag Thumbnail
+                                    TAG THUMB
                                   </button>
                                 )}
                                 {i !== 0 && (
                                   <button
                                     type="button"
                                     onClick={() => handleSetPrimaryImage(i)}
-                                    className="text-[8px] font-bold uppercase tracking-tight px-2 py-1 bg-white text-brand-text"
+                                    className="text-[8px] font-mono font-black uppercase tracking-wider px-2 py-1 bg-white text-brand-text border border-brand-text"
                                   >
-                                    Set Primary
+                                    SET PRIMARY
                                   </button>
                                 )}
                                 <button
                                   type="button"
                                   onClick={() => handleRemoveImage(i)}
-                                  className="text-[8px] font-bold uppercase tracking-tight px-2 py-1 bg-red-600 text-white"
+                                  className="text-[8px] font-mono font-black uppercase tracking-wider px-2 py-1 bg-red-600 text-white border border-brand-text"
                                 >
-                                  Remove
+                                  REMOVE
                                 </button>
                               </div>
                             </div>
@@ -1464,111 +1698,115 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                   </div>
                 </div>
 
-                {/* 4. Materiality & Physical Specifications */}
-                <div className="space-y-6 border-b border-brand-text/10 pb-10">
-                  <div className="border-b border-brand-text/10 pb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-brand-text text-white text-[10px] font-bold flex items-center justify-center">4</span>
-                      <h3 className="text-xs font-bold uppercase tracking-tight text-brand-text">Materiality & Physical Attributes</h3>
+                {/* 4. Materiality & Specifications */}
+                <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
+                  <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">4</span>
+                      <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
+                        MATERIALITY & PHYSICAL SPECIFICATIONS
+                      </h3>
                     </div>
-                    <span className="text-[9px] text-brand-text/50 uppercase tracking-tight">Tactile Specifications</span>
+                    <span className="text-[9px] font-mono text-brand-text/60 uppercase tracking-wider">TACTILE ATTRIBUTES</span>
                   </div>
 
                   <div className="space-y-4">
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Material Composition
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          MATERIAL COMPOSITION
                         </label>
                         <input 
                           type="text"
                           value={material}
                           onChange={e => setMaterial(e.target.value)}
                           placeholder="e.g. 100% Organic Heavyweight Cotton"
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Colorway / Glaze Finish
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          COLORWAY / GLAZE FINISH
                         </label>
                         <input 
                           type="text"
                           value={color}
                           onChange={e => setColor(e.target.value)}
                           placeholder="e.g. Matte Charcoal / Washed Navy"
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Capacity (Drinkware)
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          CAPACITY (DRINKWARE)
                         </label>
                         <input 
                           type="text"
                           value={capacity}
                           onChange={e => setCapacity(e.target.value)}
                           placeholder="330ml"
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Dimensions / Fit
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          DIMENSIONS / FIT
                         </label>
                         <input 
                           type="text"
                           value={dimensions}
                           onChange={e => setDimensions(e.target.value)}
                           placeholder="9.5cm x 8.2cm"
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
 
                       <div>
-                        <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                          Weight / Density
+                        <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                          WEIGHT / GSM DENSITY
                         </label>
                         <input 
                           type="text"
                           value={weight}
                           onChange={e => setWeight(e.target.value)}
                           placeholder="320g / 240 GSM"
-                          className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                          className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
                       </div>
                     </div>
 
                     <div>
-                      <label className="block text-[10px] font-bold uppercase tracking-tight text-brand-accent mb-2">
-                        Care Instructions
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
+                        CARE & MAINTENANCE INSTRUCTIONS
                       </label>
                       <input 
                         type="text"
                         value={careInstructions}
                         onChange={e => setCareInstructions(e.target.value)}
-                        placeholder="e.g. Hand wash recommended to preserve matte glaze. Microwave safe."
-                        className="w-full px-4 py-3 bg-white border border-brand-text/15 text-sm focus:border-brand-text focus:outline-none transition-colors"
+                        placeholder="e.g. Hand wash recommended to preserve matte glaze. Air dry."
+                        className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                       />
                     </div>
                   </div>
                 </div>
 
                 {/* 5. Variant Architecture */}
-                <div className="space-y-6 border-b border-brand-text/10 pb-10">
-                  <div className="border-b border-brand-text/10 pb-3 flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="w-5 h-5 rounded-full bg-brand-text text-white text-[10px] font-bold flex items-center justify-center">5</span>
-                      <h3 className="text-xs font-bold uppercase tracking-tight text-brand-text">Variants (Sizes, Colors, Options)</h3>
+                <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
+                  <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">5</span>
+                      <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
+                        VARIANT ARCHITECTURE (SIZES & OPTIONS)
+                      </h3>
                     </div>
                     <div className="flex items-center gap-3">
-                      <span className="text-[9px] text-brand-text/50 uppercase tracking-tight">
-                        {hasVariants ? `${variants.length} Variants Active` : "No Variants (Single Item)"}
+                      <span className="text-[9px] font-mono text-brand-text/60 uppercase tracking-wider">
+                        {hasVariants ? `${variants.length} VARIANTS` : "SINGLE ITEM"}
                       </span>
                       <button
                         type="button"
@@ -1579,56 +1817,58 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                             setHasVariants(!hasVariants);
                           }
                         }}
-                        className={`px-3 py-1 text-[9px] font-bold uppercase tracking-tight border transition-colors ${hasVariants ? "bg-brand-text text-white border-brand-text" : "border-brand-text/20 text-brand-text/70"}`}
+                        className={`px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[1px_1px_0px_#050505] transition-all ${
+                          hasVariants ? "bg-brand-text text-brand-bg" : "bg-brand-bg text-brand-text/70"
+                        }`}
                       >
-                        {hasVariants ? "Enabled" : "Enable Variants"}
+                        {hasVariants ? "ENABLED" : "ENABLE VARIANTS"}
                       </button>
                     </div>
                   </div>
 
                   {hasVariants && (
-                    <div className="space-y-5 bg-brand-surface p-5 border border-brand-text/10">
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-brand-text/10 pb-4">
+                    <div className="space-y-4 bg-brand-bg p-4 border-2 border-brand-text">
+                      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-brand-text pb-3">
                         <div className="flex items-center gap-2">
-                          <span className="text-[10px] font-bold uppercase tracking-tight text-brand-accent">Quick Generators:</span>
+                          <span className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-accent">GENERATORS:</span>
                           <button
                             type="button"
                             onClick={generateSizeVariants}
-                            className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-tight bg-white border border-brand-text/15 hover:border-brand-text"
+                            className="px-2.5 py-1 text-[9px] font-mono font-black uppercase tracking-wider bg-brand-surface border border-brand-text hover:bg-brand-text hover:text-brand-bg"
                           >
-                            + Sizes (S-XXL)
+                            + SIZES (S-XXL)
                           </button>
                           <button
                             type="button"
                             onClick={generateColorVariants}
-                            className="px-2.5 py-1 text-[9px] font-bold uppercase tracking-tight bg-white border border-brand-text/15 hover:border-brand-text"
+                            className="px-2.5 py-1 text-[9px] font-mono font-black uppercase tracking-wider bg-brand-surface border border-brand-text hover:bg-brand-text hover:text-brand-bg"
                           >
-                            + 3 Colorways
+                            + 3 COLORWAYS
                           </button>
                         </div>
 
                         <button
                           type="button"
                           onClick={addEmptyVariant}
-                          className="flex items-center gap-1.5 px-3 py-1 text-[9px] font-bold uppercase tracking-tight bg-brand-text text-white hover:bg-neutral-800"
+                          className="flex items-center gap-1 px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider bg-brand-text text-brand-bg hover:bg-neutral-800"
                         >
-                          <Plus size={11} /> Add Variant Row
+                          <Plus size={11} /> ADD ROW
                         </button>
                       </div>
 
                       <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs border-collapse">
+                        <table className="w-full text-left text-xs font-mono border-collapse">
                           <thead>
-                            <tr className="border-b border-brand-text/15 text-[9px] font-bold uppercase tracking-tight text-brand-text/60">
-                              <th className="pb-2">Option Name</th>
-                              <th className="pb-2">Value</th>
+                            <tr className="border-b-2 border-brand-text text-[9px] font-black uppercase tracking-wider text-brand-text/70">
+                              <th className="pb-2">OPTION</th>
+                              <th className="pb-2">VALUE</th>
                               <th className="pb-2">SKU</th>
-                              <th className="pb-2">Price (Rs.)</th>
-                              <th className="pb-2">Stock</th>
-                              <th className="pb-2 text-right">Action</th>
+                              <th className="pb-2">PRICE (RS.)</th>
+                              <th className="pb-2">STOCK</th>
+                              <th className="pb-2 text-right">ACTION</th>
                             </tr>
                           </thead>
-                          <tbody className="divide-y divide-brand-text/5">
+                          <tbody className="divide-y divide-brand-text/10">
                             {variants.map((v, idx) => (
                               <tr key={v.id || idx}>
                                 <td className="py-2 pr-2">
@@ -1637,7 +1877,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                                     value={v.option1Name || "Size"}
                                     onChange={e => updateVariant(idx, "option1Name", e.target.value)}
                                     placeholder="Size"
-                                    className="w-24 px-2 py-1 bg-white border border-brand-text/15 text-xs"
+                                    className="w-24 px-2 py-1 bg-brand-surface border border-brand-text text-xs uppercase"
                                   />
                                 </td>
                                 <td className="py-2 pr-2">
@@ -1646,7 +1886,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                                     value={v.option1Value || ""}
                                     onChange={e => updateVariant(idx, "option1Value", e.target.value)}
                                     placeholder="M"
-                                    className="w-20 px-2 py-1 bg-white border border-brand-text/15 text-xs font-bold"
+                                    className="w-20 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-black uppercase"
                                   />
                                 </td>
                                 <td className="py-2 pr-2">
@@ -1655,7 +1895,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                                     value={v.sku}
                                     onChange={e => updateVariant(idx, "sku", e.target.value)}
                                     placeholder="SKU"
-                                    className="w-32 px-2 py-1 bg-white border border-brand-text/15 text-xs font-mono"
+                                    className="w-32 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-mono uppercase"
                                   />
                                 </td>
                                 <td className="py-2 pr-2">
@@ -1663,7 +1903,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                                     type="number" 
                                     value={v.price}
                                     onChange={e => updateVariant(idx, "price", Number(e.target.value))}
-                                    className="w-24 px-2 py-1 bg-white border border-brand-text/15 text-xs"
+                                    className="w-24 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-bold"
                                   />
                                 </td>
                                 <td className="py-2 pr-2">
@@ -1671,14 +1911,14 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                                     type="number" 
                                     value={v.inventoryQuantity}
                                     onChange={e => updateVariant(idx, "inventoryQuantity", Number(e.target.value))}
-                                    className="w-16 px-2 py-1 bg-white border border-brand-text/15 text-xs"
+                                    className="w-16 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-bold"
                                   />
                                 </td>
                                 <td className="py-2 text-right">
                                   <button
                                     type="button"
                                     onClick={() => removeVariant(idx)}
-                                    className="text-red-500 hover:text-red-700 p-1"
+                                    className="text-red-600 hover:text-red-800 p-1"
                                     title="Remove variant"
                                   >
                                     <Trash2 size={13} />
@@ -1694,158 +1934,193 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                 </div>
 
                 {/* Form Action Controls */}
-                <div className="pt-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                  <button
-                    type="button"
-                    onClick={resetForm}
-                    className="w-full sm:w-auto px-6 py-4 text-[10px] font-bold uppercase tracking-tight border border-brand-text/20 text-brand-text/70 hover:border-brand-text hover:text-brand-text transition-colors"
-                  >
-                    Reset Form
-                  </button>
-
+                <div className="pt-2 flex flex-col sm:flex-row items-center justify-between gap-4">
                   <div className="flex items-center gap-3 w-full sm:w-auto">
                     <button
-                      type="submit"
-                      disabled={isSubmitting}
-                      className="w-full sm:w-auto flex-grow bg-brand-text text-white px-10 py-4 text-[10px] font-bold uppercase tracking-tight hover:bg-neutral-800 transition-all flex items-center justify-center gap-2 shadow-lg disabled:opacity-50"
+                      type="button"
+                      onClick={resetForm}
+                      className="w-full sm:w-auto px-5 py-3 text-[10px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-surface text-brand-text/70 hover:bg-brand-text hover:text-brand-bg transition-all shadow-[2px_2px_0px_#050505]"
                     >
-                      {isSubmitting ? (
-                        <>
-                          <RefreshCw size={14} className="animate-spin" /> Saving to Cloud...
-                        </>
-                      ) : (
-                        <>
-                          <Check size={14} /> {editingProductId ? "Update Store Object" : "Publish Object to Store"}
-                        </>
-                      )}
+                      RESET FORM
                     </button>
+                    {editingProductId && (
+                      <button
+                        type="button"
+                        onClick={() => {
+                          resetForm();
+                          setActiveTab("catalog");
+                        }}
+                        className="w-full sm:w-auto px-5 py-3 text-[10px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-bg text-brand-text hover:bg-brand-text hover:text-brand-bg transition-all shadow-[2px_2px_0px_#050505]"
+                      >
+                        CANCEL EDIT
+                      </button>
+                    )}
                   </div>
+
+                  <button
+                    type="submit"
+                    disabled={isSubmitting}
+                    className="w-full sm:w-auto bg-brand-accent text-white px-8 py-3 text-xs font-mono font-black uppercase tracking-wider hover:opacity-95 transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] disabled:opacity-50"
+                  >
+                    {isSubmitting ? (
+                      <>
+                        <RefreshCw size={13} className="animate-spin" />
+                        <span>SYNCHRONIZING WITH CLOUD...</span>
+                      </>
+                    ) : (
+                      <>
+                        <Check size={14} />
+                        <span>{editingProductId ? "UPDATE STORE SPECIMEN" : "DEPLOY TO STOREFRONT →"}</span>
+                      </>
+                    )}
+                  </button>
                 </div>
               </form>
 
               {/* Live Interactive Storefront Preview Column */}
               <div className="lg:col-span-5 space-y-6">
-                <div className="sticky top-28 space-y-4">
-                  <div className="flex items-center justify-between border-b border-brand-text/10 pb-3">
+                <div className="sticky top-24 space-y-4">
+                  <div className="flex items-center justify-between border-b-2 border-brand-text pb-3">
                     <div className="flex items-center gap-2">
                       <Eye size={14} className="text-brand-accent" />
-                      <span className="text-[10px] font-bold uppercase tracking-tight text-brand-accent">
-                        Live Storefront Preview
+                      <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                        STOREFRONT SIMULATOR
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-1 bg-brand-text/5 p-0.5 rounded border border-brand-text/10">
+                    <div className="flex border-2 border-brand-text bg-brand-bg p-0.5">
                       <button
                         type="button"
                         onClick={() => setPreviewMode("card")}
-                        className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-tight rounded ${previewMode === "card" ? "bg-brand-text text-white" : "text-brand-text/60"}`}
+                        className={`px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider transition-all ${
+                          previewMode === "card" ? "bg-brand-text text-brand-bg" : "text-brand-text/60 hover:text-brand-text"
+                        }`}
                       >
-                        Card View
+                        CARD VIEW
                       </button>
                       <button
                         type="button"
                         onClick={() => setPreviewMode("detail")}
-                        className={`px-2.5 py-1 text-[9px] font-bold uppercase tracking-tight rounded ${previewMode === "detail" ? "bg-brand-text text-white" : "text-brand-text/60"}`}
+                        className={`px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider transition-all ${
+                          previewMode === "detail" ? "bg-brand-text text-brand-bg" : "text-brand-text/60 hover:text-brand-text"
+                        }`}
                       >
-                        Detail View
+                        DETAIL VIEW
                       </button>
                     </div>
                   </div>
 
                   {previewMode === "card" ? (
-                    /* Product Card Preview */
-                    <div className="p-6 bg-brand-surface border border-brand-text/15 space-y-4">
-                      <span className="text-[8px] font-bold uppercase tracking-tight opacity-40 block">
-                        Customer Grid Representation
-                      </span>
+                    /* Product Card Preview (Matches ProductCard.tsx) */
+                    <div className="p-4 sm:p-5 bg-brand-surface border-2 border-brand-text shadow-[4px_4px_0px_#050505] space-y-4">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[8px] font-mono font-black uppercase tracking-wider opacity-60">
+                          // CUSTOMER GRID REPRESENTATION
+                        </span>
+                        <span className="text-[8px] font-mono font-bold uppercase text-brand-accent">
+                          LIVE SIMULATION
+                        </span>
+                      </div>
 
-                      <div className="bg-brand-bg border border-brand-text/10 p-2 space-y-3">
-                        <div className="relative aspect-square w-full bg-neutral-100 overflow-hidden">
+                      {/* Card Shell */}
+                      <div className="border-2 border-brand-text bg-brand-surface p-3.5 space-y-3 shadow-[6px_6px_0px_#050505]">
+                        <div className="flex items-center justify-between text-[9px] font-mono font-black uppercase tracking-wider border-b-2 border-brand-text pb-2">
+                          <span>ARCHIVE // {selectedCategoryObj?.label || "OBJECT"}</span>
+                          <span className="text-brand-accent">050 SPECIMENS</span>
+                        </div>
+
+                        <div className="relative aspect-square w-full bg-brand-bg overflow-hidden border-2 border-brand-text">
                           <img 
                             src={images[0] || PRESET_IMAGES[0].url} 
                             alt={name || "Product preview"}
                             className="w-full h-full object-cover" 
                           />
-                          <div className="absolute top-3 left-3">
-                            <span className="text-[8px] tracking-tight font-bold bg-brand-text px-2 py-1 text-white uppercase">
+                          <div className="absolute top-2 left-2">
+                            <span className="text-[8px] font-mono font-black bg-brand-text text-brand-bg px-2 py-0.5 uppercase tracking-wider border border-brand-text">
                               {selectedCategoryObj?.label || "OBJECT"}
                             </span>
                           </div>
                         </div>
 
-                        <div className="space-y-2 px-2 pb-2">
-                          <p className="text-[9px] font-bold tracking-tight text-brand-accent uppercase">
+                        <div className="space-y-2 pt-1">
+                          <p className="text-[9px] font-mono font-black tracking-wider text-brand-accent uppercase">
                             {collectionName || "BE SYMBOLIC"}
                           </p>
-                          <div className="flex justify-between items-baseline border-t border-brand-text/10 pt-2.5">
-                            <h4 className="text-base font-medium text-brand-text">
-                              {name || "Untitled Object"}
+                          <div className="flex justify-between items-baseline border-t-2 border-brand-text/15 pt-2">
+                            <h4 className="text-base font-mono font-black uppercase tracking-tight text-brand-text line-clamp-1">
+                              {name || "UNTITLED OBJECT"}
                             </h4>
-                            <p className="text-xs font-bold text-brand-text opacity-60 uppercase tracking-tight">
+                            <p className="text-xs font-mono font-black text-brand-text uppercase shrink-0 ml-2">
                               Rs. {(price || 0).toLocaleString()}
                             </p>
                           </div>
-                          <div className="flex justify-between items-center opacity-40 text-[9px] uppercase tracking-tight">
+                          <div className="flex justify-between items-center opacity-60 text-[9px] font-mono uppercase tracking-wider pt-1 border-t border-brand-text/10">
                             <span>{sku || "TWL-PREVIEW"}</span>
-                            <span>Be Symbolic</span>
+                            <span>BE SYMBOLIC</span>
                           </div>
                         </div>
                       </div>
 
-                      <div className="text-[10px] text-brand-text/60 space-y-1 bg-white p-3 border border-brand-text/10">
+                      {/* Meta Breakdown */}
+                      <div className="text-[10px] font-mono space-y-1 bg-brand-bg p-3 border-2 border-brand-text">
                         <div className="flex justify-between">
-                          <span className="font-bold uppercase tracking-tight">Category:</span>
+                          <span className="font-black uppercase">CATEGORY:</span>
                           <span>{selectedCategoryObj?.name || categoryId}</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="font-bold uppercase tracking-tight">Stock:</span>
-                          <span>{inventory} units</span>
+                          <span className="font-black uppercase">INVENTORY:</span>
+                          <span>{inventory} UNITS</span>
                         </div>
                         <div className="flex justify-between">
-                          <span className="font-bold uppercase tracking-tight">Status:</span>
-                          <span className={availability ? "text-emerald-700 font-bold" : "text-amber-700 font-bold"}>
-                            {availability ? "Live on Store" : "Draft (Hidden)"}
+                          <span className="font-black uppercase">STOREFRONT STATUS:</span>
+                          <span className={availability ? "text-emerald-700 font-black" : "text-amber-700 font-black"}>
+                            {availability ? "ACTIVE (LIVE)" : "DRAFT (HIDDEN)"}
                           </span>
                         </div>
                       </div>
                     </div>
                   ) : (
                     /* Detail Modal Preview */
-                    <div className="p-6 bg-brand-surface border border-brand-text/15 space-y-5 max-h-[600px] overflow-y-auto">
-                      <span className="text-[8px] font-bold uppercase tracking-tight opacity-40 block">
-                        Customer Modal / Page Preview
-                      </span>
+                    <div className="p-4 sm:p-5 bg-brand-surface border-2 border-brand-text shadow-[4px_4px_0px_#050505] space-y-4 max-h-[620px] overflow-y-auto">
+                      <div className="flex items-center justify-between border-b-2 border-brand-text pb-2">
+                        <span className="text-[8px] font-mono font-black uppercase tracking-wider opacity-60">
+                          // CUSTOMER MODAL INSPECTOR
+                        </span>
+                        <span className="text-[8px] font-mono font-bold uppercase text-brand-accent">
+                          INTERACTIVE SPEC
+                        </span>
+                      </div>
 
-                      <div className="border-b border-brand-text/10 pb-4">
-                        <p className="text-[9px] tracking-tight font-bold text-brand-accent uppercase mb-2">
-                          {selectedCategoryObj?.label || "OBJECT"} / {collectionName || "BE SYMBOLIC"}
+                      <div className="border-b-2 border-brand-text pb-3">
+                        <p className="text-[9px] font-mono font-black text-brand-accent uppercase tracking-wider mb-1">
+                          {selectedCategoryObj?.label || "OBJECT"} // {collectionName || "BE SYMBOLIC"}
                         </p>
-                        <h3 className="text-2xl font-mono font-black uppercase tracking-tight text-brand-text">
-                          {name || "Untitled Object"}
+                        <h3 className="text-xl sm:text-2xl font-mono font-black uppercase tracking-tight text-brand-text">
+                          {name || "UNTITLED OBJECT"}
                         </h3>
-                        <p className="text-lg font-mono font-bold text-brand-text opacity-70 tracking-tight mt-1">
+                        <p className="text-lg font-mono font-black text-brand-text tracking-tight mt-1">
                           Rs. {(price || 0).toLocaleString()}
                         </p>
                       </div>
 
-                      <div className="space-y-4 text-xs leading-relaxed text-brand-text/80">
-                        <p>{description || "Editorial description will appear here."}</p>
-                        <p className="text-[10px] font-mono font-bold uppercase tracking-tight text-brand-accent">
+                      <div className="space-y-3 text-xs leading-relaxed font-mono">
+                        <p className="text-brand-text/80">{description || "Editorial description will appear here."}</p>
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-brand-accent bg-brand-accent/5 p-2 border-l-2 border-brand-accent">
                           "{symbolicTagline || "A symbol of reflective culture."}"
                         </p>
                       </div>
 
                       {/* Variants Preview */}
                       {hasVariants && variants.length > 0 && (
-                        <div className="space-y-2 pt-3 border-t border-brand-text/10">
-                          <p className="text-[9px] font-bold uppercase tracking-tight text-brand-accent">
-                            {variants[0].option1Name || "Options"}
+                        <div className="space-y-2 pt-3 border-t-2 border-brand-text">
+                          <p className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                            {variants[0].option1Name || "OPTIONS"}
                           </p>
                           <div className="flex flex-wrap gap-2">
                             {variants.map((v, idx) => (
                               <span 
                                 key={idx} 
-                                className="px-3 py-1 text-[9px] font-bold uppercase tracking-tight border border-brand-text bg-brand-text text-white"
+                                className="px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]"
                               >
                                 {v.option1Value}
                               </span>
@@ -1855,32 +2130,32 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       )}
 
                       {/* Specs */}
-                      <div className="grid grid-cols-2 gap-3 pt-3 border-t border-brand-text/10 text-[10px]">
+                      <div className="grid grid-cols-2 gap-3 pt-3 border-t-2 border-brand-text text-[10px] font-mono">
                         <div>
-                          <span className="font-bold text-brand-accent uppercase tracking-tight block">Material</span>
-                          <span className="font-medium text-brand-text">{material || "Specified upon request"}</span>
+                          <span className="font-black text-brand-accent uppercase block">MATERIAL</span>
+                          <span className="text-brand-text">{material || "SPECIFIED UPON REQUEST"}</span>
                         </div>
                         <div>
-                          <span className="font-bold text-brand-accent uppercase tracking-tight block">Color / Finish</span>
-                          <span className="font-medium text-brand-text">{color || "Standard"}</span>
+                          <span className="font-black text-brand-accent uppercase block">COLOR / FINISH</span>
+                          <span className="text-brand-text">{color || "STANDARD"}</span>
                         </div>
                         {capacity && (
                           <div>
-                            <span className="font-bold text-brand-accent uppercase tracking-tight block">Capacity</span>
-                            <span className="font-medium text-brand-text">{capacity}</span>
+                            <span className="font-black text-brand-accent uppercase block">CAPACITY</span>
+                            <span className="text-brand-text">{capacity}</span>
                           </div>
                         )}
                         {dimensions && (
                           <div>
-                            <span className="font-bold text-brand-accent uppercase tracking-tight block">Dimensions</span>
-                            <span className="font-medium text-brand-text">{dimensions}</span>
+                            <span className="font-black text-brand-accent uppercase block">DIMENSIONS</span>
+                            <span className="text-brand-text">{dimensions}</span>
                           </div>
                         )}
                       </div>
 
                       <div className="pt-2">
-                        <div className="w-full bg-brand-text text-white py-3 text-[10px] font-bold uppercase tracking-tight text-center">
-                          Add to Bag (Customer View)
+                        <div className="w-full bg-brand-text text-brand-bg py-3 text-[10px] font-mono font-black uppercase tracking-wider text-center border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+                          ADD TO BAG (CUSTOMER VIEW)
                         </div>
                       </div>
                     </div>
@@ -1894,45 +2169,45 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
 
       {/* Custom In-App Delete Confirmation Modal (Bypasses iframe blocked window.confirm) */}
       {productToDelete && (
-        <div className="fixed inset-0 z-[200] bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="bg-brand-surface border border-brand-text/20 p-6 md:p-8 max-w-md w-full shadow-2xl space-y-6 text-brand-text">
+        <div className="fixed inset-0 z-[200] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4 font-mono">
+          <div className="bg-brand-bg border-2 border-brand-text p-6 md:p-8 max-w-md w-full shadow-[8px_8px_0px_#050505] space-y-6 text-brand-text">
             <div className="flex items-start gap-4">
-              <div className="p-3 bg-red-100 text-red-600 rounded-full shrink-0">
-                <Trash2 size={24} />
+              <div className="p-3 bg-red-100 text-red-600 border-2 border-brand-text shrink-0 shadow-[2px_2px_0px_#050505]">
+                <Trash2 size={22} />
               </div>
               <div className="space-y-2">
-                <h3 className="font-mono text-xl font-black uppercase tracking-tight">Remove Product</h3>
-                <p className="text-sm text-brand-text/80 leading-relaxed">
-                  Are you certain you want to permanently remove <strong className="text-brand-text font-bold">"{productToDelete.name}"</strong> from the store catalog?
+                <h3 className="font-mono text-xl font-black uppercase tracking-tight">REMOVE SPECIMEN</h3>
+                <p className="text-xs text-brand-text/80 leading-relaxed">
+                  Are you certain you want to permanently remove <strong className="text-brand-text font-black">"{productToDelete.name}"</strong> from the store catalog?
                 </p>
-                <p className="text-xs text-red-600 font-medium">This will delete the item and its variants from Firestore.</p>
+                <p className="text-[10px] text-red-600 font-black uppercase tracking-wider">// THIS ACTION PERMANENTLY PURGES THE ITEM FROM FIRESTORE</p>
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 pt-4 border-t border-brand-text/10">
+            <div className="flex items-center justify-end gap-3 pt-4 border-t-2 border-brand-text">
               <button
                 type="button"
                 disabled={isDeletingProduct}
                 onClick={() => setProductToDelete(null)}
-                className="px-4 py-2 text-xs font-bold uppercase tracking-tight text-brand-text/70 hover:text-brand-text border border-brand-text/20 hover:border-brand-text transition-colors disabled:opacity-50"
+                className="px-4 py-2 text-xs font-mono font-black uppercase tracking-wider text-brand-text/70 hover:text-brand-text border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505] transition-all disabled:opacity-50"
               >
-                Cancel
+                CANCEL
               </button>
               <button
                 type="button"
                 disabled={isDeletingProduct}
                 onClick={handleConfirmDelete}
-                className="px-5 py-2 text-xs font-bold uppercase tracking-tight bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 transition-all disabled:opacity-50 shadow-md"
+                className="px-5 py-2 text-xs font-mono font-black uppercase tracking-wider bg-red-600 hover:bg-red-700 text-white flex items-center gap-2 transition-all disabled:opacity-50 border-2 border-brand-text shadow-[3px_3px_0px_#050505]"
               >
                 {isDeletingProduct ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin" />
-                    Removing...
+                    <span>PURGING...</span>
                   </>
                 ) : (
                   <>
-                    <Trash2 size={14} />
-                    Yes, Remove Product
+                    <Trash2 size={13} />
+                    <span>CONFIRM REMOVAL</span>
                   </>
                 )}
               </button>
