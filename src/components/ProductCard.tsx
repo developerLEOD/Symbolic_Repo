@@ -21,12 +21,15 @@ const SCATTER_STYLES = [
   { rotate: "3deg", x: "4px", y: "-5px", zIndex: 14 }
 ];
 
+type TooltipPlacement = 'right' | 'left' | 'above';
+
 export default function ProductCard({ product, categoryLabel, onClick }: ProductCardProps) {
   const cardRef = useRef<HTMLDivElement>(null);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [isAutoRevealed, setIsAutoRevealed] = useState(false);
-  const [showBelow, setShowBelow] = useState(false);
+  const [placement, setPlacement] = useState<TooltipPlacement>('above');
+  const [sideVerticalAlign, setSideVerticalAlign] = useState<'top' | 'bottom'>('top');
   const [showAngleArrows, setShowAngleArrows] = useState(false);
   const [hoveredThumbIndex, setHoveredThumbIndex] = useState<number | null>(null);
   const hoverTriggerTimerRef = useRef<NodeJS.Timeout | null>(null);
@@ -51,6 +54,46 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
     if (typeof window === 'undefined') return false;
     return window.matchMedia('(hover: hover) and (pointer: fine)').matches;
   };
+
+  // Determine optimal placement: on the sides for desktop, strictly above the product for mobile
+  const updatePlacement = () => {
+    if (typeof window === 'undefined' || !cardRef.current) return;
+
+    // Mobile / touch screen: always show strictly on the above side of the product so the view is never blocked
+    const isMobile = window.innerWidth < 768 || !isPC();
+    if (isMobile) {
+      setPlacement('above');
+      return;
+    }
+
+    // On desktop: evaluate horizontal clearance on sides
+    const rect = cardRef.current.getBoundingClientRect();
+    const tooltipWidth = 310;
+    const spaceRight = window.innerWidth - rect.right;
+    const spaceLeft = rect.left;
+
+    if (spaceRight >= tooltipWidth + 24) {
+      setPlacement('right');
+    } else if (spaceLeft >= tooltipWidth + 24) {
+      setPlacement('left');
+    } else {
+      setPlacement('above');
+    }
+
+    // Check vertical bounds when docked to side
+    const spaceBottom = window.innerHeight - rect.top;
+    if (spaceBottom < 260 && rect.bottom > 260) {
+      setSideVerticalAlign('bottom');
+    } else {
+      setSideVerticalAlign('top');
+    }
+  };
+
+  useEffect(() => {
+    if (isRevealed) {
+      updatePlacement();
+    }
+  }, [isRevealed]);
 
   // 2-second dwell timer when specimen is on-screen (STRICTLY for mobile / touch-only devices)
   useEffect(() => {
@@ -78,11 +121,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
           // If another product was dwelling and revealed, clear suppression on prior products
           mobileTooltipManager.onProductRevealed(product.id);
 
-          if (cardRef.current) {
-            const rect = cardRef.current.getBoundingClientRect();
-            // Check if near top under header to avoid clipping
-            setShowBelow(rect.top < 210);
-          }
+          updatePlacement();
           setIsAutoRevealed(true);
         }, 2000);
       }
@@ -225,11 +264,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
     // Immediately reveal angle preview tooltip on PC without 1 second delay
     if (images.length > 1) {
       mobileTooltipManager.onProductRevealed(product.id);
-
-      if (cardRef.current) {
-        const rect = cardRef.current.getBoundingClientRect();
-        setShowBelow(rect.top < 210);
-      }
+      updatePlacement();
       setIsHovered(true);
     }
   };
@@ -242,11 +277,11 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
       hoverTriggerTimerRef.current = null;
     }
 
-    // Dismiss with a brief buffer so smooth cursor motion between card and tooltip doesn't flicker
+    // Dismiss with a brief buffer so smooth cursor motion between card and side tooltip doesn't flicker
     hoverDismissTimerRef.current = setTimeout(() => {
       setIsHovered(false);
       setHoveredThumbIndex(null);
-    }, 150);
+    }, 220);
   };
 
   return (
@@ -260,8 +295,8 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
       transition={{ duration: 0.35 }}
       className={`group cursor-pointer rounded-none border-2 border-brand-text p-5 transition-colors duration-150 flex flex-col justify-between relative ${
         isRevealed 
-          ? 'bg-brand-bg shadow-[8px_8px_0px_#050505]' 
-          : 'bg-brand-surface hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505]'
+          ? 'bg-brand-bg shadow-[8px_8px_0px_#050505] z-30' 
+          : 'bg-brand-surface hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] z-10'
       }`}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
@@ -390,19 +425,65 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
         </span>
       </div>
 
-      {/* Brutalist Random-Placement Preview Tooltip */}
+      {/* Brutalist Angle Preview Tooltip (Rendered on sides for desktop, strictly above the product for mobile) */}
       <AnimatePresence>
         {isRevealed && images.length > 1 && (
           <motion.div
-            initial={{ opacity: 0, y: showBelow ? -10 : 12, scale: 0.96 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            exit={{ opacity: 0, y: showBelow ? -6 : 8, scale: 0.97 }}
+            initial={
+              placement === 'right' 
+                ? { opacity: 0, x: -14, scale: 0.96 }
+                : placement === 'left'
+                ? { opacity: 0, x: 14, scale: 0.96 }
+                : { opacity: 0, y: 14, scale: 0.96 }
+            }
+            animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
+            exit={
+              placement === 'right'
+                ? { opacity: 0, x: -8, scale: 0.97 }
+                : placement === 'left'
+                ? { opacity: 0, x: 8, scale: 0.97 }
+                : { opacity: 0, y: 8, scale: 0.97 }
+            }
             transition={{ type: "spring", stiffness: 400, damping: 28 }}
             onClick={(e) => e.stopPropagation()}
-            className={`absolute z-50 w-[min(310px,calc(100vw-36px))] bg-brand-bg border-2 border-brand-text p-3 shadow-[8px_8px_0px_#050505] pointer-events-auto left-1/2 -translate-x-1/2 ${
-              showBelow ? 'top-10 sm:top-12' : '-top-3 sm:-top-4 -translate-y-full'
+            onMouseEnter={() => {
+              if (hoverDismissTimerRef.current) {
+                clearTimeout(hoverDismissTimerRef.current);
+                hoverDismissTimerRef.current = null;
+              }
+              setIsHovered(true);
+            }}
+            onMouseLeave={handleMouseLeave}
+            className={`absolute z-50 w-[min(310px,calc(100vw-32px))] bg-brand-bg border-2 border-brand-text p-3 shadow-[8px_8px_0px_#050505] pointer-events-auto ${
+              placement === 'right'
+                ? `left-[calc(100%+14px)] ${sideVerticalAlign === 'bottom' ? 'bottom-0' : 'top-0'}`
+                : placement === 'left'
+                ? `right-[calc(100%+14px)] left-auto ${sideVerticalAlign === 'bottom' ? 'bottom-0' : 'top-0'}`
+                : 'bottom-[calc(100%+14px)] left-1/2 -translate-x-1/2'
             }`}
           >
+            {/* Invisible hover bridge to eliminate gap when moving cursor between card and side tooltip */}
+            {placement === 'right' && (
+              <div className="absolute -left-4 top-0 bottom-0 w-4 pointer-events-auto" />
+            )}
+            {placement === 'left' && (
+              <div className="absolute -right-4 top-0 bottom-0 w-4 pointer-events-auto" />
+            )}
+            {placement === 'above' && (
+              <div className="absolute -bottom-4 left-0 right-0 h-4 pointer-events-auto" />
+            )}
+
+            {/* Brutalist Directional Pointer Anchor */}
+            {placement === 'above' && (
+              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-brand-bg border-r-2 border-b-2 border-brand-text rotate-45 pointer-events-none" />
+            )}
+            {placement === 'right' && (
+              <div className={`absolute -left-2 ${sideVerticalAlign === 'bottom' ? 'bottom-8' : 'top-8'} w-3.5 h-3.5 bg-brand-bg border-l-2 border-b-2 border-brand-text rotate-45 pointer-events-none`} />
+            )}
+            {placement === 'left' && (
+              <div className={`absolute -right-2 ${sideVerticalAlign === 'bottom' ? 'bottom-8' : 'top-8'} w-3.5 h-3.5 bg-brand-bg border-r-2 border-t-2 border-brand-text rotate-45 pointer-events-none`} />
+            )}
+
             {/* Tooltip Header Bar with Navigation Arrows & Close Button */}
             <div className="flex items-center justify-between border-b-2 border-brand-text pb-2 mb-3 bg-brand-surface -mx-3 -mt-3 p-2.5">
               <div className="flex items-center gap-1.5">
@@ -502,13 +583,6 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
               </span>
               <span className="font-bold text-brand-text">TAP ANGLE TO FLIP</span>
             </div>
-
-            {/* Brutalist Pointer Stem */}
-            {showBelow ? (
-              <div className="absolute -top-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-brand-bg border-l-2 border-t-2 border-brand-text rotate-45"></div>
-            ) : (
-              <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3 h-3 bg-brand-bg border-r-2 border-b-2 border-brand-text rotate-45"></div>
-            )}
           </motion.div>
         )}
       </AnimatePresence>
