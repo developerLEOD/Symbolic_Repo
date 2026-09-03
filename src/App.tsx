@@ -280,6 +280,7 @@ function StorefrontApp() {
       </main>
 
       <Footer 
+        categories={categories}
         onCategoryClick={handleCategoryChange}
         onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined} 
         onCartClick={() => setIsCartOpen(true)}

@@ -24,7 +24,25 @@ export async function fetchCategories(): Promise<Category[]> {
   try {
     const q = query(collection(db, path), orderBy("order", "asc"));
     const snapshot = await getDocs(q);
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Category));
+    
+    // Asynchronously delete any legacy 'garments' doc in Firestore if found
+    const garmentsDoc = snapshot.docs.find(d => 
+      d.id.toLowerCase() === "garments" || 
+      (d.data().name || "").toLowerCase() === "garments" ||
+      (d.data().label || "").toLowerCase() === "garments"
+    );
+    if (garmentsDoc) {
+      deleteDoc(doc(db, path, garmentsDoc.id)).catch(() => {});
+    }
+
+    return snapshot.docs
+      .map(d => ({ id: d.id, ...d.data() } as Category))
+      .filter(c => {
+        const id = (c.id || "").toLowerCase();
+        const name = (c.name || "").toLowerCase();
+        const label = (c.label || "").toLowerCase();
+        return id !== "garments" && name !== "garments" && label !== "garments";
+      });
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];

@@ -2,7 +2,7 @@ export default function SystemSpec() {
   const specs = [
     {
       id: "01",
-      category: "GARMENTS TAXONOMY",
+      category: "TEXTILE TAXONOMY",
       standard: "400 GSM COMBED ORGANIC COTTON",
       detail: "Dense, preshrunk heavyweight jersey with zero synthetic blending. Minimal exterior branding leaves the canvas for symbols of personal conviction.",
       mandate: "WEARER-FIRST CANVAS"

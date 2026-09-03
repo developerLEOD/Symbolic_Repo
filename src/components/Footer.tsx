@@ -1,13 +1,23 @@
 import { useAuth } from "../lib/AuthContext";
+import { Category } from "../types";
 
 interface FooterProps {
+  categories?: Category[];
   onCategoryClick?: (id: string | null) => void;
   onOwnerClick?: () => void;
   onCartClick?: () => void;
 }
 
-export default function Footer({ onCategoryClick, onOwnerClick, onCartClick }: FooterProps) {
+export default function Footer({ categories, onCategoryClick, onOwnerClick, onCartClick }: FooterProps) {
   const { isOwner } = useAuth();
+  
+  // Filter out any garments references completely
+  const validCategories = (categories || []).filter(c => {
+    const id = (c.id || "").toLowerCase();
+    const name = (c.name || "").toLowerCase();
+    const label = (c.label || "").toLowerCase();
+    return id !== "garments" && name !== "garments" && label !== "garments";
+  });
   return (
     <footer className="bg-brand-surface border-t-2 border-brand-text pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
@@ -59,30 +69,37 @@ export default function Footer({ onCategoryClick, onOwnerClick, onCartClick }: F
                     &gt; ALL OBJECTS
                   </button>
                 </li>
-                <li>
-                  <button 
-                    onClick={() => onCategoryClick && onCategoryClick("garments")}
-                    className="hover:text-brand-accent transition-colors text-left cursor-pointer"
-                  >
-                    &gt; GARMENTS
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => onCategoryClick && onCategoryClick("headwear")}
-                    className="hover:text-brand-accent transition-colors text-left cursor-pointer"
-                  >
-                    &gt; HEADWEAR
-                  </button>
-                </li>
-                <li>
-                  <button 
-                    onClick={() => onCategoryClick && onCategoryClick("vessels")}
-                    className="hover:text-brand-accent transition-colors text-left cursor-pointer"
-                  >
-                    &gt; VESSELS
-                  </button>
-                </li>
+                {validCategories.length > 0 ? (
+                  validCategories.map((c) => (
+                    <li key={c.id}>
+                      <button 
+                        onClick={() => onCategoryClick && onCategoryClick(c.id)}
+                        className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                      >
+                        &gt; {c.label || c.name}
+                      </button>
+                    </li>
+                  ))
+                ) : (
+                  <>
+                    <li>
+                      <button 
+                        onClick={() => onCategoryClick && onCategoryClick("caps")}
+                        className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                      >
+                        &gt; HEADWEAR
+                      </button>
+                    </li>
+                    <li>
+                      <button 
+                        onClick={() => onCategoryClick && onCategoryClick("mugs")}
+                        className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                      >
+                        &gt; VESSELS
+                      </button>
+                    </li>
+                  </>
+                )}
                 <li>
                   <button 
                     onClick={() => onCategoryClick && onCategoryClick("about")}

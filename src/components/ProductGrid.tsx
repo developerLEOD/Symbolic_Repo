@@ -25,7 +25,14 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
       try {
         setLoading(true);
         const catsSnapshot = await getDocs(query(collection(db, "categories"), orderBy("order")));
-        const cats = catsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
+        const cats = catsSnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as Category))
+          .filter(c => {
+            const id = (c.id || "").toLowerCase();
+            const name = (c.name || "").toLowerCase();
+            const label = (c.label || "").toLowerCase();
+            return id !== "garments" && name !== "garments" && label !== "garments";
+          });
         setCategories(cats);
         if (onCategoriesLoaded) onCategoriesLoaded(cats);
 
@@ -69,6 +76,10 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
     return 0; // featured
   });
 
+  const currentCategory = categories.find(c => c.id === activeCategoryId);
+  const currentCategoryName = currentCategory ? (currentCategory.name || currentCategory.label) : (activeCategoryId ? activeCategoryId.toUpperCase() : "");
+  const isCurrentCategoryEmpty = Boolean(activeCategoryId && filteredByCategory.length === 0);
+
   if (loading) {
     return (
       <div className="max-w-7xl mx-auto px-6 sm:px-10 py-24 space-y-12 bg-brand-bg">
@@ -93,11 +104,14 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
           <div>
             <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 01 // ARTIFACT REGISTRY ]</span>
             <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-1 text-brand-text">
-              {activeCategoryId ? `${activeCategoryId.toUpperCase()} SPECIMENS` : "SERIES 01 // THE TRANSMISSION CORPUS"}
+              {activeCategoryId ? `${currentCategoryName.toUpperCase()} SPECIMENS` : "SERIES 01 // THE TRANSMISSION CORPUS"}
             </h2>
           </div>
           <div className="font-mono text-xs font-bold uppercase text-brand-text/70">
-            SHOWING {sortedProducts.length} OF {activeProducts.length} RECORDED SPECIMENS
+            {isCurrentCategoryEmpty
+              ? "STATUS // COMING SOON"
+              : `SHOWING ${sortedProducts.length} OF ${activeProducts.length} RECORDED SPECIMENS`
+            }
           </div>
         </div>
 
@@ -116,19 +130,37 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
               >
                 ALL OBJECTS
               </button>
-              {categories.map((cat) => (
-                <button
-                  key={cat.id}
-                  onClick={() => onCategoryChange(cat.id)}
-                  className={`px-4 py-2 font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text transition-all cursor-pointer ${
-                    activeCategoryId === cat.id 
-                      ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]" 
-                      : "bg-brand-surface text-brand-text hover:bg-brand-mute"
-                  }`}
-                >
-                  {cat.label || cat.name}
-                </button>
-              ))}
+              {categories.map((cat) => {
+                const count = activeProducts.filter(p => {
+                  if (cat.id === 'corpus') return p.categoryId === 'corpus' || p.categoryId === 'wear' || p.categoryId === 't-shirts';
+                  if (cat.id === 'apparatus') return p.categoryId === 'apparatus' || p.categoryId === 'carry' || p.categoryId === 'caps';
+                  if (cat.id === 'vessels') return p.categoryId === 'vessels' || p.categoryId === 'gather' || p.categoryId === 'mugs';
+                  return p.categoryId === cat.id;
+                }).length;
+                const isSelected = activeCategoryId === cat.id;
+                return (
+                  <button
+                    key={cat.id}
+                    onClick={() => onCategoryChange(cat.id)}
+                    className={`px-4 py-2 font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text transition-all cursor-pointer flex items-center gap-2 ${
+                      isSelected 
+                        ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]" 
+                        : "bg-brand-surface text-brand-text hover:bg-brand-mute"
+                    }`}
+                  >
+                    <span>{cat.label || cat.name}</span>
+                    {count === 0 && (
+                      <span className={`text-[8px] font-mono font-bold px-1.5 py-0.5 uppercase border ${
+                        isSelected 
+                          ? "border-brand-bg/40 text-brand-bg bg-brand-bg/20" 
+                          : "border-brand-accent/60 text-brand-accent bg-brand-accent/10"
+                      }`}>
+                        COMING SOON
+                      </span>
+                    )}
+                  </button>
+                );
+              })}
             </div>
           )}
 
@@ -163,17 +195,44 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
 
       {/* Product Cards Grid */}
       {sortedProducts.length === 0 ? (
-        <div className="py-20 text-center space-y-4 border-2 border-dashed border-brand-text/30 p-8">
-          <p className="font-mono font-bold uppercase text-base text-brand-text opacity-70">
-            [ NO OBJECTS MATCHING SYSTEM QUERY ]
-          </p>
-          <button 
-            onClick={() => { setSearchQuery(""); if (onCategoryChange) onCategoryChange(null); }} 
-            className="text-xs font-mono font-black uppercase tracking-widest text-brand-accent underline cursor-pointer"
-          >
-            RESET ALL FILTERS
-          </button>
-        </div>
+        isCurrentCategoryEmpty ? (
+          <div className="py-20 px-6 text-center space-y-6 border-2 border-dashed border-brand-text/40 bg-brand-surface/50 p-8 sm:p-14 shadow-[4px_4px_0px_#050505] max-w-2xl mx-auto my-6">
+            <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-brand-accent text-white font-mono text-[10px] font-black uppercase tracking-widest border border-brand-text shadow-[2px_2px_0px_#050505]">
+              <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+              <span>[ STATUS: COMING SOON // IN PRODUCTION ]</span>
+            </div>
+            
+            <div className="space-y-3">
+              <h3 className="font-mono text-3xl sm:text-5xl font-black uppercase tracking-tight text-brand-text">
+                COMING SOON
+              </h3>
+              <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/80 leading-relaxed max-w-md mx-auto">
+                Specimens for [{currentCategoryName ? ` ${currentCategoryName.toUpperCase()} ` : " THIS CATEGORY "}] are currently being crafted under strict material standards. New releases will be archived here shortly.
+              </p>
+            </div>
+
+            <div className="pt-4 flex flex-wrap items-center justify-center gap-3">
+              <button 
+                onClick={() => { setSearchQuery(""); if (onCategoryChange) onCategoryChange(null); }} 
+                className="px-6 py-3.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+              >
+                ← VIEW ALL AVAILABLE OBJECTS
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="py-20 text-center space-y-4 border-2 border-dashed border-brand-text/30 p-8 bg-brand-surface/20 max-w-xl mx-auto">
+            <p className="font-mono font-bold uppercase text-base text-brand-text opacity-70">
+              [ NO OBJECTS MATCHING SEARCH QUERY ]
+            </p>
+            <button 
+              onClick={() => { setSearchQuery(""); if (onCategoryChange) onCategoryChange(null); }} 
+              className="text-xs font-mono font-black uppercase tracking-widest text-brand-accent underline cursor-pointer"
+            >
+              RESET ALL FILTERS
+            </button>
+          </div>
+        )
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
           {sortedProducts.map((product: Product) => {

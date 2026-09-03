@@ -219,11 +219,11 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
     // Clear existing trigger
     if (hoverTriggerTimerRef.current) {
       clearTimeout(hoverTriggerTimerRef.current);
+      hoverTriggerTimerRef.current = null;
     }
 
-    // On PCs, require cursor to hover over the object for 1 second (1000ms) or more before revealing
-    hoverTriggerTimerRef.current = setTimeout(() => {
-      // Hovering another product on PC clears previous product's 60s suppression
+    // Immediately reveal angle preview tooltip on PC without 1 second delay
+    if (images.length > 1) {
       mobileTooltipManager.onProductRevealed(product.id);
 
       if (cardRef.current) {
@@ -231,19 +231,18 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
         setShowBelow(rect.top < 210);
       }
       setIsHovered(true);
-    }, 1000);
+    }
   };
 
   const handleMouseLeave = () => {
     if (!isPC()) return;
 
-    // If mouse left before 1 second, cancel the hover reveal
     if (hoverTriggerTimerRef.current) {
       clearTimeout(hoverTriggerTimerRef.current);
       hoverTriggerTimerRef.current = null;
     }
 
-    // Dismiss with a brief buffer
+    // Dismiss with a brief buffer so smooth cursor motion between card and tooltip doesn't flicker
     hoverDismissTimerRef.current = setTimeout(() => {
       setIsHovered(false);
       setHoveredThumbIndex(null);

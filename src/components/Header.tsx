@@ -30,10 +30,21 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
 
   useEffect(() => {
     const fetchCategories = async () => {
-      const q = query(collection(db, "categories"), orderBy("order"));
-      const querySnapshot = await getDocs(q);
-      const cats = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Category));
-      setCategories(cats);
+      try {
+        const q = query(collection(db, "categories"), orderBy("order"));
+        const querySnapshot = await getDocs(q);
+        const cats = querySnapshot.docs
+          .map(doc => ({ id: doc.id, ...doc.data() } as Category))
+          .filter(c => {
+            const id = (c.id || "").toLowerCase();
+            const name = (c.name || "").toLowerCase();
+            const label = (c.label || "").toLowerCase();
+            return id !== "garments" && name !== "garments" && label !== "garments";
+          });
+        setCategories(cats);
+      } catch (err) {
+        console.error("Failed to load categories in header:", err);
+      }
     };
     fetchCategories();
   }, []);

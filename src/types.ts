@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-export type CategoryTaxonomy = "GARMENTS" | "HEADWEAR" | "VESSELS" | "STATEMENTS" | "OBJECTS";
+export type CategoryTaxonomy = "HEADWEAR" | "VESSELS" | "STATEMENTS" | "OBJECTS" | "WEAR";
 
 export interface Category {
   id: string;
