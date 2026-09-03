@@ -85,6 +85,14 @@ export default function Footer({ onCategoryClick, onOwnerClick, onCartClick }: F
                 </li>
                 <li>
                   <button 
+                    onClick={() => onCategoryClick && onCategoryClick("about")}
+                    className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                  >
+                    &gt; ABOUT SYMBOLIC
+                  </button>
+                </li>
+                <li>
+                  <button 
                     onClick={() => onCategoryClick && onCategoryClick("why-merchandise")}
                     className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent"
                   >

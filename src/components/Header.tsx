@@ -88,6 +88,12 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
               </button>
             ))}
             <button 
+              onClick={() => onCategoryClick("about")}
+              className={`whitespace-nowrap shrink-0 rounded-none text-[10px] font-mono font-black tracking-widest uppercase transition-all hover:bg-brand-text hover:text-brand-bg cursor-pointer ${scrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
+            >
+              [ ABOUT ]
+            </button>
+            <button 
               onClick={() => onCategoryClick("why-merchandise")}
               className={`whitespace-nowrap shrink-0 rounded-none text-[10px] font-mono font-black tracking-widest uppercase transition-all text-brand-accent hover:bg-brand-accent hover:text-white cursor-pointer ${scrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
             >
@@ -173,6 +179,12 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
                   <span>[ {cat.name} ]</span> <ChevronRight size={14} className="text-brand-accent" />
                 </button>
               ))}
+              <button 
+                onClick={() => { onCategoryClick("about"); setIsMenuOpen(false); }}
+                className="flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2.5 border-b border-brand-text/10 cursor-pointer"
+              >
+                <span>[ ABOUT SYMBOLIC ]</span> <ChevronRight size={14} className="text-brand-accent" />
+              </button>
               <button 
                 onClick={() => { onCategoryClick("why-merchandise"); setIsMenuOpen(false); }}
                 className="flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2.5 border-b border-brand-text/10 text-brand-accent cursor-pointer"

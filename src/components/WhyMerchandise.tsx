@@ -4,6 +4,7 @@ import LiquidCarveButton from "./LiquidCarveButton";
 
 interface WhyMerchandiseProps {
   onBack: () => void;
+  onAbout?: () => void;
 }
 
 const observations = [
@@ -39,7 +40,7 @@ const observations = [
   }
 ];
 
-export default function WhyMerchandise({ onBack }: WhyMerchandiseProps) {
+export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps) {
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -165,7 +166,7 @@ export default function WhyMerchandise({ onBack }: WhyMerchandiseProps) {
             <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/80 max-w-xl mx-auto leading-relaxed">
               Explore heavyweight garments, clean headwear, and stoneware vessels built to communicate who you are.
             </p>
-            <div className="pt-2">
+            <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">
               <LiquidCarveButton 
                 onClick={onBack}
                 variant="primary"
@@ -173,6 +174,15 @@ export default function WhyMerchandise({ onBack }: WhyMerchandiseProps) {
               >
                 <span>EXPLORE ALL OBJECTS →</span>
               </LiquidCarveButton>
+              {onAbout && (
+                <LiquidCarveButton 
+                  onClick={onAbout}
+                  variant="outline"
+                  className="px-8 py-4 text-xs font-mono font-black"
+                >
+                  <span>ABOUT THE MARK &amp; LEOD →</span>
+                </LiquidCarveButton>
+              )}
             </div>
           </section>
         </div>

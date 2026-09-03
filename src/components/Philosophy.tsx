@@ -3,9 +3,10 @@ import LiquidCarveButton from "./LiquidCarveButton";
 
 interface PhilosophyProps {
   onReadManifesto?: () => void;
+  onReadAbout?: () => void;
 }
 
-export default function Philosophy({ onReadManifesto }: PhilosophyProps) {
+export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyProps) {
   const tenets = [
     {
       id: "01",
@@ -37,15 +38,26 @@ export default function Philosophy({ onReadManifesto }: PhilosophyProps) {
               WHY WE WEAR WHAT WE WEAR
             </h2>
           </div>
-          {onReadManifesto && (
-            <LiquidCarveButton 
-              onClick={onReadManifesto}
-              variant="outline"
-              className="py-3 text-xs font-mono font-black shrink-0"
-            >
-              <span>READ THE OBSERVATIONS →</span>
-            </LiquidCarveButton>
-          )}
+          <div className="flex flex-wrap items-center gap-3 shrink-0">
+            {onReadAbout && (
+              <LiquidCarveButton 
+                onClick={onReadAbout}
+                variant="outline"
+                className="py-3 text-xs font-mono font-black"
+              >
+                <span>THE LOGO &amp; LEOD MISSION →</span>
+              </LiquidCarveButton>
+            )}
+            {onReadManifesto && (
+              <LiquidCarveButton 
+                onClick={onReadManifesto}
+                variant="secondary"
+                className="py-3 text-xs font-mono font-black"
+              >
+                <span>READ OBSERVATIONS →</span>
+              </LiquidCarveButton>
+            )}
+          </div>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

@@ -16,6 +16,7 @@ import Philosophy from "./components/Philosophy";
 import ProductGrid from "./components/ProductGrid";
 import ProductDetail from "./components/ProductDetail";
 import WhyMerchandise from "./components/WhyMerchandise";
+import About from "./components/About";
 import Cart from "./components/Cart";
 import Footer from "./components/Footer";
 import OwnerProductManager from "./components/OwnerProductManager";
@@ -29,6 +30,7 @@ function StorefrontApp() {
   const { user, isOwner } = useAuth();
   const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
   const [showWhyMerchandise, setShowWhyMerchandise] = useState(false);
+  const [showAbout, setShowAbout] = useState(false);
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -107,13 +109,23 @@ function StorefrontApp() {
   };
 
   const handleCategoryChange = (id: string | null) => {
+    if (id === "about") {
+      setShowAbout(true);
+      setShowWhyMerchandise(false);
+      setActiveCategoryId(null);
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      return;
+    }
+
     if (id === "why-merchandise" || id === "manifesto") {
       setShowWhyMerchandise(true);
+      setShowAbout(false);
       setActiveCategoryId(null);
       window.scrollTo({ top: 0, behavior: 'smooth' });
       return;
     }
     
+    setShowAbout(false);
     setShowWhyMerchandise(false);
     setActiveCategoryId(id);
     setSelectedProduct(null);
@@ -215,8 +227,16 @@ function StorefrontApp() {
       />
 
       <main>
-        {showWhyMerchandise ? (
-          <WhyMerchandise onBack={() => handleCategoryChange(null)} />
+        {showAbout ? (
+          <About 
+            onBack={() => handleCategoryChange(null)}
+            onWhyWeWear={() => handleCategoryChange("why-merchandise")}
+          />
+        ) : showWhyMerchandise ? (
+          <WhyMerchandise 
+            onBack={() => handleCategoryChange(null)} 
+            onAbout={() => handleCategoryChange("about")}
+          />
         ) : (
           <>
             {!activeCategoryId && (
@@ -250,7 +270,8 @@ function StorefrontApp() {
                 <SystemSpec />
 
                 <Philosophy 
-                  onReadManifesto={() => handleCategoryChange("why-merchandise")} 
+                  onReadManifesto={() => handleCategoryChange("why-merchandise")}
+                  onReadAbout={() => handleCategoryChange("about")}
                 />
               </>
             )}
