@@ -53,13 +53,13 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
 
   return (
     <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-brand-bg/95 backdrop-blur-sm border-b-2 border-brand-text shadow-[0_4px_0px_#050505]' : 'bg-brand-bg border-b-2 border-brand-text'}`}>
-      <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-10 flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-14' : 'h-16 sm:h-20'}`}>
-        <div className="flex items-center gap-3 lg:gap-8 ml-0">
+      <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between transition-all duration-300 ${scrolled ? 'h-13 sm:h-14' : 'h-16'}`}>
+        <div className="flex items-center gap-2.5 lg:gap-4 xl:gap-6 min-w-0">
           <button 
             onClick={() => { onCategoryClick(null); setIsMenuOpen(false); }}
             className="group flex items-center gap-2 sm:gap-2.5 text-left focus:outline-none cursor-pointer shrink-0"
           >
-            <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text group-hover:border-brand-accent group-hover:shadow-[2px_2px_0px_#050505] transition-all duration-300 ${scrolled ? 'w-7 h-7' : 'w-8 h-8 sm:w-9 sm:h-9'}`}>
+            <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text group-hover:border-brand-accent group-hover:shadow-[2px_2px_0px_#050505] transition-all duration-200 ${scrolled ? 'w-7 h-7' : 'w-8 h-8'}`}>
               <img 
                 src="/Logo_NoName.jpg" 
                 alt="SYMBOLIC" 
@@ -67,25 +67,25 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
                 className="w-full h-full object-contain p-0.5"
               />
             </div>
-            <div className="flex flex-col">
-              <span className={`block font-mono font-black tracking-wider sm:tracking-widest uppercase text-brand-text leading-none transition-all duration-300 ${scrolled ? 'text-[11px]' : 'text-xs sm:text-sm'}`}>
-                SYMBOLIC
-              </span>
-              <span className={`self-end font-mono font-bold italic tracking-wider text-brand-accent leading-none mt-0.5 transition-all duration-300 ${scrolled ? 'text-[8px]' : 'text-[8.5px] sm:text-[9.5px]'}`}>
-                MUSLIMS
-              </span>
-              {!scrolled && (
-                <span className="hidden sm:block text-[8px] font-mono uppercase tracking-widest text-brand-text/60 transition-opacity duration-200 mt-0.5">
-                  POSSESSION & IDENTITY
+            <div className="flex flex-col justify-center text-left">
+              <div className="w-fit inline-flex flex-col">
+                <span className={`block font-mono font-black tracking-wider uppercase text-brand-text leading-none transition-all duration-200 ${scrolled ? 'text-[11px]' : 'text-xs sm:text-[13px]'}`}>
+                  SYMBOLIC
                 </span>
-              )}
+                <span className={`self-end font-mono font-bold italic tracking-wider text-brand-accent leading-none mt-0.5 transition-all duration-200 ${scrolled ? 'text-[8px]' : 'text-[8.5px] sm:text-[9px]'}`}>
+                  MUSLIMS
+                </span>
+              </div>
+              <span className={`font-mono uppercase tracking-widest text-brand-text/50 leading-none transition-all duration-200 ${scrolled ? 'hidden' : 'hidden xl:block text-[7.5px] mt-0.5'}`}>
+                POSSESSION & IDENTITY
+              </span>
             </div>
           </button>
           
-          <nav className={`hidden md:flex items-center gap-1 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] overflow-x-auto hide-scrollbar transition-all duration-300 ${scrolled ? 'p-0.5' : 'p-1'}`}>
+          <nav className={`hidden md:flex items-center gap-0.5 lg:gap-1 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] overflow-x-auto hide-scrollbar transition-all duration-200 shrink min-w-0 ${scrolled ? 'p-0.5' : 'p-0.5 sm:p-1'}`}>
             <button 
               onClick={() => onCategoryClick(null)} 
-              className={`whitespace-nowrap shrink-0 rounded-none text-[10px] font-mono font-black tracking-widest uppercase transition-all hover:bg-brand-text hover:text-brand-bg cursor-pointer ${scrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
+              className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all hover:bg-brand-text hover:text-brand-bg cursor-pointer ${scrolled ? 'px-2 py-1' : 'px-2 sm:px-2.5 xl:px-3 py-1 sm:py-1.5'}`}
             >
               [ ALL ]
             </button>
@@ -93,31 +93,31 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
               <button 
                 key={cat.id} 
                 onClick={() => onCategoryClick(cat.id)}
-                className={`whitespace-nowrap shrink-0 rounded-none text-[10px] font-mono font-black tracking-widest uppercase transition-all hover:bg-brand-text hover:text-brand-bg cursor-pointer ${scrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
+                className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all hover:bg-brand-text hover:text-brand-bg cursor-pointer ${scrolled ? 'px-2 py-1' : 'px-2 sm:px-2.5 xl:px-3 py-1 sm:py-1.5'}`}
               >
                 [ {cat.label || cat.name} ]
               </button>
             ))}
             <button 
               onClick={() => onCategoryClick("about")}
-              className={`whitespace-nowrap shrink-0 rounded-none text-[10px] font-mono font-black tracking-widest uppercase transition-all hover:bg-brand-text hover:text-brand-bg cursor-pointer ${scrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
+              className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all text-brand-accent hover:bg-brand-accent hover:text-white cursor-pointer ${scrolled ? 'px-2 py-1' : 'px-2 sm:px-2.5 xl:px-3 py-1 sm:py-1.5'}`}
             >
               [ ABOUT ]
             </button>
             <button 
               onClick={() => onCategoryClick("why-merchandise")}
-              className={`whitespace-nowrap shrink-0 rounded-none text-[10px] font-mono font-black tracking-widest uppercase transition-all text-brand-accent hover:bg-brand-accent hover:text-white cursor-pointer ${scrolled ? 'px-2.5 py-1' : 'px-3 py-1.5'}`}
+              className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all text-brand-accent hover:bg-brand-accent hover:text-white cursor-pointer ${scrolled ? 'px-2 py-1' : 'px-2 sm:px-2.5 xl:px-3 py-1 sm:py-1.5'}`}
             >
               [ WHY WE WEAR ]
             </button>
           </nav>
         </div>
 
-        <div className="flex items-center gap-1.5 sm:gap-3 shrink-0">
+        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* User Account / Sign In Button */}
           <button
             onClick={onAuthClick}
-            className={`whitespace-nowrap shrink-0 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 py-1.5 sm:px-3' : 'px-2 sm:px-4 py-1.5 sm:py-2.5'}`}
+            className={`whitespace-nowrap shrink-0 h-8 sm:h-8.5 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3'}`}
             title={user ? "Manage Account & Order History" : "Sign In or Register"}
           >
             {user ? (
@@ -138,7 +138,7 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
 
           <button 
             onClick={onCartClick}
-            className={`whitespace-nowrap shrink-0 relative flex items-center gap-1 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-none border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-all shadow-[2px_2px_0px_#050505] sm:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${scrolled ? 'px-2 sm:px-4 py-1.5' : 'px-2 sm:px-5 py-1.5 sm:py-2.5'}`}
+            className={`whitespace-nowrap shrink-0 h-8 sm:h-8.5 relative flex items-center gap-1 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-none border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${scrolled ? 'px-2.5 sm:px-3' : 'px-3 sm:px-4'}`}
           >
             <ShoppingBag size={12} className="shrink-0" />
             <span className="shrink-0">BAG // [ {formattedCartCount} ]</span>
@@ -146,7 +146,7 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
 
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className={`md:hidden hover:bg-brand-surface rounded-none transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${scrolled ? 'p-1.5' : 'p-1.5 sm:p-2.5'}`}
+            className="md:hidden h-8 w-8 flex items-center justify-center hover:bg-brand-surface rounded-none transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {isMenuOpen ? <X size={16} /> : <Menu size={16} />}
@@ -192,7 +192,7 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
               ))}
               <button 
                 onClick={() => { onCategoryClick("about"); setIsMenuOpen(false); }}
-                className="flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2.5 border-b border-brand-text/10 cursor-pointer"
+                className="flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2.5 border-b border-brand-text/10 text-brand-accent cursor-pointer"
               >
                 <span>[ ABOUT SYMBOLIC ]</span> <ChevronRight size={14} className="text-brand-accent" />
               </button>

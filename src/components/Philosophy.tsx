@@ -64,11 +64,12 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
           {tenets.map((item, idx) => (
             <motion.div
               key={item.id}
-              initial={{ opacity: 0, y: 15 }}
+              initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
-              transition={{ duration: 0.4, delay: idx * 0.1 }}
-              className="p-6 bg-brand-bg border-2 border-brand-text space-y-4 shadow-[4px_4px_0px_#050505] flex flex-col justify-between"
+              transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.09 }}
+              whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+              className="p-6 bg-brand-bg border-2 border-brand-text space-y-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 flex flex-col justify-between cursor-default"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">

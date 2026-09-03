@@ -1,3 +1,5 @@
+import { motion } from "motion/react";
+
 export default function SystemSpec() {
   const specs = [
     {
@@ -45,10 +47,15 @@ export default function SystemSpec() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        {specs.map((item) => (
-          <div 
+        {specs.map((item, idx) => (
+          <motion.div 
             key={item.id}
-            className="bg-brand-surface border-2 border-brand-text p-6 flex flex-col justify-between shadow-[4px_4px_0px_#050505] space-y-6"
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            viewport={{ once: true }}
+            transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.08 }}
+            whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+            className="bg-brand-surface border-2 border-brand-text p-6 flex flex-col justify-between shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 space-y-6 cursor-default"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">
@@ -70,7 +77,7 @@ export default function SystemSpec() {
             <div className="pt-3 border-t border-brand-text/20 font-mono text-[9px] font-black uppercase tracking-widest text-brand-accent">
               {item.mandate}
             </div>
-          </div>
+          </motion.div>
         ))}
       </div>
     </section>

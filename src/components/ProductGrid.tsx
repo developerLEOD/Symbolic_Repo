@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
+import { motion } from "motion/react";
 import { db } from "../lib/firebase";
 import { Product, Category } from "../types";
 import ProductCard from "./ProductCard";
@@ -180,8 +181,11 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                     const cellLayout = getItemLayoutClasses(idx, allItems.length);
 
                     return (
-                      <button
+                      <motion.button
                         key={item.id ?? "all"}
+                        whileHover={{ y: -1 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={() => onCategoryChange(item.id)}
                         className={`group relative py-2.5 px-2.5 sm:px-3.5 md:py-2 md:px-4 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap text-center md:border-none md:w-auto ${cellLayout} ${
                           isSelected
@@ -207,7 +211,7 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                             <span className="hidden xs:inline">COMING </span>SOON
                           </span>
                         )}
-                      </button>
+                      </motion.button>
                     );
                   })}
                 </div>
@@ -285,7 +289,10 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
           </div>
         )
       ) : (
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8">
+        <motion.div 
+          layout
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 sm:gap-8"
+        >
           {sortedProducts.map((product: Product) => {
             const cat = categories.find(c => c.id === product.categoryId);
             return (
@@ -297,7 +304,7 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
               />
             );
           })}
-        </div>
+        </motion.div>
       )}
     </div>
   );

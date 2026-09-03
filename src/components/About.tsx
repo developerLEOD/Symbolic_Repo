@@ -17,12 +17,15 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
         {/* Navigation Return Button */}
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.04, x: -3 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
           onClick={onBack}
           className="inline-flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors mb-12 border-2 border-brand-text bg-brand-surface px-4 py-2 shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
           <ArrowLeft size={14} /> [ RETURN TO OBJECTS ]
-        </button>
+        </motion.button>
 
         <div className="space-y-20">
           {/* Folio Header */}
@@ -78,22 +81,30 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   </div>
 
                   {/* Logo Display Canvas */}
-                  <div className="relative aspect-square max-w-[280px] mx-auto bg-brand-bg border-2 border-brand-text shadow-[6px_6px_0px_#050505] p-6 flex flex-col items-center justify-center">
+                  <motion.div 
+                    whileHover={{ scale: 1.02 }}
+                    transition={{ type: "spring", stiffness: 350, damping: 25 }}
+                    className="relative aspect-square max-w-[280px] mx-auto bg-brand-bg border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] transition-shadow p-6 flex flex-col items-center justify-center cursor-default"
+                  >
                     {/* Actual official logo */}
-                    <div className="w-40 h-40 relative flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505] overflow-hidden bg-brand-surface">
+                    <motion.div 
+                      whileHover={{ scale: 1.05, rotate: 1 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                      className="w-40 h-40 relative flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505] overflow-hidden bg-brand-surface cursor-pointer"
+                    >
                       <img 
                         src="/Logo_NoName.jpg" 
                         alt="SYMBOLIC Logo: A small white circle in an orange square" 
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-contain p-2"
                       />
-                    </div>
+                    </motion.div>
                     {/* Callout tags */}
                     <div className="mt-4 flex items-center justify-between w-full font-mono text-[9px] text-brand-text/60 uppercase">
                       <span>[ ORANGE SQUARE ]</span>
                       <span>[ WHITE CIRCLE ]</span>
                     </div>
-                  </div>
+                  </motion.div>
                 </div>
 
                 {/* Blueprint Dimension Specs */}
@@ -253,7 +264,11 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
 
               {/* Three Pillars Grid */}
               <div className="pt-8 border-t-2 border-brand-text grid grid-cols-1 md:grid-cols-3 gap-6 font-mono">
-                <div className="p-6 bg-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] space-y-2">
+                <motion.div 
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="p-6 bg-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] transition-shadow space-y-2 cursor-default"
+                >
                   <span className="text-[10px] font-black text-brand-accent tracking-widest uppercase">
                     PILLAR 01 // IDENTITY
                   </span>
@@ -263,9 +278,13 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   <p className="text-xs uppercase text-brand-text/70 leading-relaxed">
                     Representing the believer whose appearance and manner stand distinct from the crowd with self-respect and intentionality.
                   </p>
-                </div>
+                </motion.div>
 
-                <div className="p-6 bg-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] space-y-2">
+                <motion.div 
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="p-6 bg-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] transition-shadow space-y-2 cursor-default"
+                >
                   <span className="text-[10px] font-black text-brand-accent tracking-widest uppercase">
                     PILLAR 02 // INTENTIONALITY
                   </span>
@@ -275,9 +294,13 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   <p className="text-xs uppercase text-brand-text/70 leading-relaxed">
                     External labels remain discrete. The symbol on your chest or desk belongs to your values, not our corporate marketing.
                   </p>
-                </div>
+                </motion.div>
 
-                <div className="p-6 bg-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] space-y-2">
+                <motion.div 
+                  whileHover={{ y: -4 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                  className="p-6 bg-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] transition-shadow space-y-2 cursor-default"
+                >
                   <span className="text-[10px] font-black text-brand-accent tracking-widest uppercase">
                     PILLAR 03 // MISSION
                   </span>
@@ -287,7 +310,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   <p className="text-xs uppercase text-brand-text/70 leading-relaxed">
                     An active sub-project of LEOD designed to cultivate self-esteem, Islamic consciousness, and purposeful youth living.
                   </p>
-                </div>
+                </motion.div>
               </div>
             </div>
           </section>

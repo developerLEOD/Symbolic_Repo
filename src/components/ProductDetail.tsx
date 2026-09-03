@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { X, Minus, Plus, Truck, RotateCcw, Edit3, Trash2, Sliders, ArrowLeft, Check, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Product, ProductVariant, CartItem } from "../types";
@@ -117,42 +117,56 @@ export default function ProductDetail({
 
   return (
     <motion.div 
-      initial={{ opacity: 0 }}
-      animate={{ opacity: 1 }}
-      exit={{ opacity: 0 }}
+      initial={{ opacity: 0, scale: 0.985, y: 15 }}
+      animate={{ opacity: 1, scale: 1, y: 0 }}
+      exit={{ opacity: 0, scale: 0.985, y: 15 }}
+      transition={{ type: "spring", stiffness: 350, damping: 28 }}
       className="fixed inset-0 z-[60] bg-brand-bg overflow-y-auto"
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-10 py-10">
         {/* Back & Close Top Bar */}
         <div className="flex items-center justify-between border-b-2 border-brand-text pb-4 mb-8">
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.02, x: -2 }}
+            whileTap={{ scale: 0.97 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
             onClick={onClose}
             className="flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors cursor-pointer border-2 border-brand-text px-3 py-1.5 bg-brand-surface shadow-[2px_2px_0px_#050505]"
           >
             <ArrowLeft size={14} /> [ RETURN TO OBJECTS ]
-          </button>
+          </motion.button>
           
           <div className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
             OBJECT_VIEW // {displayId}
           </div>
 
-          <button 
+          <motion.button 
+            whileHover={{ scale: 1.1, rotate: 90 }}
+            whileTap={{ scale: 0.9 }}
+            transition={{ type: "spring", stiffness: 400, damping: 22 }}
             onClick={onClose}
             className="p-2 border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-white transition-colors cursor-pointer shadow-[2px_2px_0px_#050505]"
           >
             <X size={18} />
-          </button>
+          </motion.button>
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Images Section */}
           <div className="lg:col-span-6 space-y-4">
             <div className="aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[8px_8px_0px_#050505] overflow-hidden relative group">
-              <img 
-                src={product.images[activeImageIndex]} 
-                alt={product.name}
-                className="w-full h-full object-cover transition-opacity duration-200"
-              />
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={activeImageIndex}
+                  src={product.images[activeImageIndex]} 
+                  alt={product.name}
+                  initial={{ opacity: 0.7, scale: 0.97 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0.6, scale: 1.02 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                  className="w-full h-full object-cover"
+                />
+              </AnimatePresence>
               
               {/* Category Tag */}
               <div className="absolute top-4 left-4 z-10">
@@ -170,25 +184,31 @@ export default function ProductDetail({
                 </div>
               )}
 
-              {/* Arrow Navigation Controls */}
+              {/* Arrow Navigation Controls with spring bounce */}
               {product.images.length > 1 && (
                 <>
-                  <button
+                  <motion.button
                     type="button"
+                    whileHover={{ scale: 1.1, x: -2 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 22 }}
                     onClick={handlePrevImage}
                     aria-label="Previous image"
-                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
                   >
                     <ChevronLeft size={20} />
-                  </button>
-                  <button
+                  </motion.button>
+                  <motion.button
                     type="button"
+                    whileHover={{ scale: 1.1, x: 2 }}
+                    whileTap={{ scale: 0.9 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 22 }}
                     onClick={handleNextImage}
                     aria-label="Next image"
-                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-all cursor-pointer active:translate-x-[1px] active:translate-y-[1px]"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2.5 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
                   >
                     <ChevronRight size={20} />
-                  </button>
+                  </motion.button>
                 </>
               )}
 
@@ -219,20 +239,25 @@ export default function ProductDetail({
             {product.images.length > 1 && (
               <div className="grid grid-cols-4 sm:grid-cols-5 gap-3">
                 {product.images.map((img, idx) => (
-                  <button 
+                  <motion.button 
                     key={idx}
+                    whileHover={{ scale: 1.08, y: -3 }}
+                    whileTap={{ scale: 0.94 }}
+                    transition={{ type: "spring", stiffness: 380, damping: 22 }}
                     onClick={() => setActiveImageIndex(idx)}
-                    className={`aspect-square border-2 transition-all cursor-pointer relative group/thumb ${
+                    className={`aspect-square border-2 transition-colors cursor-pointer relative group/thumb ${
                       activeImageIndex === idx 
-                        ? 'border-brand-accent shadow-[3px_3px_0px_#050505] scale-[1.02]' 
-                        : 'border-brand-text opacity-70 hover:opacity-100 hover:border-brand-text'
+                        ? 'border-brand-accent shadow-[4px_4px_0px_#050505] bg-brand-surface' 
+                        : 'border-brand-text opacity-70 hover:opacity-100 hover:border-brand-text shadow-[2px_2px_0px_#050505]'
                     }`}
                   >
                     <img src={img} alt="" className="w-full h-full object-cover" />
-                    <span className="absolute bottom-1 right-1 font-mono text-[8px] font-black bg-brand-text text-brand-bg px-1 leading-none">
+                    <span className={`absolute bottom-1 right-1 font-mono text-[8px] font-black px-1 leading-none ${
+                      activeImageIndex === idx ? 'bg-brand-accent text-white' : 'bg-brand-text text-brand-bg'
+                    }`}>
                       0{idx + 1}
                     </span>
-                  </button>
+                  </motion.button>
                 ))}
               </div>
             )}
@@ -328,17 +353,20 @@ export default function ProductDetail({
                       </div>
                       <div className="flex flex-wrap gap-2">
                         {getOptionValues(name).map((value: string) => (
-                          <button
+                          <motion.button
                             key={value}
+                            whileHover={{ scale: 1.05, y: -1 }}
+                            whileTap={{ scale: 0.95 }}
+                            transition={{ type: "spring", stiffness: 400, damping: 25 }}
                             onClick={() => handleOptionSelect(name, value)}
-                            className={`px-4 py-2 font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text transition-all cursor-pointer ${
+                            className={`px-4 py-2 font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text transition-colors cursor-pointer ${
                               selectedOptions[name] === value 
-                                ? 'border-brand-text bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]' 
-                                : 'border-brand-text bg-brand-surface text-brand-text hover:bg-brand-bg'
+                                ? 'border-brand-text bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]' 
+                                : 'border-brand-text bg-brand-surface text-brand-text hover:bg-brand-bg shadow-[1px_1px_0px_#050505]'
                             }`}
                           >
                             {value}
-                          </button>
+                          </motion.button>
                         ))}
                       </div>
                     </div>
@@ -397,19 +425,25 @@ export default function ProductDetail({
                 <div className="flex items-center gap-4">
                   <span className="font-mono text-xs font-black uppercase text-brand-accent">QTY:</span>
                   <div className="flex items-center border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
-                    <button 
+                    <motion.button 
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.85 }}
+                      transition={{ type: "spring", stiffness: 450, damping: 22 }}
                       onClick={() => setQuantity(Math.max(1, quantity - 1))}
                       className="p-2.5 hover:bg-brand-text hover:text-white transition-colors cursor-pointer"
                     >
                       <Minus size={14} />
-                    </button>
+                    </motion.button>
                     <span className="w-10 text-center font-mono text-xs font-black">{quantity}</span>
-                    <button 
+                    <motion.button 
+                      whileHover={{ scale: 1.15 }}
+                      whileTap={{ scale: 0.85 }}
+                      transition={{ type: "spring", stiffness: 450, damping: 22 }}
                       onClick={() => setQuantity(quantity + 1)}
                       className="p-2.5 hover:bg-brand-text hover:text-white transition-colors cursor-pointer"
                     >
                       <Plus size={14} />
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
 

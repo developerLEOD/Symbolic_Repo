@@ -49,12 +49,15 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
       className="min-h-screen bg-brand-bg pt-28 pb-24 border-b-2 border-brand-text"
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
-        <button 
+        <motion.button 
+          whileHover={{ scale: 1.04, x: -3 }}
+          whileTap={{ scale: 0.96 }}
+          transition={{ type: "spring", stiffness: 400, damping: 25 }}
           onClick={onBack}
           className="inline-flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors mb-12 border-2 border-brand-text bg-brand-surface px-4 py-2 shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
           <ArrowLeft size={14} /> [ RETURN TO OBJECTS ]
-        </button>
+        </motion.button>
 
         <div className="space-y-20">
           {/* Folio Header */}
@@ -88,7 +91,11 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
 
           {/* Primary Axiom Block */}
           <section className="grid grid-cols-1 lg:grid-cols-12 gap-8">
-            <div className="lg:col-span-7 bg-brand-surface border-2 border-brand-text p-8 shadow-[6px_6px_0px_#050505] space-y-6">
+            <motion.div 
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="lg:col-span-7 bg-brand-surface border-2 border-brand-text p-8 shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] transition-shadow space-y-6 cursor-default"
+            >
               <div className="flex items-center justify-between border-b border-brand-text/20 pb-3">
                 <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent">
                   THE CORE BENCHMARK
@@ -106,9 +113,13 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
                   SYMBOLIC flips this relationship. We keep our branding secondary on interior tags, making the graphic space on the garment a canvas for symbols that communicate personal identity, resilience, and faith.
                 </p>
               </div>
-            </div>
+            </motion.div>
 
-            <div className="lg:col-span-5 bg-brand-text text-brand-bg p-8 border-2 border-brand-text flex flex-col justify-between shadow-[6px_6px_0px_#050505]">
+            <motion.div 
+              whileHover={{ y: -4 }}
+              transition={{ type: "spring", stiffness: 400, damping: 25 }}
+              className="lg:col-span-5 bg-brand-text text-brand-bg p-8 border-2 border-brand-text flex flex-col justify-between shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] transition-shadow cursor-default"
+            >
               <div className="space-y-4">
                 <span className="font-mono text-[10px] font-bold uppercase tracking-widest text-brand-accent">
                   OUR CONVICTION
@@ -124,7 +135,7 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
                 </span>
                 <span className="text-white/60">// SERIES 01</span>
               </div>
-            </div>
+            </motion.div>
           </section>
 
           {/* Six Observations Grid */}
@@ -142,10 +153,15 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {observations.map((item) => (
-                <div 
+              {observations.map((item, idx) => (
+                <motion.div 
                   key={item.code}
-                  className="bg-brand-surface border-2 border-brand-text p-6 space-y-4 shadow-[4px_4px_0px_#050505] flex flex-col justify-between"
+                  initial={{ opacity: 0, y: 15 }}
+                  whileInView={{ opacity: 1, y: 0 }}
+                  viewport={{ once: true }}
+                  transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.06 }}
+                  whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+                  className="bg-brand-surface border-2 border-brand-text p-6 space-y-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 flex flex-col justify-between cursor-default"
                 >
                   <div className="space-y-3">
                     <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">
@@ -161,7 +177,7 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
                       {item.body}
                     </p>
                   </div>
-                </div>
+                </motion.div>
               ))}
             </div>
           </section>

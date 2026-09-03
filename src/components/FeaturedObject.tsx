@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { ShoppingBag, Check, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { Product, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
 
@@ -38,7 +39,13 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
   };
 
   return (
-    <section className="py-20 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text">
+    <motion.section 
+      initial={{ opacity: 0, y: 20 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      transition={{ type: "spring", stiffness: 300, damping: 26 }}
+      className="py-20 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text"
+    >
       <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 mb-10 gap-4">
         <div>
           <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 02 // FEATURED PIECE ]</span>
@@ -53,16 +60,25 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         {/* Product Visual Framing */}
-        <div className="lg:col-span-6">
-          <div 
+        <div className="lg:col-span-6 space-y-4">
+          <motion.div 
+            whileHover={{ y: -3 }}
+            transition={{ type: "spring", stiffness: 350, damping: 25 }}
             onClick={() => onViewProduct(product)}
-            className="group cursor-pointer aspect-[4/5] bg-brand-surface border-2 border-brand-text relative overflow-hidden shadow-[8px_8px_0px_#050505] transition-all"
+            className="group cursor-pointer aspect-[4/5] bg-brand-surface border-2 border-brand-text relative overflow-hidden shadow-[8px_8px_0px_#050505] transition-shadow duration-200"
           >
-            <img 
-              src={product.images[activeImageIndex] || product.images[0]} 
-              alt={product.name}
-              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-            />
+            <AnimatePresence mode="wait">
+              <motion.img 
+                key={activeImageIndex}
+                src={product.images[activeImageIndex] || product.images[0]} 
+                alt={product.name}
+                initial={{ opacity: 0.7, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0.6, scale: 1.01 }}
+                transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+              />
+            </AnimatePresence>
             <div className="absolute top-4 left-4 z-10">
               <span className="font-mono text-[10px] font-black uppercase tracking-widest bg-brand-accent text-white px-3 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
                 {product.productId || "SYM-001"}
@@ -76,22 +92,28 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                     [ {activeImageIndex + 1} / {product.images.length} ]
                   </span>
                 </div>
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
                   onClick={handlePrevImage}
                   aria-label="Previous view"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-all cursor-pointer"
+                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
                 >
                   <ChevronLeft size={18} />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.15 }}
+                  whileTap={{ scale: 0.85 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
                   onClick={handleNextImage}
                   aria-label="Next view"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-all cursor-pointer"
+                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
                 >
                   <ChevronRight size={18} />
-                </button>
+                </motion.button>
               </>
             )}
 
@@ -99,7 +121,34 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               <FileText size={12} />
               <span>VIEW OBJECT DETAILS →</span>
             </div>
-          </div>
+          </motion.div>
+
+          {/* Perspective Selector Mini Thumbnails */}
+          {product.images.length > 1 && (
+            <div className="flex gap-2">
+              {product.images.map((img, idx) => (
+                <motion.button
+                  key={idx}
+                  whileHover={{ scale: 1.08, y: -2 }}
+                  whileTap={{ scale: 0.94 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
+                  onClick={() => setActiveImageIndex(idx)}
+                  className={`w-14 h-16 border-2 relative cursor-pointer overflow-hidden ${
+                    activeImageIndex === idx 
+                      ? 'border-brand-accent shadow-[3px_3px_0px_#050505]' 
+                      : 'border-brand-text opacity-70 hover:opacity-100 shadow-[1px_1px_0px_#050505]'
+                  }`}
+                >
+                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <span className={`absolute bottom-0.5 right-0.5 font-mono text-[7px] font-black px-0.5 leading-none ${
+                    activeImageIndex === idx ? 'bg-brand-accent text-white' : 'bg-brand-text text-brand-bg'
+                  }`}>
+                    0{idx + 1}
+                  </span>
+                </motion.button>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Metadata & Specifications */}
@@ -183,6 +232,6 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
           </div>
         </div>
       </div>
-    </section>
+    </motion.section>
   );
 }

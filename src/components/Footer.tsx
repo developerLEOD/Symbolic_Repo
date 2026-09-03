@@ -1,3 +1,4 @@
+import { motion } from "motion/react";
 import { useAuth } from "../lib/AuthContext";
 import { Category } from "../types";
 
@@ -62,68 +63,89 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
               </h3>
               <ul className="space-y-2.5 font-bold uppercase">
                 <li>
-                  <button 
+                  <motion.button 
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     onClick={() => onCategoryClick && onCategoryClick(null)}
                     className="hover:text-brand-accent transition-colors text-left cursor-pointer"
                   >
                     &gt; ALL OBJECTS
-                  </button>
+                  </motion.button>
                 </li>
                 {validCategories.length > 0 ? (
                   validCategories.map((c) => (
                     <li key={c.id}>
-                      <button 
+                      <motion.button 
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={() => onCategoryClick && onCategoryClick(c.id)}
                         className="hover:text-brand-accent transition-colors text-left cursor-pointer"
                       >
                         &gt; {c.label || c.name}
-                      </button>
+                      </motion.button>
                     </li>
                   ))
                 ) : (
                   <>
                     <li>
-                      <button 
+                      <motion.button 
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={() => onCategoryClick && onCategoryClick("caps")}
                         className="hover:text-brand-accent transition-colors text-left cursor-pointer"
                       >
                         &gt; HEADWEAR
-                      </button>
+                      </motion.button>
                     </li>
                     <li>
-                      <button 
+                      <motion.button 
+                        whileHover={{ x: 4 }}
+                        whileTap={{ scale: 0.98 }}
+                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={() => onCategoryClick && onCategoryClick("mugs")}
                         className="hover:text-brand-accent transition-colors text-left cursor-pointer"
                       >
                         &gt; VESSELS
-                      </button>
+                      </motion.button>
                     </li>
                   </>
                 )}
                 <li>
-                  <button 
+                  <motion.button 
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     onClick={() => onCategoryClick && onCategoryClick("about")}
-                    className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                    className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent"
                   >
                     &gt; ABOUT SYMBOLIC
-                  </button>
+                  </motion.button>
                 </li>
                 <li>
-                  <button 
+                  <motion.button 
+                    whileHover={{ x: 4 }}
+                    whileTap={{ scale: 0.98 }}
+                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
                     onClick={() => onCategoryClick && onCategoryClick("why-merchandise")}
                     className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent"
                   >
                     &gt; WHY WE WEAR THIS
-                  </button>
+                  </motion.button>
                 </li>
                 {isOwner && onOwnerClick && (
                   <li>
-                    <button 
+                    <motion.button 
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
                       onClick={onOwnerClick}
                       className="hover:text-brand-accent transition-colors text-left cursor-pointer opacity-70"
                     >
                       &gt; STUDIO MANAGER
-                    </button>
+                    </motion.button>
                   </li>
                 )}
               </ul>

@@ -255,11 +255,13 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
       initial={{ opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
+      whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+      whileTap={{ scale: 0.99 }}
       transition={{ duration: 0.35 }}
-      className={`group cursor-pointer rounded-none border-2 border-brand-text p-5 transition-all duration-150 flex flex-col justify-between relative ${
+      className={`group cursor-pointer rounded-none border-2 border-brand-text p-5 transition-colors duration-150 flex flex-col justify-between relative ${
         isRevealed 
-          ? 'bg-brand-bg shadow-[6px_6px_0px_#050505]' 
-          : 'bg-brand-surface hover:bg-brand-bg hover:shadow-[6px_6px_0px_#050505]'
+          ? 'bg-brand-bg shadow-[8px_8px_0px_#050505]' 
+          : 'bg-brand-surface hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505]'
       }`}
       onClick={onClick}
       onMouseEnter={handleMouseEnter}
@@ -274,13 +276,18 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
 
         {/* Product Visual Frame */}
         <div className="relative aspect-[4/5] overflow-hidden rounded-none bg-brand-surface mb-4 border-2 border-brand-text">
-          <img 
-            src={images[activeImageIndex] || product.thumbnailImage || images[0]} 
-            alt={product.name}
-            className={`w-full h-full object-cover transition-transform duration-500 ${
-              isRevealed ? 'scale-105' : ''
-            }`}
-          />
+          <AnimatePresence mode="wait">
+            <motion.img 
+              key={activeImageIndex}
+              src={images[activeImageIndex] || product.thumbnailImage || images[0]} 
+              alt={product.name}
+              initial={{ opacity: 0.7, scale: 0.98 }}
+              animate={{ opacity: 1, scale: isRevealed ? 1.05 : 1 }}
+              exit={{ opacity: 0.6, scale: 1.01 }}
+              transition={{ type: "spring", stiffness: 320, damping: 26 }}
+              className="w-full h-full object-cover"
+            />
+          </AnimatePresence>
 
           {/* Category Tag */}
           <div className="absolute top-3 left-3 z-10">
@@ -299,28 +306,34 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
                 </span>
               </div>
 
-              {/* Prev / Next Arrows */}
+              {/* Prev / Next Arrows with spring tactile motion */}
               <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-between z-20 pointer-events-none">
-                <button
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.12 }}
+                  whileTap={{ scale: 0.88 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
                   onClick={handlePrevImage}
                   aria-label="Previous preview"
-                  className={`pointer-events-auto transition-opacity duration-200 p-2 sm:p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+                  className={`pointer-events-auto transition-opacity duration-200 p-2 sm:p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                     areArrowsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
                   <ChevronLeft size={16} />
-                </button>
-                <button
+                </motion.button>
+                <motion.button
                   type="button"
+                  whileHover={{ scale: 1.12 }}
+                  whileTap={{ scale: 0.88 }}
+                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
                   onClick={handleNextImage}
                   aria-label="Next preview"
-                  className={`pointer-events-auto transition-opacity duration-200 p-2 sm:p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${
+                  className={`pointer-events-auto transition-opacity duration-200 p-2 sm:p-1.5 min-w-[34px] min-h-[34px] flex items-center justify-center bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                     areArrowsVisible ? 'opacity-100' : 'opacity-0 pointer-events-none'
                   }`}
                 >
                   <ChevronRight size={16} />
-                </button>
+                </motion.button>
               </div>
 
               {/* Mini Segment Progress on Card */}
@@ -328,7 +341,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
                 {images.map((_, i) => (
                   <div 
                     key={i} 
-                    className={`h-full flex-1 transition-colors ${i === activeImageIndex ? 'bg-brand-accent' : 'bg-transparent'}`}
+                    className={`h-full flex-1 transition-colors duration-200 ${i === activeImageIndex ? 'bg-brand-accent' : 'bg-transparent'}`}
                   />
                 ))}
               </div>
@@ -336,11 +349,16 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
           )}
 
           {/* Quick View Corner Glyph */}
-          <div className={`absolute top-3 right-3 transition-opacity duration-200 bg-brand-bg border-2 border-brand-text p-1.5 rounded-none text-brand-text shadow-[2px_2px_0px_#050505] z-10 ${
-            isRevealed ? 'opacity-100' : 'opacity-0 pointer-events-none'
-          }`}>
+          <motion.div 
+            initial={false}
+            animate={{ scale: isRevealed ? 1 : 0.8, opacity: isRevealed ? 1 : 0 }}
+            transition={{ type: "spring", stiffness: 400, damping: 25 }}
+            className={`absolute top-3 right-3 bg-brand-bg border-2 border-brand-text p-1.5 rounded-none text-brand-text shadow-[2px_2px_0px_#050505] z-10 ${
+              isRevealed ? 'pointer-events-auto' : 'pointer-events-none'
+            }`}
+          >
             <ArrowUpRight size={14} />
-          </div>
+          </motion.div>
         </div>
         
         {/* Statement & Inscription */}

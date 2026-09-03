@@ -39,9 +39,13 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
 
           <div className="space-y-3">
             <div>
-              <span className="inline-block bg-brand-accent text-white pl-3 sm:pl-4 pr-4 pt-[13px] pb-0 mt-[-4px] ml-0 text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tighter leading-[0.88] border-2 border-brand-text shadow-[4px_4px_0px_#050505]">
+              <motion.span 
+                whileHover={{ scale: 1.02, rotate: -0.5 }}
+                transition={{ type: "spring", stiffness: 400, damping: 20 }}
+                className="inline-block bg-brand-accent text-white pl-3 sm:pl-4 pr-4 pt-[13px] pb-0 mt-[-4px] ml-0 text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tighter leading-[0.88] border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-default select-none"
+              >
                 BE SYMBOLIC.
-              </span>
+              </motion.span>
             </div>
             <h1 className="text-5xl sm:text-7xl lg:text-8xl font-mono font-bold uppercase tracking-tighter text-brand-text leading-[0.88]">
               WEAR WHAT YOU STAND FOR.
@@ -82,10 +86,11 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
 
         {/* Right Benchmark Criteria Block */}
         <motion.div 
-          initial={{ opacity: 0, scale: 0.98 }}
-          animate={{ opacity: 1, scale: 1 }}
-          transition={{ duration: 0.5, delay: 0.15 }}
-          className="lg:col-span-4 bg-brand-surface border-2 border-brand-text p-6 sm:p-7 shadow-[6px_6px_0px_#050505] space-y-6"
+          initial={{ opacity: 0, scale: 0.98, y: 15 }}
+          animate={{ opacity: 1, scale: 1, y: 0 }}
+          transition={{ type: "spring", stiffness: 300, damping: 25, delay: 0.1 }}
+          whileHover={{ y: -4, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+          className="lg:col-span-4 bg-brand-surface border-2 border-brand-text p-6 sm:p-7 shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] transition-shadow duration-200 space-y-6"
         >
           <div className="flex items-center justify-between border-b-2 border-brand-text pb-3">
             <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-text">
@@ -95,22 +100,22 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
           </div>
 
           <div className="space-y-3.5 font-mono text-xs">
-            <div className="border-b border-brand-text/20 pb-2.5">
+            <motion.div whileHover={{ x: 3 }} transition={{ type: "spring", stiffness: 400, damping: 22 }} className="border-b border-brand-text/20 pb-2.5 cursor-default">
               <span className="text-brand-accent font-black block text-[10px]">01 // SYMBOL OVER LOGO</span>
               <p className="text-[11px] text-brand-text/80 uppercase font-bold mt-0.5">The graphic carries personal meaning, not a corporation's status symbol.</p>
-            </div>
-            <div className="border-b border-brand-text/20 pb-2.5">
+            </motion.div>
+            <motion.div whileHover={{ x: 3 }} transition={{ type: "spring", stiffness: 400, damping: 22 }} className="border-b border-brand-text/20 pb-2.5 cursor-default">
               <span className="text-brand-accent font-black block text-[10px]">02 // SECONDARY BRANDING</span>
               <p className="text-[11px] text-brand-text/80 uppercase font-bold mt-0.5">Brand identifiers are kept to discreet interior labels.</p>
-            </div>
-            <div className="border-b border-brand-text/20 pb-2.5">
+            </motion.div>
+            <motion.div whileHover={{ x: 3 }} transition={{ type: "spring", stiffness: 400, damping: 22 }} className="border-b border-brand-text/20 pb-2.5 cursor-default">
               <span className="text-brand-accent font-black block text-[10px]">03 // DENSE SUBSTANCE</span>
               <p className="text-[11px] text-brand-text/80 uppercase font-bold mt-0.5">400 GSM combed cotton and high-fire ceramic built for years of daily use.</p>
-            </div>
-            <div>
+            </motion.div>
+            <motion.div whileHover={{ x: 3 }} transition={{ type: "spring", stiffness: 400, damping: 22 }} className="cursor-default">
               <span className="text-brand-accent font-black block text-[10px]">04 // INTENTIONAL OWNERSHIP</span>
               <p className="text-[11px] text-brand-text/80 uppercase font-bold mt-0.5">Fewer, deliberate objects that reflect genuine conviction.</p>
-            </div>
+            </motion.div>
           </div>
 
           <div className="pt-4 border-t-2 border-brand-text text-[9px] font-mono tracking-widest uppercase text-brand-text/60 font-bold flex items-center justify-between">
