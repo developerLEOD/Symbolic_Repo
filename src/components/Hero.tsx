@@ -13,7 +13,10 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
       <div className="flex flex-wrap justify-between items-center text-[9px] sm:text-[10px] font-mono tracking-widest uppercase border-b border-brand-text/30 pb-3 mb-12 gap-3">
         <div className="flex items-center gap-2">
           <span className="w-2 h-2 bg-brand-accent inline-block"></span>
-          <span className="font-bold">SYMBOLIC / MUSLIMS</span>
+          <span className="inline-flex flex-col items-end">
+            <span className="font-mono font-black text-[10px] sm:text-[11px] leading-tight text-brand-text tracking-wider">SYMBOLIC</span>
+            <span className="font-mono text-[8px] sm:text-[8.5px] font-bold italic text-brand-accent leading-none tracking-wider">MUSLIMS</span>
+          </span>
         </div>
         <span className="text-brand-text/70 hidden sm:inline">PERSON → POSSESSION → SYMBOL → IDENTITY</span>
         <span className="text-brand-accent font-bold">REPRESENT YOURSELF</span>

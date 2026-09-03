@@ -33,15 +33,15 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
                 />
               </div>
               <div>
-                <div className="flex items-baseline gap-1.5">
-                  <h2 className="text-xs font-mono font-black tracking-widest uppercase text-brand-text">
+                <div className="inline-flex flex-col items-end">
+                  <h2 className="text-xs sm:text-sm font-mono font-black tracking-widest uppercase text-brand-text leading-none">
                     SYMBOLIC
                   </h2>
-                  <span className="text-[10px] font-mono font-bold tracking-tight text-brand-accent">
-                    / MUSLIMS
+                  <span className="text-[8.5px] sm:text-[9.5px] font-mono font-bold italic tracking-wider text-brand-accent leading-none mt-1">
+                    MUSLIMS
                   </span>
                 </div>
-                <span className="block text-[8px] font-mono uppercase tracking-widest text-brand-text/60">
+                <span className="block text-[8px] font-mono uppercase tracking-widest text-brand-text/60 mt-1">
                   POSSESSION & IDENTITY STUDIO
                 </span>
               </div>
@@ -132,7 +132,14 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
         </div>
 
         <div className="flex flex-col sm:flex-row items-center justify-between font-mono text-[10px] uppercase tracking-widest font-bold text-brand-text gap-4">
-          <p>© 2026 SYMBOLIC / MUSLIMS // POSSESSION & IDENTITY</p>
+          <div className="flex items-center gap-2">
+            <span>© 2026</span>
+            <span className="inline-flex flex-col items-end">
+              <span className="font-black leading-tight">SYMBOLIC</span>
+              <span className="text-[8px] font-bold italic text-brand-accent leading-none">MUSLIMS</span>
+            </span>
+            <span className="text-brand-text/70">// POSSESSION & IDENTITY</span>
+          </div>
           <p className="text-brand-accent">PERSON → SYMBOL → OBJECT</p>
         </div>
       </div>

@@ -74,7 +74,11 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
 
             <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent pl-5">
               <p className="font-mono text-sm sm:text-base uppercase text-brand-text font-bold leading-relaxed">
-                SYMBOLIC <span className="text-brand-accent font-black">/ MUSLIMS</span> exists for those who refuse to be walking billboards. We create heavyweight garments, headwear, and vessels where the symbol represents the wearer's identity—not a brand's corporate status.
+                <span className="inline-flex flex-col items-end align-middle mr-1.5">
+                  <span className="font-black text-sm sm:text-base leading-none">SYMBOLIC</span>
+                  <span className="text-[10px] sm:text-[11px] font-bold italic text-brand-accent leading-none mt-0.5">MUSLIMS</span>
+                </span>
+                exists for those who refuse to be walking billboards. We create heavyweight garments, headwear, and vessels where the symbol represents the wearer's identity—not a brand's corporate status.
               </p>
               <p className="font-mono text-xs uppercase text-brand-text/70 leading-relaxed">
                 What we choose to possess and wear should communicate what we stand for.
@@ -113,8 +117,12 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
                   "WE CHOOSE TO WEAR WHAT WE STAND FOR, RATHER THAN TURNING OURSELVES INTO WALKING BANNERS FOR OTHER BRANDS."
                 </p>
               </div>
-              <div className="pt-6 border-t border-white/20 font-mono text-[10px] uppercase tracking-widest text-brand-accent font-bold">
-                SYMBOLIC / MUSLIMS // SERIES 01
+              <div className="pt-6 border-t border-white/20 font-mono text-[10px] uppercase tracking-widest text-brand-accent font-bold flex items-center gap-2">
+                <span className="inline-flex flex-col items-end">
+                  <span className="text-white text-[11px] font-black leading-tight">SYMBOLIC</span>
+                  <span className="text-[8.5px] font-bold italic text-brand-accent leading-none">MUSLIMS</span>
+                </span>
+                <span className="text-white/60">// SERIES 01</span>
               </div>
             </div>
           </section>

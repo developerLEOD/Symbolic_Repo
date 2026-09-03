@@ -178,16 +178,16 @@ function StorefrontApp() {
           />
         </motion.div>
 
-        <div className="text-center mb-6">
-          <div className="flex items-center justify-center gap-2">
-            <span className="text-base sm:text-lg font-mono font-black tracking-[0.25em] uppercase text-brand-text pl-[0.25em]">
+        <div className="text-center mb-6 flex flex-col items-center">
+          <div className="inline-flex flex-col items-end">
+            <span className="text-base sm:text-lg font-mono font-black tracking-[0.25em] uppercase text-brand-text pl-[0.25em] leading-none">
               SYMBOLIC
             </span>
-            <span className="text-xs sm:text-sm font-mono font-bold tracking-[0.2em] text-brand-accent uppercase pl-[0.2em]">
+            <span className="text-xs sm:text-sm font-mono font-bold italic tracking-[0.18em] text-brand-accent uppercase leading-none mt-1">
               MUSLIMS
             </span>
           </div>
-          <p className="text-[9px] font-mono tracking-[0.25em] text-brand-text/60 uppercase mt-1.5 pl-[0.25em]">
+          <p className="text-[9px] font-mono tracking-[0.25em] text-brand-text/60 uppercase mt-2 pl-[0.25em]">
             POSSESSION &amp; IDENTITY STUDIO
           </p>
         </div>

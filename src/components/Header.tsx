@@ -71,7 +71,7 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
               <span className={`block font-mono font-black tracking-wider sm:tracking-widest uppercase text-brand-text leading-none transition-all duration-300 ${scrolled ? 'text-[11px]' : 'text-xs sm:text-sm'}`}>
                 SYMBOLIC
               </span>
-              <span className={`self-end font-mono font-normal tracking-wider text-brand-accent leading-none mt-0.5 transition-all duration-300 ${scrolled ? 'text-[8px]' : 'text-[8.5px] sm:text-[9.5px]'}`}>
+              <span className={`self-end font-mono font-bold italic tracking-wider text-brand-accent leading-none mt-0.5 transition-all duration-300 ${scrolled ? 'text-[8px]' : 'text-[8.5px] sm:text-[9.5px]'}`}>
                 MUSLIMS
               </span>
               {!scrolled && (
