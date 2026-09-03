@@ -33,24 +33,22 @@ export default function LoadingScreen() {
   const current = STATUS_MESSAGES[index];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-center bg-brand-bg px-4 select-none font-mono">
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-brand-bg px-4 py-8 sm:py-12 select-none font-mono">
       {/* Subtle Background Pattern */}
       <div className="absolute inset-0 opacity-[0.025] pointer-events-none bg-[radial-gradient(#050505_1px,transparent_1px)] [background-size:18px_18px]" />
 
-      <div className="relative z-10 flex flex-col items-center max-w-md w-full text-center">
-        {/* Substantially Bigger Brand Logo Container */}
+      {/* Top Balancing Spacer */}
+      <div className="h-4 sm:h-8 w-full shrink-0" />
+
+      {/* Center: Brand Logo & Title */}
+      <div className="relative z-10 flex flex-col items-center max-w-md w-full text-center my-auto">
+        {/* Clean, Prominent Brand Logo Container (without + ornaments) */}
         <motion.div 
           initial={{ scale: 0.95, opacity: 0.9 }}
           animate={{ scale: [0.97, 1.02, 0.97], opacity: [0.93, 1, 0.93] }}
           transition={{ repeat: Infinity, duration: 2.4, ease: "easeInOut" }}
           className="relative w-36 h-36 sm:w-44 sm:h-44 md:w-48 md:h-48 mb-6 shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 sm:border-[3px] border-brand-text shadow-[6px_6px_0px_#050505]"
         >
-          {/* Subtle Corner Registration Marks */}
-          <span className="absolute top-1.5 left-2 text-[9px] text-brand-text/30 font-bold leading-none select-none">+</span>
-          <span className="absolute top-1.5 right-2 text-[9px] text-brand-text/30 font-bold leading-none select-none">+</span>
-          <span className="absolute bottom-1.5 left-2 text-[9px] text-brand-text/30 font-bold leading-none select-none">+</span>
-          <span className="absolute bottom-1.5 right-2 text-[9px] text-brand-text/30 font-bold leading-none select-none">+</span>
-
           <img 
             src="/Logo_NoName.jpg" 
             alt="SYMBOLIC" 
@@ -60,7 +58,7 @@ export default function LoadingScreen() {
         </motion.div>
 
         {/* Brand Lockup: Minimal Space Between SYMBOLIC and MUSLIMS */}
-        <div className="text-center mb-6 flex flex-col items-center">
+        <div className="text-center flex flex-col items-center">
           <div className="inline-flex flex-col items-end leading-none">
             <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-black tracking-[0.2em] uppercase text-brand-text leading-none pl-[0.2em]">
               SYMBOLIC
@@ -73,9 +71,12 @@ export default function LoadingScreen() {
             POSSESSION &amp; IDENTITY STUDIO
           </p>
         </div>
+      </div>
 
+      {/* Bottom Part: Loading Progress Bar and Animated Loading Text */}
+      <div className="relative z-10 flex flex-col items-center max-w-md w-full text-center pb-2 sm:pb-4 shrink-0">
         {/* Brutalist Progress Indicator */}
-        <div className="w-56 sm:w-64 h-2 bg-brand-surface border-2 border-brand-text overflow-hidden shadow-[3px_3px_0px_#050505] mb-4">
+        <div className="w-56 sm:w-64 h-2 bg-brand-surface border-2 border-brand-text overflow-hidden shadow-[3px_3px_0px_#050505] mb-3">
           <motion.div 
             className="h-full bg-brand-accent"
             initial={{ x: "-100%" }}
@@ -84,8 +85,8 @@ export default function LoadingScreen() {
           />
         </div>
 
-        {/* Animated Rotating Status Text Container */}
-        <div className="h-14 flex flex-col items-center justify-center w-full px-2">
+        {/* Animated Rotating Status Text Container positioned at bottom */}
+        <div className="h-12 sm:h-14 flex flex-col items-center justify-center w-full px-2">
           <AnimatePresence mode="wait">
             <motion.div
               key={index}
