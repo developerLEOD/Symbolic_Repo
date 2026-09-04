@@ -143,7 +143,7 @@ export const FOUR_AXIOMS: Axiom[] = [
     code: "01",
     title: "SOVEREIGNTY OVER BILLBOARD CULTURE",
     subheading: "REJECTION OF COMMERCIAL COMMODIFICATION",
-    thesis: "Modern consumer culture compels the individual to purchase branded apparel, turning the human chest into free advertising space for conglomerates. We reject this commodification. What you wear in public should articulate your own faith, your own discipline, and your own moral stance—not build market cap for a corporation.",
+    thesis: "Modern consumer culture compels the individual to purchase branded apparel, turning the human chest into free advertising space for conglomerates. We reject this commodification. What you wear in public should articulate your own Deen, your own discipline, and your own moral stance—not build market cap for a corporation.",
     imperative: "Own your surface. Do not lease your body to corporate trademarks."
   },
   {
@@ -158,7 +158,7 @@ export const FOUR_AXIOMS: Axiom[] = [
     title: "DEEN IN THE PHYSICAL REALM",
     subheading: "AUTHENTIC MUSLIM IDENTITY IS NOT COSTUME",
     thesis: "Muslim identity is neither a passing subculture nor an aesthetic gimmick. It is a comprehensive civilizational commitment defined by modesty (Haya), intellectual rigor, justice, and unwavering moral fortitude. Our symbols are physical anchors reminding the wearer of their covenants with the Creator and creation.",
-    imperative: "Wear what grounds your faith; reject what dissolves your focus."
+    imperative: "Wear what grounds your Deen; reject what dissolves your focus."
   },
   {
     code: "04",

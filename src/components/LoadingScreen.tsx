@@ -57,13 +57,13 @@ export default function LoadingScreen() {
           />
         </motion.div>
 
-        {/* Brand Lockup: Minimal Space Between SYMBOLIC and MUSLIMS */}
+        {/* Brand Lockup: Regular Gap Between SYMBOLIC and MUSLIMS */}
         <div className="text-center flex flex-col items-center">
           <div className="inline-flex flex-col items-end leading-none">
             <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-black tracking-[0.2em] uppercase text-brand-text leading-none pl-[0.2em]">
               SYMBOLIC
             </span>
-            <span className="text-sm sm:text-base md:text-lg font-mono font-black italic tracking-[0.16em] text-brand-accent uppercase leading-none -mt-1 sm:-mt-1.5 md:-mt-2 pl-[0.16em]">
+            <span className="text-sm sm:text-base md:text-lg font-mono font-black italic tracking-[0.16em] text-brand-accent uppercase leading-none mt-1.5 sm:mt-2 pl-[0.16em]">
               MUSLIMS
             </span>
           </div>

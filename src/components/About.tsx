@@ -45,7 +45,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
 
             <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent pl-5">
               <p className="font-mono text-sm sm:text-base uppercase text-brand-text font-bold leading-relaxed">
-                SYMBOLIC is a manifestation of conviction, deliberate possession, and unapologetic identity. Rooted in the mission to establish our faith through daily presence.
+                SYMBOLIC is a manifestation of conviction, deliberate possession, and unapologetic identity. Rooted in the mission to establish our Deen through daily presence.
               </p>
               <p className="font-mono text-xs uppercase text-brand-text/70 leading-relaxed">
                 Islamabad, Pakistan // Under the Let’s Establish Our Deen (LEOD) Mission.
@@ -210,7 +210,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                       Symbolic is owned by a Muslim boy living in Islamabad, who initiated this brand as a sub-project under the Let’s Establish Our Deen (LEOD) mission.
                     </p>
                     <p>
-                      The LEOD mission is grounded in a singular aspiration: reviving, establishing, and proudly upholding our Deen (faith, principles, and holistic way of life) across every facet of modern daily experience.
+                      The LEOD mission is grounded in a singular aspiration: reviving, establishing, and proudly upholding our Deen (the holistic Islamic System, principles, and comprehensive way of life) across every facet of modern daily experience.
                     </p>
                     <p>
                       For years, modern merchandise and streetwear have forced youth to become passive billboards for foreign secular corporations, wearing symbols devoid of spiritual depth or personal resonance.
@@ -256,7 +256,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                       [ ESTABLISHING THE DEEN ]
                     </p>
                     <p className="text-[11px] leading-relaxed text-brand-bg/85">
-                      Faith is not confined to private thought—it shapes what we value, how we walk, and what we choose to represent in the public square.
+                      Our Deen is not confined to private thought—it shapes what we value, how we walk, and what we choose to represent in the public square.
                     </p>
                   </div>
                 </div>

@@ -110,7 +110,7 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
                   Most contemporary clothing turns the wearer into an unpaid advertising surface for multinational logos. People wear brands to signal external status rather than internal conviction.
                 </p>
                 <p>
-                  SYMBOLIC flips this relationship. We keep our branding secondary on interior tags, making the graphic space on the garment a canvas for symbols that communicate personal identity, resilience, and faith.
+                  SYMBOLIC flips this relationship. We keep our branding secondary on interior tags, making the graphic space on the garment a canvas for symbols that communicate personal identity, resilience, and our Deen.
                 </p>
               </div>
             </motion.div>

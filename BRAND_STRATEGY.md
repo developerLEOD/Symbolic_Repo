@@ -97,7 +97,7 @@ BRAND  (0%)   ───► SYMBOLIC; maker's mark only, exiled to interior colla
 ## 6. The Four Axioms of Possession
 
 ### Axiom 01 // Sovereignty over Billboard Culture
-Modern consumer culture compels the individual to purchase branded apparel, turning the human chest into free advertising space for conglomerates. We reject this commodification. What you wear in public should articulate your own faith, your own discipline, and your own moral stance—not build market cap for a corporation.
+Modern consumer culture compels the individual to purchase branded apparel, turning the human chest into free advertising space for conglomerates. We reject this commodification. What you wear in public should articulate your own Deen, your own discipline, and your own moral stance—not build market cap for a corporation.
 
 ### Axiom 02 // The Hierarchy of Presence
 In our hierarchy, the person is paramount. The symbol manifests their inner conviction. The object is the functional vessel that carries it through daily life. The maker remains discreetly tucked inside the collar. SYMBOLIC exists to empower the believer's public witness, never to eclipse it.
