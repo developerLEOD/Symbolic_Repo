@@ -13,8 +13,10 @@ import {
 import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { UserProfile } from "../types";
+import { generateUserReferralCode } from "./referralService";
 
 const OWNER_EMAILS = [
+  "araizhasan60@gmail.com",
   "araizhasan00@gmail.com",
   "developertwl@gmail.com",
   "araizhasan41@gmail.com",
@@ -70,6 +72,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const userRole = isOwnerEmail(firebaseUser.email) ? "admin" : "customer";
 
       if (!userDoc.exists()) {
+        const generatedCode = generateUserReferralCode({
+          uid: firebaseUser.uid,
+          displayName: additionalData?.displayName || firebaseUser.displayName,
+          email: firebaseUser.email
+        });
+
         const newProfile: UserProfile = {
           uid: firebaseUser.uid,
           email: firebaseUser.email || "",
@@ -77,6 +85,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           photoURL: firebaseUser.photoURL || "",
           phone: additionalData?.phone || firebaseUser.phoneNumber || "",
           role: userRole,
+          referralCode: generatedCode,
+          referralsCount: 0,
           createdAt: Date.now(),
           lastLoginAt: Date.now(),
           ...additionalData
@@ -85,24 +95,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setUserProfile(newProfile);
       } else {
         const existingData = userDoc.data() as UserProfile;
+        const userReferralCode = existingData.referralCode || generateUserReferralCode({
+          uid: firebaseUser.uid,
+          displayName: existingData.displayName || firebaseUser.displayName,
+          email: firebaseUser.email
+        });
+
         const updatedData: UserProfile = {
           ...existingData,
           role: userRole,
+          referralCode: userReferralCode,
+          referralsCount: typeof existingData.referralsCount === "number" ? existingData.referralsCount : 0,
           lastLoginAt: Date.now(),
           ...(additionalData || {})
         };
-        await updateDoc(userDocRef, { role: userRole, lastLoginAt: Date.now(), ...(additionalData || {}) });
+        await updateDoc(userDocRef, {
+          role: userRole,
+          referralCode: userReferralCode,
+          lastLoginAt: Date.now(),
+          ...(additionalData || {})
+        });
         setUserProfile(updatedData);
       }
     } catch (err) {
       console.error("Error syncing user profile with Firestore:", err);
       // Fallback profile from auth object
+      const fallbackCode = generateUserReferralCode({
+        uid: firebaseUser.uid,
+        displayName: firebaseUser.displayName,
+        email: firebaseUser.email
+      });
       setUserProfile({
         uid: firebaseUser.uid,
         email: firebaseUser.email || "",
         displayName: firebaseUser.displayName || "",
         photoURL: firebaseUser.photoURL || "",
-        role: isOwnerEmail(firebaseUser.email) ? "admin" : "customer"
+        role: isOwnerEmail(firebaseUser.email) ? "admin" : "customer",
+        referralCode: fallbackCode,
+        referralsCount: 0
       });
     }
   };

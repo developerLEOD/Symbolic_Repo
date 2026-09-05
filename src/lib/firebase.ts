@@ -19,13 +19,19 @@ export const auth = getAuth(app);
 // Verify connection as specified in Firebase guidelines with graceful offline detection
 async function testConnection() {
   try {
-    await getDocFromServer(doc(db, 'test', 'connection'));
-  } catch (error: any) {
-    // If the client is connecting or offline, log an informational warning
-    const message = error?.message || String(error);
-    if (message.includes('the client is offline') || message.includes('unavailable')) {
-      console.warn("Firestore is connecting or operating in offline mode.");
-    }
+    // Delay connection verification slightly to allow web channel initialization
+    setTimeout(async () => {
+      try {
+        await getDocFromServer(doc(db, 'test', 'connection'));
+      } catch (error: any) {
+        const message = error?.message || String(error);
+        if (message.includes('the client is offline') || message.includes('unavailable')) {
+          console.info("Firestore: Operating with offline persistence/connecting in background.");
+        }
+      }
+    }, 1500);
+  } catch {
+    // Silent catch
   }
 }
 testConnection();

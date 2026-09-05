@@ -1,10 +1,11 @@
-import { useState, useEffect } from "react";
-import { ShoppingBag, Menu, X, ChevronRight, Sliders, User as UserIcon } from "lucide-react";
+import React, { useState, useEffect, useRef } from "react";
+import { ShoppingBag, Menu, X, ChevronRight, Sliders, User as UserIcon, Gift, ArrowRight, Sparkles } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { Category } from "../types";
+import { Category, ReferralSettings } from "../types";
 import { useAuth } from "../lib/AuthContext";
+import { getReferralSettings, subscribeReferralSettings, getFriendDiscountPercentage } from "../lib/referralService";
 
 interface HeaderProps {
   onCartClick: () => void;
@@ -12,13 +13,73 @@ interface HeaderProps {
   onCategoryClick: (id: string | null) => void;
   onOwnerClick?: () => void;
   onAuthClick: () => void;
+  onReferralClick?: () => void;
 }
 
-export default function Header({ onCartClick, cartCount, onCategoryClick, onOwnerClick, onAuthClick }: HeaderProps) {
+export default function Header({ onCartClick, cartCount, onCategoryClick, onOwnerClick, onAuthClick, onReferralClick }: HeaderProps) {
   const { user, userProfile, isOwner } = useAuth();
   const [isMenuOpen, setIsMenuOpen] = useState(false);
   const [categories, setCategories] = useState<Category[]>([]);
   const [scrolled, setScrolled] = useState(false);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const [showReferralTooltip, setShowReferralTooltip] = useState(false);
+  const accountContainerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const unsubscribe = subscribeReferralSettings((settings) => {
+      setReferralSettings(settings);
+      if (!settings.isEnabled) {
+        setShowReferralTooltip(false);
+      }
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Show referral tooltip after a brief delay if referral program is active and not dismissed this session
+  useEffect(() => {
+    if (!referralSettings || !referralSettings.isEnabled) {
+      setShowReferralTooltip(false);
+      return;
+    }
+
+    const dismissed = sessionStorage.getItem("symbolic_referral_tooltip_dismissed");
+    if (!dismissed) {
+      const timer = setTimeout(() => {
+        setShowReferralTooltip(true);
+      }, 1200);
+      return () => clearTimeout(timer);
+    }
+  }, [referralSettings]);
+
+  // Handle outside click to dismiss tooltip gracefully
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (accountContainerRef.current && !accountContainerRef.current.contains(e.target as Node)) {
+        setShowReferralTooltip(false);
+      }
+    };
+    if (showReferralTooltip) {
+      document.addEventListener("mousedown", handleOutsideClick);
+      return () => document.removeEventListener("mousedown", handleOutsideClick);
+    }
+  }, [showReferralTooltip]);
+
+  const handleDismissTooltip = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setShowReferralTooltip(false);
+    sessionStorage.setItem("symbolic_referral_tooltip_dismissed", "true");
+  };
+
+  const handleOpenReferral = (e?: React.MouseEvent) => {
+    if (e) e.stopPropagation();
+    setShowReferralTooltip(false);
+    sessionStorage.setItem("symbolic_referral_tooltip_dismissed", "true");
+    if (onReferralClick) {
+      onReferralClick();
+    } else {
+      onAuthClick();
+    }
+  };
 
   useEffect(() => {
     const handleScroll = () => {
@@ -114,27 +175,123 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
         </div>
 
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          {/* User Account / Sign In Button */}
-          <button
-            onClick={onAuthClick}
-            className={`whitespace-nowrap shrink-0 h-8 sm:h-8.5 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3'}`}
-            title={user ? "Manage Account & Order History" : "Sign In or Register"}
-          >
-            {user ? (
-              <>
-                <span className="w-2 h-2 rounded-full bg-green-500 ring-2 ring-brand-text/30 animate-pulse shrink-0"></span>
-                <span className="max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline shrink-0">
-                  {userProfile?.displayName ? userProfile.displayName.split(" ")[0] : (user.email?.split("@")[0] || "ACCOUNT")}
+          {/* User Account / Sign In Button with Brutalist Referral Tooltip */}
+          <div ref={accountContainerRef} className="relative">
+            <button
+              onClick={onAuthClick}
+              className={`whitespace-nowrap shrink-0 h-8 sm:h-8.5 flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3'}`}
+              title={user ? "Manage Account & Order History" : "Sign In or Register"}
+            >
+              {user ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-green-500 ring-2 ring-brand-text/30 animate-pulse shrink-0"></span>
+                  <span className="max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline shrink-0">
+                    {userProfile?.displayName ? userProfile.displayName.split(" ")[0] : (user.email?.split("@")[0] || "ACCOUNT")}
+                  </span>
+                  <span className="sm:hidden shrink-0">ACCOUNT</span>
+                </>
+              ) : (
+                <>
+                  <UserIcon size={12} className="text-brand-accent shrink-0" />
+                  <span className="shrink-0">SIGN IN</span>
+                </>
+              )}
+
+              {/* Referral Perk Tag Indicator on Account Button */}
+              {referralSettings?.isEnabled && (
+                <span 
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    setShowReferralTooltip(prev => !prev);
+                  }}
+                  className="hidden xl:inline-flex items-center gap-1 text-[8px] font-mono font-black text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 border border-brand-accent/30 hover:bg-brand-accent hover:text-white transition-colors cursor-pointer"
+                  title="Friend Referral Privilege"
+                >
+                  <Gift size={9} />
+                  <span>REFER</span>
                 </span>
-                <span className="sm:hidden shrink-0">ACCOUNT</span>
-              </>
-            ) : (
-              <>
-                <UserIcon size={12} className="text-brand-accent shrink-0" />
-                <span className="shrink-0">SIGN IN</span>
-              </>
-            )}
-          </button>
+              )}
+            </button>
+
+            {/* Brutalist Referral Tooltip anchored to Account Box */}
+            <AnimatePresence>
+              {showReferralTooltip && referralSettings?.isEnabled && (
+                <motion.div
+                  initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                  animate={{ opacity: 1, y: 0, scale: 1 }}
+                  exit={{ opacity: 0, y: 6, scale: 0.95 }}
+                  transition={{ type: "spring", stiffness: 400, damping: 26 }}
+                  onClick={(e) => e.stopPropagation()}
+                  className="absolute z-50 top-[calc(100%+12px)] right-0 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 w-[310px] sm:w-[350px] bg-brand-bg border-2 border-brand-text p-4 shadow-[8px_8px_0px_#050505] pointer-events-auto text-left"
+                >
+                  {/* Brutalist Directional Pointer Anchor pointing UP to the Account button */}
+                  <div className="absolute -top-2 right-6 sm:right-auto sm:left-1/2 sm:-translate-x-1/2 w-3.5 h-3.5 bg-brand-surface border-l-2 border-t-2 border-brand-text rotate-45 pointer-events-none" />
+
+                  {/* Tooltip Header Bar */}
+                  <div className="flex items-center justify-between border-b-2 border-brand-text pb-2.5 mb-3 bg-brand-surface -mx-4 -mt-4 p-3">
+                    <div className="flex items-center gap-1.5">
+                      <span className="w-2 h-2 bg-[#ff5500] inline-block animate-ping"></span>
+                      <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-text">
+                        EXCLUSIVE MEMBER PRIVILEGE
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleDismissTooltip}
+                      aria-label="Dismiss referral tooltip"
+                      className="p-1 border border-brand-text bg-brand-bg hover:bg-[#ff5500] hover:text-white text-brand-text shadow-[1px_1px_0px_#050505] transition-colors cursor-pointer"
+                    >
+                      <X size={11} />
+                    </button>
+                  </div>
+
+                  {/* Big Bold Orange Headline requested by User */}
+                  <div className="mb-2.5">
+                    <div className="font-mono text-2xl sm:text-[28px] font-black uppercase tracking-tight text-[#ff5500] leading-none drop-shadow-sm">
+                      REFER A FRIEND!
+                    </div>
+                    <div className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-text/80 mt-1">
+                      UNLOCK {referralSettings?.referrerRewardPercentage ?? 20}% OFF // FRIENDS GET {referralSettings ? getFriendDiscountPercentage(referralSettings) : 10}% OFF
+                    </div>
+                  </div>
+
+                  {/* Details Under the Big Heading with OR condition */}
+                  <div className="space-y-2.5">
+                    <p className="text-[11px] text-brand-text/85 font-sans leading-relaxed">
+                      Share your referral link. Unlock <span className="font-bold text-[#ff5500]">{referralSettings?.referrerRewardPercentage ?? 20}% OFF</span> your next order when <span className="font-bold text-brand-text font-mono underline decoration-[#ff5500] decoration-2">{referralSettings?.minimumReferrals ?? 2} friends</span> complete an order <span className="font-bold text-[#ff5500]">OR</span> when <span className="font-bold text-brand-text font-mono underline decoration-[#ff5500] decoration-2">{referralSettings?.minimumVisits ?? 35} visitors</span> view the site through your link! Friends also receive <span className="font-bold text-[#ff5500] font-mono">{referralSettings ? getFriendDiscountPercentage(referralSettings) : 10}% OFF</span> on their order.
+                    </p>
+
+                    {/* How It Works 3-Step Card */}
+                    <div className="bg-brand-surface border border-brand-text/20 p-2.5 space-y-1.5 font-mono text-[9px]">
+                      <div className="flex items-center gap-2 text-brand-text">
+                        <span className="w-4 h-4 bg-brand-text text-brand-bg font-black flex items-center justify-center shrink-0">1</span>
+                        <span className="font-bold uppercase truncate">Share your personal link or code</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-brand-text">
+                        <span className="w-4 h-4 bg-brand-text text-brand-bg font-black flex items-center justify-center shrink-0">2</span>
+                        <span className="font-bold uppercase truncate">Friends receive {referralSettings ? getFriendDiscountPercentage(referralSettings) : 10}% OFF at checkout</span>
+                      </div>
+                      <div className="flex items-center gap-2 text-[#ff5500]">
+                        <span className="w-4 h-4 bg-[#ff5500] text-white font-black flex items-center justify-center shrink-0">3</span>
+                        <span className="font-black uppercase truncate">You unlock {referralSettings?.referrerRewardPercentage ?? 20}% OFF ({referralSettings?.minimumReferrals ?? 2} orders OR {referralSettings?.minimumVisits ?? 35} visits)!</span>
+                      </div>
+                    </div>
+
+                    {/* Action Button */}
+                    <button
+                      type="button"
+                      onClick={handleOpenReferral}
+                      className="w-full mt-2 py-2.5 px-3 bg-[#ff5500] text-white font-mono text-[11px] font-black uppercase tracking-wider hover:bg-neutral-900 transition-colors flex items-center justify-center gap-2 border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                    >
+                      <Gift size={13} />
+                      <span>{user ? "VIEW PROGRESS & SHARE LINK" : "SIGN IN TO GET YOUR LINK"}</span>
+                      <ArrowRight size={13} />
+                    </button>
+                  </div>
+                </motion.div>
+              )}
+            </AnimatePresence>
+          </div>
 
           <button 
             onClick={onCartClick}
@@ -166,7 +323,7 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
               {/* User Bar in Mobile Menu */}
               <button
                 onClick={() => { onAuthClick(); setIsMenuOpen(false); }}
-                className="flex items-center justify-between text-xs font-black uppercase tracking-widest py-3 px-4 bg-brand-surface border-2 border-brand-text text-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer mb-2"
+                className="flex items-center justify-between text-xs font-black uppercase tracking-widest py-3 px-4 bg-brand-surface border-2 border-brand-text text-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer mb-1"
               >
                 <span className="flex items-center gap-2">
                   <UserIcon size={14} className="text-brand-accent" />
@@ -174,6 +331,20 @@ export default function Header({ onCartClick, cartCount, onCategoryClick, onOwne
                 </span>
                 <ChevronRight size={14} />
               </button>
+
+              {/* Referral Banner in Mobile Menu */}
+              {referralSettings?.isEnabled && (
+                <button
+                  onClick={handleOpenReferral}
+                  className="flex items-center justify-between text-[11px] font-black uppercase tracking-wider py-2.5 px-3 bg-[#ff5500]/10 border-2 border-[#ff5500] text-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer mb-2"
+                >
+                  <span className="flex items-center gap-2 text-[#ff5500]">
+                    <Gift size={14} />
+                    <span>REFER A FRIEND // {referralSettings ? getFriendDiscountPercentage(referralSettings) : 10}% OFF FOR FRIENDS</span>
+                  </span>
+                  <ChevronRight size={14} className="text-[#ff5500]" />
+                </button>
+              )}
 
               <button 
                 onClick={() => { onCategoryClick(null); setIsMenuOpen(false); }}

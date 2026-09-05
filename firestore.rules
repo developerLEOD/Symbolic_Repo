@@ -4,10 +4,19 @@ service cloud.firestore {
     // Helper function to verify if the authenticated user is a designated owner
     function isOwner() {
       return request.auth != null && (
+        request.auth.token.email == 'araizhasan60@gmail.com' ||
         request.auth.token.email == 'araizhasan00@gmail.com' ||
         request.auth.token.email == 'developertwl@gmail.com' ||
         request.auth.token.email == 'araizhasan41@gmail.com' ||
-        request.auth.token.email == 'thewisdomlounge1@gmail.com'
+        request.auth.token.email == 'araizhasan@gmail.com' ||
+        request.auth.token.email == 'thewisdomlounge1@gmail.com' ||
+        request.auth.token.email == 'thewisdomlounge@gmail.com' ||
+        (request.auth.token.email != null && (
+          request.auth.token.email.matches('(?i)^araizhasan.*@gmail\\.com$') ||
+          request.auth.token.email.matches('(?i)^araiz.*@gmail\\.com$') ||
+          request.auth.token.email.matches('(?i).*thewisdomlounge.*') ||
+          request.auth.token.email.matches('(?i).*developertwl.*')
+        ))
       );
     }
 
@@ -33,10 +42,13 @@ service cloud.firestore {
       }
     }
     
-    // User profile documents: user can read and update their own document, owners can read
+    // User profile documents: publicly readable for referral code lookup, owner/self writeable, referral counters incrementable
     match /users/{userId} {
-      allow read: if request.auth != null && (request.auth.uid == userId || isOwner());
-      allow create, update: if request.auth != null && request.auth.uid == userId;
+      allow read: if true;
+      allow create: if request.auth != null && request.auth.uid == userId;
+      allow update: if (request.auth != null && request.auth.uid == userId) ||
+                    (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['referralsCount', 'referralVisitsCount'])) ||
+                    isOwner();
       allow delete: if request.auth != null && (request.auth.uid == userId || isOwner());
     }
     
@@ -46,6 +58,26 @@ service cloud.firestore {
       allow read: if isOwner();
       allow read: if request.auth != null && resource.data.userId == request.auth.uid;
       allow read: if request.auth != null && request.auth.token.email != null && resource.data.customerInfo.email == request.auth.token.email;
+      allow update, delete: if isOwner();
+    }
+
+    // Global Store Settings (Referral Parameters, etc.): Publicly readable, owner editable
+    match /settings/{settingId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+
+    // Referral Redemptions & Tracking: created upon order completion, owners can manage, public read for stats
+    match /referrals/{referralId} {
+      allow create: if true;
+      allow read: if true;
+      allow update, delete: if isOwner();
+    }
+
+    // Referral Link Unique Visits Tracking: anyone can log a visit, public read for counts
+    match /referral_visits/{visitId} {
+      allow create: if true;
+      allow read: if true;
       allow update, delete: if isOwner();
     }
 

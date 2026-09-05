@@ -133,8 +133,9 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   </div>
 
                   <h3 className="text-2xl sm:text-3xl font-mono font-black uppercase text-brand-text tracking-tight leading-tight">
-                    "LOGO REPRESENTS THE ONE WHO IS DISTINCT FROM THE SURROUNDING DUE TO ITS APPEARANCE AND LOOKS."
+                    "THE LOGO REPRESENTS SOCIETY THROUGH ORANGE, WHICH SYMBOLIZES CONSUMERISM AND CONFORMITY, WHILE THE WHITE CIRCLE REPRESENTS THE SYMBOLIC MUSLIM WHO, DESPITE EXISTING WITHIN IT, REMAINS UNAPOLOGETICALLY DISTINCT."
                   </h3>
+
 
                   <div className="font-mono text-xs uppercase space-y-4 text-brand-text/80 leading-relaxed border-l-2 border-brand-text pl-4">
                     <p>

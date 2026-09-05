@@ -28,11 +28,13 @@ import {
   Key,
   Search,
   X,
-  Filter
+  Filter,
+  Users
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../lib/AuthContext";
 import { Product, ProductVariant, Category } from "../types";
+import OwnerReferralManager from "./OwnerReferralManager";
 import { 
   fetchCategories, 
   fetchProducts, 
@@ -133,7 +135,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"upload" | "catalog">("upload");
+  const [activeTab, setActiveTab] = useState<"upload" | "catalog" | "referrals">("upload");
   const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "list">("grid");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("all");
@@ -880,6 +882,18 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
             <Package size={12} className="shrink-0 hidden xs:inline" />
             <span>CATALOG ({existingProducts.length})</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("referrals")}
+            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === "referrals" 
+                ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
+                : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+            }`}
+          >
+            <Users size={12} className="shrink-0 hidden xs:inline" />
+            <span>REFERRALS</span>
+          </button>
         </div>
 
         {/* Right: Action Buttons */}
@@ -930,7 +944,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                 )}
               </button>
             </>
-          ) : (
+          ) : activeTab === "catalog" ? (
             <>
               <button
                 type="button"
@@ -949,6 +963,12 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                 <span>+ NEW OBJECT</span>
               </button>
             </>
+          ) : (
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-mono font-black uppercase tracking-wider text-emerald-600 bg-emerald-50 px-2.5 py-1 border border-emerald-600">
+                REFERRAL LOGIC // ACTIVE
+              </span>
+            </div>
           )}
         </div>
       </header>
@@ -970,7 +990,14 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
 
       {/* Content Area */}
       <div className="flex-grow overflow-y-auto">
-        {activeTab === "catalog" ? (
+        {activeTab === "referrals" ? (
+          <OwnerReferralManager
+            onNotify={(type, message) => {
+              setNotification({ type, message });
+              setTimeout(() => setNotification(null), 4000);
+            }}
+          />
+        ) : activeTab === "catalog" ? (
           /* Catalog View */
           <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
             {/* Header and Stats */}

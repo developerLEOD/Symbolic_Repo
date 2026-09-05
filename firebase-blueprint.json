@@ -85,10 +85,60 @@
         "city": { "type": "string" },
         "postalCode": { "type": "string" },
         "role": { "type": "string", "enum": ["customer", "admin"] },
+        "referralCode": { "type": "string" },
+        "referralsCount": { "type": "number" },
+        "referralVisitsCount": { "type": "number" },
         "createdAt": { "type": "number" },
         "lastLoginAt": { "type": "number" }
       },
       "required": ["uid", "email"]
+    },
+    "referralSettings": {
+      "title": "ReferralSettings",
+      "description": "Store configuration for friend referral discount program",
+      "type": "object",
+      "properties": {
+        "isEnabled": { "type": "boolean" },
+        "discountPercentage": { "type": "number" },
+        "minimumReferrals": { "type": "number" },
+        "minimumVisits": { "type": "number" },
+        "referrerRewardPercentage": { "type": "number" },
+        "minimumOrderAmount": { "type": "number" },
+        "maxDiscountCap": { "type": "number" },
+        "referralCodePrefix": { "type": "string" },
+        "headline": { "type": "string" },
+        "description": { "type": "string" },
+        "updatedAt": { "type": "number" },
+        "updatedBy": { "type": "string" }
+      },
+      "required": ["isEnabled", "discountPercentage", "minimumReferrals", "minimumVisits", "referrerRewardPercentage"]
+    },
+    "referralVisit": {
+      "title": "ReferralVisit",
+      "description": "Log of unique visitor visits through customer referral links",
+      "type": "object",
+      "properties": {
+        "referrerUid": { "type": "string" },
+        "referrerCode": { "type": "string" },
+        "visitorSessionId": { "type": "string" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["referrerCode", "visitorSessionId", "createdAt"]
+    },
+    "referralRecord": {
+      "title": "ReferralRecord",
+      "description": "Log of friend referral discount applications",
+      "type": "object",
+      "properties": {
+        "referrerUid": { "type": "string" },
+        "referrerCode": { "type": "string" },
+        "refereeEmail": { "type": "string" },
+        "orderId": { "type": "string" },
+        "orderTotal": { "type": "number" },
+        "discountApplied": { "type": "number" },
+        "createdAt": { "type": "number" }
+      },
+      "required": ["referrerCode", "refereeEmail", "discountApplied", "createdAt"]
     }
   },
   "firestore": {
@@ -111,6 +161,18 @@
     "/users/{userId}": {
       "schema": "user",
       "description": "User account profiles"
+    },
+    "/settings/{settingId}": {
+      "schema": "referralSettings",
+      "description": "Global store settings including referral discount configurations"
+    },
+    "/referrals/{referralId}": {
+      "schema": "referralRecord",
+      "description": "Customer referral redemption and tracking records"
+    },
+    "/referral_visits/{visitId}": {
+      "schema": "referralVisit",
+      "description": "Log of unique visitor landings via customer referral links"
     }
   }
 }

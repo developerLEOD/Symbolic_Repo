@@ -1,11 +1,34 @@
 import React, { useState, useEffect } from "react";
-import { X, Check, ShieldCheck, ArrowRight, Lock, Truck, CreditCard, ShoppingBag, MessageCircle, User as UserIcon } from "lucide-react";
+import { 
+  X, 
+  Check, 
+  ShieldCheck, 
+  ArrowRight, 
+  Lock, 
+  Truck, 
+  CreditCard, 
+  ShoppingBag, 
+  MessageCircle, 
+  User as UserIcon,
+  Tag,
+  CheckCircle2,
+  AlertCircle,
+  Gift
+} from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
-import { CartItem } from "../types";
+import { CartItem, ReferralSettings } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
 import { useAuth } from "../lib/AuthContext";
 import { collection, addDoc } from "firebase/firestore";
 import { db } from "../lib/firebase";
+import { 
+  getReferralSettings, 
+  subscribeReferralSettings,
+  validateReferralCode, 
+  recordReferralUsage,
+  getFriendDiscountPercentage,
+  isReferrerRewardUnlocked
+} from "../lib/referralService";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -55,9 +78,105 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     }
   }, [user, userProfile]);
 
+  // Referral System States
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const [referralCodeInput, setReferralCodeInput] = useState("");
+  const [isApplyingReferral, setIsApplyingReferral] = useState(false);
+  const [appliedReferral, setAppliedReferral] = useState<{
+    code: string;
+    discountAmount: number;
+    discountPercentage: number;
+    message: string;
+    referrerUid?: string;
+    referrerEmail?: string;
+    isReferrerReward?: boolean;
+  } | null>(null);
+  const [referralMessage, setReferralMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
+
   const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
+  const discount = (referralSettings?.isEnabled && appliedReferral) ? appliedReferral.discountAmount : 0;
   const shipping = subtotal > 0 ? 500 : 0;
-  const total = subtotal + shipping;
+  const total = Math.max(0, subtotal - discount + shipping);
+
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const unsubscribe = subscribeReferralSettings((settings) => {
+      setReferralSettings(settings);
+      if (!settings.isEnabled) {
+        setAppliedReferral(null);
+        setReferralMessage(null);
+        return;
+      }
+
+      const savedCode = localStorage.getItem("sym_applied_referral_code");
+      if (savedCode && !referralCodeInput && !appliedReferral) {
+        setReferralCodeInput(savedCode);
+        if (subtotal > 0) {
+          validateReferralCode(savedCode, subtotal, user?.uid, user?.email, settings).then(res => {
+            if (res.valid) {
+              setAppliedReferral({
+                code: res.referrerCode,
+                discountAmount: res.discountAmount,
+                discountPercentage: res.discountPercentage,
+                message: res.message,
+                referrerUid: res.referrerUid,
+                referrerEmail: res.referrerEmail,
+                isReferrerReward: res.isReferrerReward
+              });
+            }
+          }).catch(console.warn);
+        }
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isOpen, subtotal, user?.uid, user?.email]);
+
+  const handleApplyReferral = async (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (!referralCodeInput.trim()) return;
+
+    setIsApplyingReferral(true);
+    setReferralMessage(null);
+
+    try {
+      const result = await validateReferralCode(
+        referralCodeInput,
+        subtotal,
+        user?.uid,
+        user?.email,
+        referralSettings || undefined
+      );
+
+      if (result.valid) {
+        setAppliedReferral({
+          code: result.referrerCode,
+          discountAmount: result.discountAmount,
+          discountPercentage: result.discountPercentage,
+          message: result.message,
+          referrerUid: result.referrerUid,
+          referrerEmail: result.referrerEmail,
+          isReferrerReward: result.isReferrerReward
+        });
+        setReferralMessage({ type: "success", text: result.message });
+      } else {
+        setAppliedReferral(null);
+        setReferralMessage({ type: "error", text: result.message });
+      }
+    } catch (err: any) {
+      setAppliedReferral(null);
+      setReferralMessage({ type: "error", text: err?.message || "Failed to validate referral code." });
+    } finally {
+      setIsApplyingReferral(false);
+    }
+  };
+
+  const handleRemoveReferral = () => {
+    setAppliedReferral(null);
+    setReferralCodeInput("");
+    setReferralMessage(null);
+  };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value });
@@ -76,8 +195,10 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
         items,
         subtotal,
         shipping,
-        discount: 0,
+        discount,
         total,
+        referralCode: appliedReferral ? appliedReferral.code : null,
+        referrerUid: appliedReferral?.referrerUid || null,
         status: "pending",
         createdAt: Date.now(),
         customerInfo: {
@@ -92,7 +213,19 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
         }
       };
 
-      await addDoc(collection(db, "orders"), orderData);
+      const orderRef = await addDoc(collection(db, "orders"), orderData);
+
+      // Record referral redemption if code applied
+      if (appliedReferral) {
+        await recordReferralUsage({
+          referrerUid: appliedReferral.referrerUid,
+          referrerCode: appliedReferral.code,
+          refereeEmail: formData.email,
+          orderId: orderRef.id,
+          orderTotal: total,
+          discountApplied: discount
+        });
+      }
 
       setOrderNumber(randomOrderNo);
       setStep("success");
@@ -114,7 +247,10 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       const opts = item.options ? Object.entries(item.options as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
       return `• ${item.name}${opts ? ` (${opts})` : ''} x ${item.quantity} - Rs. ${(item.price * item.quantity).toLocaleString()}`;
     }).join('\n');
-    const message = `🛍️ *NEW ORDER - SYMBOLIC*\n\n*Customer Details:*\nName: ${formData.firstName} ${formData.lastName}\nEmail: ${formData.email}\nPhone / WhatsApp: ${formData.phone}\nAddress: House #${formData.houseNo}, ${formData.street}, ${formData.suburb}, ${formData.city} ${formData.zip ? `(Postal: ${formData.zip})` : ''}\n\n*Order Items:*\n${itemsList}\n\nSubtotal: Rs. ${subtotal.toLocaleString()}\nShipping: Rs. ${shipping.toLocaleString()}\n*Total: Rs. ${total.toLocaleString()}*\n\nPayment Method: ${formData.paymentMethod.toUpperCase()}`;
+    const discountText = discount > 0 
+      ? `Referral Discount (${appliedReferral?.code}): -Rs. ${discount.toLocaleString()} (${appliedReferral?.discountPercentage}% off)\n` 
+      : '';
+    const message = `🛍️ *NEW ORDER - SYMBOLIC*\n\n*Customer Details:*\nName: ${formData.firstName} ${formData.lastName}\nEmail: ${formData.email}\nPhone / WhatsApp: ${formData.phone}\nAddress: House #${formData.houseNo}, ${formData.street}, ${formData.suburb}, ${formData.city} ${formData.zip ? `(Postal: ${formData.zip})` : ''}\n\n*Order Items:*\n${itemsList}\n\nSubtotal: Rs. ${subtotal.toLocaleString()}\n${discountText}Shipping: Rs. ${shipping.toLocaleString()}\n*Total: Rs. ${total.toLocaleString()}*\n\nPayment Method: ${formData.paymentMethod.toUpperCase()}`;
 
     const encodedMessage = encodeURIComponent(message);
     const whatsappUrl = `https://wa.me/923342764183?text=${encodedMessage}`;
@@ -453,12 +589,172 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                       </div>
                     </div>
 
-                    <div className="bg-brand-surface p-4 border border-brand-text/10 flex items-center justify-between">
-                      <div className="space-y-0.5">
-                        <p className="text-xs font-bold uppercase tracking-tight">Total Amount Due</p>
-                        <p className="text-[10px] text-brand-text/60">Inclusive of all taxes and shipping</p>
+                    {/* Friend Referral & Referrer Reward Box (Only shown if referral program is active) */}
+                    {referralSettings?.isEnabled && (
+                      <div className="bg-brand-surface p-4 border border-brand-text/10 space-y-3">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Tag size={14} className="text-[#ff5500]" />
+                            <span className="text-xs font-black uppercase tracking-wider">Referral Program</span>
+                          </div>
+                          <span className="text-[9px] font-mono font-black uppercase text-[#ff5500] bg-[#ff5500]/10 px-2 py-0.5 border border-[#ff5500]/30">
+                            REFERRERS EARN {referralSettings.referrerRewardPercentage}% OFF
+                          </span>
+                        </div>
+
+                        {/* Logged in User Unlocked Reward Banner */}
+                        {user && !appliedReferral && (() => {
+                          const ordersCount = userProfile?.referralsCount ?? 0;
+                          const visitsCount = userProfile?.referralVisitsCount ?? 0;
+                          const unlockCheck = isReferrerRewardUnlocked(ordersCount, visitsCount, referralSettings);
+
+                          if (!unlockCheck.unlocked) return null;
+
+                          return (
+                            <div className="p-3 bg-[#ff5500]/10 border-2 border-[#ff5500] flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5">
+                              <div className="flex items-center gap-2">
+                                <Gift size={16} className="text-[#ff5500] shrink-0" />
+                                <div>
+                                  <div className="text-xs font-mono font-black uppercase text-[#ff5500]">
+                                    REWARD UNLOCKED ({unlockCheck.reason === "orders" ? `${ordersCount} ORDERS MET` : `${visitsCount} VISITS MET`})!
+                                  </div>
+                                  <div className="text-[10px] text-brand-text/80">
+                                    You met your referral milestone. Claim your {referralSettings.referrerRewardPercentage}% discount!
+                                  </div>
+                                </div>
+                              </div>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  const code = userProfile?.referralCode || "SYM-REWARD";
+                                  setReferralCodeInput(code);
+                                  validateReferralCode(code, subtotal, user.uid, user.email, referralSettings).then(res => {
+                                    if (res.valid) {
+                                      setAppliedReferral({
+                                        code: res.referrerCode,
+                                        discountAmount: res.discountAmount,
+                                        discountPercentage: res.discountPercentage,
+                                        message: res.message,
+                                        referrerUid: res.referrerUid,
+                                        referrerEmail: res.referrerEmail,
+                                        isReferrerReward: true
+                                      });
+                                      setReferralMessage({ type: "success", text: res.message });
+                                    }
+                                  });
+                                }}
+                                className="px-3 py-1.5 bg-[#ff5500] text-white font-mono text-[10px] font-black uppercase tracking-wider hover:bg-neutral-900 transition-colors shadow-[2px_2px_0px_#050505] shrink-0 cursor-pointer"
+                              >
+                                CLAIM REWARD
+                              </button>
+                            </div>
+                          );
+                        })()}
+
+                        {appliedReferral ? (
+                          <div className={`p-3 border flex items-center justify-between ${
+                            appliedReferral.discountAmount > 0 
+                              ? "bg-emerald-50 border-emerald-300" 
+                              : "bg-amber-50 border-amber-300"
+                          }`}>
+                            <div className="flex items-center gap-2.5">
+                              <CheckCircle2 size={16} className={appliedReferral.discountAmount > 0 ? "text-emerald-600 shrink-0" : "text-amber-600 shrink-0"} />
+                              <div>
+                                <div className={`text-xs font-mono font-black uppercase tracking-wider ${
+                                  appliedReferral.discountAmount > 0 ? "text-emerald-900" : "text-amber-900"
+                                }`}>
+                                  {appliedReferral.isReferrerReward
+                                    ? `REWARD APPLIED: ${appliedReferral.code} (${appliedReferral.discountPercentage}% OFF)` 
+                                    : `FRIEND PRIVILEGE APPLIED: ${appliedReferral.code} (${appliedReferral.discountPercentage}% OFF)`}
+                                </div>
+                                <div className={`text-[10px] font-sans ${
+                                  appliedReferral.discountAmount > 0 ? "text-emerald-700" : "text-amber-800"
+                                }`}>
+                                  {appliedReferral.message}
+                                </div>
+                              </div>
+                            </div>
+                            <button
+                              type="button"
+                              onClick={handleRemoveReferral}
+                              className="text-[10px] font-mono font-black uppercase text-red-600 hover:underline cursor-pointer ml-3 shrink-0"
+                            >
+                              REMOVE
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="space-y-2">
+                            <div className="flex gap-2">
+                              <input
+                                type="text"
+                                value={referralCodeInput}
+                                onChange={(e) => {
+                                  setReferralCodeInput(e.target.value.toUpperCase());
+                                  setReferralMessage(null);
+                                }}
+                                placeholder="Enter friend's code or your reward code"
+                                className="flex-grow bg-white border border-brand-text/20 px-3 py-2 text-xs font-mono font-bold uppercase focus:outline-none focus:border-brand-accent shadow-[1px_1px_0px_#050505]"
+                              />
+                              <button
+                                type="button"
+                                onClick={handleApplyReferral}
+                                disabled={isApplyingReferral || !referralCodeInput.trim()}
+                                className="px-4 py-2 bg-brand-text text-brand-bg text-[10px] font-mono font-black uppercase tracking-wider hover:opacity-90 disabled:opacity-40 transition-opacity cursor-pointer shadow-[2px_2px_0px_#050505] whitespace-nowrap"
+                              >
+                                {isApplyingReferral ? "CHECKING..." : "APPLY CODE"}
+                              </button>
+                            </div>
+
+                            {referralMessage && (
+                              <div className={`p-2.5 text-[10px] flex items-center gap-2 ${
+                                referralMessage.type === "success" 
+                                  ? "bg-emerald-50 text-emerald-800 border border-emerald-300" 
+                                  : "bg-red-50 text-red-700 border border-red-300"
+                              }`}>
+                                {referralMessage.type === "success" ? <CheckCircle2 size={13} className="shrink-0" /> : <AlertCircle size={13} className="shrink-0" />}
+                                <span>{referralMessage.text}</span>
+                              </div>
+                            )}
+
+                            <p className="text-[9px] text-brand-text/70 font-sans leading-relaxed">
+                              Friends receive {getFriendDiscountPercentage(referralSettings)}% OFF immediately. Referrers unlock {referralSettings.referrerRewardPercentage}% OFF when they reach EITHER {referralSettings.minimumReferrals} friend orders OR {referralSettings.minimumVisits ?? 35} website visits!
+                            </p>
+                          </div>
+                        )}
                       </div>
-                      <span className="text-lg font-mono font-black uppercase">Rs. {total.toLocaleString()}</span>
+                    )}
+
+                    {/* Order Cost Breakdown */}
+                    <div className="bg-brand-surface p-4 border border-brand-text/10 space-y-2.5">
+                      <div className="flex justify-between text-xs text-brand-text/70">
+                        <span>Cart Subtotal</span>
+                        <span className="font-mono font-bold">Rs. {subtotal.toLocaleString()}</span>
+                      </div>
+
+                      {discount > 0 && (
+                        <div className="flex justify-between text-xs text-brand-accent font-bold">
+                          <span className="flex items-center gap-1">
+                            <Tag size={12} />
+                            <span>{appliedReferral?.isReferrerReward ? "Referrer Reward" : "Friend Referral Discount"} ({appliedReferral?.discountPercentage}%)</span>
+                          </span>
+                          <span className="font-mono font-black">-Rs. {discount.toLocaleString()}</span>
+                        </div>
+                      )}
+
+                      <div className="flex justify-between text-xs text-brand-text/70">
+                        <span>Standard Secure Delivery</span>
+                        <span className="font-mono font-bold">Rs. {shipping.toLocaleString()}</span>
+                      </div>
+
+                      <div className="pt-2.5 border-t border-brand-text/10 flex items-center justify-between">
+                        <div className="space-y-0.5">
+                          <p className="text-xs font-bold uppercase tracking-tight">Total Amount Due</p>
+                          <p className="text-[10px] text-brand-text/60">Inclusive of all taxes, discounts, and shipping</p>
+                        </div>
+                        <span className="text-lg font-mono font-black uppercase text-brand-text">
+                          Rs. {total.toLocaleString()}
+                        </span>
+                      </div>
                     </div>
 
                     <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">

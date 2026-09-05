@@ -57,17 +57,17 @@ export default function LoadingScreen() {
           />
         </motion.div>
 
-        {/* Brand Lockup: Regular Gap Between SYMBOLIC and MUSLIMS */}
+        {/* Brand Lockup: Increased SYMBOLIC size with refined proportional MUSLIMS gap */}
         <div className="text-center flex flex-col items-center">
           <div className="inline-flex flex-col items-end leading-none">
-            <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-black tracking-[0.2em] uppercase text-brand-text leading-none pl-[0.2em]">
+            <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-black tracking-tight uppercase text-brand-text leading-none">
               SYMBOLIC
             </span>
-            <span className="text-sm sm:text-base md:text-lg font-mono font-black italic tracking-[0.16em] text-brand-accent uppercase leading-none mt-1.5 sm:mt-2 pl-[0.16em]">
+            <span className="text-base sm:text-lg md:text-xl font-mono font-black italic tracking-normal text-brand-accent uppercase leading-none mt-0.5 sm:mt-1">
               MUSLIMS
             </span>
           </div>
-          <p className="text-[9px] sm:text-[10px] font-mono tracking-[0.28em] text-brand-text/50 uppercase mt-2.5 pl-[0.28em] font-semibold">
+          <p className="text-[9px] sm:text-[10px] font-mono tracking-widest text-brand-text/50 uppercase mt-2.5 font-semibold">
             POSSESSION &amp; IDENTITY STUDIO
           </p>
         </div>

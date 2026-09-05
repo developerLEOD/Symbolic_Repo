@@ -89,6 +89,8 @@ export interface Order {
   total: number;
   status: 'pending' | 'processing' | 'shipped' | 'delivered' | 'cancelled';
   createdAt: number;
+  referralCode?: string;
+  referrerUid?: string;
   customerInfo: {
     firstName: string;
     lastName: string;
@@ -112,7 +114,46 @@ export interface UserProfile {
   zip?: string;
   country?: string;
   role?: 'customer' | 'admin';
+  referralCode?: string;
+  referralsCount?: number;
+  referralVisitsCount?: number;
+  referredBy?: string;
   createdAt?: number;
   lastLoginAt?: number;
+}
+
+export interface ReferralSettings {
+  id?: string;
+  isEnabled: boolean;
+  discountPercentage: number;
+  minimumReferrals: number;
+  minimumVisits: number;
+  referrerRewardPercentage: number;
+  minimumOrderAmount: number;
+  maxDiscountCap: number;
+  referralCodePrefix: string;
+  headline?: string;
+  description?: string;
+  updatedAt?: number;
+  updatedBy?: string;
+}
+
+export interface ReferralRecord {
+  id: string;
+  referrerUid?: string;
+  referrerCode: string;
+  refereeEmail: string;
+  orderId: string;
+  orderTotal: number;
+  discountApplied: number;
+  createdAt: number;
+}
+
+export interface ReferralVisitRecord {
+  id?: string;
+  referrerUid?: string;
+  referrerCode: string;
+  visitorSessionId: string;
+  createdAt: number;
 }
 

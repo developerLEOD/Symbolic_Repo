@@ -26,6 +26,7 @@ import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants } from "./lib/productService";
+import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 
 function StorefrontApp() {
   const { user, isOwner } = useAuth();
@@ -41,9 +42,11 @@ function StorefrontApp() {
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [profileInitialTab, setProfileInitialTab] = useState<"profile" | "orders" | "referral">("orders");
   const [authDefaultTab, setAuthDefaultTab] = useState<"signin" | "signup">("signin");
   const [refreshKey, setRefreshKey] = useState(0);
   const [flagshipProduct, setFlagshipProduct] = useState<Product | null>(null);
+  const [referralWelcomeBanner, setReferralWelcomeBanner] = useState<{ code: string; referrerName?: string } | null>(null);
   const [categories, setCategories] = useState<Category[]>([
     { id: "t-shirts", name: "T-Shirts", description: "Heavyweight 400 GSM organic cotton silhouettes", label: "WEAR", order: 1 },
     { id: "caps", name: "Caps", description: "Structured 280 GSM cotton twill headwear", label: "CARRY", order: 2 },
@@ -83,6 +86,32 @@ function StorefrontApp() {
   useEffect(() => {
     localStorage.setItem("twl_cart", JSON.stringify(cart));
   }, [cart]);
+
+  // Track inbound visits via referral link (?ref=CODE or ?referral=CODE) and monitor referral status
+  useEffect(() => {
+    const unsubscribe = subscribeReferralSettings((settings) => {
+      if (!settings.isEnabled) {
+        setReferralWelcomeBanner(null);
+      }
+    });
+
+    if (typeof window !== "undefined") {
+      const params = new URLSearchParams(window.location.search);
+      const refParam = params.get("ref") || params.get("referral");
+      if (refParam) {
+        trackReferralVisit(refParam).then(res => {
+          if (res.success) {
+            setReferralWelcomeBanner({
+              code: refParam.toUpperCase(),
+              referrerName: res.referrerName
+            });
+          }
+        });
+      }
+    }
+
+    return () => unsubscribe();
+  }, []);
 
   const handleAddToCart = (item: CartItem) => {
     setCart(prev => {
@@ -168,6 +197,25 @@ function StorefrontApp() {
 
   return (
     <div className="min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white">
+      {referralWelcomeBanner && (
+        <div className="bg-[#ff5500] text-white px-4 py-2.5 font-mono text-xs flex flex-wrap items-center justify-between gap-3 border-b-2 border-neutral-900 shadow-[0_2px_0px_#050505] sticky top-0 z-[60]">
+          <div className="flex items-center gap-2">
+            <span className="font-black uppercase tracking-wider bg-white text-[#ff5500] px-2 py-0.5 text-[10px] shrink-0">
+              FRIEND PRIVILEGE LINKED
+            </span>
+            <span className="text-[11px]">
+              Referred by <strong>{referralWelcomeBanner.referrerName || "a Member"}</strong> (Code: <strong>{referralWelcomeBanner.code}</strong>). Your referral discount will auto-apply when you checkout!
+            </span>
+          </div>
+          <button 
+            type="button"
+            onClick={() => setReferralWelcomeBanner(null)} 
+            className="text-white hover:text-neutral-900 text-xs font-black uppercase px-2 py-0.5 border border-white hover:bg-white transition-colors cursor-pointer shrink-0"
+          >
+            DISMISS
+          </button>
+        </div>
+      )}
       <Header 
         onCartClick={() => setIsCartOpen(true)} 
         cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
@@ -175,9 +223,19 @@ function StorefrontApp() {
         onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined}
         onAuthClick={() => {
           if (user) {
+            setProfileInitialTab("orders");
             setIsProfileOpen(true);
           } else {
             setAuthDefaultTab("signin");
+            setIsAuthOpen(true);
+          }
+        }}
+        onReferralClick={() => {
+          if (user) {
+            setProfileInitialTab("referral");
+            setIsProfileOpen(true);
+          } else {
+            setAuthDefaultTab("signup");
             setIsAuthOpen(true);
           }
         }}
@@ -291,6 +349,7 @@ function StorefrontApp() {
         isOpen={isProfileOpen}
         onClose={() => setIsProfileOpen(false)}
         onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
+        initialTab={profileInitialTab}
       />
 
       {/* Owner Product Manager Studio */}
