@@ -5,6 +5,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Product, ProductVariant, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
+import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
 
 interface ProductDetailProps {
   product: Product;
@@ -29,6 +30,10 @@ export default function ProductDetail({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
+
+  const specimenType = normalizeProductCategory(product).toUpperCase();
+  const collectionName = normalizeProductCollection(product);
+  const collectionTag = collectionName.toUpperCase();
   const [added, setAdded] = useState(false);
 
   useEffect(() => {
@@ -133,11 +138,11 @@ export default function ProductDetail({
             onClick={onClose}
             className="flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors cursor-pointer border-2 border-brand-text px-3 py-1.5 bg-brand-surface shadow-[2px_2px_0px_#050505]"
           >
-            <ArrowLeft size={14} /> [ RETURN TO OBJECTS ]
+            <ArrowLeft size={14} /> [ RETURN TO SPECIMEN CORPUS ]
           </motion.button>
           
           <div className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
-            OBJECT_VIEW // {displayId}
+            SPECIMEN_DOSSIER // {displayId}
           </div>
 
           <motion.button 
@@ -168,10 +173,13 @@ export default function ProductDetail({
                 />
               </AnimatePresence>
               
-              {/* Category Tag */}
-              <div className="absolute top-4 left-4 z-10">
-                <span className="font-mono text-[10px] font-black uppercase tracking-widest bg-brand-accent text-white px-2.5 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-                  {(product.categoryId || categoryLabel).toUpperCase()}
+              {/* Category & Collection Tags */}
+              <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5 items-start">
+                <span className="font-mono text-[10px] font-black uppercase tracking-widest bg-brand-text text-brand-bg px-2.5 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+                  [ {specimenType} ]
+                </span>
+                <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+                  {collectionTag}
                 </span>
               </div>
 
@@ -297,11 +305,16 @@ export default function ProductDetail({
 
             <div className="space-y-4 border-b-2 border-brand-text pb-6">
               <div className="flex items-center justify-between">
-                <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
-                  {(product.categoryId || categoryLabel).toUpperCase()} // SERIES 01
-                </span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest text-brand-text bg-brand-surface px-2 py-0.5 border border-brand-text">
+                    [ {specimenType} ]
+                  </span>
+                  <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
+                    {collectionTag} // SERIES 01
+                  </span>
+                </div>
                 <span className="font-mono text-xs font-bold uppercase text-brand-text/70">
-                  AVAILABLE STOCK: {product.inventory} PIECES
+                  AVAILABLE DEPOT RESERVE: {product.inventory} ALLOTMENTS
                 </span>
               </div>
               <h1 className="text-3xl sm:text-5xl font-mono font-black tracking-tight uppercase text-brand-text">
@@ -323,7 +336,7 @@ export default function ProductDetail({
               {(product.wearingCommunicates || product.statementMeaning) && (
                 <div className="p-4 bg-brand-surface border-2 border-brand-text space-y-2 shadow-[3px_3px_0px_#050505]">
                   <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent">
-                    [ WHAT THIS COMMUNICATES ]
+                    [ INTENDED TRANSMISSION // CONVICTION EMBODIED ]
                   </span>
                   {product.wearingCommunicates && (
                     <p className="font-mono text-xs font-bold uppercase text-brand-text">
@@ -423,7 +436,7 @@ export default function ProductDetail({
               {/* Quantity and Actions */}
               <div className="space-y-4 pt-4 border-t-2 border-brand-text">
                 <div className="flex items-center gap-4">
-                  <span className="font-mono text-xs font-black uppercase text-brand-accent">QTY:</span>
+                  <span className="font-mono text-xs font-black uppercase text-brand-accent">ALLOTMENT QTY:</span>
                   <div className="flex items-center border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
                     <motion.button 
                       whileHover={{ scale: 1.15 }}
@@ -456,10 +469,10 @@ export default function ProductDetail({
                     {added ? (
                       <>
                         <Check size={16} className="text-brand-accent" />
-                        <span>ADDED TO BAG</span>
+                        <span>ALLOTMENT ENQUEUED</span>
                       </>
                     ) : (
-                      <span>ADD TO BAG →</span>
+                      <span>REQUISITION SPECIMEN →</span>
                     )}
                   </LiquidCarveButton>
                   <LiquidCarveButton 
@@ -470,7 +483,7 @@ export default function ProductDetail({
                     variant="secondary"
                     className="py-4 text-xs font-mono font-black"
                   >
-                    <span>BUY NOW →</span>
+                    <span>IMMEDIATE CLEARANCE →</span>
                   </LiquidCarveButton>
                 </div>
               </div>
@@ -485,11 +498,11 @@ export default function ProductDetail({
           <div className="bg-brand-surface border-2 border-brand-text p-6 md:p-8 max-w-md w-full shadow-[8px_8px_0px_#050505] space-y-6 text-brand-text">
             <div className="space-y-3">
               <span className="font-mono text-[10px] font-black uppercase tracking-widest text-red-600">
-                [ REMOVE ARTIFACT ]
+                [ PURGE SPECIMEN RECORD ]
               </span>
-              <h3 className="font-mono text-xl font-black uppercase tracking-tight">CONFIRM DELETION</h3>
+              <h3 className="font-mono text-xl font-black uppercase tracking-tight">CONFIRM EXPULSION</h3>
               <p className="font-mono text-xs uppercase text-brand-text/80 leading-relaxed">
-                Permanently purge <strong>"{product.name}"</strong> from system records?
+                Permanently expunge <strong>"{product.name}"</strong> from system records and depot ledger?
               </p>
             </div>
 
@@ -500,7 +513,7 @@ export default function ProductDetail({
                 onClick={() => setShowDeleteModal(false)}
                 className="px-4 py-2 font-mono text-xs font-black uppercase border-2 border-brand-text bg-brand-bg hover:bg-brand-mute transition-colors cursor-pointer"
               >
-                CANCEL
+                ABORT
               </button>
               <button
                 type="button"
@@ -518,7 +531,7 @@ export default function ProductDetail({
                 }}
                 className="px-5 py-2 font-mono text-xs font-black uppercase bg-red-600 hover:bg-red-700 text-white border-2 border-brand-text cursor-pointer transition-colors shadow-[2px_2px_0px_#050505]"
               >
-                {isDeleting ? "PURGING..." : "CONFIRM PURGE"}
+                {isDeleting ? "EXPUNGING..." : "CONFIRM PURGE"}
               </button>
             </div>
           </div>

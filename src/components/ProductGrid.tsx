@@ -5,6 +5,7 @@ import { db } from "../lib/firebase";
 import { Product, Category } from "../types";
 import ProductCard from "./ProductCard";
 import { Search } from "lucide-react";
+import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
 
 interface ProductGridProps {
   activeCategoryId: string | null;
@@ -20,6 +21,16 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<"featured" | "price-asc" | "price-desc">("featured");
+  const [selectedCollection, setSelectedCollection] = useState<"all" | "be-symbolic" | "be-palestine">("all");
+
+  // Sync collection if activeCategoryId points to a collection from header
+  useEffect(() => {
+    if (activeCategoryId === "be-palestine" || activeCategoryId === "palestine") {
+      setSelectedCollection("be-palestine");
+    } else if (activeCategoryId === "be-symbolic") {
+      setSelectedCollection("be-symbolic");
+    }
+  }, [activeCategoryId]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -32,7 +43,7 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
             const id = (c.id || "").toLowerCase();
             const name = (c.name || "").toLowerCase();
             const label = (c.label || "").toLowerCase();
-            return id !== "garments" && name !== "garments" && label !== "garments";
+            return id !== "garments" && name !== "garments" && label !== "garments" && id !== "palestine" && id !== "be-symbolic";
           });
         setCategories(cats);
         if (onCategoriesLoaded) onCategoriesLoaded(cats);
@@ -52,17 +63,29 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
   // Only show active/available products in customer storefront
   const activeProducts = products.filter(p => p.availability !== false);
 
-  // Category filtering with complete taxonomy backward-compatibility
-  const filteredByCategory = activeCategoryId 
-    ? activeProducts.filter(p => {
-        if (activeCategoryId === 'corpus') return p.categoryId === 'corpus' || p.categoryId === 'wear' || p.categoryId === 't-shirts';
-        if (activeCategoryId === 'apparatus') return p.categoryId === 'apparatus' || p.categoryId === 'carry' || p.categoryId === 'caps';
-        if (activeCategoryId === 'vessels') return p.categoryId === 'vessels' || p.categoryId === 'gather' || p.categoryId === 'mugs';
-        return p.categoryId === activeCategoryId;
-      })
-    : activeProducts;
+  // Derive active specimen type (Wear, Carry, Headwear, Vessels)
+  const activeSpecimenType = (activeCategoryId === "be-palestine" || activeCategoryId === "palestine" || activeCategoryId === "be-symbolic")
+    ? null
+    : activeCategoryId;
 
-  const searchedProducts = filteredByCategory.filter(p => 
+  // Filter products by Ethos Collection and Specimen Type independently
+  const filteredProducts = activeProducts.filter(p => {
+    // 1. Ethos Collection filter
+    if (selectedCollection === "be-palestine") {
+      if (normalizeProductCollection(p) !== "Be Palestine") return false;
+    } else if (selectedCollection === "be-symbolic") {
+      if (normalizeProductCollection(p) !== "Be Symbolic") return false;
+    }
+
+    // 2. Specimen Type category filter
+    if (activeSpecimenType) {
+      if (normalizeProductCategory(p) !== activeSpecimenType.toLowerCase()) return false;
+    }
+
+    return true;
+  });
+
+  const searchedProducts = filteredProducts.filter(p => 
     p.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
     (p.productId && p.productId.toLowerCase().includes(searchQuery.toLowerCase())) ||
     (p.sku && p.sku.toLowerCase().includes(searchQuery.toLowerCase())) ||
@@ -77,9 +100,42 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
     return 0; // featured
   });
 
-  const currentCategory = categories.find(c => c.id === activeCategoryId);
-  const currentCategoryName = currentCategory ? (currentCategory.name || currentCategory.label) : (activeCategoryId ? activeCategoryId.toUpperCase() : "");
-  const isCurrentCategoryEmpty = Boolean(activeCategoryId && filteredByCategory.length === 0);
+  // Canonical Specimen Types
+  const specimenTypes: { id: string | null; label: string }[] = [
+    { id: null, label: "ALL SPECIMENS" },
+    { id: "wear", label: "WEAR" },
+    { id: "carry", label: "CARRY" },
+    { id: "headwear", label: "HEADWEAR" },
+    { id: "vessels", label: "VESSELS" },
+  ];
+
+  // Ethos Collections
+  const ethosCollections = [
+    { id: "all" as const, label: "ALL COLLECTIONS" },
+    { id: "be-symbolic" as const, label: "BE SYMBOLIC" },
+    { id: "be-palestine" as const, label: "BE PALESTINE" },
+  ];
+
+  const getCatalogTitle = () => {
+    const colPrefix = selectedCollection === "be-palestine"
+      ? "BE PALESTINE"
+      : selectedCollection === "be-symbolic"
+      ? "BE SYMBOLIC"
+      : null;
+
+    if (activeSpecimenType) {
+      return colPrefix 
+        ? `${colPrefix} // ${activeSpecimenType.toUpperCase()} SPECIMENS` 
+        : `${activeSpecimenType.toUpperCase()} SPECIMENS`;
+    }
+    
+    return colPrefix 
+      ? `${colPrefix} // THE STEADFAST CORPUS` 
+      : "SERIES 01 // THE TRANSMISSION CORPUS";
+  };
+
+  const isCurrentCategoryEmpty = Boolean(filteredProducts.length === 0);
+  const currentCategoryName = activeSpecimenType ? activeSpecimenType.toUpperCase() : (selectedCollection !== "all" ? selectedCollection.toUpperCase() : "");
 
   if (loading) {
     return (
@@ -105,80 +161,38 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
           <div>
             <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 01 // ARTIFACT REGISTRY ]</span>
             <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-1 text-brand-text">
-              {activeCategoryId ? `${currentCategoryName.toUpperCase()} SPECIMENS` : "SERIES 01 // THE TRANSMISSION CORPUS"}
+              {getCatalogTitle()}
             </h2>
           </div>
           <div className="font-mono text-xs font-bold uppercase text-brand-text/70">
             {isCurrentCategoryEmpty
-              ? "STATUS // COMING SOON"
+              ? "STATUS // ALLOTMENT IN FABRICATION"
               : `SHOWING ${sortedProducts.length} OF ${activeProducts.length} RECORDED SPECIMENS`
             }
           </div>
         </div>
 
-        {/* Category Filters + Search & Sort Controls Bar */}
-        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-4 border-t border-brand-text/20">
-          {/* Taxonomy Structural Index: Joined Monolithic Rectangle */}
-          {onCategoryChange && (() => {
-            const allItems = [
-              { id: null, label: "ALL OBJECTS", count: activeProducts.length, isAll: true },
-              ...categories.map(cat => {
-                const count = activeProducts.filter(p => {
-                  if (cat.id === 'corpus') return p.categoryId === 'corpus' || p.categoryId === 'wear' || p.categoryId === 't-shirts';
-                  if (cat.id === 'apparatus') return p.categoryId === 'apparatus' || p.categoryId === 'carry' || p.categoryId === 'caps';
-                  if (cat.id === 'vessels') return p.categoryId === 'vessels' || p.categoryId === 'gather' || p.categoryId === 'mugs';
-                  return p.categoryId === cat.id;
-                }).length;
-                return {
-                  id: cat.id,
-                  label: cat.label || cat.name,
-                  count,
-                  isAll: false
-                };
-              })
-            ];
+        {/* Dual Taxonomy System: Specimen Types & Ethos Line Filters */}
+        <div className="space-y-4 pt-4 border-t border-brand-text/20">
+          {/* Level 1: Specimen Type Index (Wear, Carry, Headwear, Vessels) */}
+          <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent whitespace-nowrap">
+                [ SPECIMEN TYPE ]
+              </span>
+            </div>
 
-            // Assign structural grid spans and borders so the buttons join seamlessly into 1 perfect rectangle
-            const getItemLayoutClasses = (index: number, total: number) => {
-              if (total === 5) {
-                switch (index) {
-                  case 0: return "col-span-7 border-b-2 border-r-2 border-brand-text";
-                  case 1: return "col-span-5 border-b-2 border-brand-text";
-                  case 2: return "col-span-4 border-r-2 border-brand-text";
-                  case 3: return "col-span-4 border-r-2 border-brand-text";
-                  case 4: return "col-span-4";
-                  default: return "col-span-4";
-                }
-              }
-              if (total === 4) {
-                switch (index) {
-                  case 0: return "col-span-6 border-b-2 border-r-2 border-brand-text";
-                  case 1: return "col-span-6 border-b-2 border-brand-text";
-                  case 2: return "col-span-6 border-r-2 border-brand-text";
-                  case 3: return "col-span-6";
-                  default: return "col-span-6";
-                }
-              }
-              if (total <= 3) {
-                const span = Math.floor(12 / total);
-                const isLast = index === total - 1;
-                return `col-span-${span} ${!isLast ? "border-r-2 border-brand-text" : ""}`;
-              }
-              // Generic fallback for > 5 items (2 equal rows)
-              const half = Math.ceil(total / 2);
-              const isFirstRow = index < half;
-              const rowItems = isFirstRow ? half : total - half;
-              const colSpan = Math.floor(12 / rowItems);
-              const isLastInRow = isFirstRow ? index === half - 1 : index === total - 1;
-              return `col-span-${colSpan} ${isFirstRow ? "border-b-2 border-brand-text" : ""} ${!isLastInRow ? "border-r-2 border-brand-text" : ""}`;
-            };
-
-            return (
-              <div className="w-full md:w-auto">
-                <div className="grid grid-cols-12 md:inline-flex md:divide-x-2 md:divide-brand-text border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] overflow-hidden select-none">
-                  {allItems.map((item, idx) => {
-                    const isSelected = activeCategoryId === item.id;
-                    const cellLayout = getItemLayoutClasses(idx, allItems.length);
+            {onCategoryChange && (
+              <div className="w-full xl:w-auto">
+                <div className="grid grid-cols-2 sm:grid-cols-5 xl:inline-flex border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] overflow-hidden select-none divide-x-2 divide-y-2 sm:divide-y-0 divide-brand-text">
+                  {specimenTypes.map((item) => {
+                    const isSelected = activeSpecimenType === item.id;
+                    const count = activeProducts.filter(p => {
+                      if (selectedCollection === "be-palestine" && normalizeProductCollection(p) !== "Be Palestine") return false;
+                      if (selectedCollection === "be-symbolic" && normalizeProductCollection(p) !== "Be Symbolic") return false;
+                      if (item.id === null) return true;
+                      return normalizeProductCategory(p) === item.id;
+                    }).length;
 
                     return (
                       <motion.button
@@ -187,7 +201,7 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                         whileTap={{ scale: 0.98 }}
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
                         onClick={() => onCategoryChange(item.id)}
-                        className={`group relative py-2.5 px-2.5 sm:px-3.5 md:py-2 md:px-4 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap text-center md:border-none md:w-auto ${cellLayout} ${
+                        className={`group relative py-2.5 px-3 md:py-2 md:px-4 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap text-center ${
                           isSelected
                             ? "bg-brand-text text-brand-bg"
                             : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
@@ -195,12 +209,11 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                         title={item.label}
                       >
                         <span className="truncate">{item.label}</span>
-
-                        {item.count > 0 ? (
+                        {count > 0 ? (
                           <span className={`text-[8px] sm:text-[9px] font-mono font-bold px-1 py-0.2 shrink-0 ${
                             isSelected ? "text-brand-bg/75" : "text-brand-text/50 group-hover:text-brand-text/80"
                           }`}>
-                            [{item.count < 10 ? `0${item.count}` : item.count}]
+                            [{count < 10 ? `0${count}` : count}]
                           </span>
                         ) : (
                           <span className={`text-[7px] sm:text-[8px] font-mono font-bold tracking-tight px-1 py-0.2 border shrink-0 uppercase ${
@@ -208,7 +221,7 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                               ? "border-brand-bg/40 text-brand-bg bg-brand-bg/20"
                               : "border-brand-accent/60 text-brand-accent bg-brand-accent/10"
                           }`}>
-                            <span className="hidden xs:inline">COMING </span>SOON
+                            PENDING
                           </span>
                         )}
                       </motion.button>
@@ -216,16 +229,54 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                   })}
                 </div>
               </div>
-            );
-          })()}
+            )}
+          </div>
 
-          {/* Search & Sort */}
-          <div className="flex flex-wrap items-center gap-3">
+          {/* Level 2: Ethos Collection Line + Search & Sort Controls */}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4 pt-3 border-t border-brand-text/10">
+            {/* Ethos Collection Filter */}
+            <div className="flex flex-wrap items-center gap-2">
+              <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-text/60 mr-1">
+                ETHOS LINE //
+              </span>
+              <div className="inline-flex border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505] divide-x-2 divide-brand-text overflow-hidden">
+                {ethosCollections.map(col => {
+                  const isSelected = selectedCollection === col.id;
+                  const count = activeProducts.filter(p => {
+                    if (activeSpecimenType && normalizeProductCategory(p) !== activeSpecimenType.toLowerCase()) return false;
+                    if (col.id === "all") return true;
+                    if (col.id === "be-palestine") return normalizeProductCollection(p) === "Be Palestine";
+                    if (col.id === "be-symbolic") return normalizeProductCollection(p) === "Be Symbolic";
+                    return true;
+                  }).length;
+
+                  return (
+                    <button
+                      key={col.id}
+                      onClick={() => setSelectedCollection(col.id)}
+                      className={`px-2.5 sm:px-3 py-1.5 text-[9px] sm:text-[10px] font-mono font-black uppercase tracking-wider transition-colors cursor-pointer flex items-center gap-1.5 ${
+                        isSelected
+                          ? "bg-brand-text text-brand-bg"
+                          : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
+                      }`}
+                    >
+                      <span>{col.label}</span>
+                      <span className={`text-[8px] font-mono ${isSelected ? "text-brand-bg/70" : "text-brand-text/50"}`}>
+                        [{count}]
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Search & Sort */}
+            <div className="flex flex-wrap items-center gap-3">
             <div className="relative flex-1 sm:w-64">
               <Search size={14} className="absolute left-3.5 top-1/2 -translate-y-1/2 text-brand-text/50" />
               <input 
                 type="text"
-                placeholder="SEARCH ARCHIVE..."
+                placeholder="SCAN REGISTRY // QUERY SPECIMEN..."
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
                 className="bg-brand-surface border-2 border-brand-text text-brand-text text-xs pl-10 pr-3 py-2 rounded-none focus:outline-none focus:bg-brand-bg w-full font-mono uppercase font-bold placeholder:text-brand-text/40 shadow-[2px_2px_0px_#050505]"
@@ -239,14 +290,15 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                 onChange={(e) => setSortBy(e.target.value as any)}
                 className="bg-brand-surface border-2 border-brand-text text-brand-text text-xs px-3 py-2 rounded-none focus:outline-none font-mono font-bold cursor-pointer uppercase shadow-[2px_2px_0px_#050505]"
               >
-                <option value="featured">SERIES ORDER</option>
-                <option value="price-asc">PRICE ↑</option>
-                <option value="price-desc">PRICE ↓</option>
+                <option value="featured">CORPUS SEQUENCE</option>
+                <option value="price-asc">VALUATION: ASCENDING ↑</option>
+                <option value="price-desc">VALUATION: DESCENDING ↓</option>
               </select>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
       {/* Product Cards Grid */}
       {sortedProducts.length === 0 ? (
@@ -254,15 +306,15 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
           <div className="py-20 px-6 text-center space-y-6 border-2 border-dashed border-brand-text/40 bg-brand-surface/50 p-8 sm:p-14 shadow-[4px_4px_0px_#050505] max-w-2xl mx-auto my-6">
             <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-brand-accent text-white font-mono text-[10px] font-black uppercase tracking-widest border border-brand-text shadow-[2px_2px_0px_#050505]">
               <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
-              <span>[ STATUS: COMING SOON // IN PRODUCTION ]</span>
+              <span>[ STATUS: FORGING // MATERIAL CRITERIA IN PROGRESS ]</span>
             </div>
             
             <div className="space-y-3">
               <h3 className="font-mono text-3xl sm:text-5xl font-black uppercase tracking-tight text-brand-text">
-                COMING SOON
+                ALLOTMENT IN FABRICATION
               </h3>
               <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/80 leading-relaxed max-w-md mx-auto">
-                Specimens for [{currentCategoryName ? ` ${currentCategoryName.toUpperCase()} ` : " THIS CATEGORY "}] are currently being crafted under strict material standards. New releases will be archived here shortly.
+                Specimens for [{currentCategoryName ? ` ${currentCategoryName.toUpperCase()} ` : " THIS TAXONOMY "}] are currently being forged under strict monolithic material mandates. Ingested artifacts will be cataloged here shortly.
               </p>
             </div>
 
@@ -271,20 +323,20 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
                 onClick={() => { setSearchQuery(""); if (onCategoryChange) onCategoryChange(null); }} 
                 className="px-6 py-3.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
               >
-                ← VIEW ALL AVAILABLE OBJECTS
+                ← INSPECT FULL SPECIMEN CORPUS
               </button>
             </div>
           </div>
         ) : (
           <div className="py-20 text-center space-y-4 border-2 border-dashed border-brand-text/30 p-8 bg-brand-surface/20 max-w-xl mx-auto">
             <p className="font-mono font-bold uppercase text-base text-brand-text opacity-70">
-              [ NO OBJECTS MATCHING SEARCH QUERY ]
+              [ REGISTRY QUERY RETURNED NULL // ZERO MATCHING SPECIMENS ]
             </p>
             <button 
               onClick={() => { setSearchQuery(""); if (onCategoryChange) onCategoryChange(null); }} 
               className="text-xs font-mono font-black uppercase tracking-widest text-brand-accent underline cursor-pointer"
             >
-              RESET ALL FILTERS
+              PURGE SEARCH &amp; RESET REGISTRY
             </button>
           </div>
         )

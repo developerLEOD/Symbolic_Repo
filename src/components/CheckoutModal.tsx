@@ -276,42 +276,45 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
           className="relative w-full max-w-3xl bg-brand-bg border border-brand-text/10 shadow-2xl z-[100] overflow-hidden my-8"
         >
           {/* Header */}
-          <div className="px-8 py-6 border-b border-brand-text/10 flex items-center justify-between bg-brand-surface">
+          <div className="px-8 py-6 border-b-2 border-brand-text flex items-center justify-between bg-brand-surface">
             <div className="flex items-center gap-3">
               <ShoppingBag size={18} className="text-brand-accent" />
-              <h2 className="text-xs font-bold uppercase tracking-[0.2em]">Secure Checkout</h2>
+              <h2 className="text-xs font-mono font-black uppercase tracking-[0.2em]">CLEARANCE PROTOCOL // REQUISITION</h2>
             </div>
             {step !== "success" && (
-              <button onClick={onClose} className="p-2 hover:bg-brand-text/5 rounded-full transition-colors">
-                <X size={18} />
+              <button 
+                onClick={onClose} 
+                className="p-2 border border-brand-text bg-brand-bg hover:bg-brand-text hover:text-white transition-colors cursor-pointer shadow-[1px_1px_0px_#050505]"
+              >
+                <X size={16} />
               </button>
             )}
           </div>
 
           <div className="p-8 sm:p-12">
             {step === "success" ? (
-              <div className="text-center py-12 space-y-8">
-                <div className="w-16 h-16 bg-brand-accent/10 text-brand-accent mx-auto flex items-center justify-center rounded-full">
+              <div className="text-center py-10 space-y-8">
+                <div className="w-16 h-16 bg-brand-accent text-white mx-auto flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505]">
                   <Check size={32} />
                 </div>
                 <div className="space-y-2">
-                  <span className="text-[10px] font-bold uppercase tracking-[0.3em] text-brand-accent">Order Confirmed</span>
-                  <h3 className="text-3xl font-mono font-black uppercase tracking-tight">Thank you for your order</h3>
-                  <p className="text-xs text-brand-text/60 max-w-sm mx-auto pt-2">
-                    Order confirmation #{orderNumber} has been sent to <span className="font-bold text-brand-text">{formData.email}</span>.
+                  <span className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-brand-accent">[ REQUISITION RATIFIED ]</span>
+                  <h3 className="text-2xl sm:text-3xl font-mono font-black uppercase tracking-tight">TRANSMISSION CONFIRMED</h3>
+                  <p className="text-xs font-mono uppercase text-brand-text/70 max-w-sm mx-auto pt-2">
+                    REQUISITION IDENTIFIER #{orderNumber} DISPATCHED TO <span className="font-black text-brand-text">{formData.email}</span>.
                   </p>
                 </div>
 
-                <div className="bg-brand-surface p-6 max-w-md mx-auto text-left space-y-4 border border-brand-text/10">
-                  <div className="flex justify-between text-xs font-bold uppercase tracking-tight">
-                    <span>Shipping Address</span>
-                    <span className="text-brand-accent">Standard Curated</span>
+                <div className="bg-brand-surface p-6 max-w-md mx-auto text-left space-y-3 border-2 border-brand-text shadow-[4px_4px_0px_#050505]">
+                  <div className="flex justify-between text-xs font-mono font-black uppercase tracking-tight border-b border-brand-text/15 pb-2">
+                    <span>DISPATCH COORDINATES</span>
+                    <span className="text-brand-accent">SECURE TRANSIT</span>
                   </div>
-                  <p className="text-xs text-brand-text/70 leading-relaxed font-mono font-medium">
+                  <p className="text-xs text-brand-text/85 leading-relaxed font-mono uppercase font-bold">
                     {formData.firstName} {formData.lastName}<br />
                     House #{formData.houseNo}, {formData.street}, {formData.suburb}<br />
                     {formData.city} {formData.zip ? `- ${formData.zip}` : ""}<br />
-                    {formData.country} (WhatsApp: {formData.phone})
+                    {formData.country} (SECURE LINE: {formData.phone})
                   </p>
                 </div>
 
@@ -319,36 +322,36 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                   <button
                     type="button"
                     onClick={handleSendWhatsAppOrder}
-                    className="bg-[#25D366] text-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center gap-2 shadow-lg"
+                    className="bg-[#25D366] text-white px-8 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
                   >
-                    <MessageCircle size={15} /> Send Order via WhatsApp (03342764183)
+                    <MessageCircle size={15} /> TRANSMIT VIA WHATSAPP (03342764183)
                   </button>
                   <button
                     onClick={() => {
                       onClose();
                       setStep("details");
                     }}
-                    className="bg-brand-text text-white px-8 py-4 text-[10px] font-bold uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all shadow-lg"
+                    className="bg-brand-text text-white px-8 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
                   >
-                    Return to Sanctuary
+                    RETURN TO SANCTUARY
                   </button>
                 </div>
               </div>
             ) : (
-              <form onSubmit={handleCompleteOrder} className="space-y-10">
+              <form onSubmit={handleCompleteOrder} className="space-y-8">
                 {/* Progress Steps */}
-                <div className="flex items-center justify-between border-b border-brand-text/10 pb-6">
-                  <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-tight ${step === "details" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
-                    <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">1</span>
-                    Contact & Address
+                <div className="flex items-center justify-between border-b-2 border-brand-text pb-5 font-mono">
+                  <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-wider ${step === "details" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
+                    <span className="w-5 h-5 border-2 border-current flex items-center justify-center text-[10px]">1</span>
+                    DOSSIER & DESTINATION
                   </div>
-                  <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-tight ${step === "shipping" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
-                    <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">2</span>
-                    Shipping
+                  <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-wider ${step === "shipping" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
+                    <span className="w-5 h-5 border-2 border-current flex items-center justify-center text-[10px]">2</span>
+                    DISPATCH
                   </div>
-                  <div className={`flex items-center gap-2 text-xs font-bold uppercase tracking-tight ${step === "payment" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
-                    <span className="w-5 h-5 rounded-full border border-current flex items-center justify-center text-[10px]">3</span>
-                    Payment
+                  <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-wider ${step === "payment" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
+                    <span className="w-5 h-5 border-2 border-current flex items-center justify-center text-[10px]">3</span>
+                    SETTLEMENT
                   </div>
                 </div>
 

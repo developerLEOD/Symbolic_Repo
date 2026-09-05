@@ -64,6 +64,13 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
       setAddress(userProfile.address || "");
       setCity(userProfile.city || "");
       setZip(userProfile.zip || "");
+      if (userProfile.referralCode) {
+        try {
+          localStorage.setItem("sym_user_referral_code", userProfile.referralCode);
+        } catch {
+          // ignore
+        }
+      }
     }
   }, [userProfile, user]);
 

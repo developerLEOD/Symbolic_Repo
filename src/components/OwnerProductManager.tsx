@@ -64,8 +64,8 @@ const TEMPLATES = {
   tshirt: {
     name: "Quiet Contemplation Heavyweight Tee",
     collectionName: "Be Symbolic",
-    categoryId: "t-shirts",
-    sku: "TWL-TSH-003",
+    categoryId: "wear",
+    sku: "SYM-TSH-003",
     price: 2490,
     inventory: 60,
     availability: true,
@@ -78,17 +78,17 @@ const TEMPLATES = {
     description: "An understated garment tailored for the reader, the scholar, and the thinker. Cut from heavyweight combed organic cotton, it features subtle typographic coordinates celebrating the quiet discipline of contemplation.",
     images: ["/src/assets/images/store_hero_editorial_1788008309317.jpg"],
     variants: [
-      { id: "v-s", sku: "TWL-TSH-003-S", option1Name: "Size", option1Value: "S", price: 2490, inventoryQuantity: 15 },
-      { id: "v-m", sku: "TWL-TSH-003-M", option1Name: "Size", option1Value: "M", price: 2490, inventoryQuantity: 20 },
-      { id: "v-l", sku: "TWL-TSH-003-L", option1Name: "Size", option1Value: "L", price: 2490, inventoryQuantity: 15 },
-      { id: "v-xl", sku: "TWL-TSH-003-XL", option1Name: "Size", option1Value: "XL", price: 2490, inventoryQuantity: 10 }
+      { id: "v-s", sku: "SYM-TSH-003-S", option1Name: "Size", option1Value: "S", price: 2490, inventoryQuantity: 15 },
+      { id: "v-m", sku: "SYM-TSH-003-M", option1Name: "Size", option1Value: "M", price: 2490, inventoryQuantity: 20 },
+      { id: "v-l", sku: "SYM-TSH-003-L", option1Name: "Size", option1Value: "L", price: 2490, inventoryQuantity: 15 },
+      { id: "v-xl", sku: "SYM-TSH-003-XL", option1Name: "Size", option1Value: "XL", price: 2490, inventoryQuantity: 10 }
     ]
   },
   mug: {
     name: "The Student of Adab Vessel",
-    collectionName: "Seek Wisdom",
-    categoryId: "mugs",
-    sku: "TWL-MUG-004",
+    collectionName: "Be Symbolic",
+    categoryId: "vessels",
+    sku: "SYM-MUG-004",
     price: 1590,
     inventory: 80,
     availability: true,
@@ -102,28 +102,28 @@ const TEMPLATES = {
     description: "Crafted to ground your daily reading ritual. Tactile matte finish on the exterior with an unglazed mineral rim, engineered for contemplative pauses between passages of profound texts.",
     images: ["/src/assets/images/mug_seek_wisdom_1788008333595.jpg"],
     variants: [
-      { id: "v-standard", sku: "TWL-MUG-004-STD", option1Name: "Capacity", option1Value: "350ml", option2Name: "Finish", option2Value: "Matte", price: 1590, inventoryQuantity: 80 }
+      { id: "v-standard", sku: "SYM-MUG-004-STD", option1Name: "Capacity", option1Value: "350ml", option2Name: "Finish", option2Value: "Matte", price: 1590, inventoryQuantity: 80 }
     ]
   },
   cap: {
-    name: "Seeker Archival Structured Cap",
-    collectionName: "The Seeker",
-    categoryId: "caps",
-    sku: "TWL-CAP-002",
+    name: "Be Palestine Olive & Stone Structured Cap",
+    collectionName: "Be Palestine",
+    categoryId: "headwear",
+    sku: "SYM-PAL-002",
     price: 1950,
     inventory: 40,
     availability: true,
     material: "100% Washed Cotton Chino Twill",
-    color: "Midnight Navy",
+    color: "Midnight Olive",
     dimensions: "Adjustable Antique Brass Clasp (56-62cm)",
     weight: "110g",
     careInstructions: "Spot clean with mild soapy water. Reshape and air dry.",
-    symbolicTagline: "Keep wisdom close, wherever your search leads.",
-    description: "A minimalist 6-panel unstructured silhouette adorned with high-density tonal embroidery of the SYMBOLIC monogram. Unpretentious, durable, and understated.",
+    symbolicTagline: "Rooted steadfastness, unwavering conviction.",
+    description: "A minimalist 6-panel unstructured silhouette adorned with high-density tonal embroidery honoring the enduring spirit and steadfast roots of Falasteen.",
     images: ["/src/assets/images/store_hero_editorial_1788008309317.jpg"],
     variants: [
-      { id: "v-navy", sku: "TWL-CAP-002-NVY", option1Name: "Color", option1Value: "Midnight Navy", price: 1950, inventoryQuantity: 25 },
-      { id: "v-charcoal", sku: "TWL-CAP-002-CHR", option1Name: "Color", option1Value: "Charcoal Black", price: 1950, inventoryQuantity: 15 }
+      { id: "v-navy", sku: "SYM-PAL-002-NVY", option1Name: "Color", option1Value: "Midnight Olive", price: 1950, inventoryQuantity: 25 },
+      { id: "v-charcoal", sku: "SYM-CAP-002-CHR", option1Name: "Color", option1Value: "Charcoal Black", price: 1950, inventoryQuantity: 15 }
     ]
   }
 };
@@ -151,7 +151,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
   // Form State
   const [name, setName] = useState("");
   const [collectionName, setCollectionName] = useState("Be Symbolic");
-  const [categoryId, setCategoryId] = useState(categories[0]?.id || "t-shirts");
+  const [categoryId, setCategoryId] = useState(categories[0]?.id || "be-symbolic");
   const [sku, setSku] = useState("");
   const [price, setPrice] = useState<number>(1490);
   const [inventory, setInventory] = useState<number>(50);
@@ -215,9 +215,9 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     }
   }, [initialEditProductId]);
 
-  // Auto-generate SKU when name or category changes if SKU is untouched or auto-formatted
+  // Auto-generate SKU when name or collection changes if SKU is untouched or auto-formatted
   const generateSku = (prodName: string, catId: string) => {
-    const catCode = catId === "t-shirts" ? "TSH" : catId === "mugs" ? "MUG" : catId === "caps" ? "CAP" : "TWL";
+    const catCode = (catId === "palestine" || catId === "be-palestine") ? "PAL" : "SYM";
     const nameCode = prodName
       .trim()
       .split(/\s+/)
@@ -225,26 +225,20 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
       .join("")
       .slice(0, 3) || "01";
     const rand = Math.floor(100 + Math.random() * 900);
-    return `TWL-${catCode}-${nameCode || rand}`;
+    return `SYM-${catCode}-${nameCode || rand}`;
   };
 
   const handleNameChange = (val: string) => {
     setName(val);
-    if (!editingProductId && (!sku || sku.startsWith("TWL-"))) {
+    if (!editingProductId && (!sku || sku.startsWith("SYM-"))) {
       setSku(generateSku(val, categoryId));
     }
   };
 
-  const handleCategoryChange = (newCatId: string) => {
-    setCategoryId(newCatId);
-    if (newCatId === "mugs") {
-      if (!capacity) setCapacity("330ml");
-      if (!material || material.includes("Cotton")) setMaterial("Ceramic");
-    } else if (newCatId === "t-shirts") {
-      if (!material || material === "Ceramic") setMaterial("100% Organic Cotton");
-    }
-    if (!editingProductId && (!sku || sku.startsWith("TWL-"))) {
-      setSku(generateSku(name, newCatId));
+  const handleCollectionChange = (newCol: string) => {
+    setCollectionName(newCol);
+    if (!editingProductId && (!sku || sku.startsWith("SYM-"))) {
+      setSku(generateSku(name, categoryId));
     }
   };
 
@@ -363,7 +357,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     const newVars: ProductVariant[] = sizes.map(sz => ({
       id: `v-${sz.toLowerCase()}-${Date.now()}`,
       productId: "",
-      sku: `${sku || "TWL-PROD"}-${sz}`,
+      sku: `${sku || "SYM-PROD"}-${sz}`,
       price: price || 2490,
       inventoryQuantity: Math.floor((inventory || 50) / sizes.length),
       option1Name: "Size",
@@ -380,7 +374,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     const newVars: ProductVariant[] = colors.map(c => ({
       id: `v-${c.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
       productId: "",
-      sku: `${sku || "TWL-PROD"}-${c.slice(0, 3).toUpperCase()}`,
+      sku: `${sku || "SYM-PROD"}-${c.slice(0, 3).toUpperCase()}`,
       price: price || 1950,
       inventoryQuantity: Math.floor((inventory || 30) / colors.length),
       option1Name: "Color",
@@ -394,7 +388,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     const newVar: ProductVariant = {
       id: `v-custom-${Date.now()}`,
       productId: "",
-      sku: `${sku || "TWL-PROD"}-VAR-${variants.length + 1}`,
+      sku: `${sku || "SYM-PROD"}-VAR-${variants.length + 1}`,
       price: price || 1500,
       inventoryQuantity: 10,
       option1Name: categoryId === "t-shirts" ? "Size" : "Option",
@@ -424,7 +418,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     setEditingProductId(null);
     setName("");
     setCollectionName("Be Symbolic");
-    setCategoryId(categories[0]?.id || "t-shirts");
+    setCategoryId(categories[0]?.id || "be-symbolic");
     setSku("");
     setPrice(1490);
     setInventory(50);
@@ -521,7 +515,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
         description: description.trim(),
         price: Number(price),
         categoryId,
-        sku: sku.trim() || `TWL-${Date.now()}`,
+        sku: sku.trim() || `SYM-${Date.now()}`,
         images,
         thumbnailImage: thumbnailImage || undefined,
         inventory: Number(inventory),
@@ -795,7 +789,14 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
   }
 
   const filteredCatalogProducts = existingProducts.filter(p => {
-    const matchesCat = catalogCategoryFilter === "all" || p.categoryId === catalogCategoryFilter;
+    let matchesCat = true;
+    if (catalogCategoryFilter === "be-symbolic") {
+      matchesCat = p.categoryId === "be-symbolic" || (!p.collectionName || p.collectionName.toLowerCase().includes("symbolic"));
+    } else if (catalogCategoryFilter === "palestine" || catalogCategoryFilter === "be-palestine") {
+      matchesCat = p.categoryId === "palestine" || p.categoryId === "be-palestine" || (p.collectionName && p.collectionName.toLowerCase().includes("palestine"));
+    } else if (catalogCategoryFilter !== "all") {
+      matchesCat = p.categoryId === catalogCategoryFilter;
+    }
     const q = catalogSearch.toLowerCase().trim();
     const matchesQuery = !q || 
       p.name.toLowerCase().includes(q) || 
@@ -1177,7 +1178,6 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       <tr className="border-b-2 border-brand-text bg-brand-bg text-[9px] uppercase tracking-wider font-black text-brand-text">
                         <th className="p-3.5">OBJECT</th>
                         <th className="p-3.5">SKU / COLLECTION</th>
-                        <th className="p-3.5">CATEGORY</th>
                         <th className="p-3.5">PRICE</th>
                         <th className="p-3.5">STOCK</th>
                         <th className="p-3.5">PUBLICATION</th>
@@ -1200,9 +1200,8 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                           </td>
                           <td className="p-3.5">
                             <p className="font-mono text-[11px] font-bold text-brand-text">{prod.sku}</p>
-                            <p className="text-[9px] text-brand-accent uppercase font-bold tracking-tight">{prod.collectionName || "BE SYMBOLIC"}</p>
+                            <p className="text-[9px] text-brand-accent uppercase font-bold tracking-tight">{prod.collectionName || (prod.categoryId === 'palestine' ? 'BE PALESTINE' : 'BE SYMBOLIC')}</p>
                           </td>
-                          <td className="p-3.5 uppercase text-[10px] font-bold">{prod.categoryId}</td>
                           <td className="p-3.5 font-black text-brand-text">Rs. {prod.price?.toLocaleString()}</td>
                           <td className="p-3.5">
                             <span className={`px-2 py-0.5 text-[10px] font-black uppercase border ${prod.inventory < 10 ? "border-amber-500 bg-amber-50 text-amber-900" : "border-brand-text/20 bg-brand-bg text-brand-text"}`}>
@@ -1257,7 +1256,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                         />
                         <div className="absolute top-2 left-2">
                           <span className="text-[8px] font-mono font-black bg-brand-text text-brand-bg px-2 py-0.5 uppercase tracking-wider border border-brand-text">
-                            {prod.categoryId}
+                            {prod.collectionName || (prod.categoryId === 'palestine' ? 'BE PALESTINE' : 'BE SYMBOLIC')}
                           </span>
                         </div>
                         <div className="absolute top-2 right-2">
@@ -1434,35 +1433,31 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                       <div>
                         <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
-                          COLLECTION / ETHOS LINE
+                          COLLECTION / ETHOS LINE *
                         </label>
                         <select
                           value={collectionName}
-                          onChange={e => setCollectionName(e.target.value)}
+                          onChange={e => handleCollectionChange(e.target.value)}
                           className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         >
                           <option value="Be Symbolic">Be Symbolic (Core Ethos)</option>
-                          <option value="Seek Wisdom">Seek Wisdom (The Reader)</option>
-                          <option value="Find Clarity">Find Clarity (The Thinker)</option>
-                          <option value="The Seeker">The Seeker (Archival)</option>
-                          <option value="Adab & Reflection">Adab & Reflection</option>
+                          <option value="Be Palestine">Be Palestine (The Steadfast Line)</option>
                         </select>
                       </div>
 
                       <div>
                         <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent mb-1.5">
-                          CATEGORY *
+                          SPECIMEN TYPE (CATEGORY) *
                         </label>
                         <select
                           value={categoryId}
-                          onChange={e => handleCategoryChange(e.target.value)}
+                          onChange={e => setCategoryId(e.target.value)}
                           className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         >
-                          {categories.map(cat => (
-                            <option key={cat.id} value={cat.id}>
-                              {cat.name} ({cat.label})
-                            </option>
-                          ))}
+                          <option value="wear">Wear (Heavyweight Tees, Fleece, Hoodies)</option>
+                          <option value="carry">Carry (Utility Totes, Bags, Organizers)</option>
+                          <option value="headwear">Headwear (Structured Twill Caps, Headwear)</option>
+                          <option value="vessels">Vessels (Ceramic Mugs, Stoneware)</option>
                         </select>
                       </div>
                     </div>
@@ -1476,7 +1471,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                           type="text"
                           value={sku}
                           onChange={e => setSku(e.target.value)}
-                          placeholder="TWL-TSH-001"
+                          placeholder="SYM-TSH-001"
                           required
                           className="w-full px-3.5 py-2.5 bg-brand-bg border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
                         />
@@ -2052,7 +2047,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       {/* Card Shell */}
                       <div className="border-2 border-brand-text bg-brand-surface p-3.5 space-y-3 shadow-[6px_6px_0px_#050505]">
                         <div className="flex items-center justify-between text-[9px] font-mono font-black uppercase tracking-wider border-b-2 border-brand-text pb-2">
-                          <span>ARCHIVE // {selectedCategoryObj?.label || "OBJECT"}</span>
+                          <span>ARCHIVE // {(collectionName || "BE SYMBOLIC").toUpperCase()}</span>
                           <span className="text-brand-accent">050 SPECIMENS</span>
                         </div>
 
@@ -2064,7 +2059,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                           />
                           <div className="absolute top-2 left-2">
                             <span className="text-[8px] font-mono font-black bg-brand-text text-brand-bg px-2 py-0.5 uppercase tracking-wider border border-brand-text">
-                              {selectedCategoryObj?.label || "OBJECT"}
+                              {(collectionName || "BE SYMBOLIC").toUpperCase()}
                             </span>
                           </div>
                         </div>
@@ -2082,8 +2077,8 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                             </p>
                           </div>
                           <div className="flex justify-between items-center opacity-60 text-[9px] font-mono uppercase tracking-wider pt-1 border-t border-brand-text/10">
-                            <span>{sku || "TWL-PREVIEW"}</span>
-                            <span>BE SYMBOLIC</span>
+                            <span>{sku || "SYM-PREVIEW"}</span>
+                            <span>{collectionName.toUpperCase()}</span>
                           </div>
                         </div>
                       </div>
@@ -2091,8 +2086,8 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       {/* Meta Breakdown */}
                       <div className="text-[10px] font-mono space-y-1 bg-brand-bg p-3 border-2 border-brand-text">
                         <div className="flex justify-between">
-                          <span className="font-black uppercase">CATEGORY:</span>
-                          <span>{selectedCategoryObj?.name || categoryId}</span>
+                          <span className="font-black uppercase">COLLECTION:</span>
+                          <span className="text-brand-accent font-bold uppercase">{collectionName}</span>
                         </div>
                         <div className="flex justify-between">
                           <span className="font-black uppercase">INVENTORY:</span>
@@ -2120,7 +2115,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
 
                       <div className="border-b-2 border-brand-text pb-3">
                         <p className="text-[9px] font-mono font-black text-brand-accent uppercase tracking-wider mb-1">
-                          {selectedCategoryObj?.label || "OBJECT"} // {collectionName || "BE SYMBOLIC"}
+                          {(collectionName || "BE SYMBOLIC").toUpperCase()} // SPECIMEN
                         </p>
                         <h3 className="text-xl sm:text-2xl font-mono font-black uppercase tracking-tight text-brand-text">
                           {name || "UNTITLED OBJECT"}

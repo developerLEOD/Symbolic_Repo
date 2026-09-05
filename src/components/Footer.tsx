@@ -94,10 +94,10 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
                         whileHover={{ x: 4 }}
                         whileTap={{ scale: 0.98 }}
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onClick={() => onCategoryClick && onCategoryClick("caps")}
+                        onClick={() => onCategoryClick && onCategoryClick("be-symbolic")}
                         className="hover:text-brand-accent transition-colors text-left cursor-pointer"
                       >
-                        &gt; HEADWEAR
+                        &gt; BE SYMBOLIC
                       </motion.button>
                     </li>
                     <li>
@@ -105,10 +105,10 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
                         whileHover={{ x: 4 }}
                         whileTap={{ scale: 0.98 }}
                         transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onClick={() => onCategoryClick && onCategoryClick("mugs")}
+                        onClick={() => onCategoryClick && onCategoryClick("palestine")}
                         className="hover:text-brand-accent transition-colors text-left cursor-pointer"
                       >
-                        &gt; VESSELS
+                        &gt; BE PALESTINE
                       </motion.button>
                     </li>
                   </>

@@ -3,6 +3,7 @@ import { Product } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Layers, X } from "lucide-react";
 import { mobileTooltipManager } from "../lib/mobileTooltipManager";
+import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
 
 interface ProductCardProps {
   product: Product;
@@ -38,7 +39,9 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
 
   const displayId = product.productId || product.sku;
   const editionLabel = product.edition || "050 SPECIMENS";
-  const categoryTag = (product.categoryId || categoryLabel || "OBJECT").toUpperCase();
+  const specimenType = normalizeProductCategory(product).toUpperCase();
+  const collectionName = normalizeProductCollection(product);
+  const collectionTag = collectionName.toUpperCase();
   const images = product.images && product.images.length > 0 
     ? product.images 
     : [product.thumbnailImage || "/placeholder.png"];
@@ -306,7 +309,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
         {/* Top Archival Header */}
         <div className="flex justify-between items-center text-[9px] font-mono tracking-widest uppercase mb-3 border-b border-brand-text/20 pb-2 font-bold">
           <span className="text-brand-text">{displayId}</span>
-          <span className="text-brand-accent">STOCK: {product.inventory}</span>
+          <span className="text-brand-accent">DEPOT: {product.inventory} ALLOTMENTS</span>
         </div>
 
         {/* Product Visual Frame */}
@@ -324,10 +327,13 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
             />
           </AnimatePresence>
 
-          {/* Category Tag */}
-          <div className="absolute top-3 left-3 z-10">
-            <span className="text-[9px] font-mono tracking-widest font-black bg-brand-accent text-white px-2.5 py-1 uppercase rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-              {categoryTag}
+          {/* Category & Collection Tags */}
+          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start">
+            <span className="text-[9px] font-mono tracking-widest font-black bg-brand-text text-brand-bg px-2 py-0.5 uppercase rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+              [ {specimenType} ]
+            </span>
+            <span className="text-[8px] font-mono tracking-widest font-black bg-brand-accent text-white px-1.5 py-0.5 uppercase rounded-none border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+              {collectionTag}
             </span>
           </div>
 
@@ -579,9 +585,9 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
             {/* Tooltip Footer Instruction */}
             <div className="mt-3 pt-1.5 border-t border-brand-text/20 flex justify-between items-center text-[8px] font-mono tracking-wider text-brand-text/70 uppercase">
               <span className="flex items-center gap-1 text-brand-accent font-bold">
-                <Layers size={10} /> {images.length} ARCHIVAL VIEWS
+                <Layers size={10} /> {images.length} ARCHIVAL ELEVATIONS
               </span>
-              <span className="font-bold text-brand-text">TAP ANGLE TO FLIP</span>
+              <span className="font-bold text-brand-text">INSPECT ELEVATION</span>
             </div>
           </motion.div>
         )}

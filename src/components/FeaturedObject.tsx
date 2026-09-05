@@ -3,6 +3,7 @@ import { ShoppingBag, Check, FileText, ChevronLeft, ChevronRight } from "lucide-
 import { motion, AnimatePresence } from "motion/react";
 import { Product, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
+import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
 
 interface FeaturedObjectProps {
   product: Product;
@@ -24,6 +25,10 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
     setActiveImageIndex(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
   };
 
+  const specimenType = normalizeProductCategory(product).toUpperCase();
+  const collectionName = normalizeProductCollection(product);
+  const collectionTag = collectionName.toUpperCase();
+
   const handleQuickAdd = () => {
     onAddToCart({
       id: `${product.id}-default`,
@@ -32,7 +37,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
       price: product.price,
       quantity: 1,
       image: product.thumbnailImage || product.images[activeImageIndex] || product.images[0],
-      categoryLabel: (product.categoryId || "CORPUS").toUpperCase()
+      categoryLabel: `${specimenType} // ${collectionTag}`
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -79,9 +84,12 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                 className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
               />
             </AnimatePresence>
-            <div className="absolute top-4 left-4 z-10">
-              <span className="font-mono text-[10px] font-black uppercase tracking-widest bg-brand-accent text-white px-3 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-                {product.productId || "SYM-001"}
+            <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 items-start">
+              <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-text text-brand-bg px-2.5 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+                [ {specimenType} ]
+              </span>
+              <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+                {collectionTag}
               </span>
             </div>
 
@@ -155,9 +163,14 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
         <div className="lg:col-span-6 space-y-8">
           <div className="space-y-3">
             <div className="flex items-center gap-3">
-              <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
-                {product.categoryId.toUpperCase()} // SERIES 01
-              </span>
+              <div className="flex items-center gap-2 flex-wrap">
+                <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-text bg-brand-surface px-2 py-0.5 border border-brand-text">
+                  [ {specimenType} ]
+                </span>
+                <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
+                  {collectionTag} // SERIES 01
+                </span>
+              </div>
               <span className="font-mono text-xs font-bold text-brand-text/50">|</span>
               <span className="font-mono text-xs font-bold text-brand-text/70 uppercase">
                 AVAILABLE: {product.inventory} UNITS

@@ -81,12 +81,84 @@ export function isReferrerRewardUnlocked(
 }
 
 /**
+ * Fast & resilient public IP lookup with multiple fallbacks
+ */
+async function fetchPublicIp(): Promise<string> {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), 3500);
+
+  const services = [
+    "https://api64.ipify.org?format=json",
+    "https://api.ipify.org?format=json",
+    "https://ipapi.co/json/"
+  ];
+
+  for (const url of services) {
+    try {
+      const res = await fetch(url, { signal: controller.signal });
+      if (res.ok) {
+        const data = await res.json();
+        const ip = data.ip || data.query || data.client_ip;
+        if (ip && typeof ip === "string" && ip.length >= 7) {
+          clearTimeout(timeoutId);
+          return ip.trim();
+        }
+      }
+    } catch {
+      // Continue to next fallback
+    }
+  }
+
+  clearTimeout(timeoutId);
+  return "unknown_ip";
+}
+
+/**
+ * Generate a persistent, deterministic hardware & browser fingerprint for the device
+ */
+function getDeviceFingerprint(): string {
+  if (typeof window === "undefined") return "server_device";
+
+  // Persistent unique device token in localStorage
+  let deviceToken = "";
+  try {
+    deviceToken = localStorage.getItem("sym_device_token") || "";
+    if (!deviceToken) {
+      deviceToken = "dev_" + Math.random().toString(36).substring(2, 15) + Date.now().toString(36);
+      localStorage.setItem("sym_device_token", deviceToken);
+    }
+  } catch {
+    deviceToken = "dev_cookie_fallback";
+  }
+
+  const screenData = `${window.screen?.width || 0}x${window.screen?.height || 0}x${window.screen?.colorDepth || 0}`;
+  const tz = Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC";
+  const lang = navigator.language || "en";
+  const cores = navigator.hardwareConcurrency || 1;
+  const platform = navigator.platform || "mobile_web";
+
+  const rawString = `${deviceToken}|${screenData}|${tz}|${lang}|${cores}|${platform}`;
+  
+  let hash = 0;
+  for (let i = 0; i < rawString.length; i++) {
+    const char = rawString.charCodeAt(i);
+    hash = ((hash << 5) - hash) + char;
+    hash |= 0;
+  }
+  return `fp_${Math.abs(hash).toString(36)}_${deviceToken.substring(0, 8)}`;
+}
+
+/**
  * Record a visit via a referral link (e.g. ?ref=CODE)
- * Tracks unique visits per session so duplicate refreshes are not counted.
+ * Uses multi-layered Public IP detection, device hardware fingerprinting,
+ * self-referral blocking, and database deduplication so opening the link multiple
+ * times on the same mobile phone / IP will NOT fraudulently increment counts.
  */
 export async function trackReferralVisit(
-  rawCode: string
-): Promise<{ success: boolean; visitsCount?: number; referrerName?: string }> {
+  rawCode: string,
+  currentUserId?: string | null,
+  currentUserEmail?: string | null
+): Promise<{ success: boolean; visitsCount?: number; referrerName?: string; isDuplicate?: boolean }> {
   const code = rawCode.trim().toUpperCase();
   if (!code) return { success: false };
 
@@ -96,11 +168,12 @@ export async function trackReferralVisit(
     return { success: false };
   }
 
-  // Prevent duplicate counts in the same browser session
-  const sessionKey = `sym_ref_visit_${code}`;
+  // Always store code for checkout auto-fill privilege
   if (typeof window !== "undefined") {
-    if (sessionStorage.getItem(sessionKey)) {
-      return { success: false };
+    try {
+      localStorage.setItem("sym_applied_referral_code", code);
+    } catch {
+      // ignore
     }
   }
 
@@ -109,49 +182,125 @@ export async function trackReferralVisit(
     const q = query(usersRef, where("referralCode", "==", code), limit(1));
     const snap = await getDocs(q);
 
-    let referrerUid = "";
-    let referrerName = "Member";
-    let currentVisits = 0;
-
-    if (!snap.empty) {
-      const userDoc = snap.docs[0];
-      const userData = userDoc.data() as UserProfile;
-      referrerUid = userDoc.id;
-      referrerName = userData.displayName || "Member";
-      currentVisits = (userData.referralVisitsCount || 0) + 1;
-
-      // Increment referralVisitsCount on referrer user doc
-      const userRef = doc(db, "users", referrerUid);
-      await updateDoc(userRef, {
-        referralVisitsCount: increment(1)
-      }).catch(err => {
-        console.warn("Could not increment referralVisitsCount on user doc:", err);
-      });
+    if (snap.empty) {
+      return { success: false };
     }
 
-    // Log to referral_visits collection
-    const visitorSessionId = typeof window !== "undefined"
-      ? (localStorage.getItem("sym_visitor_id") || (() => {
-          const id = "vis_" + Math.random().toString(36).substring(2, 12);
-          localStorage.setItem("sym_visitor_id", id);
-          return id;
-        })())
-      : "vis_anon";
+    const userDoc = snap.docs[0];
+    const userData = userDoc.data() as UserProfile;
+    const referrerUid = userDoc.id;
+    const referrerName = userData.displayName || "Member";
+    const currentVisits = userData.referralVisitsCount || 0;
 
-    await addDoc(collection(db, "referral_visits"), {
+    // 1. SELF-REFERRAL BLOCK: If current user is the owner of the referral code, do not count self-visits
+    const isSelfReferral = Boolean(
+      (currentUserId && (currentUserId === referrerUid || currentUserId === userData.uid)) ||
+      (currentUserEmail && userData.email && currentUserEmail.toLowerCase() === userData.email.toLowerCase()) ||
+      (typeof window !== "undefined" && localStorage.getItem("sym_user_referral_code") === code)
+    );
+
+    if (isSelfReferral) {
+      return { success: true, visitsCount: currentVisits, referrerName, isDuplicate: true };
+    }
+
+    // 2. CLIENT-SIDE LOCAL STORAGE CHECK (Fast deduplication for same browser/phone)
+    let visitedMap: Record<string, number> = {};
+    if (typeof window !== "undefined") {
+      try {
+        visitedMap = JSON.parse(localStorage.getItem("sym_visited_referrals") || "{}");
+        if (visitedMap[code]) {
+          // Device has already visited this specific referral code
+          return { success: true, visitsCount: currentVisits, referrerName, isDuplicate: true };
+        }
+      } catch {
+        // ignore JSON parse error
+      }
+    }
+
+    // 3. PUBLIC IP & DEVICE HARDWARE FINGERPRINT LOOKUP
+    const [publicIp, deviceFingerprint] = await Promise.all([
+      fetchPublicIp(),
+      Promise.resolve(getDeviceFingerprint())
+    ]);
+
+    const cleanIp = publicIp.replace(/[^a-zA-Z0-9]/g, "_");
+    const cleanFp = deviceFingerprint.replace(/[^a-zA-Z0-9]/g, "_");
+    // Deterministic unique document ID for this specific referral code + IP + Device combination
+    const visitDocId = `${code}_${cleanIp}_${cleanFp}`.slice(0, 100);
+
+    // 4. FIRESTORE DATABASE UNIQUENESS VERIFICATION
+    // Check if this exact IP + Device document already exists
+    const existingDocRef = doc(db, "referral_visits", visitDocId);
+    const existingDocSnap = await getDoc(existingDocRef);
+
+    if (existingDocSnap.exists()) {
+      // Already logged in database for this device/IP! Mark locally and skip increment
+      if (typeof window !== "undefined") {
+        try {
+          visitedMap[code] = Date.now();
+          localStorage.setItem("sym_visited_referrals", JSON.stringify(visitedMap));
+        } catch {
+          // ignore
+        }
+      }
+      return { success: true, visitsCount: currentVisits, referrerName, isDuplicate: true };
+    }
+
+    // Also check if this IP has already logged a visit for this referral code
+    if (publicIp !== "unknown_ip") {
+      const ipQuery = query(
+        collection(db, "referral_visits"),
+        where("referrerCode", "==", code),
+        where("visitorIp", "==", publicIp),
+        limit(1)
+      );
+      const ipQuerySnap = await getDocs(ipQuery);
+      if (!ipQuerySnap.empty) {
+        // This IP address has already been credited for this referral code!
+        if (typeof window !== "undefined") {
+          try {
+            visitedMap[code] = Date.now();
+            localStorage.setItem("sym_visited_referrals", JSON.stringify(visitedMap));
+          } catch {
+            // ignore
+          }
+        }
+        return { success: true, visitsCount: currentVisits, referrerName, isDuplicate: true };
+      }
+    }
+
+    // 5. GENUINE FIRST-TIME UNIQUE VISIT: Record visit log and increment referrer's count
+    await setDoc(existingDocRef, {
       referrerUid,
       referrerCode: code,
-      visitorSessionId,
+      visitorIp: publicIp,
+      visitorDeviceHash: deviceFingerprint,
+      visitorKey: `${cleanIp}_${cleanFp}`,
       createdAt: Date.now()
-    }).catch(err => console.warn("Could not add to referral_visits:", err));
+    }).catch(err => {
+      console.warn("Could not write to referral_visits:", err);
+    });
 
+    // Increment referralVisitsCount on referrer user doc
+    const userRef = doc(db, "users", referrerUid);
+    await updateDoc(userRef, {
+      referralVisitsCount: increment(1)
+    }).catch(err => {
+      console.warn("Could not increment referralVisitsCount on user doc:", err);
+    });
+
+    // Mark as visited locally on this phone
     if (typeof window !== "undefined") {
-      sessionStorage.setItem(sessionKey, "true");
-      // Save code for auto-filling during checkout
-      localStorage.setItem("sym_applied_referral_code", code);
+      try {
+        visitedMap[code] = Date.now();
+        localStorage.setItem("sym_visited_referrals", JSON.stringify(visitedMap));
+        sessionStorage.setItem(`sym_ref_visit_${code}`, "true");
+      } catch {
+        // ignore
+      }
     }
 
-    return { success: true, visitsCount: currentVisits, referrerName };
+    return { success: true, visitsCount: currentVisits + 1, referrerName, isDuplicate: false };
   } catch (error) {
     console.warn("Error tracking referral visit:", error);
     return { success: false };

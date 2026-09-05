@@ -48,9 +48,10 @@ function StorefrontApp() {
   const [flagshipProduct, setFlagshipProduct] = useState<Product | null>(null);
   const [referralWelcomeBanner, setReferralWelcomeBanner] = useState<{ code: string; referrerName?: string } | null>(null);
   const [categories, setCategories] = useState<Category[]>([
-    { id: "t-shirts", name: "T-Shirts", description: "Heavyweight 400 GSM organic cotton silhouettes", label: "WEAR", order: 1 },
-    { id: "caps", name: "Caps", description: "Structured 280 GSM cotton twill headwear", label: "CARRY", order: 2 },
-    { id: "mugs", name: "Mugs", description: "High-fire ceramic stoneware vessels", label: "GATHER", order: 3 }
+    { id: "wear", name: "Wear", description: "Daily armor of modesty and dignified public posture", label: "WEAR", order: 1 },
+    { id: "carry", name: "Carry", description: "Instruments of transit and stewardship", label: "CARRY", order: 2 },
+    { id: "headwear", name: "Headwear", description: "Crown of focus and gaze-restraint", label: "HEADWEAR", order: 3 },
+    { id: "vessels", name: "Vessels", description: "Rituals of sustenance and contemplation", label: "VESSELS", order: 4 }
   ]);
 
   useEffect(() => {
@@ -73,7 +74,7 @@ function StorefrontApp() {
     };
     init();
 
-    const savedCart = localStorage.getItem("twl_cart");
+    const savedCart = localStorage.getItem("sym_cart") || localStorage.getItem("twl_cart");
     if (savedCart) {
       try {
         setCart(JSON.parse(savedCart));
@@ -84,7 +85,7 @@ function StorefrontApp() {
   }, [refreshKey]);
 
   useEffect(() => {
-    localStorage.setItem("twl_cart", JSON.stringify(cart));
+    localStorage.setItem("sym_cart", JSON.stringify(cart));
   }, [cart]);
 
   // Track inbound visits via referral link (?ref=CODE or ?referral=CODE) and monitor referral status
@@ -99,7 +100,7 @@ function StorefrontApp() {
       const params = new URLSearchParams(window.location.search);
       const refParam = params.get("ref") || params.get("referral");
       if (refParam) {
-        trackReferralVisit(refParam).then(res => {
+        trackReferralVisit(refParam, user?.uid, user?.email).then(res => {
           if (res.success) {
             setReferralWelcomeBanner({
               code: refParam.toUpperCase(),
@@ -111,7 +112,7 @@ function StorefrontApp() {
     }
 
     return () => unsubscribe();
-  }, []);
+  }, [user?.uid, user?.email]);
 
   const handleAddToCart = (item: CartItem) => {
     setCart(prev => {

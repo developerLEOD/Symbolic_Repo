@@ -115,15 +115,17 @@
     },
     "referralVisit": {
       "title": "ReferralVisit",
-      "description": "Log of unique visitor visits through customer referral links",
+      "description": "Log of unique visitor visits through customer referral links with IP and device deduplication",
       "type": "object",
       "properties": {
         "referrerUid": { "type": "string" },
         "referrerCode": { "type": "string" },
-        "visitorSessionId": { "type": "string" },
+        "visitorIp": { "type": "string" },
+        "visitorDeviceHash": { "type": "string" },
+        "visitorKey": { "type": "string" },
         "createdAt": { "type": "number" }
       },
-      "required": ["referrerCode", "visitorSessionId", "createdAt"]
+      "required": ["referrerCode", "createdAt"]
     },
     "referralRecord": {
       "title": "ReferralRecord",
