@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Layers, X } from "lucide-react";
 import { mobileTooltipManager } from "../lib/mobileTooltipManager";
 import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
+import { soundManager } from "../lib/soundEffects";
 
 interface ProductCardProps {
   product: Product;
@@ -185,18 +186,21 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    soundManager.playToggle(0.08);
     setShowAngleArrows(true);
     setActiveImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    soundManager.playToggle(0.08);
     setShowAngleArrows(true);
     setActiveImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
   const handleCloseTooltip = (e: React.SyntheticEvent) => {
     e.stopPropagation();
+    soundManager.playToggle(0.06);
     setIsAutoRevealed(false);
     setIsHovered(false);
     setHoveredThumbIndex(null);
@@ -218,6 +222,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
 
   const handleSelectAngleThumbnail = (e: React.SyntheticEvent, idx: number) => {
     e.stopPropagation();
+    soundManager.playClick(0.07);
 
     // 1. Immediately switch to the selected angle image
     setActiveImageIndex(idx);
@@ -250,6 +255,8 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
   };
 
   const handleMouseEnter = () => {
+    soundManager.playHover();
+
     // Only on PC with mouse cursor
     if (!isPC()) return;
 
@@ -287,33 +294,44 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
     }, 220);
   };
 
+  const handleCardClick = (e: React.MouseEvent) => {
+    soundManager.playClick();
+    onClick();
+  };
+
   return (
     <motion.div 
       ref={cardRef}
       initial={{ opacity: 0, y: 15 }}
       whileInView={{ opacity: 1, y: 0 }}
       viewport={{ once: true }}
-      whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.35 }}
-      className={`group cursor-pointer rounded-none border-2 border-brand-text p-5 transition-colors duration-150 flex flex-col justify-between relative ${
+      whileHover={{ y: -6, transition: { type: "spring", stiffness: 450, damping: 24 } }}
+      whileTap={{ scale: 0.985 }}
+      transition={{ duration: 0.25 }}
+      className={`group cursor-pointer rounded-none border-[2.5px] border-brand-text p-4 sm:p-5 transition-all duration-150 flex flex-col justify-between relative ${
         isRevealed 
           ? 'bg-brand-bg shadow-[8px_8px_0px_#050505] z-30' 
-          : 'bg-brand-surface hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] z-10'
+          : 'bg-brand-surface hover:bg-brand-bg shadow-[5px_5px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[2px_2px_0px_#050505] z-10'
       }`}
-      onClick={onClick}
+      onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
+      {/* Architectural Corner Registration Crosshairs */}
+      <span className="absolute -top-1.5 -left-1.5 font-mono text-[11px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
+      <span className="absolute -top-1.5 -right-1.5 font-mono text-[11px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
+      <span className="absolute -bottom-1.5 -left-1.5 font-mono text-[11px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
+      <span className="absolute -bottom-1.5 -right-1.5 font-mono text-[11px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
+
       <div>
         {/* Top Archival Header */}
-        <div className="flex justify-between items-center text-[9px] font-mono tracking-widest uppercase mb-3 border-b border-brand-text/20 pb-2 font-bold">
-          <span className="text-brand-text">{displayId}</span>
-          <span className="text-brand-accent">DEPOT: {product.inventory} ALLOTMENTS</span>
+        <div className="flex justify-between items-center text-[9px] font-mono tracking-widest uppercase mb-3 border-b-2 border-brand-text pb-2 font-black">
+          <span className="text-brand-text bg-brand-text/5 px-1 py-0.5 border border-brand-text/30">[ SPECIMEN // {displayId} ]</span>
+          <span className="text-brand-accent bg-brand-accent/10 px-1.5 py-0.5 border border-brand-accent/40">DEPOT: {product.inventory} ALLOTMENTS</span>
         </div>
 
         {/* Product Visual Frame */}
-        <div className="relative aspect-[4/5] overflow-hidden rounded-none bg-brand-surface mb-4 border-2 border-brand-text">
+        <div className="relative aspect-[4/5] overflow-hidden rounded-none bg-brand-surface mb-3.5 border-[2px] border-brand-text">
           <AnimatePresence mode="wait">
             <motion.img 
               key={activeImageIndex}
@@ -327,9 +345,16 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
             />
           </AnimatePresence>
 
+          {/* Blueprint Corner Reticle Marker */}
+          <div className="absolute top-1.5 right-1.5 z-10 pointer-events-none select-none">
+            <span className="text-[7.5px] font-mono font-black text-brand-text/50 bg-brand-bg/80 px-1 py-0.2 border border-brand-text/30">
+              ⌖ REF.0{activeImageIndex + 1}
+            </span>
+          </div>
+
           {/* Category & Collection Tags */}
-          <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start">
-            <span className="text-[9px] font-mono tracking-widest font-black bg-brand-text text-brand-bg px-2 py-0.5 uppercase rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+          <div className="absolute top-2.5 left-2.5 z-10 flex flex-col gap-1 items-start">
+            <span className="text-[9px] font-mono tracking-widest font-black bg-brand-text text-brand-bg px-2 py-0.5 uppercase rounded-none border border-brand-text shadow-[2px_2px_0px_#050505]">
               [ {specimenType} ]
             </span>
             <span className="text-[8px] font-mono tracking-widest font-black bg-brand-accent text-white px-1.5 py-0.5 uppercase rounded-none border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
@@ -341,8 +366,8 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
           {images.length > 1 && (
             <>
               {/* Image Counter Tag */}
-              <div className="absolute bottom-3 left-3 z-10">
-                <span className="text-[8.5px] font-mono font-black uppercase tracking-widest bg-brand-bg/95 text-brand-text px-2 py-0.5 border border-brand-text shadow-[2px_2px_0px_#050505]">
+              <div className="absolute bottom-2.5 left-2.5 z-10">
+                <span className="text-[8px] font-mono font-black uppercase tracking-widest bg-brand-bg/95 text-brand-text px-2 py-0.5 border border-brand-text shadow-[2px_2px_0px_#050505]">
                   [ 0{activeImageIndex + 1} / 0{images.length} ]
                 </span>
               </div>
@@ -394,7 +419,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
             initial={false}
             animate={{ scale: isRevealed ? 1 : 0.8, opacity: isRevealed ? 1 : 0 }}
             transition={{ type: "spring", stiffness: 400, damping: 25 }}
-            className={`absolute top-3 right-3 bg-brand-bg border-2 border-brand-text p-1.5 rounded-none text-brand-text shadow-[2px_2px_0px_#050505] z-10 ${
+            className={`absolute top-2.5 right-2.5 bg-brand-bg border-2 border-brand-text p-1.5 rounded-none text-brand-text shadow-[2px_2px_0px_#050505] z-10 ${
               isRevealed ? 'pointer-events-auto' : 'pointer-events-none'
             }`}
           >
@@ -403,31 +428,36 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
         </div>
         
         {/* Statement & Inscription */}
-        <div className="space-y-1 px-1">
-          <div className="flex justify-between items-center text-[9px] font-mono uppercase text-brand-text/60 font-bold">
+        <div className="space-y-1.5 px-0.5">
+          <div className="flex justify-between items-center text-[8.5px] font-mono uppercase text-brand-text/70 font-black">
             <span>RUN: {editionLabel}</span>
-            {product.weight && <span>{product.weight}</span>}
+            {product.weight && <span>SPEC // {product.weight}</span>}
           </div>
           <h3 className="text-base sm:text-lg font-mono font-black uppercase text-brand-text tracking-tight leading-tight">
             {product.name}
           </h3>
           {product.inscription && (
-            <p className="text-[9px] font-mono text-brand-accent uppercase font-bold tracking-wider pt-0.5">
+            <p className="text-[9px] font-mono text-brand-accent uppercase font-black tracking-wider">
               SYMBOL // {product.inscription}
             </p>
           )}
+          {/* Brutalist Archival Barcode Glyph */}
+          <div className="font-mono text-[7.5px] tracking-widest text-brand-text/30 select-none uppercase font-bold pt-0.5">
+            ||||| | ||||| || |||||| | [VERIFIED CORPUS]
+          </div>
         </div>
       </div>
 
       {/* Footer / Price & Link */}
-      <div className="flex justify-between items-center border-t-2 border-brand-text pt-3.5 mt-4 px-1">
-        <span className="text-sm font-mono font-black text-brand-text tracking-tight">
-          Rs. {product.price.toLocaleString()}
-        </span>
-        <span className={`text-[9px] font-mono font-black uppercase tracking-wider flex items-center gap-1 transition-colors ${
-          isRevealed ? 'text-brand-accent' : 'text-brand-text group-hover:text-brand-accent'
-        }`}>
-          VIEW OBJECT →
+      <div className="flex justify-between items-center border-t-2 border-brand-text pt-3 mt-3.5 px-0.5">
+        <div className="flex flex-col">
+          <span className="text-[7.5px] font-mono font-bold uppercase text-brand-text/60 tracking-wider">VALUATION</span>
+          <span className="text-sm sm:text-base font-mono font-black text-brand-text tracking-tight leading-none">
+            Rs. {product.price.toLocaleString()}
+          </span>
+        </div>
+        <span className="inline-flex items-center gap-1 font-mono text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg group-hover:bg-brand-accent group-hover:text-white border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all">
+          INSPECT ↗
         </span>
       </div>
 
@@ -493,9 +523,9 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
             {/* Tooltip Header Bar with Navigation Arrows & Close Button */}
             <div className="flex items-center justify-between border-b-2 border-brand-text pb-2 mb-3 bg-brand-surface -mx-3 -mt-3 p-2.5">
               <div className="flex items-center gap-1.5">
-                <span className="w-1.5 h-1.5 bg-brand-accent inline-block"></span>
+                <span className="w-2 h-2 bg-brand-accent inline-block border border-brand-text"></span>
                 <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-text">
-                  ANGLES // {displayId}
+                  [ ELEVATION // {displayId} ]
                 </span>
               </div>
               
@@ -505,25 +535,25 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
                   type="button"
                   onClick={handlePrevImage}
                   aria-label="Previous angle"
-                  className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-text hover:text-white text-brand-text shadow-[1px_1px_0px_#050505] transition-colors cursor-pointer"
+                  className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-text hover:text-white text-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
                 >
                   <ChevronLeft size={12} />
                 </button>
-                <span className="font-mono text-[8px] font-bold px-1 text-brand-text">
-                  {activeImageIndex + 1}/{images.length}
+                <span className="font-mono text-[8px] font-black px-1 text-brand-text">
+                  0{activeImageIndex + 1}/0{images.length}
                 </span>
                 <button
                   type="button"
                   onClick={handleNextImage}
                   aria-label="Next angle"
-                  className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-text hover:text-white text-brand-text shadow-[1px_1px_0px_#050505] transition-colors cursor-pointer"
+                  className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-text hover:text-white text-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
                 >
                   <ChevronRight size={12} />
                 </button>
                 <button
                   type="button"
                   onClick={handleCloseTooltip}
-                  className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-accent hover:text-white text-brand-text shadow-[1px_1px_0px_#050505] transition-colors cursor-pointer ml-1"
+                  className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-accent hover:text-white text-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer ml-1"
                   aria-label="Close angles preview"
                   title="Close preview"
                 >
@@ -552,6 +582,7 @@ export default function ProductCard({ product, categoryLabel, onClick }: Product
                     transition={{ type: "spring", stiffness: 350, damping: 25 }}
                     onMouseEnter={() => {
                       if (isPC()) {
+                        soundManager.playHover(0.035);
                         setHoveredThumbIndex(idx);
                         setActiveImageIndex(idx);
                       }

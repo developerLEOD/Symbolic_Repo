@@ -4,6 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Product, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
 import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
+import { soundManager } from "../lib/soundEffects";
 
 interface FeaturedObjectProps {
   product: Product;
@@ -17,11 +18,13 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    soundManager.playClick(0.06);
     setActiveImageIndex(prev => (prev === 0 ? product.images.length - 1 : prev - 1));
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
+    soundManager.playClick(0.06);
     setActiveImageIndex(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
   };
 
@@ -66,70 +69,86 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
         {/* Product Visual Framing */}
         <div className="lg:col-span-6 space-y-4">
-          <motion.div 
-            whileHover={{ y: -3 }}
-            transition={{ type: "spring", stiffness: 350, damping: 25 }}
-            onClick={() => onViewProduct(product)}
-            className="group cursor-pointer aspect-[4/5] bg-brand-surface border-2 border-brand-text relative overflow-hidden shadow-[8px_8px_0px_#050505] transition-shadow duration-200"
-          >
-            <AnimatePresence mode="wait">
-              <motion.img 
-                key={activeImageIndex}
-                src={product.images[activeImageIndex] || product.images[0]} 
-                alt={product.name}
-                initial={{ opacity: 0.7, scale: 0.98 }}
-                animate={{ opacity: 1, scale: 1 }}
-                exit={{ opacity: 0.6, scale: 1.01 }}
-                transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-              />
-            </AnimatePresence>
-            <div className="absolute top-4 left-4 z-10 flex flex-col gap-1 items-start">
-              <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-text text-brand-bg px-2.5 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-                [ {specimenType} ]
-              </span>
-              <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
-                {collectionTag}
-              </span>
-            </div>
+          <div className="relative">
+            {/* Architectural Corner Registration Crosshairs */}
+            <span className="absolute -top-2 -left-2 font-mono text-[12px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
+            <span className="absolute -top-2 -right-2 font-mono text-[12px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
+            <span className="absolute -bottom-2 -left-2 font-mono text-[12px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
+            <span className="absolute -bottom-2 -right-2 font-mono text-[12px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
 
-            {product.images.length > 1 && (
-              <>
-                <div className="absolute top-4 right-4 z-10">
-                  <span className="font-mono text-[10px] font-black uppercase tracking-widest bg-brand-bg text-brand-text px-2.5 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-                    [ {activeImageIndex + 1} / {product.images.length} ]
-                  </span>
-                </div>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.85 }}
-                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
-                  onClick={handlePrevImage}
-                  aria-label="Previous view"
-                  className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
-                >
-                  <ChevronLeft size={18} />
-                </motion.button>
-                <motion.button
-                  type="button"
-                  whileHover={{ scale: 1.15 }}
-                  whileTap={{ scale: 0.85 }}
-                  transition={{ type: "spring", stiffness: 450, damping: 22 }}
-                  onClick={handleNextImage}
-                  aria-label="Next view"
-                  className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
-                >
-                  <ChevronRight size={18} />
-                </motion.button>
-              </>
-            )}
+            <motion.div 
+              whileHover={{ y: -4 }}
+              whileTap={{ scale: 0.985 }}
+              transition={{ type: "spring", stiffness: 450, damping: 24 }}
+              onClick={() => {
+                soundManager.playClick(0.14);
+                onViewProduct(product);
+              }}
+              onMouseEnter={() => soundManager.playHover(0.065)}
+              className="group cursor-pointer aspect-[4/5] bg-brand-surface border-[2.5px] border-brand-text relative overflow-hidden shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#050505] active:translate-x-1 active:translate-y-1 active:shadow-[3px_3px_0px_#050505] transition-all duration-150"
+            >
+              <AnimatePresence mode="wait">
+                <motion.img 
+                  key={activeImageIndex}
+                  src={product.images[activeImageIndex] || product.images[0]} 
+                  alt={product.name}
+                  initial={{ opacity: 0.7, scale: 0.98 }}
+                  animate={{ opacity: 1, scale: 1 }}
+                  exit={{ opacity: 0.6, scale: 1.01 }}
+                  transition={{ type: "spring", stiffness: 320, damping: 26 }}
+                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
+                />
+              </AnimatePresence>
 
-            <div className="absolute bottom-4 right-4 bg-brand-bg text-brand-text font-mono text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 z-10">
-              <FileText size={12} />
-              <span>VIEW OBJECT DETAILS →</span>
-            </div>
-          </motion.div>
+              {/* Blueprint Reticle Marker */}
+              <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none select-none">
+                <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-bg text-brand-text px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+                  ⌖ HERO // ELEVATION [0{activeImageIndex + 1}]
+                </span>
+              </div>
+
+              <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1 items-start">
+                <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-text text-brand-bg px-2.5 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+                  [ {specimenType} ]
+                </span>
+                <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+                  {collectionTag}
+                </span>
+              </div>
+
+              {product.images.length > 1 && (
+                <>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.85 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 22 }}
+                    onClick={handlePrevImage}
+                    aria-label="Previous view"
+                    className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
+                  >
+                    <ChevronLeft size={18} />
+                  </motion.button>
+                  <motion.button
+                    type="button"
+                    whileHover={{ scale: 1.15 }}
+                    whileTap={{ scale: 0.85 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 22 }}
+                    onClick={handleNextImage}
+                    aria-label="Next view"
+                    className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
+                  >
+                    <ChevronRight size={18} />
+                  </motion.button>
+                </>
+              )}
+
+              <div className="absolute bottom-4 right-4 bg-brand-bg text-brand-text font-mono text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 z-10">
+                <FileText size={12} />
+                <span>INSPECT OBJECT DETAILS →</span>
+              </div>
+            </motion.div>
+          </div>
 
           {/* Perspective Selector Mini Thumbnails */}
           {product.images.length > 1 && (
@@ -140,7 +159,11 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                   whileHover={{ scale: 1.08, y: -2 }}
                   whileTap={{ scale: 0.94 }}
                   transition={{ type: "spring", stiffness: 400, damping: 22 }}
-                  onClick={() => setActiveImageIndex(idx)}
+                  onMouseEnter={() => soundManager.playHover(0.04)}
+                  onClick={() => {
+                    soundManager.playToggle(0.09);
+                    setActiveImageIndex(idx);
+                  }}
                   className={`w-14 h-16 border-2 relative cursor-pointer overflow-hidden ${
                     activeImageIndex === idx 
                       ? 'border-brand-accent shadow-[3px_3px_0px_#050505]' 

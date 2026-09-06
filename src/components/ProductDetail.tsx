@@ -6,6 +6,7 @@ import { db } from "../lib/firebase";
 import { Product, ProductVariant, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
 import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
+import { soundManager } from "../lib/soundEffects";
 
 interface ProductDetailProps {
   product: Product;
@@ -55,10 +56,12 @@ export default function ProductDetail({
   }, [product]);
 
   const handlePrevImage = () => {
+    soundManager.playToggle(0.08);
     setActiveImageIndex(prev => (prev === 0 ? product.images.length - 1 : prev - 1));
   };
 
   const handleNextImage = () => {
+    soundManager.playToggle(0.08);
     setActiveImageIndex(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
   };
 
@@ -86,6 +89,7 @@ export default function ProductDetail({
   });
 
   const handleOptionSelect = (name: string, value: string) => {
+    soundManager.playToggle(0.07);
     setSelectedOptions(prev => ({ ...prev, [name]: value }));
   };
 
@@ -102,6 +106,7 @@ export default function ProductDetail({
   const optionNames = Array.from(new Set(variants.flatMap(v => [v.option1Name, v.option2Name, v.option3Name].filter(Boolean) as string[])));
 
   const handleAddToBag = () => {
+    soundManager.playClick(0.14);
     onAddToCart({
       id: `${product.id}-${selectedVariant?.id || 'default'}`,
       productId: product.id,
@@ -159,7 +164,10 @@ export default function ProductDetail({
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12">
           {/* Images Section */}
           <div className="lg:col-span-6 space-y-4">
-            <div className="aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[8px_8px_0px_#050505] overflow-hidden relative group">
+            <div 
+              onMouseEnter={() => soundManager.playHover(0.04)}
+              className="aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[8px_8px_0px_#050505] overflow-hidden relative group"
+            >
               <AnimatePresence mode="wait">
                 <motion.img 
                   key={activeImageIndex}
@@ -252,7 +260,11 @@ export default function ProductDetail({
                     whileHover={{ scale: 1.08, y: -3 }}
                     whileTap={{ scale: 0.94 }}
                     transition={{ type: "spring", stiffness: 380, damping: 22 }}
-                    onClick={() => setActiveImageIndex(idx)}
+                    onMouseEnter={() => soundManager.playHover(0.035)}
+                    onClick={() => {
+                      soundManager.playClick(0.06);
+                      setActiveImageIndex(idx);
+                    }}
                     className={`aspect-square border-2 transition-colors cursor-pointer relative group/thumb ${
                       activeImageIndex === idx 
                         ? 'border-brand-accent shadow-[4px_4px_0px_#050505] bg-brand-surface' 

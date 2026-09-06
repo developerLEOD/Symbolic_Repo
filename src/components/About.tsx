@@ -1,6 +1,7 @@
 import { motion } from "motion/react";
 import { ArrowLeft, Compass, ShieldCheck, MapPin, Sparkles, ExternalLink } from "lucide-react";
 import LiquidCarveButton from "./LiquidCarveButton";
+import { soundManager } from "../lib/soundEffects";
 
 interface AboutProps {
   onBack: () => void;
@@ -190,7 +191,34 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
               </span>
             </div>
 
-            <div className="bg-brand-surface border-2 border-brand-text p-8 sm:p-12 shadow-[6px_6px_0px_#050505] space-y-10">
+            <div className="relative bg-brand-surface border-2 border-brand-text p-8 sm:p-12 shadow-[6px_6px_0px_#050505] space-y-10">
+              {/* Overlapping Corner Specimen: 90-degree rotated square containing owner portrait */}
+              <div 
+                className="absolute -top-6 -right-4 sm:-top-8 sm:-right-6 md:-top-10 md:-right-8 z-20 group"
+                title="Symbolic Founder & Architect // LEOD Mission"
+              >
+                {/* 90-Degree Rotated Square Frame (Diamond) overlapping the card boundaries */}
+                <div 
+                  onMouseEnter={() => soundManager.playHover()}
+                  onClick={() => soundManager.playClick()}
+                  className="relative w-22 h-22 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-white group-hover:bg-brand-accent hover:bg-brand-accent border-2 sm:border-3 border-brand-text shadow-[4px_4px_0px_#050505] rotate-45 overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-[6px_6px_0px_#050505] cursor-pointer"
+                >
+                  {/* Counter-rotated image container so the owner picture remains upright and balanced */}
+                  <div className="-rotate-45 w-[145%] h-[145%] flex items-center justify-center overflow-hidden">
+                    <img 
+                      src="/Owner_Pic.png" 
+                      alt="Owner of Symbolic // LEOD Mission"
+                      className="w-full h-full object-cover object-[50%_18%] filter contrast-105 drop-shadow-sm select-none transition-transform duration-300 group-hover:scale-105"
+                      draggable={false}
+                    />
+                  </div>
+                </div>
+
+                {/* Overlapping Brutalist Identifier Tag */}
+                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 sm:-bottom-3 bg-brand-text text-brand-bg px-2 sm:px-2.5 py-0.5 font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] border border-brand-surface whitespace-nowrap z-30">
+                  [ ARCHITECT // OWNER ]
+                </div>
+              </div>
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div className="lg:col-span-8 space-y-6">
                   <div className="flex items-center gap-3">
@@ -208,7 +236,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
 
                   <div className="font-mono text-xs sm:text-sm uppercase space-y-4 text-brand-text/90 leading-relaxed">
                     <p className="font-bold text-brand-accent">
-                      Symbolic is owned by a Muslim boy living in Islamabad, who initiated this brand as a sub-project under the Let’s Establish Our Deen (LEOD) mission.
+                      Symbolic is owned by a Muslim living in Islamabad, who initiated this brand as a sub-project under the Let’s Establish Our Deen (LEOD) mission.
                     </p>
                     <p>
                       The LEOD mission is grounded in a singular aspiration: reviving, establishing, and proudly upholding our Deen (the holistic Islamic System, principles, and comprehensive way of life) across every facet of modern daily experience.
