@@ -141,9 +141,6 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               / MUSLIMS
             </span>
           </div>
-          <span className="hidden md:inline-block px-2 py-0.5 bg-brand-text/5 border border-brand-text/20 text-[8.5px] font-bold text-brand-text/70">
-            SOVEREIGN MANIFESTO // SERIES 01
-          </span>
         </div>
 
         <div className="flex items-center gap-4 text-brand-text/70 hidden sm:flex">

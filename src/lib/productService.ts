@@ -98,6 +98,33 @@ export async function fetchCategories(): Promise<Category[]> {
   }
 }
 
+/**
+ * Checks whether a product is in a draft, hidden, or archived state.
+ * Drafted or hidden items must never appear as statement pieces or in the public storefront.
+ */
+export function isProductDraftOrHidden(product: Product | null | undefined): boolean {
+  if (!product) return true;
+  if (product.availability === false) return true;
+  const p = product as unknown as Record<string, unknown>;
+  if (p.isDraft === true || p.draft === true || p.hidden === true || p.isArchived === true) return true;
+  if (typeof p.status === "string") {
+    const s = p.status.toLowerCase();
+    if (s === "draft" || s === "hidden" || s === "archived") return true;
+  }
+  if (typeof p.visibility === "string") {
+    const v = p.visibility.toLowerCase();
+    if (v === "draft" || v === "hidden" || v === "archived") return true;
+  }
+  return false;
+}
+
+/**
+ * Checks whether a product is live and eligible for public storefront exhibition.
+ */
+export function isProductLive(product: Product | null | undefined): boolean {
+  return !isProductDraftOrHidden(product);
+}
+
 export function normalizeProductCategory(p: Product): string {
   const cat = (p.categoryId || "").toLowerCase();
   const name = (p.name || "").toLowerCase();

@@ -3,7 +3,7 @@ import { ShoppingBag, Check, FileText, ChevronLeft, ChevronRight } from "lucide-
 import { motion, AnimatePresence } from "motion/react";
 import { Product, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
-import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
+import { normalizeProductCategory, normalizeProductCollection, isProductDraftOrHidden } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 
 interface FeaturedObjectProps {
@@ -13,6 +13,11 @@ interface FeaturedObjectProps {
 }
 
 export default function FeaturedObject({ product, onViewProduct, onAddToCart }: FeaturedObjectProps) {
+  // Guard: Never show drafted or hidden products as statement pieces
+  if (!product || isProductDraftOrHidden(product)) {
+    return null;
+  }
+
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
 

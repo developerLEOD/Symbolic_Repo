@@ -5,7 +5,7 @@ import { db } from "../lib/firebase";
 import { Product, Category } from "../types";
 import ProductCard from "./ProductCard";
 import { Search } from "lucide-react";
-import { normalizeProductCategory, normalizeProductCollection } from "../lib/productService";
+import { normalizeProductCategory, normalizeProductCollection, isProductLive } from "../lib/productService";
 
 interface ProductGridProps {
   activeCategoryId: string | null;
@@ -60,8 +60,8 @@ export default function ProductGrid({ activeCategoryId, onCategoryChange, onProd
     fetchData();
   }, [refreshKey]);
 
-  // Only show active/available products in customer storefront
-  const activeProducts = products.filter(p => p.availability !== false);
+  // Only show active/available products in customer storefront (exclude drafted or hidden products)
+  const activeProducts = products.filter(isProductLive);
 
   // Derive active specimen type (Wear, Carry, Headwear, Vessels)
   const activeSpecimenType = (activeCategoryId === "be-palestine" || activeCategoryId === "palestine" || activeCategoryId === "be-symbolic")

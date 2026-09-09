@@ -25,7 +25,7 @@ import AuthModal from "./components/AuthModal";
 import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
-import { fetchCategories, deleteProductAndVariants } from "./lib/productService";
+import { fetchCategories, deleteProductAndVariants, isProductLive } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 
 function StorefrontApp() {
@@ -64,7 +64,9 @@ function StorefrontApp() {
 
         const prodsSnapshot = await getDocs(collection(db, "products"));
         const prods = prodsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
-        const flagship = prods.find(p => p.productId === "SYM-TSH-001") || prods[0] || null;
+        // Never show drafted or hidden products as statement pieces
+        const liveProds = prods.filter(isProductLive);
+        const flagship = liveProds.find(p => p.productId === "SYM-TSH-001") || liveProds[0] || null;
         setFlagshipProduct(flagship);
       } catch (err) {
         console.error("Initialization failed:", err);
@@ -275,7 +277,7 @@ function StorefrontApp() {
 
             {!activeCategoryId && (
               <>
-                {flagshipProduct && (
+                {flagshipProduct && isProductLive(flagshipProduct) && (
                   <FeaturedObject 
                     product={flagshipProduct}
                     onViewProduct={setSelectedProduct}
