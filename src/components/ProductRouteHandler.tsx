@@ -55,15 +55,15 @@ export default function ProductRouteHandler({
   }, [id]);
 
   const handleClose = () => {
-    // Navigate back to artefacts directory or previous location
-    navigate("/artefacts");
+    // Navigate back to artifacts directory or previous location
+    navigate("/artifacts");
   };
 
   const handleDelete = async (prodId: string, name: string) => {
     try {
       await deleteProductAndVariants(prodId);
       if (onProductDeleted) onProductDeleted();
-      navigate("/artefacts");
+      navigate("/artifacts");
     } catch (err) {
       console.error("Failed to remove product from route:", err);
     }
@@ -74,7 +74,7 @@ export default function ProductRouteHandler({
       <div className="fixed inset-0 z-50 bg-brand-bg/95 flex flex-col items-center justify-center font-mono">
         <div className="w-10 h-10 border-2 border-brand-text border-t-brand-accent animate-spin mb-4" />
         <div className="text-xs font-black uppercase tracking-widest text-brand-text">
-          RETRIEVING ARTEFACT RECORD // {id}
+          RETRIEVING ARTIFACT RECORD // {id}
         </div>
       </div>
     );
@@ -84,14 +84,14 @@ export default function ProductRouteHandler({
     return (
       <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center font-mono space-y-4">
         <div className="text-sm font-black uppercase tracking-widest text-brand-accent border-2 border-brand-text p-3 bg-brand-surface shadow-[4px_4px_0px_#050505]">
-          ARTEFACT NOT LOCATED IN ARCHIVE
+          ARTIFACT NOT LOCATED IN ARCHIVE
         </div>
         <p className="text-xs text-brand-text/70 max-w-md uppercase">
           The requested identifier [{id}] could not be resolved against current registered specimens.
         </p>
         <button
           type="button"
-          onClick={() => navigate("/artefacts")}
+          onClick={() => navigate("/artifacts")}
           className="px-4 py-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-black text-xs uppercase border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
           RETURN TO DIRECTORY
@@ -104,7 +104,7 @@ export default function ProductRouteHandler({
     <AnimatePresence>
       <ProductDetail
         product={product}
-        categoryLabel={product.category ? product.category.toUpperCase() : "ARTEFACT"}
+        categoryLabel={product.category ? product.category.toUpperCase() : "ARTIFACT"}
         onClose={handleClose}
         onAddToCart={onAddToCart}
         onOpenLedger={onOpenLedger}

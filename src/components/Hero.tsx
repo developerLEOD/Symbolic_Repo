@@ -88,7 +88,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
   };
 
   const coreJourneySteps = [
-    { step: "01", name: "DISCOVER", detail: "Curated collection of symbolic artefacts" },
+    { step: "01", name: "DISCOVER", detail: "Curated collection of symbolic artifacts" },
     { step: "02", name: "EXAMINE", detail: "Multi-perspective structural documentation" },
     { step: "03", name: "DECIPHER", detail: "The symbol, inscription & ethos" },
     { step: "04", name: "SUBSTANCE", detail: "Dense organic cotton & artisan stoneware" },
@@ -174,7 +174,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             />
             <div>
               <p className="text-sm sm:text-base font-mono uppercase tracking-wide text-brand-text font-bold leading-relaxed">
-                A curated collection of physical artefacts carrying symbol, reflection, and quiet conviction.
+                A curated collection of physical artifacts carrying symbol, reflection, and quiet conviction.
               </p>
             </div>
           </motion.div>
@@ -267,7 +267,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
       >
         <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono font-black uppercase tracking-widest text-brand-text/75">
           <span className="w-2 h-2 bg-brand-accent inline-block border border-brand-text" />
-          <span>THE ARTEFACT ENCOUNTER // 5-STAGE PROTOCOL</span>
+          <span>THE ARTIFACT ENCOUNTER // 5-STAGE PROTOCOL</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-mono">
           {coreJourneySteps.map((s, idx) => (
@@ -315,7 +315,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             { num: "01", title: "SYMBOL OVER LOGO", desc: "The graphic carries personal meaning, not a corporation's status symbol." },
             { num: "02", title: "SECONDARY BRANDING", desc: "Brand identifiers are kept to discreet interior labels." },
             { num: "03", title: "DENSE SUBSTANCE", desc: "400 GSM combed cotton and high-fire ceramic built for years of daily use." },
-            { num: "04", title: "INTENTIONAL OWNERSHIP", desc: "Fewer, deliberate artefacts that reflect genuine conviction." }
+            { num: "04", title: "INTENTIONAL OWNERSHIP", desc: "Fewer, deliberate artifacts that reflect genuine conviction." }
           ].map((item) => (
             <motion.div
               key={item.num}

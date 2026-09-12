@@ -29,8 +29,8 @@ import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 
-// Wrapper for /artefacts and /artefacts/:category views
-function ArtefactsDirectoryView({
+// Wrapper for /artifacts and /artifacts/:category views
+function ArtifactsDirectoryView({
   onProductClick,
   refreshKey,
   onCategoriesLoaded,
@@ -55,8 +55,8 @@ function ArtefactsDirectoryView({
       <ProductGrid 
         activeCategoryId={categoryId || null} 
         onCategoryChange={(catId) => {
-          if (!catId) navigate("/artefacts");
-          else navigate(`/artefacts/${catId}`);
+          if (!catId) navigate("/artifacts");
+          else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
         refreshKey={refreshKey}
@@ -107,8 +107,8 @@ function CollectionDirectoryView({
       <ProductGrid 
         activeCategoryId={collectionId || null} 
         onCategoryChange={(catId) => {
-          if (!catId) navigate("/artefacts");
-          else navigate(`/artefacts/${catId}`);
+          if (!catId) navigate("/artifacts");
+          else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
         refreshKey={refreshKey}
@@ -166,8 +166,8 @@ function HomeView({
       <ProductGrid 
         activeCategoryId={null} 
         onCategoryChange={(catId) => {
-          if (catId) navigate(`/artefacts/${catId}`);
-          else navigate("/artefacts");
+          if (catId) navigate(`/artifacts/${catId}`);
+          else navigate("/artifacts");
         }}
         onProductClick={onProductClick} 
         refreshKey={refreshKey}
@@ -342,9 +342,9 @@ function StorefrontApp() {
   };
 
   const handleProductSelect = (product: Product) => {
-    // Navigate to canonical URL for this artefact
+    // Navigate to canonical URL for this artifact
     const identifier = product.productId || product.sku || product.id;
-    navigate(`/artefact/${identifier}`);
+    navigate(`/artifact/${identifier}`);
   };
 
   if (isLoading) {
@@ -393,7 +393,7 @@ function StorefrontApp() {
             setIsProfileOpen(true);
           } else {
             setAuthDefaultTab("signup");
-            setAuthNotice("SIGN UP TO UNLOCK YOUR AFFILIATION NETWORK // Share symbolic transmission codes and earn commission on every acquired artefact.");
+            setAuthNotice("SIGN UP TO UNLOCK YOUR AFFILIATION NETWORK // Share symbolic transmission codes and earn commission on every acquired artifact.");
             setIsAuthOpen(true);
           }
         }}
@@ -417,11 +417,11 @@ function StorefrontApp() {
             }
           />
 
-          {/* Canonical Artefacts Directory */}
+          {/* Canonical Artifacts Directory */}
           <Route
-            path="/artefacts"
+            path="/artifacts"
             element={
-              <ArtefactsDirectoryView
+              <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
@@ -433,11 +433,11 @@ function StorefrontApp() {
             }
           />
 
-          {/* Artefacts filtered by medium (wear, carry, headwear, vessels, etc.) */}
+          {/* Artifacts filtered by medium (wear, carry, headwear, vessels, etc.) */}
           <Route
-            path="/artefacts/:categoryId"
+            path="/artifacts/:categoryId"
             element={
-              <ArtefactsDirectoryView
+              <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
@@ -465,9 +465,9 @@ function StorefrontApp() {
             }
           />
 
-          {/* Direct Artefact Specification Dossier */}
+          {/* Direct Artifact Specification Dossier */}
           <Route
-            path="/artefact/:id"
+            path="/artifact/:id"
             element={
               <ProductRouteHandler
                 onAddToCart={handleAddToCart}
@@ -483,7 +483,7 @@ function StorefrontApp() {
             path="/about" 
             element={
               <About 
-                onBack={() => navigate("/artefacts")} 
+                onBack={() => navigate("/artifacts")} 
                 onWhyWeWear={() => navigate("/why-merchandise")} 
               />
             } 
@@ -494,7 +494,7 @@ function StorefrontApp() {
             path="/why-merchandise" 
             element={
               <WhyMerchandise 
-                onBack={() => navigate("/artefacts")} 
+                onBack={() => navigate("/artifacts")} 
                 onAbout={() => navigate("/about")} 
               />
             } 
@@ -521,12 +521,12 @@ function StorefrontApp() {
       <Footer 
         categories={categories}
         onCategoryClick={(catId) => {
-          if (!catId) navigate("/artefacts");
+          if (!catId) navigate("/artifacts");
           else if (catId === "about") navigate("/about");
           else if (catId === "why-merchandise") navigate("/why-merchandise");
           else if (catId === "be-symbolic") navigate("/collection/be-symbolic");
           else if (catId === "be-palestine" || catId === "palestine") navigate("/collection/be-palestine");
-          else navigate(`/artefacts/${catId}`);
+          else navigate(`/artifacts/${catId}`);
         }}
         onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined} 
         onCartClick={() => setIsCartOpen(true)}
@@ -537,7 +537,7 @@ function StorefrontApp() {
         {selectedProduct && (
           <ProductDetail 
             product={selectedProduct}
-            categoryLabel={selectedProduct.category ? selectedProduct.category.toUpperCase() : 'ARTEFACT'}
+            categoryLabel={selectedProduct.category ? selectedProduct.category.toUpperCase() : 'ARTIFACT'}
             onClose={() => setSelectedProduct(null)}
             onAddToCart={handleAddToCart}
             onOpenLedger={() => setIsCartOpen(true)}
@@ -558,7 +558,7 @@ function StorefrontApp() {
           setIsCartOpen(false);
           if (!user) {
             setAuthDefaultTab("signup");
-            setAuthNotice("REGISTRATION MANDATORY // In accordance with Symbolic studio protocol, all custodians must be registered to acquire physical artefacts.");
+            setAuthNotice("REGISTRATION MANDATORY // In accordance with Symbolic studio protocol, all custodians must be registered to acquire physical artifacts.");
             setPendingOpenCheckoutAfterAuth(true);
             setIsAuthOpen(true);
           } else {
@@ -574,7 +574,7 @@ function StorefrontApp() {
         onClearCart={() => setCart([])}
         onOpenAuth={(mode = "signup", customNotice) => {
           setAuthDefaultTab(mode);
-          setAuthNotice(customNotice || "REGISTRATION MANDATORY // You must maintain a registered studio identity to finalize artefact custody.");
+          setAuthNotice(customNotice || "REGISTRATION MANDATORY // You must maintain a registered studio identity to finalize artifact custody.");
           setIsAuthOpen(true);
         }}
       />
@@ -617,8 +617,8 @@ function StorefrontApp() {
           onViewProductInStore={(catId) => {
             setIsOwnerOpen(false);
             setOwnerEditProductId(null);
-            if (catId) navigate(`/artefacts/${catId}`);
-            else navigate("/artefacts");
+            if (catId) navigate(`/artifacts/${catId}`);
+            else navigate("/artifacts");
           }}
         />
       )}

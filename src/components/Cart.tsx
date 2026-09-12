@@ -82,25 +82,25 @@ export default function Cart({
     return () => window.removeEventListener("keydown", handleKeyDown);
   }, [isOpen, onClose]);
 
-  // Derive monumental artefact number and identifier
-  const getArtefactCode = (item: CartItem, index: number): string => {
+  // Derive monumental artifact number and identifier
+  const getArtifactCode = (item: CartItem, index: number): string => {
     const raw = item.productId || item.id || "";
     const numMatch = raw.match(/\d+/);
     if (numMatch) {
-      return `artefact ${String(parseInt(numMatch[0], 10)).padStart(3, "0")}`;
+      return `artifact ${String(parseInt(numMatch[0], 10)).padStart(3, "0")}`;
     }
     const upperName = item.name.toUpperCase();
-    if (upperName.includes("ALIF") || upperName.includes("TSH-001")) return "artefact 001";
-    if (upperName.includes("SUMUD FIELD") || upperName.includes("HOODIE")) return "artefact 004";
-    if (upperName.includes("ADAB") || upperName.includes("VESSEL")) return "artefact 003";
-    if (upperName.includes("PALESTINE") || upperName.includes("FALASTEEN")) return "artefact 002";
-    if (upperName.includes("BASIRAH") || upperName.includes("CAP") || upperName.includes("HAT")) return "artefact 005";
-    if (upperName.includes("AMANAH") || upperName.includes("TOTE") || upperName.includes("BAG")) return "artefact 006";
-    return `artefact ${String(index + 1).padStart(3, "0")}`;
+    if (upperName.includes("ALIF") || upperName.includes("TSH-001")) return "artifact 001";
+    if (upperName.includes("SUMUD FIELD") || upperName.includes("HOODIE")) return "artifact 004";
+    if (upperName.includes("ADAB") || upperName.includes("VESSEL")) return "artifact 003";
+    if (upperName.includes("PALESTINE") || upperName.includes("FALASTEEN")) return "artifact 002";
+    if (upperName.includes("BASIRAH") || upperName.includes("CAP") || upperName.includes("HAT")) return "artifact 005";
+    if (upperName.includes("AMANAH") || upperName.includes("TOTE") || upperName.includes("BAG")) return "artifact 006";
+    return `artifact ${String(index + 1).padStart(3, "0")}`;
   };
 
   // Derive Arabic symbol or inscription if present
-  const getArtefactSymbol = (item: CartItem): string | null => {
+  const getArtifactSymbol = (item: CartItem): string | null => {
     const upper = (item.name + " " + (item.categoryLabel || "")).toUpperCase();
     if (upper.includes("ALIF")) return "# أَلِف";
     if (upper.includes("SUMUD") || upper.includes("PALESTINE") || upper.includes("FALASTEEN")) return "# صُمُود";
@@ -186,10 +186,10 @@ export default function Cart({
                   </h1>
 
                   <div className="flex items-center gap-2 text-[10px] text-brand-text/75 uppercase font-black">
-                    <span className="text-brand-accent">SELECTED ARTEFACTS</span>
+                    <span className="text-brand-accent">SELECTED ARTIFACTS</span>
                     <span className="opacity-30">/</span>
                     <span className="bg-brand-text text-brand-bg px-2 py-0.5 border border-brand-text">
-                      [ {totalQuantity < 10 ? `0${totalQuantity}` : totalQuantity} {totalQuantity === 1 ? "ARTEFACT" : "ARTEFACTS"} ]
+                      [ {totalQuantity < 10 ? `0${totalQuantity}` : totalQuantity} {totalQuantity === 1 ? "ARTIFACT" : "ARTIFACTS"} ]
                     </span>
                   </div>
                 </div>
@@ -209,20 +209,20 @@ export default function Cart({
               </div>
             </header>
 
-            {/* 2. SELECTED ARTEFACTS LIST (NO DISTRACTIONS, NO UPSELLS) */}
+            {/* 2. SELECTED ARTIFACTS LIST (NO DISTRACTIONS, NO UPSELLS) */}
             <div className="flex-grow overflow-y-auto p-5 sm:p-6 space-y-6">
               {items.length === 0 ? (
                 /* Empty Possessions State */
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 border-2 border-dashed border-brand-text/30 p-8 sm:p-12 bg-brand-surface/30 my-auto">
                   <div className="space-y-3 max-w-sm">
                     <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 border border-brand-accent/30 inline-block">
-                      [ CUSTODY LEDGER: ZERO ARTEFACTS ]
+                      [ CUSTODY LEDGER: ZERO ARTIFACTS ]
                     </span>
                     <h2 className="text-xl font-mono font-black uppercase tracking-tight text-brand-text">
-                      NO ARTEFACTS CURRENTLY SELECTED
+                      NO ARTIFACTS CURRENTLY SELECTED
                     </h2>
                     <p className="text-brand-text/75 font-mono text-xs uppercase leading-relaxed">
-                      You have not yet registered physical instruments for custody transfer. Explore the collection to inspect artefacts carrying enduring conviction.
+                      You have not yet registered physical instruments for custody transfer. Explore the collection to inspect artifacts carrying enduring conviction.
                     </p>
                   </div>
 
@@ -243,10 +243,10 @@ export default function Cart({
                   </button>
                 </div>
               ) : (
-                /* Iterative Selected Artefact Dossiers */
+                /* Iterative Selected Artifact Dossiers */
                 items.map((item, idx) => {
-                  const artefactCode = getArtefactCode(item, idx);
-                  const symbolInscription = getArtefactSymbol(item);
+                  const artifactCode = getArtifactCode(item, idx);
+                  const symbolInscription = getArtifactSymbol(item);
                   const isApparel = item.categoryLabel?.toUpperCase().includes("WEAR") || 
                     item.name.toUpperCase().includes("HOODIE") || 
                     item.name.toUpperCase().includes("TEE") || 
@@ -274,11 +274,11 @@ export default function Cart({
                       <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
                       <span className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
 
-                      {/* Header Line: Artefact Number & Category & Symbol */}
+                      {/* Header Line: Artifact Number & Category & Symbol */}
                       <div className="flex items-center justify-between gap-2 border-b-2 border-brand-text/20 pb-2 text-[10px]">
                         <div className="flex items-center gap-2">
                           <span className="font-black bg-brand-text text-brand-bg px-2 py-0.5 border border-brand-text uppercase">
-                            {artefactCode}
+                            {artifactCode}
                           </span>
                           {symbolInscription && (
                             <span dir="rtl" className="font-serif font-black text-brand-accent text-xs">
@@ -304,7 +304,7 @@ export default function Cart({
                                 ? "bg-red-600 text-white border-red-800"
                                 : "bg-brand-bg text-brand-text/60 hover:text-red-600 hover:border-red-600 border-brand-text/40"
                             }`}
-                            title="Release Artefact from Custody"
+                            title="Release Artifact from Custody"
                           >
                             {isConfirmingRemove ? "CANCEL" : "RELEASE"}
                           </button>
@@ -321,11 +321,11 @@ export default function Cart({
                             className="bg-red-50 border-2 border-red-600 p-3 space-y-2 text-red-950 font-mono"
                           >
                             <div className="flex items-center justify-between text-[11px] font-black uppercase">
-                              <span>CONFIRM RELEASE OF ARTEFACT?</span>
+                              <span>CONFIRM RELEASE OF ARTIFACT?</span>
                               <Trash2 size={13} className="text-red-600" />
                             </div>
                             <p className="text-[9.5px] uppercase opacity-90 leading-tight">
-                              This physical artefact will be de-registered from your possession ledger.
+                              This physical artifact will be de-registered from your possession ledger.
                             </p>
                             <div className="flex items-center gap-2 pt-1">
                               <button
@@ -376,7 +376,7 @@ export default function Cart({
                         {/* Object Specifications & Interactive Controls */}
                         <div className="col-span-8 sm:col-span-9 space-y-3">
                           
-                          {/* Artefact Title */}
+                          {/* Artifact Title */}
                           <div>
                             <h3 className="text-sm sm:text-base font-mono font-black uppercase tracking-tight text-brand-text leading-tight">
                               {item.name}
@@ -488,7 +488,7 @@ export default function Cart({
                 {/* Financial Ledger Calculation Matrix */}
                 <div className="space-y-2 font-mono text-xs uppercase border-b-2 border-brand-text/20 pb-4">
                   <div className="flex justify-between items-center text-brand-text/75">
-                    <span>ARTEFACTS VALUATION ({totalQuantity} {totalQuantity === 1 ? "ARTEFACT" : "ARTEFACTS"})</span>
+                    <span>ARTIFACTS VALUATION ({totalQuantity} {totalQuantity === 1 ? "ARTIFACT" : "ARTIFACTS"})</span>
                     <span className="font-bold text-brand-text">Rs. {subtotal.toLocaleString()} PKR</span>
                   </div>
 

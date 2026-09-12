@@ -81,11 +81,11 @@ export default function Header({
 
   // Canonical Mediums
   const standardMediums = [
-    { id: null, path: "/artefacts", label: "MEDIUMS // ALL", desc: "Complete Transmission Archive" },
-    { id: "wear", path: "/artefacts/wear", label: "WEAR", desc: "Heavyweight Tees, Fleece & Outerwear" },
-    { id: "carry", path: "/artefacts/carry", label: "CARRY", desc: "Utility Totes & Artefact Carriers" },
-    { id: "headwear", path: "/artefacts/headwear", label: "HEADWEAR", desc: "Structured Twill Caps & Headwear" },
-    { id: "vessels", path: "/artefacts/vessels", label: "VESSELS", desc: "Ceramic Mugs & Stoneware" },
+    { id: null, path: "/artifacts", label: "MEDIUMS // ALL", desc: "Complete Transmission Archive" },
+    { id: "wear", path: "/artifacts/wear", label: "WEAR", desc: "Heavyweight Tees, Fleece & Outerwear" },
+    { id: "carry", path: "/artifacts/carry", label: "CARRY", desc: "Utility Totes & Artifact Carriers" },
+    { id: "headwear", path: "/artifacts/headwear", label: "HEADWEAR", desc: "Structured Twill Caps & Headwear" },
+    { id: "vessels", path: "/artifacts/vessels", label: "VESSELS", desc: "Ceramic Mugs & Stoneware" },
   ];
 
   const canonicalMediumIds = new Set(["wear", "carry", "headwear", "vessels", "be-palestine", "palestine", "be-symbolic", "garments"]);
@@ -93,7 +93,7 @@ export default function Header({
     .filter(c => !canonicalMediumIds.has((c.id || "").toLowerCase()))
     .map(c => ({
       id: c.id,
-      path: `/artefacts/${c.id}`,
+      path: `/artifacts/${c.id}`,
       label: (c.label || c.name).toUpperCase(),
       desc: "Custom Medium Taxonomy"
     }));
@@ -101,7 +101,7 @@ export default function Header({
   const mediumItems = [...standardMediums, ...extraCategories];
 
   const collectionItems = [
-    { id: null, path: "/artefacts", label: "ALL COLLECTIONS", desc: "Unified Archive // Both Ethos Lines" },
+    { id: null, path: "/artifacts", label: "ALL COLLECTIONS", desc: "Unified Archive // Both Ethos Lines" },
     { id: "be-symbolic", path: "/collection/be-symbolic", label: "BE SYMBOLIC", desc: "Core Identity & Modern Islamic Ethos" },
     { id: "be-palestine", path: "/collection/be-palestine", label: "BE PALESTINE", desc: "The Steadfast Line // Heritage & Solidarity" },
   ];
@@ -111,7 +111,7 @@ export default function Header({
     { id: "about", path: "/about", label: "PROVENANCE // ABOUT SYMBOLIC", desc: "Identity, Origin & Material Mandates" },
   ];
 
-  const isMediumActive = location.pathname.startsWith("/artefacts");
+  const isMediumActive = location.pathname.startsWith("/artifacts");
   const isCollectionActive = location.pathname.startsWith("/collection");
   const isManifestoActive = location.pathname === "/about" || location.pathname === "/why-merchandise";
 

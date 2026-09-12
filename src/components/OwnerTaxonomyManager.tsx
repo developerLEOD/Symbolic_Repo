@@ -403,10 +403,10 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
             <span className="text-[10px] font-mono font-black uppercase tracking-widest">OWNER TAXONOMY &amp; MEDIUM ENGINE</span>
           </div>
           <h2 className="text-xl sm:text-2xl font-mono font-black tracking-tight uppercase text-brand-text">
-            MEDIUM &amp; ARTEFACT TAXONOMY ARCHITECTURE
+            MEDIUM &amp; ARTIFACT TAXONOMY ARCHITECTURE
           </h2>
           <p className="text-xs font-mono text-brand-text/70 mt-1 max-w-2xl leading-relaxed">
-            Manage SYMBOLIC&apos;s internal organizational hierarchy. Define top-level Mediums (WEAR, CARRY, HEADWEAR, VESSELS), configure distinct artefact types within each Medium, and establish reusable metadata tags for deep collection structuring without altering public storefront curation.
+            Manage SYMBOLIC&apos;s internal organizational hierarchy. Define top-level Mediums (WEAR, CARRY, HEADWEAR, VESSELS), configure distinct artifact types within each Medium, and establish reusable metadata tags for deep collection structuring without altering public storefront curation.
           </p>
         </div>
 
@@ -655,7 +655,7 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
           </div>
         </div>
 
-        {/* Panel 2: Artefact Types for Selected Medium (Cols 7) */}
+        {/* Panel 2: Artifact Types for Selected Medium (Cols 7) */}
         <div className="lg:col-span-7 space-y-4">
           <div className="border-2 border-brand-text bg-brand-surface p-4 sm:p-5 shadow-[4px_4px_0px_#050505] space-y-4">
             <div className="border-b-2 border-brand-text pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
@@ -669,7 +669,7 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
                   </span>
                 </div>
                 <p className="text-[10px] font-mono text-brand-text/60 mt-0.5">
-                  Artefact types nested within this primary medium
+                  Artifact types nested within this primary medium
                 </p>
               </div>
 
@@ -684,7 +684,7 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
                   className="px-2.5 py-1 text-[10px] font-mono font-black uppercase tracking-wider bg-brand-text text-brand-bg hover:bg-neutral-800 flex items-center gap-1 shadow-[2px_2px_0px_#050505] cursor-pointer shrink-0 self-start sm:self-auto"
                 >
                   <Plus size={11} />
-                  <span>ADD ARTEFACT TYPE</span>
+                  <span>ADD ARTIFACT TYPE</span>
                 </button>
               )}
             </div>
@@ -693,11 +693,11 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
             {isAddingType && (
               <div className="p-3.5 border-2 border-brand-text bg-brand-bg space-y-3">
                 <div className="text-[10px] font-mono font-black uppercase text-brand-accent">
-                  + ADD ARTEFACT TYPE UNDER &quot;{selectedClassification?.name}&quot;
+                  + ADD ARTIFACT TYPE UNDER &quot;{selectedClassification?.name}&quot;
                 </div>
                 <div>
                   <label className="block text-[9px] font-mono font-bold uppercase text-brand-text/70 mb-1">
-                    ARTEFACT TYPE NAME (E.G. T-SHIRTS, HOODIES, TOTES, CAPS, MUGS)
+                    ARTIFACT TYPE NAME (E.G. T-SHIRTS, HOODIES, TOTES, CAPS, MUGS)
                   </label>
                   <input 
                     type="text"
@@ -851,7 +851,7 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
             ) : (
               <div className="p-8 border-2 border-dashed border-brand-text/30 text-center space-y-2">
                 <p className="text-xs font-mono text-brand-text/60 uppercase">
-                  No artefact types registered under &quot;{selectedClassification?.name}&quot; yet.
+                  No artifact types registered under &quot;{selectedClassification?.name}&quot; yet.
                 </p>
                 <button
                   type="button"
@@ -863,7 +863,7 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
                   className="px-3 py-1.5 text-xs font-mono font-black uppercase bg-brand-text text-brand-bg hover:bg-neutral-800 inline-flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_#050505]"
                 >
                   <Plus size={12} />
-                  <span>ADD FIRST ARTEFACT TYPE</span>
+                  <span>ADD FIRST ARTIFACT TYPE</span>
                 </button>
               </div>
             )}
@@ -878,10 +878,10 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
             <TagIcon size={18} className="text-brand-accent" />
             <div>
               <h3 className="text-sm font-mono font-black uppercase tracking-wider text-brand-text">
-                REUSABLE ARTEFACT TAG REPOSITORY ({catalog.tags.length})
+                REUSABLE ARTIFACT TAG REPOSITORY ({catalog.tags.length})
               </h3>
               <p className="text-[10px] font-mono text-brand-text/60 uppercase">
-                GLOBAL ATTRIBUTE TAGS ASSIGNABLE ACROSS ARTEFACTS (SILHOUETTE, FABRICATION, SERIES, LIMITED RUNS)
+                GLOBAL ATTRIBUTE TAGS ASSIGNABLE ACROSS ARTIFACTS (SILHOUETTE, FABRICATION, SERIES, LIMITED RUNS)
               </p>
             </div>
           </div>
@@ -918,7 +918,7 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
         {isAddingTag && (
           <div className="p-4 border-2 border-brand-text bg-brand-bg space-y-3">
             <div className="text-[10px] font-mono font-black uppercase text-brand-accent">
-              + DEFINE REUSABLE ARTEFACT TAG
+              + DEFINE REUSABLE ARTIFACT TAG
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               <div>

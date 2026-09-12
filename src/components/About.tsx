@@ -25,7 +25,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
           onClick={onBack}
           className="inline-flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors mb-12 border-2 border-brand-text bg-brand-surface px-4 py-2 shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
-          <ArrowLeft size={14} /> [ RETURN TO ARTEFACTS ]
+          <ArrowLeft size={14} /> [ RETURN TO ARTIFACTS ]
         </motion.button>
 
         <div className="space-y-20">
@@ -351,7 +351,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                 EXPLORE THE ARCHIVES
               </span>
               <h3 className="font-mono text-xl sm:text-2xl font-black uppercase text-brand-text">
-                EXPERIENCE THE PHYSICAL ARTEFACTS
+                EXPERIENCE THE PHYSICAL ARTIFACTS
               </h3>
             </div>
 

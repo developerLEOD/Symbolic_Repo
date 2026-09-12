@@ -27,7 +27,7 @@ export default function SystemSpec() {
       id: "04",
       category: "PRODUCTION ETHIC",
       standard: "INTENTIONAL LIMITED RUNS",
-      detail: "Strict batch limits without artificial hype or fast-fashion drop cycles. Artefacts intended to be owned, maintained, and worn for years.",
+      detail: "Strict batch limits without artificial hype or fast-fashion drop cycles. Artifacts intended to be owned, maintained, and worn for years.",
       mandate: "OWN LESS, STAND FOR MORE"
     }
   ];

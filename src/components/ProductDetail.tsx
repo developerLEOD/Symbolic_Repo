@@ -119,14 +119,14 @@ export default function ProductDetail({
   const collectionName = normalizeProductCollection(product);
   const collectionTag = collectionName.toUpperCase();
 
-  // Extract clean numerical artefact ID (e.g. "SYM-04" -> "04", "SYM-TSH-001" -> "01")
+  // Extract clean numerical artifact ID (e.g. "SYM-04" -> "04", "SYM-TSH-001" -> "01")
   const rawId = product.productId || product.sku || product.id || "";
   const numericMatch = rawId.match(/\d+/);
-  const artefactNumber = numericMatch 
+  const artifactNumber = numericMatch 
     ? String(parseInt(numericMatch[0], 10)).padStart(3, "0") 
     : "001";
-  const specimenNumber = artefactNumber;
-  const objectNumber = artefactNumber;
+  const specimenNumber = artifactNumber;
+  const objectNumber = artifactNumber;
 
   // Derive monumental artifact name
   const rawName = product.name.trim();
@@ -135,7 +135,7 @@ export default function ProductDetail({
     .replace(/\s+(HEAVYWEIGHT|FIELD|VESSEL|CAP|TOTE|TEE|HOODIE|STONEWARE)/gi, "")
     .trim() || rawName;
 
-  const editionLabel = product.edition || "050 ARTEFACTS // FIRST EDITION";
+  const editionLabel = product.edition || "050 ARTIFACTS // FIRST EDITION";
 
   // Conceptual tagline / thesis
   const conceptualStatement = product.symbolicTagline || 
@@ -319,7 +319,7 @@ export default function ProductDetail({
             </button>
 
             <div className="hidden sm:flex items-center gap-2.5 font-mono text-[10.5px] font-black uppercase tracking-wider">
-              <span className="text-brand-accent">ARTEFACT DOSSIER // {artefactNumber}</span>
+              <span className="text-brand-accent">ARTIFACT DOSSIER // {artifactNumber}</span>
               <span className="opacity-30">/</span>
               <span className="text-brand-text bg-brand-surface px-2 py-0.5 border border-brand-text text-[9px] font-black">
                 {collectionTag}
@@ -359,7 +359,7 @@ export default function ProductDetail({
                 onClick={() => scrollToSection("dossier-specimen")} 
                 className="px-2 py-1 text-brand-text/80 hover:text-brand-accent cursor-pointer transition-colors"
               >
-                #THE-ARTEFACT
+                #THE-ARTIFACT
               </button>
               <span className="opacity-30">/</span>
               <button 
@@ -377,7 +377,7 @@ export default function ProductDetail({
               onClick={() => {
                 soundManager.playClick();
                 const identifier = product.productId || product.sku || product.id;
-                const canonicalUrl = `${window.location.origin}/artefact/${identifier}`;
+                const canonicalUrl = `${window.location.origin}/artifact/${identifier}`;
                 navigator.clipboard?.writeText(canonicalUrl).then(() => {
                   setCopiedLink(true);
                   setTimeout(() => setCopiedLink(false), 2400);
@@ -391,7 +391,7 @@ export default function ProductDetail({
                 });
               }}
               className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-white transition-colors cursor-pointer shadow-[2px_2px_0px_#050505] text-[10px] font-mono font-black uppercase tracking-wider"
-              title="Copy Artefact URL"
+              title="Copy Artifact URL"
             >
               {copiedLink ? (
                 <>
@@ -455,15 +455,15 @@ export default function ProductDetail({
       <main className="max-w-7xl mx-auto px-6 sm:px-10 py-12 sm:py-16 space-y-24">
 
         {/* ============================================================
-            SECTION 1: ARTEFACT IDENTIFICATION
+            SECTION 1: ARTIFACT IDENTIFICATION
             ============================================================ */}
-        <section id="dossier-identity" aria-label="Artefact Identification" className="space-y-6 border-b-2 border-brand-text pb-12">
+        <section id="dossier-identity" aria-label="Artifact Identification" className="space-y-6 border-b-2 border-brand-text pb-12">
           
           {/* Identity Hierarchy Header */}
           <div className="flex flex-wrap items-center justify-between gap-4">
             <div className="flex items-center gap-3">
               <span className="font-mono text-xs sm:text-sm font-black uppercase tracking-widest bg-brand-text text-brand-bg px-3 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-                ARTEFACT / {artefactNumber}
+                ARTIFACT / {artifactNumber}
               </span>
               {isSoldOut && (
                 <span className="font-mono text-xs sm:text-sm font-black uppercase tracking-widest bg-red-600 text-white px-3 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
@@ -478,7 +478,7 @@ export default function ProductDetail({
             <div className="flex items-center gap-3 font-mono text-[10px] sm:text-xs uppercase font-bold text-brand-text/75">
               <span>ALLOTMENT STATUS:</span>
               <span className={`font-black px-2 py-0.5 border border-brand-text ${isSoldOut ? "bg-red-600 text-white" : "text-brand-text bg-brand-surface"}`}>
-                {isSoldOut ? "ALL ARTEFACTS IN CUSTODY // SOLD OUT" : `${product.inventory} PIECES AVAILABLE`}
+                {isSoldOut ? "ALL ARTIFACTS IN CUSTODY // SOLD OUT" : `${product.inventory} PIECES AVAILABLE`}
               </span>
             </div>
           </div>
@@ -603,7 +603,7 @@ export default function ProductDetail({
                     type="button"
                     onClick={() => setShowFullscreenImage(true)}
                     className="absolute top-3 right-3 z-10 p-2 bg-brand-surface/90 hover:bg-brand-text hover:text-brand-bg border border-brand-text shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer"
-                    title="Inspect Fullscreen Artefact"
+                    title="Inspect Fullscreen Artifact"
                   >
                     <Maximize2 size={16} />
                   </button>
@@ -638,7 +638,7 @@ export default function ProductDetail({
 
                   {/* Corner Stamp */}
                   <div className="absolute bottom-3 right-3 z-10 font-mono text-[8px] font-black uppercase tracking-widest bg-brand-bg text-brand-text px-2 py-0.5 border border-brand-text">
-                    STUDIO ARCHIVE // PHYSICAL ARTEFACT
+                    STUDIO ARCHIVE // PHYSICAL ARTIFACT
                   </div>
                 </div>
               </div>
@@ -653,7 +653,7 @@ export default function ProductDetail({
                       PLATE ANALYSIS // PERSPECTIVE 0{activeImageIndex + 1} OF 0{images.length}
                     </span>
                     <span className="font-mono text-[8px] font-black uppercase px-2 py-0.5 bg-brand-text text-brand-bg">
-                      ARTEFACT VIEW
+                      ARTIFACT VIEW
                     </span>
                   </div>
                   <h3 className="text-lg sm:text-xl font-black uppercase text-brand-text mt-1 tracking-tight">
@@ -803,7 +803,7 @@ export default function ProductDetail({
                 )}
               </div>
               <p className="font-mono text-xs sm:text-sm text-brand-text/80 uppercase mt-2 max-w-2xl leading-relaxed">
-                An artefact is not merely apparel or hardware. It is a physical carrier of meaning. What you wear communicates what you believe.
+                An artifact is not merely apparel or hardware. It is a physical carrier of meaning. What you wear communicates what you believe.
               </p>
             </div>
             
@@ -859,7 +859,7 @@ export default function ProductDetail({
               </p>
             </div>
 
-            {/* 3. What the artefact communicates */}
+            {/* 3. What the artifact communicates */}
             <div className="border-2 border-brand-text bg-brand-surface p-6 sm:p-8 shadow-[5px_5px_0px_#050505] space-y-3">
               <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">
                 <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent">
@@ -870,7 +870,7 @@ export default function ProductDetail({
                 </span>
               </div>
               <h3 className="font-mono text-lg sm:text-xl font-black uppercase text-brand-text tracking-tight">
-                WHAT THE ARTEFACT COMMUNICATES
+                WHAT THE ARTIFACT COMMUNICATES
               </h3>
               <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/85 leading-relaxed">
                 {symbolKnowledge.communicates}
@@ -913,9 +913,9 @@ export default function ProductDetail({
 
 
         {/* ============================================================
-            SECTION 4: THE ARTEFACT
+            SECTION 4: THE ARTIFACT
             ============================================================ */}
-        <section id="dossier-specimen" aria-label="The Artefact Specifications" className="space-y-8">
+        <section id="dossier-specimen" aria-label="The Artifact Specifications" className="space-y-8">
           
           <div className="border-b-2 border-brand-text pb-4 flex flex-col sm:flex-row sm:items-end justify-between gap-4">
             <div>
@@ -923,7 +923,7 @@ export default function ProductDetail({
                 [ SECTION 04 // PHYSICAL SPECIFICATIONS ]
               </span>
               <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-1">
-                # THE ARTEFACT
+                # THE ARTIFACT
               </h2>
             </div>
             <div className="font-mono text-[10px] uppercase font-bold text-brand-text/70">
@@ -1053,7 +1053,7 @@ export default function ProductDetail({
               # POSSESSION
             </h2>
             <p className="font-mono text-xs sm:text-sm text-brand-text/80 uppercase mt-2 max-w-2xl leading-relaxed">
-              Now that you understand the artefact and its symbolic weight, register custody of this physical artefact. Allotments are strictly limited per edition.
+              Now that you understand the artifact and its symbolic weight, register custody of this physical artifact. Allotments are strictly limited per edition.
             </p>
           </div>
 
@@ -1081,7 +1081,7 @@ export default function ProductDetail({
                   BATCH ALLOTMENT STATUS
                 </span>
                 <div className="text-sm sm:text-base font-black uppercase text-brand-accent">
-                  {product.inventory > 0 ? "ARTEFACTS AVAILABLE" : "ALLOTTED // WAITLIST ONLY"}
+                  {product.inventory > 0 ? "ARTIFACTS AVAILABLE" : "ALLOTTED // WAITLIST ONLY"}
                 </div>
                 <div className="text-[10px] text-brand-text/70 uppercase">
                   BATCH: {editionLabel}
@@ -1183,10 +1183,10 @@ export default function ProductDetail({
                     <span>ARCHIVAL NOTICE // PHYSICAL ALLOTMENT ACCORDED</span>
                   </div>
                   <h3 className="font-mono text-xl sm:text-2xl font-black uppercase tracking-tight text-brand-text">
-                    ARTEFACT / {artefactNumber} IS SOLD OUT
+                    ARTIFACT / {artifactNumber} IS SOLD OUT
                   </h3>
                   <p className="font-mono text-xs text-brand-text/80 uppercase leading-relaxed max-w-2xl">
-                    Every physical artefact from this edition is currently in custody. In accordance with studio philosophy, this artefact remains part of the collection as an artefact that has existed. All visual documentation, symbolic thesis, and technical specifications remain accessible in this permanent dossier.
+                    Every physical artifact from this edition is currently in custody. In accordance with studio philosophy, this artifact remains part of the collection as an artifact that has existed. All visual documentation, symbolic thesis, and technical specifications remain accessible in this permanent dossier.
                   </p>
                 </div>
 
@@ -1199,12 +1199,12 @@ export default function ProductDetail({
                     </span>
                   </div>
                   <p className="font-mono text-[11px] text-brand-text/70 uppercase">
-                    Provide your email coordinates to receive an immediate dispatch advisory if archival vault artefacts or a future edition is authorized.
+                    Provide your email coordinates to receive an immediate dispatch advisory if archival vault artifacts or a future edition is authorized.
                   </p>
                   {notifySubmitted ? (
                     <div className="p-4 bg-brand-text text-brand-bg font-mono text-xs font-black uppercase tracking-wider flex items-center gap-2.5 border-2 border-brand-text">
                       <Check size={16} className="text-brand-accent shrink-0" />
-                      <span>DISPATCH LOGGED. YOU WILL BE TRANSMITTED NOTICE IF ARTEFACT / {artefactNumber} RE-ENTERS THE ATELIER.</span>
+                      <span>DISPATCH LOGGED. YOU WILL BE TRANSMITTED NOTICE IF ARTIFACT / {artifactNumber} RE-ENTERS THE ATELIER.</span>
                     </div>
                   ) : (
                     <form onSubmit={handleNotifySubmit} className="flex flex-col sm:flex-row gap-3">
@@ -1277,7 +1277,7 @@ export default function ProductDetail({
                         </>
                       ) : (
                         <>
-                          <span>ACQUIRE ARTEFACT</span>
+                          <span>ACQUIRE ARTIFACT</span>
                           <ArrowUpRight size={18} />
                         </>
                       )}
@@ -1352,7 +1352,7 @@ export default function ProductDetail({
             <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
               <div className="flex items-center gap-3">
                 <span className="font-mono text-xs font-black uppercase text-brand-accent hidden sm:inline">
-                  ARTEFACT / {artefactNumber}
+                  ARTIFACT / {artifactNumber}
                 </span>
                 <div>
                   <div className="font-mono text-xs sm:text-sm font-black uppercase truncate max-w-[200px] sm:max-w-xs text-brand-text">
@@ -1395,7 +1395,7 @@ export default function ProductDetail({
                         </>
                       ) : (
                         <>
-                          <span>ACQUIRE ARTEFACT</span>
+                          <span>ACQUIRE ARTIFACT</span>
                           <ArrowUpRight size={14} />
                         </>
                       )}
@@ -1408,7 +1408,7 @@ export default function ProductDetail({
         )}
       </AnimatePresence>
 
-      {/* FULLSCREEN ARTEFACT LIGHTBOX */}
+      {/* FULLSCREEN ARTIFACT LIGHTBOX */}
       {showFullscreenImage && (
         <div 
           onClick={() => setShowFullscreenImage(false)}
@@ -1527,7 +1527,7 @@ export default function ProductDetail({
           <div className="bg-brand-surface border-2 border-brand-text p-6 md:p-8 max-w-md w-full shadow-[8px_8px_0px_#050505] space-y-6 text-brand-text font-mono">
             <div className="space-y-3">
               <span className="text-[10px] font-black uppercase tracking-widest text-red-600">
-                [ EXPUNGE ARTEFACT DOSSIER ]
+                [ EXPUNGE ARTIFACT DOSSIER ]
               </span>
               <h3 className="text-xl font-black uppercase tracking-tight">CONFIRM EXPULSION</h3>
               <p className="text-xs uppercase text-brand-text/80 leading-relaxed">

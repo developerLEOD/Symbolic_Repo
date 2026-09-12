@@ -26,7 +26,7 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
     const id = catId.toLowerCase();
     if (id === "be-symbolic") return "/collection/be-symbolic";
     if (id === "be-palestine" || id === "palestine") return "/collection/be-palestine";
-    return `/artefacts/${id}`;
+    return `/artifacts/${id}`;
   };
 
   const handleLinkClick = (path: string, catId: string | null) => {
@@ -75,11 +75,11 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
               <ul className="space-y-2 uppercase font-bold text-brand-text">
                 <li>
                   <Link
-                    to="/artefacts"
-                    onClick={() => handleLinkClick("/artefacts", null)}
+                    to="/artifacts"
+                    onClick={() => handleLinkClick("/artifacts", null)}
                     className="hover:text-brand-accent transition-colors text-left cursor-pointer block"
                   >
-                    &gt; ALL ARTEFACTS
+                    &gt; ALL ARTIFACTS
                   </Link>
                 </li>
                 <li>

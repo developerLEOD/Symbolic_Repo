@@ -127,7 +127,7 @@ export default function ProductGrid({
 
   const getCatalogSubtitle = () => {
     if (selectedCollection === "be-palestine") {
-      return "COLLECTION FALASTEEN // ARTEFACTS OF UNYIELDING SOLIDARITY & ANCESTRAL ROOTS";
+      return "COLLECTION FALASTEEN // ARTIFACTS OF UNYIELDING SOLIDARITY & ANCESTRAL ROOTS";
     }
     if (selectedCollection === "be-symbolic") {
       return "COLLECTION BE SYMBOLIC // CORE CORPOREAL INSTRUMENTS & ARCHIVAL SILHOUETTES";
@@ -171,7 +171,7 @@ export default function ProductGrid({
                 THE COLLECTION
               </h2>
               <span className="font-mono text-xs font-bold text-brand-text/50 uppercase tracking-widest">
-                [{sortedProducts.length < 10 ? `0${sortedProducts.length}` : sortedProducts.length} {sortedProducts.length === 1 ? "ARTEFACT" : "ARTEFACTS"}]
+                [{sortedProducts.length < 10 ? `0${sortedProducts.length}` : sortedProducts.length} {sortedProducts.length === 1 ? "ARTIFACT" : "ARTIFACTS"}]
               </span>
             </div>
           </div>
@@ -190,7 +190,7 @@ export default function ProductGrid({
                   ? "bg-brand-text text-brand-bg shadow-inner"
                   : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
               }`}
-              title="Exhibition View: Curated interactive overlapping artefacts showcase"
+              title="Exhibition View: Curated interactive overlapping artifacts showcase"
               aria-label="Switch to Exhibition View"
             >
               <LayoutGrid size={13} className="shrink-0" />
@@ -320,9 +320,9 @@ export default function ProductGrid({
                 ? "bg-brand-accent text-white shadow-inner" 
                 : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
             }`}
-            title="Filter by availability: toggle between showing all items or only artefacts currently in stock"
+            title="Filter by availability: toggle between showing all items or only artifacts currently in stock"
             aria-pressed={inStockOnly}
-            aria-label="Filter artefacts in stock only"
+            aria-label="Filter artifacts in stock only"
           >
             <span className={`w-2 h-2 rounded-full border border-black/30 transition-colors ${inStockOnly ? "bg-white animate-pulse" : "bg-brand-accent"}`} />
             <span>AVAILABLE ONLY</span>
@@ -349,7 +349,7 @@ export default function ProductGrid({
               ALLOTMENTS IN FABRICATION
             </h3>
             <p className="font-mono text-xs uppercase text-brand-text/80 leading-relaxed max-w-md mx-auto">
-              Artefacts for [{currentCategoryName ? ` ${currentCategoryName} ` : " THIS SELECTION "}] are currently being tailored under strict material mandates. They will be documented here upon release.
+              Artifacts for [{currentCategoryName ? ` ${currentCategoryName} ` : " THIS SELECTION "}] are currently being tailored under strict material mandates. They will be documented here upon release.
             </p>
           </div>
 
@@ -363,7 +363,7 @@ export default function ProductGrid({
               }} 
               className="px-6 py-3 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
             >
-              EXPLORE ALL REGISTERED ARTEFACTS
+              EXPLORE ALL REGISTERED ARTIFACTS
             </button>
           </div>
         </div>
@@ -373,7 +373,7 @@ export default function ProductGrid({
           <table className="w-full text-left font-mono border-collapse">
             <thead>
               <tr className="border-b-2 border-brand-text bg-brand-text text-brand-bg text-[9.5px] uppercase tracking-widest font-black">
-                <th className="p-3.5">ID // ARTEFACT</th>
+                <th className="p-3.5">ID // ARTIFACT</th>
                 <th className="p-3.5">SYMBOL / INSCRIPTION</th>
                 <th className="p-3.5">MEDIUM</th>
                 <th className="p-3.5">MATERIAL & STRUCTURE</th>
@@ -398,7 +398,7 @@ export default function ProductGrid({
                   >
                     <td className="p-3.5">
                       <div className="flex items-center gap-3">
-                        <span className="font-bold text-brand-accent text-[10px]">[artefact {artifactNum}]</span>
+                        <span className="font-bold text-brand-accent text-[10px]">[artifact {artifactNum}]</span>
                         <div>
                           <div className="font-black uppercase tracking-tight text-brand-text group-hover:text-brand-accent transition-colors flex items-center gap-2">
                             <span>{p.name}</span>
@@ -436,7 +436,7 @@ export default function ProductGrid({
                       </span>
                     </td>
                     <td className="p-3.5 font-bold uppercase text-[10px] text-brand-accent">
-                      {p.edition?.replace(/SPECIMENS/gi, "ARTEFACTS") || "050 ARTEFACTS"}
+                      {p.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 ARTIFACTS"}
                     </td>
                     <td className="p-3.5 text-right">
                       <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg group-hover:bg-brand-accent group-hover:text-white border border-brand-text transition-all">
@@ -451,7 +451,7 @@ export default function ProductGrid({
           </table>
         </div>
       ) : viewMode === "grid" ? (
-        /* ARTEFACT CARDS GRID VIEW */
+        /* ARTIFACT CARDS GRID VIEW */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
           {sortedProducts.map((product, idx) => (
             <ProductCard
@@ -464,7 +464,7 @@ export default function ProductGrid({
           ))}
         </div>
       ) : (
-        /* 4. CURATED HORIZONTAL OVERLAPPING ARTEFACT COLLECTION */
+        /* 4. CURATED HORIZONTAL OVERLAPPING ARTIFACT COLLECTION */
         <ArtifactOverlappingCollection 
           products={sortedProducts} 
           categories={categories} 

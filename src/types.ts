@@ -113,7 +113,7 @@ export interface Product {
   inscription?: string; // Primary symbol / inscription e.g. "أَلِف", "صُمُود"
   pillar1Represents?: string; // Pillar 01: Doctrine / Scriptural Roots - What the symbol represents
   pillar2WhyChosen?: string; // Pillar 02: Intent / Deliberate Selection - Why it was chosen
-  pillar3Communicates?: string; // Pillar 03: Transmission / Public Witness - What the artefact communicates
+  pillar3Communicates?: string; // Pillar 03: Transmission / Public Witness - What the artifact communicates
   pillar4WearerCarries?: string; // Pillar 04: Covenant / Inward Burden - What idea the wearer is carrying
   
   // Legacy aliases for full backward compatibility
@@ -127,7 +127,7 @@ export interface Product {
   // Owner-only Medium & Tagging System
   medium?: string; // Primary medium e.g. "WEAR", "CARRY", "HEADWEAR", "VESSELS"
   artifactClassification?: string; // Legacy alias for medium e.g. "WEAR", "CARRY", "HEADWEAR", "VESSELS"
-  artifactType?: string; // Primary specific artefact type e.g. "T-Shirts", "Hoodies", "Caps", "Mugs"
+  artifactType?: string; // Primary specific artifact type e.g. "T-Shirts", "Hoodies", "Caps", "Mugs"
   artifactTags?: string[]; // Multiple owner-defined tags e.g. ["Heavyweight", "Drop Shoulder", "Series 01"]
   
   // Real inventory and availability

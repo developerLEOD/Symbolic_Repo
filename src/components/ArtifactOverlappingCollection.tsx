@@ -206,7 +206,7 @@ export default function ArtifactOverlappingCollection({
       <div className="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 pb-4 border-b-2 border-brand-text font-mono text-[10px] uppercase tracking-widest text-brand-text/70">
         <div className="flex items-center gap-3">
           <span className="inline-block w-2 h-2 bg-[#ff4500] animate-pulse" />
-          <span className="font-black text-brand-text">HORIZONTAL ARTEFACT ARRAY</span>
+          <span className="font-black text-brand-text">HORIZONTAL ARTIFACT ARRAY</span>
           <span className="text-brand-text/30">//</span>
           <span className="hidden sm:inline">OVERLAPPING CURATION [3:4 FORMAT]</span>
         </div>
@@ -214,7 +214,7 @@ export default function ArtifactOverlappingCollection({
         <div className="flex items-center gap-4">
           <div className="hidden md:flex items-center gap-2">
             <span className="text-[#ff4500] font-black">
-              {activeIdx !== null ? `ARTEFACT 0${activeIdx + 1} ENGAGED` : "RESTING STATE"}
+              {activeIdx !== null ? `ARTIFACT 0${activeIdx + 1} ENGAGED` : "RESTING STATE"}
             </span>
             <span className="text-brand-text/40">•</span>
             <span>HOVER TO DISPLACE & EXAMINE</span>
@@ -561,7 +561,7 @@ export default function ArtifactOverlappingCollection({
                         <div className="flex items-center gap-1.5">
                           <span className="w-2 h-2 bg-brand-accent inline-block border border-brand-text" />
                           <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-text">
-                            [ ELEVATION // {product.productId || `ARTEFACT ${artifactNum}`} ]
+                            [ ELEVATION // {product.productId || `ARTIFACT ${artifactNum}`} ]
                           </span>
                         </div>
 
@@ -696,13 +696,13 @@ export default function ArtifactOverlappingCollection({
       {/* 5. ARCHITECTURAL FOOTER REGISTER WITH SCROLL INSTRUCTION & TICKER */}
       <div className="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 pt-3 border-t border-brand-text/20 font-mono text-[9.5px] uppercase tracking-widest text-brand-text/60">
         <div className="flex items-center gap-2">
-          <span>ARRAY REGISTER // {products.length} {products.length === 1 ? "ARTEFACT" : "ARTEFACTS"}</span>
+          <span>ARRAY REGISTER // {products.length} {products.length === 1 ? "ARTIFACT" : "ARTIFACTS"}</span>
           <span className="text-brand-text/30">•</span>
           <span className="hidden sm:inline">DRAG HORIZONTALLY OR USE TRACKPAD TO PAN</span>
         </div>
 
         <div className="flex items-center gap-3 font-bold text-brand-text">
-          <span className="text-[#ff4500]">[ 3:4 PERSISTENT ARTEFACT PREVIEW ]</span>
+          <span className="text-[#ff4500]">[ 3:4 PERSISTENT ARTIFACT PREVIEW ]</span>
         </div>
       </div>
     </div>

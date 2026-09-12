@@ -50,7 +50,7 @@ export const BRAND_IDENTITY = {
 } as const;
 
 export const CONCEPTUAL_HIERARCHY = {
-  principle: "PERSON → SYMBOL → ARTEFACT → BRAND",
+  principle: "PERSON → SYMBOL → ARTIFACT → BRAND",
   layers: [
     {
       level: 1,
@@ -66,7 +66,7 @@ export const CONCEPTUAL_HIERARCHY = {
     },
     {
       level: 3,
-      subject: "THE ARTEFACT",
+      subject: "THE ARTIFACT",
       role: "Heavy-gauge physical instrument (400 GSM fleece, 18 oz canvas, dense stoneware). Carries the symbol into daily worship, transit, and study.",
       prominence: "Functional Instrument (10%)"
     },
@@ -149,8 +149,8 @@ export const FOUR_AXIOMS: Axiom[] = [
   {
     code: "02",
     title: "THE HIERARCHY OF PRESENCE",
-    subheading: "PERSON → SYMBOL → ARTEFACT → MAKER",
-    thesis: "In our hierarchy, the person is paramount. The symbol manifests their inner conviction. The artefact is the functional vessel that carries it through daily life. The maker remains discreetly tucked inside the collar. SYMBOLIC exists to empower the believer's public witness, never to eclipse it.",
+    subheading: "PERSON → SYMBOL → ARTIFACT → MAKER",
+    thesis: "In our hierarchy, the person is paramount. The symbol manifests their inner conviction. The artifact is the functional vessel that carries it through daily life. The maker remains discreetly tucked inside the collar. SYMBOLIC exists to empower the believer's public witness, never to eclipse it.",
     imperative: "Keep the maker secondary; keep the human conviction sovereign."
   },
   {
@@ -163,9 +163,9 @@ export const FOUR_AXIOMS: Axiom[] = [
   {
     code: "04",
     title: "TACTILE PERMANENCE OVER DISPOSABILITY",
-    subheading: "ENDURING ARTEFACTS FOR DELIBERATE LIVES",
+    subheading: "ENDURING ARTIFACTS FOR DELIBERATE LIVES",
     thesis: "Fast fashion manufactures disposable identities. When garments fall apart after three washes, the psychological relationship to material possessions becomes hollow and reckless. We craft 400 GSM loopback cotton, 18 oz canvas, and kiln-fired stoneware engineered to survive decades of continuous use.",
-    imperative: "Acquire fewer artefacts; ensure every artefact you possess stands firm."
+    imperative: "Acquire fewer artifacts; ensure every artifact you possess stands firm."
   }
 ];
 
@@ -236,14 +236,14 @@ export const CATEGORY_FRAMEWORK: CategoryPhilosophy[] = [
 ];
 
 export const LONG_TERM_SCALABILITY = {
-  seriesLogic: "Each SERIES represents a comprehensive, multi-artefact thematic investigation lasting 12 to 24 months (e.g. Series 01: The Transmission Corpus).",
+  seriesLogic: "Each SERIES represents a comprehensive, multi-artifact thematic investigation lasting 12 to 24 months (e.g. Series 01: The Transmission Corpus).",
   symbolSyntax: "SYM-[SERIES_NO]-[CLASSIFICATION_ABBR]-[INDEX_NO] (e.g. SYM-01-EPS-01)",
-  artefactSyntax: "ART-[MEDIUM_CODE]-[SERIES_NO]-[ARTEFACT_NO] (e.g. ART-W-01-01 for Wear Artefact 01)",
-  permanentArtefacts: [
+  artifactSyntax: "ART-[MEDIUM_CODE]-[SERIES_NO]-[ARTIFACT_NO] (e.g. ART-W-01-01 for Wear Artifact 01)",
+  permanentArtifacts: [
     "Core 400 GSM Black Drop-Shoulder Hooded Sweatshirt",
     "Core 280 GSM Bone Boxy Heavyweight Tee",
     "Core 6-Panel Low-Crown Brushed Twill Cap",
     "Core 450ml High-Fire Stoneware Studio Mug"
   ],
-  editionRules: "Permanent artefacts remain indefinitely in inventory. Thematic Series symbols are cataloged forever in the Codex even when physical production runs conclude."
+  editionRules: "Permanent artifacts remain indefinitely in inventory. Thematic Series symbols are cataloged forever in the Codex even when physical production runs conclude."
 } as const;

@@ -149,7 +149,7 @@ export default function ArtifactTaxonomySelector({
               MEDIUM CLASSIFICATION &amp; INTERNAL TAXONOMY
             </h3>
             <p className="text-[10px] font-mono text-brand-text/60">
-              Primary medium classification and metadata tagging (separate from purchasable artefact variants)
+              Primary medium classification and metadata tagging (separate from purchasable artifact variants)
             </p>
           </div>
         </div>
@@ -200,7 +200,7 @@ export default function ArtifactTaxonomySelector({
         {/* Step 2: Specific Artifact Type */}
         <div className="md:col-span-6 space-y-2">
           <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-text">
-            2. ARTEFACT TYPE <span className="text-red-500">*</span>
+            2. ARTIFACT TYPE <span className="text-red-500">*</span>
           </label>
 
           {availableTypes.length > 0 ? (
@@ -226,7 +226,7 @@ export default function ArtifactTaxonomySelector({
             </div>
           ) : (
             <div className="p-3 border-2 border-dashed border-brand-text/30 bg-brand-bg text-center text-xs font-mono text-brand-text/60">
-              No artefact types defined for {currentClassificationObj?.name}. Use the hierarchy manager to add types.
+              No artifact types defined for {currentClassificationObj?.name}. Use the hierarchy manager to add types.
             </div>
           )}
         </div>
@@ -374,7 +374,7 @@ export default function ArtifactTaxonomySelector({
           </span>
           <ChevronRight size={12} className="text-brand-text/60" />
           <span className="font-black uppercase tracking-wider">
-            {selectedType || "GENERIC ARTEFACT"}
+            {selectedType || "GENERIC ARTIFACT"}
           </span>
           {selectedTags.length > 0 && (
             <>

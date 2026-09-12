@@ -24,7 +24,7 @@ export default function ProductCard({
   const [isHovered, setIsHovered] = useState(false);
 
   const displayId = product.productId || product.sku || `SYM-0${(index ?? 0) + 1}`;
-  const editionLabel = product.edition?.replace(/SPECIMENS/gi, "ARTEFACTS") || "050 ARTEFACTS";
+  const editionLabel = product.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 ARTIFACTS";
   const medium = (categoryLabel || normalizeProductCategory(product)).toUpperCase();
   const collectionName = normalizeProductCollection(product);
   const collectionTag = collectionName.toUpperCase();
@@ -79,11 +79,11 @@ export default function ProductCard({
       <span className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
       <span className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
 
-      {/* ─── 1. TOP ARTEFACT IDENTIFICATION HEADER ─── */}
+      {/* ─── 1. TOP ARTIFACT IDENTIFICATION HEADER ─── */}
       <div className="flex items-center justify-between border-b-2 border-brand-text pb-2.5 mb-3">
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-[9.5px] font-black uppercase tracking-wider text-brand-text bg-brand-text/10 px-1.5 py-0.5 border border-brand-text/40">
-            {artifactNum ? `ARTEFACT ${artifactNum}` : displayId}
+            {artifactNum ? `ARTIFACT ${artifactNum}` : displayId}
           </span>
           <span className="font-mono text-[8.5px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
             {medium}
@@ -95,7 +95,7 @@ export default function ProductCard({
         </div>
       </div>
 
-      {/* ─── 2. CENTRAL VISUAL ARTEFACT CANVAS (Clean 4:5 Aspect Ratio) ─── */}
+      {/* ─── 2. CENTRAL VISUAL ARTIFACT CANVAS (Clean 4:5 Aspect Ratio) ─── */}
       <div className="relative aspect-[4/5] overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
         <AnimatePresence mode="wait">
           <motion.img 
@@ -171,7 +171,7 @@ export default function ProductCard({
         )}
       </div>
 
-      {/* ─── 3. ARTEFACT INFORMATION & CONVICTION ─── */}
+      {/* ─── 3. ARTIFACT INFORMATION & CONVICTION ─── */}
       <div className="space-y-2.5 flex-1 flex flex-col justify-between">
         <div className="space-y-1.5">
           <h3 className="text-sm sm:text-base font-mono font-black uppercase text-brand-text tracking-tight leading-snug group-hover:text-brand-accent transition-colors line-clamp-1">
@@ -199,7 +199,7 @@ export default function ProductCard({
         {/* ─── 4. ACTION BAR ─── */}
         <div className="border-t-2 border-brand-text pt-2.5">
           <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
-            <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE ARTEFACT"}</span>
+            <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE ARTIFACT"}</span>
             <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
         </div>

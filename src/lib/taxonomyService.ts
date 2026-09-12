@@ -70,7 +70,7 @@ export const DEFAULT_TAGS: CustomArtifactTag[] = [
   { id: "tag-artisan-stoneware", name: "Artisan Stoneware", description: "Dense kiln-fired earthenware", color: "#78350f", createdAt: Date.now() },
   { id: "tag-duck-canvas", name: "18 oz Duck Canvas", description: "Heavyweight unbleached industrial canvas", color: "#57534e", createdAt: Date.now() },
   { id: "tag-steadfast-heritage", name: "Steadfast Heritage", description: "Cultural solidarity and rooted symbols", color: "#991b1b", createdAt: Date.now() },
-  { id: "tag-limited-edition", name: "Limited Edition", description: "Numbered or restricted artefact run", color: "#4c1d95", createdAt: Date.now() }
+  { id: "tag-limited-edition", name: "Limited Edition", description: "Numbered or restricted artifact run", color: "#4c1d95", createdAt: Date.now() }
 ];
 
 export const INITIAL_TAXONOMY_CATALOG: TaxonomyCatalog = {

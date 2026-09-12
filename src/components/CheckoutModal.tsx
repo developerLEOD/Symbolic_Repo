@@ -206,7 +206,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       ? `• Referral Privilege (${appliedReferral?.code}): -Rs. ${discount.toLocaleString()} (${appliedReferral?.discountPercentage}% OFF)\n` 
       : '';
       
-    const message = `*SYMBOLIC // ARTEFACT ACQUISITION DIRECTIVE*\n` +
+    const message = `*SYMBOLIC // ARTIFACT ACQUISITION DIRECTIVE*\n` +
       `----------------------------------------\n` +
       `*ORDER REGISTRY:* #${currentOrderNo}\n` +
       `*STATUS:* Pending WhatsApp Settlement Confirmation\n` +
@@ -217,7 +217,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       `• Email: ${formData.email}\n` +
       `• Dispatch Coordinates: House #${formData.houseNo}, ${formData.street}, ${formData.suburb}, ${formData.city} ${formData.zip ? `(Postcode: ${formData.zip})` : ''}\n` +
       `• Country: ${formData.country}\n\n` +
-      `*RESERVED ARTEFACTS:*\n` +
+      `*RESERVED ARTIFACTS:*\n` +
       `${itemsList}\n\n` +
       `*FINANCIAL VALUATION MATRIX:*\n` +
       `• Subtotal: Rs. ${subtotal.toLocaleString()}\n` +
@@ -226,7 +226,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       `*• TOTAL SETTLEMENT: Rs. ${total.toLocaleString()} PKR*\n\n` +
       `*SETTLEMENT PROTOCOL:*\n` +
       `Direct WhatsApp Interaction (Bank payments on standby / Direct IBFT or Raast clearance requested).\n\n` +
-      `_Please confirm physical reservation and dispatch schedule for this artefact acquisition._`;
+      `_Please confirm physical reservation and dispatch schedule for this artifact acquisition._`;
 
     return message;
   };
@@ -251,7 +251,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     if (!user) {
       setIsSubmitting(false);
       if (onOpenAuth) {
-        onOpenAuth("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.");
+        onOpenAuth("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artifacts.");
       }
       return;
     }
@@ -344,7 +344,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
               <ShieldCheck size={20} className="text-brand-accent" />
               <div>
                 <h2 className="text-xs font-mono font-black uppercase tracking-[0.2em]">CUSTODY TRANSFER PROTOCOL</h2>
-                <p className="text-[9px] font-mono text-brand-text/60 uppercase">FINALIZATION OF ARTEFACT POSSESSION</p>
+                <p className="text-[9px] font-mono text-brand-text/60 uppercase">FINALIZATION OF ARTIFACT POSSESSION</p>
               </div>
             </div>
             {step !== "success" && (
@@ -375,7 +375,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                       <span>STUDIO ARCHIVE // OFFICIAL REGISTRY</span>
                     </div>
                     <h3 className="text-xl sm:text-2xl font-mono font-black uppercase tracking-tight text-brand-text">
-                      CERTIFICATE OF ARTEFACT POSSESSION
+                      CERTIFICATE OF ARTIFACT POSSESSION
                     </h3>
                     <p className="text-[10px] font-mono uppercase text-brand-text/70">
                       ACQUISITION REGISTRY ENTRY NO. #{orderNumber}
@@ -429,7 +429,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                   {/* Archival Authenticity Statement */}
                   <div className="space-y-2 pt-1">
                     <p className="text-[10px] font-mono uppercase text-brand-text/80 leading-relaxed">
-                      "You have acquired an authentic artefact of conviction and steadfast identity. Our master artisans are now preparing your pieces under strict studio standards for physical custody transfer."
+                      "You have acquired an authentic artifact of conviction and steadfast identity. Our master artisans are now preparing your pieces under strict studio standards for physical custody transfer."
                     </p>
                     <div className="font-mono text-[8px] tracking-widest text-brand-text/40 uppercase font-bold pt-1">
                       ||||| | ||||| || |||||| | [SYMBOLIC CORPUS — VERIFIED ARCHIVAL ENTRY]
@@ -502,7 +502,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                           </button>
                           <button
                             type="button"
-                            onClick={() => onOpenAuth?.("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.")}
+                            onClick={() => onOpenAuth?.("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artifacts.")}
                             className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase text-white bg-brand-accent border-2 border-brand-text px-2.5 py-1.5 shadow-[2px_2px_0px_#050505] hover:bg-brand-text hover:text-brand-bg transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                           >
                             <ShieldCheck size={12} className="shrink-0" />
@@ -525,13 +525,13 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                         </div>
                         
                         <p className="text-[11px] font-mono text-brand-text/90 uppercase font-bold leading-relaxed">
-                          In accordance with Symbolic studio protocol, physical artefact custody transfer requires an authenticated studio account. You must register your identity or sign in before dispatch logistics can be authorized.
+                          In accordance with Symbolic studio protocol, physical artifact custody transfer requires an authenticated studio account. You must register your identity or sign in before dispatch logistics can be authorized.
                         </p>
 
                         <div className="flex flex-wrap items-center gap-2.5 pt-1">
                           <button
                             type="button"
-                            onClick={() => onOpenAuth?.("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.")}
+                            onClick={() => onOpenAuth?.("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artifacts.")}
                             className="px-4 py-2.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
                           >
                             <UserIcon size={14} />
@@ -690,7 +690,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                         onClick={() => {
                           if (!user) {
                             if (onOpenAuth) {
-                              onOpenAuth("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.");
+                              onOpenAuth("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artifacts.");
                             }
                             return;
                           }
@@ -977,7 +977,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                     {/* Order Cost Breakdown */}
                     <div className="bg-brand-surface p-4 border border-brand-text/10 space-y-2.5">
                       <div className="flex justify-between text-xs text-brand-text/70">
-                        <span className="font-mono uppercase font-bold text-[10px]">Artefact Subtotal</span>
+                        <span className="font-mono uppercase font-bold text-[10px]">Artifact Subtotal</span>
                         <span className="font-mono font-bold">Rs. {subtotal.toLocaleString()}</span>
                       </div>
 

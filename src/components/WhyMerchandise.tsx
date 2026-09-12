@@ -31,7 +31,7 @@ const observations = [
   {
     code: "05",
     title: "THE HIERARCHY OF WEARING",
-    body: "WEARER → STATEMENT & SYMBOL → ARTEFACT → BRAND. In that exact order. The brand is merely the maker; the statement is yours."
+    body: "WEARER → STATEMENT & SYMBOL → ARTIFACT → BRAND. In that exact order. The brand is merely the maker; the statement is yours."
   },
   {
     code: "06",
@@ -56,7 +56,7 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
           onClick={onBack}
           className="inline-flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors mb-12 border-2 border-brand-text bg-brand-surface px-4 py-2 shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
-          <ArrowLeft size={14} /> [ RETURN TO ARTEFACTS ]
+          <ArrowLeft size={14} /> [ RETURN TO ARTIFACTS ]
         </motion.button>
 
         <div className="space-y-20">
@@ -196,7 +196,7 @@ export default function WhyMerchandise({ onBack, onAbout }: WhyMerchandiseProps)
                 variant="primary"
                 className="px-10 py-4 text-xs font-mono font-black"
               >
-                <span>EXPLORE ALL ARTEFACTS →</span>
+                <span>EXPLORE ALL ARTIFACTS →</span>
               </LiquidCarveButton>
               {onAbout && (
                 <LiquidCarveButton 
