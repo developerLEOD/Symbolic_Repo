@@ -194,23 +194,16 @@ export default function ProductDetail({
     };
 
     const handleScroll = () => {
-      if (dossierContainerRef.current) {
-        const scrollTop = dossierContainerRef.current.scrollTop;
-        setShowStickyAcquire(scrollTop > 500);
-      }
+      const scrollTop = window.scrollY || document.documentElement.scrollTop;
+      setShowStickyAcquire(scrollTop > 500);
     };
 
-    const container = dossierContainerRef.current;
-    if (container) {
-      container.addEventListener("scroll", handleScroll);
-    }
+    window.addEventListener("scroll", handleScroll, { passive: true });
     window.addEventListener("keydown", handleKeyDown);
 
     return () => {
       window.removeEventListener("keydown", handleKeyDown);
-      if (container) {
-        container.removeEventListener("scroll", handleScroll);
-      }
+      window.removeEventListener("scroll", handleScroll);
     };
   }, [images.length, showFullscreenImage, showSizeGuide, onClose]);
 
@@ -308,10 +301,10 @@ export default function ProductDetail({
   return (
     <div 
       ref={dossierContainerRef}
-      className="fixed inset-0 z-[60] bg-brand-bg text-brand-text overflow-y-auto"
+      className="w-full min-h-screen bg-brand-bg text-brand-text"
     >
       {/* 1. TOP ARCHIVAL DOSSIER NAVIGATION BAR */}
-      <header className="sticky top-0 z-40 bg-brand-bg/95 backdrop-blur-md border-b-2 border-brand-text">
+      <header className="sticky top-14 sm:top-16 z-30 bg-brand-bg/95 backdrop-blur-md border-b-2 border-brand-text shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-8 py-3 flex items-center justify-between gap-4">
           
           {/* Left: Return action & Specimen Reference */}

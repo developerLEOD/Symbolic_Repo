@@ -386,6 +386,7 @@ export default function ProductGrid({
               {sortedProducts.map((p, idx) => {
                 const artifactNum = String(idx + 1).padStart(3, '0');
                 const cat = categories.find(c => c.id === p.categoryId);
+                const isComingSoon = Boolean(p.isComingSoon || p.comingSoon || p.status === "coming-soon");
                 return (
                   <tr 
                     key={p.id}
@@ -399,8 +400,13 @@ export default function ProductGrid({
                       <div className="flex items-center gap-3">
                         <span className="font-bold text-brand-accent text-[10px]">[artefact {artifactNum}]</span>
                         <div>
-                          <div className="font-black uppercase tracking-tight text-brand-text group-hover:text-brand-accent transition-colors">
-                            {p.name}
+                          <div className="font-black uppercase tracking-tight text-brand-text group-hover:text-brand-accent transition-colors flex items-center gap-2">
+                            <span>{p.name}</span>
+                            {isComingSoon && (
+                              <span className="text-[8px] font-black uppercase tracking-wider bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text">
+                                COMING SOON
+                              </span>
+                            )}
                           </div>
                           <div className="text-[9px] text-brand-text/60 uppercase">
                             SKU: {p.productId || p.sku}
@@ -425,8 +431,8 @@ export default function ProductGrid({
                       {p.material || "ARCHIVAL COTTON"}
                     </td>
                     <td className="p-3.5">
-                      <span className="text-[10px] font-bold text-brand-text/90">
-                        {p.inventory > 0 ? "AVAILABLE" : "ALLOTTED"}
+                      <span className={`text-[10px] font-bold ${isComingSoon ? "text-brand-accent" : p.inventory > 0 ? "text-brand-text/90" : "text-red-600"}`}>
+                        {isComingSoon ? "COMING SOON" : p.inventory > 0 ? "AVAILABLE" : "ALLOTTED"}
                       </span>
                     </td>
                     <td className="p-3.5 font-bold uppercase text-[10px] text-brand-accent">
@@ -434,7 +440,7 @@ export default function ProductGrid({
                     </td>
                     <td className="p-3.5 text-right">
                       <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg group-hover:bg-brand-accent group-hover:text-white border border-brand-text transition-all">
-                        <span>EXPLORE</span>
+                        <span>{isComingSoon ? "PREVIEW" : "EXPLORE"}</span>
                         <ArrowUpRight size={10} />
                       </span>
                     </td>

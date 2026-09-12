@@ -324,7 +324,8 @@ export default function ArtifactOverlappingCollection({
             const categoryLabel = product.artifactClassification || specimenCategory?.label || normalizeProductCategory(product).toUpperCase();
             const artifactTypeLabel = product.artifactType || normalizeProductCategory(product).toUpperCase();
             const symbolicTagline = product.symbolicTagline || product.inscription || product.wearingCommunicates || "CONVICTION, MATERIALIZED.";
-            const isSoldOut = product.inventory !== undefined && product.inventory <= 0;
+            const isComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
+            const isSoldOut = !isComingSoon && product.inventory !== undefined && product.inventory <= 0;
 
             const placement = placementMap[idx] || "right";
 
@@ -383,12 +384,17 @@ export default function ArtifactOverlappingCollection({
                     loading="lazy"
                   />
 
-                  {/* SUBTLE UNHOVERED DISCREET SPECIMEN TICK (Purely architectural, no text/prices) */}
+                  {/* SUBTLE UNHOVERED DISCREET SPECIMEN TICK & COMING SOON PILL */}
                   <div
-                    className={`absolute bottom-2.5 right-2.5 pointer-events-none transition-opacity duration-200 ${
-                      isHovered ? "opacity-0" : "opacity-40 group-hover:opacity-70"
+                    className={`absolute bottom-2.5 right-2.5 pointer-events-none transition-opacity duration-200 flex items-center gap-1.5 ${
+                      isHovered ? "opacity-0" : "opacity-90 group-hover:opacity-100"
                     }`}
                   >
+                    {isComingSoon && (
+                      <span className="font-mono text-[8.5px] font-black uppercase text-white bg-brand-accent px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                        COMING SOON
+                      </span>
+                    )}
                     <span className="font-mono text-[9px] font-black text-brand-text bg-brand-surface/90 px-1.5 py-0.5 border border-brand-text">
                       {artifactNum}
                     </span>
@@ -471,9 +477,9 @@ export default function ArtifactOverlappingCollection({
                         {/* Bottom Curatorial Status & Dossier Trigger */}
                         <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-brand-bg/20">
                           <div className="flex items-center gap-1.5 text-[8.5px] font-black uppercase tracking-wider">
-                            <span className="w-1.5 h-1.5 bg-emerald-400 rounded-none inline-block" />
+                            <span className={`w-1.5 h-1.5 rounded-none inline-block ${isComingSoon ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
                             <span className="text-brand-bg/85">
-                              {isSoldOut ? "ARCHIVAL COMMISSION" : "PERMANENT ATELIER HOLDING"}
+                              {isComingSoon ? "UPCOMING STUDIO RELEASE" : isSoldOut ? "ARCHIVAL COMMISSION" : "PERMANENT ATELIER HOLDING"}
                             </span>
                           </div>
 
@@ -485,7 +491,7 @@ export default function ArtifactOverlappingCollection({
                             }}
                             className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#ff4500] hover:bg-[#ea3e00] text-white text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
                           >
-                            <span>OPEN DOSSIER</span>
+                            <span>{isComingSoon ? "PREVIEW DOSSIER" : "OPEN DOSSIER"}</span>
                             <MoveRight size={12} />
                           </button>
                         </div>

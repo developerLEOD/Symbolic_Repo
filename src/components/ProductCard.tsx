@@ -30,7 +30,8 @@ export default function ProductCard({
   const collectionTag = collectionName.toUpperCase();
   const images = resolveProductImages(product);
 
-  const isSoldOut = product.inventory !== undefined && product.inventory <= 0;
+  const isComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
+  const isSoldOut = !isComingSoon && product.inventory !== undefined && product.inventory <= 0;
   const artifactNum = typeof index === 'number' ? String(index + 1).padStart(3, '0') : null;
 
   const handlePrevImage = (e: React.MouseEvent) => {
@@ -116,11 +117,16 @@ export default function ProductCard({
           />
         </AnimatePresence>
 
-        {/* Collection Badge */}
-        <div className="absolute top-2 left-2 z-10">
+        {/* Collection Badge & Coming Soon Pill */}
+        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
           <span className="text-[8px] font-mono tracking-widest font-black bg-brand-surface/95 text-brand-text px-1.5 py-0.5 uppercase border border-brand-text shadow-[1px_1px_0px_#050505]">
             {collectionTag}
           </span>
+          {isComingSoon && (
+            <span className="text-[8px] font-mono tracking-wider font-black bg-brand-accent text-white px-2 py-0.5 uppercase border border-brand-text shadow-[1.5px_1.5px_0px_#050505] animate-pulse">
+              COMING SOON
+            </span>
+          )}
         </div>
 
         {/* Arabic Inscription Plaque (if present) */}
@@ -184,8 +190,8 @@ export default function ProductCard({
           </div>
           <div className="text-right">
             <span className="text-brand-text/50 block text-[7px] font-bold">AVAILABILITY:</span>
-            <span className={`font-black ${isSoldOut ? "text-red-600" : "text-brand-accent"}`}>
-              {isSoldOut ? "ALLOTTED" : "REGISTERED"}
+            <span className={`font-black ${isComingSoon ? "text-brand-accent" : isSoldOut ? "text-red-600" : "text-brand-text"}`}>
+              {isComingSoon ? "COMING SOON" : isSoldOut ? "ALLOTTED" : "REGISTERED"}
             </span>
           </div>
         </div>
@@ -193,7 +199,7 @@ export default function ProductCard({
         {/* ─── 4. ACTION BAR ─── */}
         <div className="border-t-2 border-brand-text pt-2.5">
           <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
-            <span>EXPLORE ARTEFACT</span>
+            <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE ARTEFACT"}</span>
             <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
           </div>
         </div>

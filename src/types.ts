@@ -133,6 +133,9 @@ export interface Product {
   // Real inventory and availability
   inventory: number;
   availability: boolean;
+  isComingSoon?: boolean;
+  comingSoon?: boolean;
+  status?: string;
   
   collectionName?: string;
   symbolicTagline?: string;

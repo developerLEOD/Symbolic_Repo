@@ -3,6 +3,11 @@ import { db } from "./firebase";
 import { Product, Category, ProductVariant } from "../types";
 import { handleFirestoreError, OperationType } from "./firestoreErrors";
 
+import FalasteenHoodieImg from "../assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg";
+import CanvasBagImg from "../assets/images/canvas_field_bag_1789233558525.jpg";
+import TwillCapImg from "../assets/images/structured_twill_cap_1789233572064.jpg";
+import BlankComingSoonImg from "../assets/images/completely_blank_coming_soon_1789235306808.jpg";
+
 function cleanUndefined<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
     return obj;
@@ -286,6 +291,7 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     price: 2950,
     inventory: 42,
     availability: true,
+    isComingSoon: false,
     edition: "050 ARTEFACTS // FIRST EDITION",
     material: "100% COMBED ORGANIC RING-SPUN COTTON (280 GSM)",
     fit: "BOXY RELAXED ARCHITECTURAL CUT",
@@ -311,12 +317,13 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     price: 5800,
     inventory: 36,
     availability: true,
+    isComingSoon: false,
     edition: "050 ARTEFACTS // FALASTEEN COLLECTION",
     material: "450 GSM ARCHIVAL FRENCH TERRY",
     fit: "SUBSTANTIAL BOXY THERMAL DRAPE",
     color: "Midnight Carbon / Olive Stitch",
     images: [
-      "/images/store_hero_editorial_1788008309317.jpg",
+      FalasteenHoodieImg,
       "/images/store_hero_editorial_1788008309317.jpg"
     ]
   },
@@ -336,6 +343,7 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     price: 1850,
     inventory: 58,
     availability: true,
+    isComingSoon: false,
     edition: "100 ARTEFACTS // ARTISAN STONEWARE",
     material: "HIGH-FIRED ARTISAN CERAMIC // SATIN MATTE",
     capacity: "350ML // WEIGHT: 380G",
@@ -362,12 +370,13 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     price: 2200,
     inventory: 30,
     availability: true,
+    isComingSoon: false,
     edition: "050 ARTEFACTS // RUN 01",
     material: "100% WASHED COTTON TWILL // BRASS FASTENER",
     fit: "UNSTRUCTURED 6-PANEL LOW PROFILE",
     color: "Olive & Earth",
     images: [
-      "/images/store_hero_editorial_1788008309317.jpg",
+      TwillCapImg,
       "/images/store_hero_editorial_1788008309317.jpg"
     ]
   },
@@ -387,6 +396,7 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     price: 1850,
     inventory: 45,
     availability: true,
+    isComingSoon: false,
     edition: "075 ARTEFACTS // SERIES 02",
     material: "DENSE GLAZED EARTHENWARE",
     capacity: "340ML // WEIGHT: 390G",
@@ -413,12 +423,13 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     price: 3400,
     inventory: 28,
     availability: true,
+    isComingSoon: false,
     edition: "040 ARTEFACTS // FIRST EDITION",
     material: "18 OZ WATER-REPELLENT DUCK CANVAS",
     dimensions: "42CM X 38CM X 14CM",
     color: "Natural Unbleached Bone / Carbon",
     images: [
-      "/images/store_hero_editorial_1788008309317.jpg",
+      CanvasBagImg,
       "/images/store_hero_editorial_1788008309317.jpg"
     ]
   }
@@ -429,7 +440,6 @@ export async function fetchProducts(): Promise<Product[]> {
   try {
     const snapshot = await getDocs(collection(db, path));
     if (snapshot.empty) {
-      // Seed canonical products into Firestore asynchronously and return them
       for (const obj of CANONICAL_SEED_OBJECTS) {
         setDoc(doc(db, path, obj.id), cleanUndefined(obj)).catch(() => {});
       }
