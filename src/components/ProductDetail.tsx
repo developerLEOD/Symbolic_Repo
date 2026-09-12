@@ -17,7 +17,8 @@ import {
   ArrowUpRight,
   Info,
   Bell,
-  Clock
+  Clock,
+  Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { collection, getDocs } from "firebase/firestore";
@@ -98,6 +99,7 @@ export default function ProductDetail({
   const [showSizeGuide, setShowSizeGuide] = useState(false);
   const [showFullscreenImage, setShowFullscreenImage] = useState(false);
   const [showStickyAcquire, setShowStickyAcquire] = useState(false);
+  const [copiedLink, setCopiedLink] = useState(false);
   const [notifyEmail, setNotifyEmail] = useState("");
   const [notifySubmitted, setNotifySubmitted] = useState(false);
 
@@ -375,6 +377,41 @@ export default function ProductDetail({
                 #POSSESSION
               </button>
             </nav>
+
+            {/* Copy Dossier Direct URL */}
+            <button 
+              type="button"
+              onClick={() => {
+                soundManager.playClick();
+                const identifier = product.productId || product.sku || product.id;
+                const canonicalUrl = `${window.location.origin}/artefact/${identifier}`;
+                navigator.clipboard?.writeText(canonicalUrl).then(() => {
+                  setCopiedLink(true);
+                  setTimeout(() => setCopiedLink(false), 2400);
+                }).catch(() => {
+                  // Fallback
+                  try {
+                    navigator.clipboard?.writeText(window.location.href);
+                    setCopiedLink(true);
+                    setTimeout(() => setCopiedLink(false), 2400);
+                  } catch (e) {}
+                });
+              }}
+              className="flex items-center gap-1.5 px-2.5 py-1.5 border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-white transition-colors cursor-pointer shadow-[2px_2px_0px_#050505] text-[10px] font-mono font-black uppercase tracking-wider"
+              title="Copy Artefact URL"
+            >
+              {copiedLink ? (
+                <>
+                  <Check size={13} className="text-brand-accent" />
+                  <span className="hidden sm:inline">URL COPIED</span>
+                </>
+              ) : (
+                <>
+                  <Share2 size={13} />
+                  <span className="hidden sm:inline">SHARE</span>
+                </>
+              )}
+            </button>
 
             {/* Close Action */}
             <button 

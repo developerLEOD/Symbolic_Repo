@@ -1,4 +1,5 @@
 import { motion } from "motion/react";
+import { Link, useNavigate } from "react-router-dom";
 import { useAuth } from "../lib/AuthContext";
 import { Category } from "../types";
 
@@ -11,6 +12,7 @@ interface FooterProps {
 
 export default function Footer({ categories, onCategoryClick, onOwnerClick, onCartClick }: FooterProps) {
   const { isOwner } = useAuth();
+  const navigate = useNavigate();
   
   // Filter out any garments references completely
   const validCategories = (categories || []).filter(c => {
@@ -19,6 +21,19 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
     const label = (c.label || "").toLowerCase();
     return id !== "garments" && name !== "garments" && label !== "garments";
   });
+
+  const getCategoryPath = (catId: string) => {
+    const id = catId.toLowerCase();
+    if (id === "be-symbolic") return "/collection/be-symbolic";
+    if (id === "be-palestine" || id === "palestine") return "/collection/be-palestine";
+    return `/artefacts/${id}`;
+  };
+
+  const handleLinkClick = (path: string, catId: string | null) => {
+    if (onCategoryClick) onCategoryClick(catId);
+    navigate(path);
+  };
+
   return (
     <footer className="bg-brand-surface border-t-2 border-brand-text pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
@@ -43,97 +58,120 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
                   </span>
                 </div>
                 <span className="block text-[8px] font-mono uppercase tracking-widest text-brand-text/60 mt-1">
-                  POSSESSION & IDENTITY STUDIO
+                  POSSESSION &amp; IDENTITY // EST. 1446 AH
                 </span>
               </div>
             </div>
-            <p className="font-mono text-xs text-brand-text/80 max-w-sm leading-relaxed uppercase">
-              What we possess and wear should communicate who we are and what we stand for—not turn us into walking banners for other brands.
+            <p className="font-mono text-xs text-brand-text/80 max-w-md leading-relaxed uppercase">
+              A design house dedicated to manufacturing heavyweight physical instruments for those who carry unwavering faith and upright posture.
             </p>
-            <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-text text-brand-bg font-mono text-[9px] uppercase tracking-widest border border-brand-text">
-              <span className="w-2 h-2 bg-brand-accent" />
-              <span>REPRESENT YOURSELF // ZERO BILLBOARD CULTURE</span>
-            </div>
           </div>
-          
-          <div className="md:col-span-6 flex justify-start md:justify-end gap-12 font-mono text-xs">
-            <div className="space-y-4">
-              <h3 className="text-[10px] font-mono font-black uppercase tracking-widest text-brand-accent">
-                [ DIRECTORY ]
-              </h3>
-              <ul className="space-y-2.5 font-bold uppercase">
+
+          <div className="md:col-span-6 grid grid-cols-2 gap-8 font-mono text-xs">
+            <div>
+              <span className="text-brand-accent font-black block mb-4 uppercase tracking-widest">
+                [ 01 // ARCHIVE ]
+              </span>
+              <ul className="space-y-2 uppercase font-bold text-brand-text">
                 <li>
-                  <motion.button 
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={() => onCategoryClick && onCategoryClick(null)}
-                    className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                  <Link
+                    to="/artefacts"
+                    onClick={() => handleLinkClick("/artefacts", null)}
+                    className="hover:text-brand-accent transition-colors text-left cursor-pointer block"
                   >
-                    &gt; ALL OBJECTS
-                  </motion.button>
+                    &gt; ALL ARTEFACTS
+                  </Link>
                 </li>
+                <li>
+                  <Link
+                    to="/collection/be-symbolic"
+                    onClick={() => handleLinkClick("/collection/be-symbolic", "be-symbolic")}
+                    className="hover:text-brand-accent transition-colors text-left cursor-pointer block"
+                  >
+                    &gt; BE SYMBOLIC
+                  </Link>
+                </li>
+                <li>
+                  <Link
+                    to="/collection/be-palestine"
+                    onClick={() => handleLinkClick("/collection/be-palestine", "be-palestine")}
+                    className="hover:text-brand-accent transition-colors text-left cursor-pointer block"
+                  >
+                    &gt; BE PALESTINE
+                  </Link>
+                </li>
+                {onCartClick && (
+                  <li>
+                    <motion.button 
+                      whileHover={{ x: 4 }}
+                      whileTap={{ scale: 0.98 }}
+                      transition={{ type: "spring", stiffness: 400, damping: 25 }}
+                      onClick={onCartClick}
+                      className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                    >
+                      &gt; POSSESSION LEDGER
+                    </motion.button>
+                  </li>
+                )}
+              </ul>
+            </div>
+
+            <div>
+              <span className="text-brand-accent font-black block mb-4 uppercase tracking-widest">
+                [ 02 // CODEX ]
+              </span>
+              <ul className="space-y-2 uppercase font-bold text-brand-text">
                 {validCategories.length > 0 ? (
-                  validCategories.map((c) => (
+                  validCategories.map(c => (
                     <li key={c.id}>
-                      <motion.button 
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onClick={() => onCategoryClick && onCategoryClick(c.id)}
-                        className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                      <Link
+                        to={getCategoryPath(c.id)}
+                        onClick={() => handleLinkClick(getCategoryPath(c.id), c.id)}
+                        className="hover:text-brand-accent transition-colors text-left cursor-pointer block"
                       >
                         &gt; {c.label || c.name}
-                      </motion.button>
+                      </Link>
                     </li>
                   ))
                 ) : (
                   <>
                     <li>
-                      <motion.button 
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onClick={() => onCategoryClick && onCategoryClick("be-symbolic")}
-                        className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                      <Link
+                        to="/collection/be-symbolic"
+                        onClick={() => handleLinkClick("/collection/be-symbolic", "be-symbolic")}
+                        className="hover:text-brand-accent transition-colors text-left cursor-pointer block"
                       >
                         &gt; BE SYMBOLIC
-                      </motion.button>
+                      </Link>
                     </li>
                     <li>
-                      <motion.button 
-                        whileHover={{ x: 4 }}
-                        whileTap={{ scale: 0.98 }}
-                        transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                        onClick={() => onCategoryClick && onCategoryClick("palestine")}
-                        className="hover:text-brand-accent transition-colors text-left cursor-pointer"
+                      <Link
+                        to="/collection/be-palestine"
+                        onClick={() => handleLinkClick("/collection/be-palestine", "be-palestine")}
+                        className="hover:text-brand-accent transition-colors text-left cursor-pointer block"
                       >
                         &gt; BE PALESTINE
-                      </motion.button>
+                      </Link>
                     </li>
                   </>
                 )}
                 <li>
-                  <motion.button 
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={() => onCategoryClick && onCategoryClick("about")}
-                    className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent"
+                  <Link
+                    to="/about"
+                    onClick={() => handleLinkClick("/about", "about")}
+                    className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent block"
                   >
                     &gt; ABOUT SYMBOLIC
-                  </motion.button>
+                  </Link>
                 </li>
                 <li>
-                  <motion.button 
-                    whileHover={{ x: 4 }}
-                    whileTap={{ scale: 0.98 }}
-                    transition={{ type: "spring", stiffness: 400, damping: 25 }}
-                    onClick={() => onCategoryClick && onCategoryClick("why-merchandise")}
-                    className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent"
+                  <Link
+                    to="/why-merchandise"
+                    onClick={() => handleLinkClick("/why-merchandise", "why-merchandise")}
+                    className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent block"
                   >
                     &gt; WHY WE WEAR THIS
-                  </motion.button>
+                  </Link>
                 </li>
                 {isOwner && onOwnerClick && (
                   <li>
@@ -160,7 +198,7 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
               <span className="font-black leading-tight">SYMBOLIC</span>
               <span className="text-[8px] font-bold italic text-brand-accent leading-none">MUSLIMS</span>
             </span>
-            <span className="text-brand-text/70">// POSSESSION & IDENTITY</span>
+            <span className="text-brand-text/70">// POSSESSION &amp; IDENTITY</span>
           </div>
           <p className="text-brand-accent">PERSON → SYMBOL → OBJECT</p>
         </div>
@@ -168,7 +206,3 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
     </footer>
   );
 }
-
-
-
-

@@ -4,9 +4,8 @@
  */
 
 import { useState, useEffect } from "react";
+import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "./lib/firebase";
 import { Product, CartItem, Category } from "./types";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
@@ -15,6 +14,7 @@ import SystemSpec from "./components/SystemSpec";
 import Philosophy from "./components/Philosophy";
 import ProductGrid from "./components/ProductGrid";
 import ProductDetail from "./components/ProductDetail";
+import ProductRouteHandler from "./components/ProductRouteHandler";
 import WhyMerchandise from "./components/WhyMerchandise";
 import About from "./components/About";
 import Cart from "./components/Cart";
@@ -24,15 +24,179 @@ import CheckoutModal from "./components/CheckoutModal";
 import AuthModal from "./components/AuthModal";
 import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
+import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 
+// Wrapper for /artefacts and /artefacts/:category views
+function ArtefactsDirectoryView({
+  onProductClick,
+  refreshKey,
+  onCategoriesLoaded,
+  flagshipProduct,
+  onAddToCart,
+  onNavigateManifesto,
+  onNavigateAbout,
+}: {
+  onProductClick: (p: Product) => void;
+  refreshKey: number;
+  onCategoriesLoaded: (cats: Category[]) => void;
+  flagshipProduct: Product | null;
+  onAddToCart: (item: CartItem) => void;
+  onNavigateManifesto: () => void;
+  onNavigateAbout: () => void;
+}) {
+  const { categoryId } = useParams<{ categoryId?: string }>();
+  const navigate = useNavigate();
+
+  return (
+    <div className="pt-20">
+      <ProductGrid 
+        activeCategoryId={categoryId || null} 
+        onCategoryChange={(catId) => {
+          if (!catId) navigate("/artefacts");
+          else navigate(`/artefacts/${catId}`);
+        }}
+        onProductClick={onProductClick} 
+        refreshKey={refreshKey}
+        onCategoriesLoaded={onCategoriesLoaded}
+      />
+
+      {flagshipProduct && isProductLive(flagshipProduct) && (
+        <FeaturedObject 
+          product={flagshipProduct}
+          onViewProduct={onProductClick}
+          onAddToCart={onAddToCart}
+        />
+      )}
+
+      <SystemSpec />
+
+      <Philosophy 
+        onReadManifesto={onNavigateManifesto}
+        onReadAbout={onNavigateAbout}
+      />
+    </div>
+  );
+}
+
+// Wrapper for /collection/:collectionId views
+function CollectionDirectoryView({
+  onProductClick,
+  refreshKey,
+  onCategoriesLoaded,
+  flagshipProduct,
+  onAddToCart,
+  onNavigateManifesto,
+  onNavigateAbout,
+}: {
+  onProductClick: (p: Product) => void;
+  refreshKey: number;
+  onCategoriesLoaded: (cats: Category[]) => void;
+  flagshipProduct: Product | null;
+  onAddToCart: (item: CartItem) => void;
+  onNavigateManifesto: () => void;
+  onNavigateAbout: () => void;
+}) {
+  const { collectionId } = useParams<{ collectionId?: string }>();
+  const navigate = useNavigate();
+
+  return (
+    <div className="pt-20">
+      <ProductGrid 
+        activeCategoryId={collectionId || null} 
+        onCategoryChange={(catId) => {
+          if (!catId) navigate("/artefacts");
+          else navigate(`/artefacts/${catId}`);
+        }}
+        onProductClick={onProductClick} 
+        refreshKey={refreshKey}
+        onCategoriesLoaded={onCategoriesLoaded}
+      />
+
+      {flagshipProduct && isProductLive(flagshipProduct) && (
+        <FeaturedObject 
+          product={flagshipProduct}
+          onViewProduct={onProductClick}
+          onAddToCart={onAddToCart}
+        />
+      )}
+
+      <SystemSpec />
+
+      <Philosophy 
+        onReadManifesto={onNavigateManifesto}
+        onReadAbout={onNavigateAbout}
+      />
+    </div>
+  );
+}
+
+// Home page view
+function HomeView({
+  onProductClick,
+  refreshKey,
+  onCategoriesLoaded,
+  flagshipProduct,
+  onAddToCart,
+  onNavigateManifesto,
+  onNavigateAbout,
+}: {
+  onProductClick: (p: Product) => void;
+  refreshKey: number;
+  onCategoriesLoaded: (cats: Category[]) => void;
+  flagshipProduct: Product | null;
+  onAddToCart: (item: CartItem) => void;
+  onNavigateManifesto: () => void;
+  onNavigateAbout: () => void;
+}) {
+  const navigate = useNavigate();
+
+  return (
+    <>
+      <Hero 
+        onExplore={() => {
+          const el = document.getElementById("catalog-section");
+          if (el) el.scrollIntoView({ behavior: "smooth" });
+        }} 
+        onWhy={() => navigate("/why-merchandise")} 
+      />
+      
+      <ProductGrid 
+        activeCategoryId={null} 
+        onCategoryChange={(catId) => {
+          if (catId) navigate(`/artefacts/${catId}`);
+          else navigate("/artefacts");
+        }}
+        onProductClick={onProductClick} 
+        refreshKey={refreshKey}
+        onCategoriesLoaded={onCategoriesLoaded}
+      />
+
+      {flagshipProduct && isProductLive(flagshipProduct) && (
+        <FeaturedObject 
+          product={flagshipProduct}
+          onViewProduct={onProductClick}
+          onAddToCart={onAddToCart}
+        />
+      )}
+
+      <SystemSpec />
+
+      <Philosophy 
+        onReadManifesto={onNavigateManifesto}
+        onReadAbout={onNavigateAbout}
+      />
+    </>
+  );
+}
+
 function StorefrontApp() {
   const { user, isOwner } = useAuth();
-  const [activeCategoryId, setActiveCategoryId] = useState<string | null>(null);
-  const [showWhyMerchandise, setShowWhyMerchandise] = useState(false);
-  const [showAbout, setShowAbout] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -140,12 +304,14 @@ function StorefrontApp() {
 
   const handleUpdateCartItem = (oldId: string, updatedItem: CartItem) => {
     setCart(prev => {
-      // If new item composite id matches an existing item other than oldId, merge quantity
-      const existingIndex = prev.findIndex(i => i.id === updatedItem.id && i.id !== oldId);
-      if (existingIndex > -1) {
+      const existingIndex = prev.findIndex(item => item.id === updatedItem.id);
+      if (existingIndex > -1 && updatedItem.id !== oldId) {
         return prev
-          .filter(i => i.id !== oldId)
-          .map((item, idx) => idx === existingIndex ? { ...item, quantity: item.quantity + updatedItem.quantity } : item);
+          .filter(item => item.id !== oldId)
+          .map(item => item.id === updatedItem.id 
+            ? { ...item, quantity: item.quantity + updatedItem.quantity } 
+            : item
+          );
       }
       return prev.map(item => item.id === oldId ? updatedItem : item);
     });
@@ -153,39 +319,6 @@ function StorefrontApp() {
 
   const handleRemoveFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item.id !== id));
-  };
-
-  const handleCategoryChange = (id: string | null) => {
-    if (id === "about") {
-      setShowAbout(true);
-      setShowWhyMerchandise(false);
-      setActiveCategoryId(null);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-
-    if (id === "why-merchandise" || id === "manifesto") {
-      setShowWhyMerchandise(true);
-      setShowAbout(false);
-      setActiveCategoryId(null);
-      window.scrollTo({ top: 0, behavior: 'smooth' });
-      return;
-    }
-    
-    setShowAbout(false);
-    setShowWhyMerchandise(false);
-    setActiveCategoryId(id);
-    setSelectedProduct(null);
-
-    // Smooth scroll to catalog section if filtering
-    setTimeout(() => {
-      const el = document.getElementById("catalog-section");
-      if (el) {
-        el.scrollIntoView({ behavior: "smooth" });
-      } else {
-        window.scrollTo({ top: window.innerHeight * 0.8, behavior: 'smooth' });
-      }
-    }, 50);
   };
 
   const handleProductPublished = () => {
@@ -208,12 +341,19 @@ function StorefrontApp() {
     }
   };
 
+  const handleProductSelect = (product: Product) => {
+    // Navigate to canonical URL for this artefact
+    const identifier = product.productId || product.sku || product.id;
+    navigate(`/artefact/${identifier}`);
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
 
   return (
     <div className="min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white">
+      <ScrollToTop />
       {referralWelcomeBanner && (
         <div className="bg-brand-surface text-brand-text px-4 py-2 font-mono text-[11px] flex flex-wrap items-center justify-between gap-3 border-b-2 border-brand-text shadow-[0_2px_0px_#050505] sticky top-0 z-[60]">
           <div className="flex items-center gap-2.5">
@@ -233,10 +373,10 @@ function StorefrontApp() {
           </button>
         </div>
       )}
+
       <Header 
         onCartClick={() => setIsCartOpen(true)} 
         cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
-        onCategoryClick={handleCategoryChange}
         onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined}
         onAuthClick={() => {
           if (user) {
@@ -253,76 +393,151 @@ function StorefrontApp() {
             setIsProfileOpen(true);
           } else {
             setAuthDefaultTab("signup");
+            setAuthNotice("SIGN UP TO UNLOCK YOUR AFFILIATION NETWORK // Share symbolic transmission codes and earn commission on every acquired artefact.");
             setIsAuthOpen(true);
           }
         }}
       />
 
       <main>
-        {showAbout ? (
-          <About 
-            onBack={() => handleCategoryChange(null)}
-            onWhyWeWear={() => handleCategoryChange("why-merchandise")}
-          />
-        ) : showWhyMerchandise ? (
-          <WhyMerchandise 
-            onBack={() => handleCategoryChange(null)} 
-            onAbout={() => handleCategoryChange("about")}
-          />
-        ) : (
-          <>
-            {!activeCategoryId && (
-              <Hero 
-                onExplore={() => {
-                  const el = document.getElementById("catalog-section");
-                  if (el) el.scrollIntoView({ behavior: "smooth" });
-                }} 
-                onWhy={() => handleCategoryChange("why-merchandise")} 
+        <Routes>
+          {/* Home Route */}
+          <Route
+            path="/"
+            element={
+              <HomeView
+                onProductClick={handleProductSelect}
+                refreshKey={refreshKey}
+                onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
+                flagshipProduct={flagshipProduct}
+                onAddToCart={handleAddToCart}
+                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateAbout={() => navigate("/about")}
               />
-            )}
-            
-            <ProductGrid 
-              activeCategoryId={activeCategoryId} 
-              onCategoryChange={handleCategoryChange}
-              onProductClick={setSelectedProduct} 
-              refreshKey={refreshKey}
-              onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
-            />
+            }
+          />
 
-            {!activeCategoryId && (
-              <>
-                {flagshipProduct && isProductLive(flagshipProduct) && (
-                  <FeaturedObject 
-                    product={flagshipProduct}
-                    onViewProduct={setSelectedProduct}
-                    onAddToCart={handleAddToCart}
-                  />
-                )}
+          {/* Canonical Artefacts Directory */}
+          <Route
+            path="/artefacts"
+            element={
+              <ArtefactsDirectoryView
+                onProductClick={handleProductSelect}
+                refreshKey={refreshKey}
+                onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
+                flagshipProduct={flagshipProduct}
+                onAddToCart={handleAddToCart}
+                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateAbout={() => navigate("/about")}
+              />
+            }
+          />
 
-                <SystemSpec />
+          {/* Artefacts filtered by medium (wear, carry, headwear, vessels, etc.) */}
+          <Route
+            path="/artefacts/:categoryId"
+            element={
+              <ArtefactsDirectoryView
+                onProductClick={handleProductSelect}
+                refreshKey={refreshKey}
+                onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
+                flagshipProduct={flagshipProduct}
+                onAddToCart={handleAddToCart}
+                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateAbout={() => navigate("/about")}
+              />
+            }
+          />
 
-                <Philosophy 
-                  onReadManifesto={() => handleCategoryChange("why-merchandise")}
-                  onReadAbout={() => handleCategoryChange("about")}
-                />
-              </>
-            )}
-          </>
-        )}
+          {/* Collections routes (/collection/be-symbolic, /collection/be-palestine) */}
+          <Route
+            path="/collection/:collectionId"
+            element={
+              <CollectionDirectoryView
+                onProductClick={handleProductSelect}
+                refreshKey={refreshKey}
+                onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
+                flagshipProduct={flagshipProduct}
+                onAddToCart={handleAddToCart}
+                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateAbout={() => navigate("/about")}
+              />
+            }
+          />
+
+          {/* Direct Artefact Specification Dossier */}
+          <Route
+            path="/artefact/:id"
+            element={
+              <ProductRouteHandler
+                onAddToCart={handleAddToCart}
+                onOpenLedger={() => setIsCartOpen(true)}
+                onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
+                onProductDeleted={handleProductPublished}
+              />
+            }
+          />
+
+          {/* About SYMBOLIC Dossier */}
+          <Route 
+            path="/about" 
+            element={
+              <About 
+                onBack={() => navigate("/artefacts")} 
+                onWhyWeWear={() => navigate("/why-merchandise")} 
+              />
+            } 
+          />
+
+          {/* Why We Wear This / Doctrine */}
+          <Route 
+            path="/why-merchandise" 
+            element={
+              <WhyMerchandise 
+                onBack={() => navigate("/artefacts")} 
+                onAbout={() => navigate("/about")} 
+              />
+            } 
+          />
+
+          {/* Fallback route back to home */}
+          <Route
+            path="*"
+            element={
+              <HomeView
+                onProductClick={handleProductSelect}
+                refreshKey={refreshKey}
+                onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
+                flagshipProduct={flagshipProduct}
+                onAddToCart={handleAddToCart}
+                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateAbout={() => navigate("/about")}
+              />
+            }
+          />
+        </Routes>
       </main>
 
       <Footer 
         categories={categories}
-        onCategoryClick={handleCategoryChange}
+        onCategoryClick={(catId) => {
+          if (!catId) navigate("/artefacts");
+          else if (catId === "about") navigate("/about");
+          else if (catId === "why-merchandise") navigate("/why-merchandise");
+          else if (catId === "be-symbolic") navigate("/collection/be-symbolic");
+          else if (catId === "be-palestine" || catId === "palestine") navigate("/collection/be-palestine");
+          else navigate(`/artefacts/${catId}`);
+        }}
         onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined} 
         onCartClick={() => setIsCartOpen(true)}
       />
 
+      {/* Legacy/in-page modal fallback if selectedProduct is ever set directly */}
       <AnimatePresence>
         {selectedProduct && (
           <ProductDetail 
             product={selectedProduct}
-            categoryLabel={activeCategoryId === 'mugs' ? 'GATHER' : activeCategoryId === 't-shirts' ? 'WEAR' : 'CARRY'}
+            categoryLabel={selectedProduct.category ? selectedProduct.category.toUpperCase() : 'ARTEFACT'}
             onClose={() => setSelectedProduct(null)}
             onAddToCart={handleAddToCart}
             onOpenLedger={() => setIsCartOpen(true)}
@@ -402,7 +617,8 @@ function StorefrontApp() {
           onViewProductInStore={(catId) => {
             setIsOwnerOpen(false);
             setOwnerEditProductId(null);
-            handleCategoryChange(catId);
+            if (catId) navigate(`/artefacts/${catId}`);
+            else navigate("/artefacts");
           }}
         />
       )}
@@ -417,4 +633,3 @@ export default function App() {
     </AuthProvider>
   );
 }
-

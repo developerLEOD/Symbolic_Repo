@@ -525,3 +525,33 @@ export async function toggleProductAvailability(productId: string, availability:
     handleFirestoreError(error, OperationType.UPDATE, productPath);
   }
 }
+
+/**
+ * Creates a URL-safe slug from product name, inscription, or identifier.
+ */
+export function getProductSlug(product: Product): string {
+  if (product.productId) {
+    return product.productId.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+  }
+  const raw = product.name || product.sku || product.id;
+  return raw.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "");
+}
+
+/**
+ * Looks up a product by ID, SKU, product code (e.g. SYM-01), or slug.
+ */
+export async function fetchProductBySlugOrId(identifier: string): Promise<Product | null> {
+  const clean = decodeURIComponent(identifier).trim().toLowerCase();
+  const all = await fetchProducts();
+  const live = all.filter(isProductLive);
+
+  // Exact ID / ProductId / SKU match
+  const found = live.find(p => 
+    p.id.toLowerCase() === clean ||
+    (p.productId && p.productId.toLowerCase() === clean) ||
+    (p.sku && p.sku.toLowerCase() === clean) ||
+    getProductSlug(p) === clean
+  );
+
+  return found || null;
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useRef } from "react";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { Menu, X, ChevronRight, ChevronDown, User as UserIcon, Sliders } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { Category } from "../types";
@@ -8,7 +9,7 @@ import { fetchCategories } from "../lib/productService";
 interface HeaderProps {
   onCartClick: () => void;
   cartCount: number;
-  onCategoryClick: (id: string | null) => void;
+  onCategoryClick?: (id: string | null) => void;
   onOwnerClick?: () => void;
   onAuthClick: () => void;
   onReferralClick?: () => void;
@@ -28,6 +29,8 @@ export default function Header({
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<"corpus" | "collections" | "manifestoes" | null>(null);
   const navRef = useRef<HTMLElement>(null);
+  const location = useLocation();
+  const navigate = useNavigate();
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -50,7 +53,11 @@ export default function Header({
 
   useEffect(() => {
     const handleScroll = () => {
-      setScrolled(window.scrollY > 20);
+      if (window.scrollY > 20) {
+        setScrolled(true);
+      } else {
+        setScrolled(false);
+      }
     };
     window.addEventListener("scroll", handleScroll);
     return () => window.removeEventListener("scroll", handleScroll);
@@ -74,11 +81,11 @@ export default function Header({
 
   // Canonical Mediums
   const standardMediums = [
-    { id: null, label: "MEDIUMS // ALL", desc: "Complete Transmission Archive" },
-    { id: "wear", label: "WEAR", desc: "Heavyweight Tees, Fleece & Outerwear" },
-    { id: "carry", label: "CARRY", desc: "Utility Totes & Artefact Carriers" },
-    { id: "headwear", label: "HEADWEAR", desc: "Structured Twill Caps & Headwear" },
-    { id: "vessels", label: "VESSELS", desc: "Ceramic Mugs & Stoneware" },
+    { id: null, path: "/artefacts", label: "MEDIUMS // ALL", desc: "Complete Transmission Archive" },
+    { id: "wear", path: "/artefacts/wear", label: "WEAR", desc: "Heavyweight Tees, Fleece & Outerwear" },
+    { id: "carry", path: "/artefacts/carry", label: "CARRY", desc: "Utility Totes & Artefact Carriers" },
+    { id: "headwear", path: "/artefacts/headwear", label: "HEADWEAR", desc: "Structured Twill Caps & Headwear" },
+    { id: "vessels", path: "/artefacts/vessels", label: "VESSELS", desc: "Ceramic Mugs & Stoneware" },
   ];
 
   const canonicalMediumIds = new Set(["wear", "carry", "headwear", "vessels", "be-palestine", "palestine", "be-symbolic", "garments"]);
@@ -86,6 +93,7 @@ export default function Header({
     .filter(c => !canonicalMediumIds.has((c.id || "").toLowerCase()))
     .map(c => ({
       id: c.id,
+      path: `/artefacts/${c.id}`,
       label: (c.label || c.name).toUpperCase(),
       desc: "Custom Medium Taxonomy"
     }));
@@ -93,22 +101,39 @@ export default function Header({
   const mediumItems = [...standardMediums, ...extraCategories];
 
   const collectionItems = [
-    { id: null, label: "ALL COLLECTIONS", desc: "Unified Archive // Both Ethos Lines" },
-    { id: "be-symbolic", label: "BE SYMBOLIC", desc: "Core Identity & Modern Islamic Ethos" },
-    { id: "be-palestine", label: "BE PALESTINE", desc: "The Steadfast Line // Heritage & Solidarity" },
+    { id: null, path: "/artefacts", label: "ALL COLLECTIONS", desc: "Unified Archive // Both Ethos Lines" },
+    { id: "be-symbolic", path: "/collection/be-symbolic", label: "BE SYMBOLIC", desc: "Core Identity & Modern Islamic Ethos" },
+    { id: "be-palestine", path: "/collection/be-palestine", label: "BE PALESTINE", desc: "The Steadfast Line // Heritage & Solidarity" },
   ];
 
   const manifestoItems = [
-    { id: "why-merchandise", label: "DOCTRINE // WHY MERCHANDISE", desc: "Foundational Manifesto & Philosophy" },
-    { id: "about", label: "PROVENANCE // ABOUT SYMBOLIC", desc: "Identity, Origin & Material Mandates" },
+    { id: "why-merchandise", path: "/why-merchandise", label: "DOCTRINE // WHY MERCHANDISE", desc: "Foundational Manifesto & Philosophy" },
+    { id: "about", path: "/about", label: "PROVENANCE // ABOUT SYMBOLIC", desc: "Identity, Origin & Material Mandates" },
   ];
+
+  const isMediumActive = location.pathname.startsWith("/artefacts");
+  const isCollectionActive = location.pathname.startsWith("/collection");
+  const isManifestoActive = location.pathname === "/about" || location.pathname === "/why-merchandise";
+
+  const handleItemSelect = (path: string, id: string | null) => {
+    setOpenDropdown(null);
+    setIsMenuOpen(false);
+    if (onCategoryClick) {
+      onCategoryClick(id);
+    }
+    navigate(path);
+  };
 
   return (
     <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-brand-bg/95 backdrop-blur-sm border-b-2 border-brand-text shadow-[0_4px_0px_#050505]' : 'bg-brand-bg border-b-2 border-brand-text'}`}>
       <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 transition-all duration-300 ${scrolled ? 'h-13 sm:h-14' : 'h-16'}`}>
         <div className="flex items-center gap-3 lg:gap-5 xl:gap-8 shrink-0">
-          <button 
-            onClick={() => { onCategoryClick(null); setIsMenuOpen(false); }}
+          <Link 
+            to="/"
+            onClick={() => {
+              if (onCategoryClick) onCategoryClick(null);
+              setIsMenuOpen(false);
+            }}
             className="group flex items-center gap-2 sm:gap-2.5 text-left focus:outline-none cursor-pointer shrink-0 select-none"
           >
             <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text group-hover:border-brand-accent group-hover:shadow-[2px_2px_0px_#050505] transition-all duration-200 ${scrolled ? 'w-8 h-8 sm:w-9 sm:h-9' : 'w-9 h-9 sm:w-10 sm:h-10'}`}>
@@ -132,7 +157,7 @@ export default function Header({
                 POSSESSION &amp; IDENTITY
               </span>
             </div>
-          </button>
+          </Link>
           
           {/* PC Navigation: Visible on desktop (lg:flex) */}
           <nav 
@@ -145,7 +170,7 @@ export default function Header({
                 type="button"
                 onClick={() => setOpenDropdown(prev => prev === "corpus" ? null : "corpus")}
                 className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                  openDropdown === "corpus" 
+                  openDropdown === "corpus" || isMediumActive
                     ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                     : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
                 } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
@@ -170,14 +195,11 @@ export default function Header({
                     </div>
                     <div className="max-h-72 overflow-y-auto divide-y divide-brand-text/10">
                       {mediumItems.map(item => (
-                        <button
-                          key={item.id ?? "all"}
-                          type="button"
-                          onClick={() => {
-                            onCategoryClick(item.id);
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer"
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => handleItemSelect(item.path, item.id)}
+                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer block"
                         >
                           <div>
                             <div className="font-mono text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider group-hover:text-brand-bg">
@@ -188,7 +210,7 @@ export default function Header({
                             </div>
                           </div>
                           <ChevronRight size={12} className="text-brand-text/40 group-hover:text-brand-bg shrink-0 transition-transform group-hover:translate-x-0.5" />
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </motion.div>
@@ -202,7 +224,7 @@ export default function Header({
                 type="button"
                 onClick={() => setOpenDropdown(prev => prev === "collections" ? null : "collections")}
                 className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                  openDropdown === "collections" 
+                  openDropdown === "collections" || isCollectionActive
                     ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                     : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
                 } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
@@ -227,14 +249,11 @@ export default function Header({
                     </div>
                     <div className="divide-y divide-brand-text/10">
                       {collectionItems.map(item => (
-                        <button
-                          key={item.id ?? "all"}
-                          type="button"
-                          onClick={() => {
-                            onCategoryClick(item.id);
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer"
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => handleItemSelect(item.path, item.id)}
+                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer block"
                         >
                           <div>
                             <div className={`font-mono text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider group-hover:text-brand-bg ${item.id ? 'text-brand-accent' : ''}`}>
@@ -245,7 +264,7 @@ export default function Header({
                             </div>
                           </div>
                           <ChevronRight size={12} className="text-brand-text/40 group-hover:text-brand-bg shrink-0 transition-transform group-hover:translate-x-0.5" />
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </motion.div>
@@ -253,19 +272,19 @@ export default function Header({
               </AnimatePresence>
             </div>
 
-            {/* Dropdown 3: About & Manifestoes */}
+            {/* Dropdown 3: Manifesto / Doctrine / Provenance */}
             <div className="relative">
               <button 
                 type="button"
                 onClick={() => setOpenDropdown(prev => prev === "manifestoes" ? null : "manifestoes")}
                 className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                  openDropdown === "manifestoes" 
+                  openDropdown === "manifestoes" || isManifestoActive
                     ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                     : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
                 } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
                 aria-expanded={openDropdown === "manifestoes"}
               >
-                <span>[ ABOUT &amp; MANIFESTOES ]</span>
+                <span>[ ABOUT &amp; MANIFESTO ]</span>
                 <ChevronDown size={11} className={`transition-transform duration-200 ${openDropdown === "manifestoes" ? "rotate-180" : ""}`} />
               </button>
 
@@ -276,22 +295,19 @@ export default function Header({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-1.5 w-68 sm:w-80 bg-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
+                    className="absolute left-0 top-full mt-1.5 w-72 sm:w-80 bg-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
                   >
                     <div className="px-3 py-1.5 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
-                      <span>// PHILOSOPHICAL FOUNDATION</span>
-                      <span className="text-brand-text/40">ARCHIVE</span>
+                      <span>// PHILOSOPHICAL FOUNDATIONS</span>
+                      <span className="text-brand-text/40">2 FOLIOS</span>
                     </div>
                     <div className="divide-y divide-brand-text/10">
                       {manifestoItems.map(item => (
-                        <button
-                          key={item.id}
-                          type="button"
-                          onClick={() => {
-                            onCategoryClick(item.id);
-                            setOpenDropdown(null);
-                          }}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer"
+                        <Link
+                          key={item.path}
+                          to={item.path}
+                          onClick={() => handleItemSelect(item.path, item.id)}
+                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer block"
                         >
                           <div>
                             <div className="font-mono text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider group-hover:text-brand-bg text-brand-accent">
@@ -302,7 +318,7 @@ export default function Header({
                             </div>
                           </div>
                           <ChevronRight size={12} className="text-brand-text/40 group-hover:text-brand-bg shrink-0 transition-transform group-hover:translate-x-0.5" />
-                        </button>
+                        </Link>
                       ))}
                     </div>
                   </motion.div>
@@ -373,7 +389,9 @@ export default function Header({
                   <UserIcon size={14} className="text-brand-accent" />
                   {user ? `[ ${userProfile?.displayName || user.email} ]` : "[ AUTHENTICATE CLIENT ]"}
                 </span>
-                <ChevronRight size={14} />
+                <span className="text-[9px] font-bold text-brand-accent">
+                  {user ? "PROFILE" : "LOGIN / REGISTER"}
+                </span>
               </button>
 
               {/* Mobile Navigation Sections */}
@@ -385,14 +403,15 @@ export default function Header({
                   </div>
                   <div className="space-y-1">
                     {mediumItems.map(item => (
-                      <button
-                        key={item.id ?? "all"}
-                        onClick={() => { onCategoryClick(item.id); setIsMenuOpen(false); }}
-                        className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors"
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => handleItemSelect(item.path, item.id)}
+                        className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors block"
                       >
                         <span>[ {item.label} ]</span>
                         <ChevronRight size={13} className="text-brand-accent" />
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -404,14 +423,15 @@ export default function Header({
                   </div>
                   <div className="space-y-1">
                     {collectionItems.map(item => (
-                      <button
-                        key={item.id ?? "all"}
-                        onClick={() => { onCategoryClick(item.id); setIsMenuOpen(false); }}
-                        className={`w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors ${item.id ? 'text-brand-accent font-black' : ''}`}
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => handleItemSelect(item.path, item.id)}
+                        className={`w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors block ${item.id ? 'text-brand-accent font-black' : ''}`}
                       >
                         <span>[ {item.label} ]</span>
                         <ChevronRight size={13} className="text-brand-accent" />
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -419,18 +439,19 @@ export default function Header({
                 {/* Section 3: About & Manifestoes */}
                 <div>
                   <div className="text-[9px] font-mono font-black uppercase tracking-widest text-brand-text/50 mb-1.5 px-1">
-                    // ABOUT & MANIFESTOES
+                    // ABOUT &amp; MANIFESTOES
                   </div>
                   <div className="space-y-1">
                     {manifestoItems.map(item => (
-                      <button
-                        key={item.id}
-                        onClick={() => { onCategoryClick(item.id); setIsMenuOpen(false); }}
-                        className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors text-brand-accent font-black"
+                      <Link
+                        key={item.path}
+                        to={item.path}
+                        onClick={() => handleItemSelect(item.path, item.id)}
+                        className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors text-brand-accent font-black block"
                       >
                         <span>[ {item.label} ]</span>
                         <ChevronRight size={13} className="text-brand-accent" />
-                      </button>
+                      </Link>
                     ))}
                   </div>
                 </div>
@@ -454,4 +475,3 @@ export default function Header({
     </header>
   );
 }
-
