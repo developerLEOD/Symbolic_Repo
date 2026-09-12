@@ -13,12 +13,66 @@ export interface Category {
   order: number;
 }
 
+export interface GarmentTypeConfig {
+  id: string;
+  name: string; // e.g. "Regular Fit", "Oversized", "Drop Shoulder", "Heavyweight", "Boxy Fit"
+  basePrice: number; // e.g. 4200
+  skuPrefix?: string;
+  description?: string;
+}
+
+export interface ArtifactTypeItem {
+  id: string;
+  name: string; // e.g. "T-Shirts", "Hoodies", "Full Sleeves", "Bags", "Caps", "Mugs"
+  description?: string;
+  order: number;
+}
+
+export interface Medium {
+  id: string;
+  name: string; // e.g. "WEAR", "CARRY", "HEADWEAR", "VESSELS"
+  description?: string;
+  order: number;
+  types: ArtifactTypeItem[];
+}
+
+// Alias for backward compatibility
+export type ArtifactClassification = Medium;
+
+export interface CustomArtifactTag {
+  id: string;
+  name: string; // e.g. "Heavyweight", "Drop Shoulder", "Oversized", "Series 01"
+  description?: string;
+  color?: string; // Optional accent badge color
+  createdAt?: number;
+}
+
+export interface TaxonomyCatalog {
+  classifications: Medium[];
+  mediums?: Medium[];
+  tags: CustomArtifactTag[];
+  updatedAt?: number;
+  updatedBy?: string;
+}
+
+export interface ProductColorConfig {
+  id: string;
+  name: string; // e.g. "Charcoal Black", "Washed Raw Ecru", "Olive Sand"
+  hex: string;  // e.g. "#1C1C1C", "#F4F1EA", "#555A4C"
+}
+
 export interface ProductVariant {
   id: string;
   productId: string;
   sku: string;
   price: number;
   inventoryQuantity: number;
+  inStock?: boolean;
+  priceOverride?: number | null;
+  garmentType?: string;
+  color?: string;
+  colorHex?: string;
+  size?: string;
   option1Name?: string;
   option1Value?: string;
   option2Name?: string;
@@ -38,6 +92,11 @@ export interface Product {
   images: string[];
   thumbnailImage?: string;
   
+  // Multi-axis Variant Architecture Configuration
+  garmentTypes?: GarmentTypeConfig[];
+  availableColors?: ProductColorConfig[];
+  availableSizes?: string[];
+  
   // Material & Construction specifications
   material?: string;
   weight?: string; // e.g. "400 GSM"
@@ -50,14 +109,26 @@ export interface Product {
   careInstructions?: string;
   finish?: string;
   
-  // Meaning & Symbol representation
-  statement?: string; // What the object/symbol communicates
+  // Meaning & 4 Pillars of Symbolic Representation
+  inscription?: string; // Primary symbol / inscription e.g. "أَلِف", "صُمُود"
+  pillar1Represents?: string; // Pillar 01: Doctrine / Scriptural Roots - What the symbol represents
+  pillar2WhyChosen?: string; // Pillar 02: Intent / Deliberate Selection - Why it was chosen
+  pillar3Communicates?: string; // Pillar 03: Transmission / Public Witness - What the artefact communicates
+  pillar4WearerCarries?: string; // Pillar 04: Covenant / Inward Burden - What idea the wearer is carrying
+  
+  // Legacy aliases for full backward compatibility
+  statement?: string; // What idea the wearer carries
   representation?: string; // Why the wearer chooses this
-  inscription?: string; // Primary symbol/inscription
   wearingCommunicates?: string; // What wearing this communicates
-  statementMeaning?: string; // Core conviction or purpose
+  statementMeaning?: string; // What the symbol represents
   brandPlacement?: string; // e.g. "Subtle interior neck label; primary surface belongs to wearer"
   provenance?: string;
+  
+  // Owner-only Medium & Tagging System
+  medium?: string; // Primary medium e.g. "WEAR", "CARRY", "HEADWEAR", "VESSELS"
+  artifactClassification?: string; // Legacy alias for medium e.g. "WEAR", "CARRY", "HEADWEAR", "VESSELS"
+  artifactType?: string; // Primary specific artefact type e.g. "T-Shirts", "Hoodies", "Caps", "Mugs"
+  artifactTags?: string[]; // Multiple owner-defined tags e.g. ["Heavyweight", "Drop Shoulder", "Series 01"]
   
   // Real inventory and availability
   inventory: number;

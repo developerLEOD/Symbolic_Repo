@@ -87,79 +87,16 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
     },
   };
 
-  const telemetryBadges = [
-    { label: "MATERIAL DENSITY", value: 400, suffix: " GSM", icon: Layers, note: "Unbleached Heavyweight 2-Ply" },
-    { label: "COMMERCIAL NOISE", value: 0, suffix: "%", icon: ShieldCheck, note: "Zero Outer Logomania" },
-    { label: "CONVICTION PURITY", value: 100, suffix: "%", icon: Fingerprint, note: "Personal Sovereign Doctrine" },
-    { label: "STRUCTURAL LIFESPAN", value: 10, suffix: " YR+", icon: Activity, note: "Monolithic Mineral & Cotton" },
+  const coreJourneySteps = [
+    { step: "01", name: "DISCOVER", detail: "Curated collection of symbolic artefacts" },
+    { step: "02", name: "EXAMINE", detail: "Multi-perspective structural documentation" },
+    { step: "03", name: "DECIPHER", detail: "The symbol, inscription & ethos" },
+    { step: "04", name: "SUBSTANCE", detail: "Dense organic cotton & artisan stoneware" },
+    { step: "05", name: "EMBODY", detail: "Carry the conviction into the world" }
   ];
 
   return (
-    <section className="relative pt-32 pb-24 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text overflow-hidden">
-      {/* Industrial Corner Crosshairs with Pulse */}
-      <div className="pointer-events-none absolute top-3 left-3 flex items-center gap-1.5 z-10 text-brand-text/40 font-mono text-[9px] font-bold select-none">
-        <motion.span
-          initial={{ scale: 0, rotate: -90 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-[#ff4500]"
-        >
-          +
-        </motion.span>
-        <span className="tracking-widest">FOUNDRY:33.68°N/73.04°E</span>
-      </div>
-
-      <div className="pointer-events-none absolute top-3 right-3 flex items-center gap-1.5 z-10 text-brand-text/40 font-mono text-[9px] font-bold select-none">
-        <span className="tracking-widest">CORPUS:RATIFIED // V2.6</span>
-        <motion.span
-          initial={{ scale: 0, rotate: 90 }}
-          animate={{ scale: 1, rotate: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-[#ff4500]"
-        >
-          +
-        </motion.span>
-      </div>
-
-      {/* Top Benchmark Bar with Pulsing Radar and Live Identity Stream */}
-      <motion.div
-        initial={{ opacity: 0, y: -20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 flex flex-wrap justify-between items-center text-[9px] sm:text-[10px] font-mono tracking-widest uppercase border-b-2 border-brand-text/20 pb-3.5 mb-10 gap-3"
-      >
-        <div className="flex items-center gap-3">
-          <span className="relative flex h-2.5 w-2.5">
-            <span className="animate-ping absolute inline-flex h-full w-full bg-[#ff4500] opacity-75"></span>
-            <span className="relative inline-flex w-2.5 h-2.5 bg-[#ff4500] border border-black"></span>
-          </span>
-          <div className="flex items-baseline gap-2">
-            <span className="font-mono font-black text-[11px] sm:text-[12px] leading-tight text-brand-text tracking-wider">
-              SYMBOLIC
-            </span>
-            <span className="font-mono text-[9px] font-bold italic text-brand-accent tracking-wider">
-              / MUSLIMS
-            </span>
-          </div>
-        </div>
-
-        <div className="flex items-center gap-4 text-brand-text/70 hidden sm:flex">
-          <motion.span
-            animate={{ opacity: [0.3, 1, 0.3] }}
-            transition={{ repeat: Infinity, duration: 2.2, ease: "easeInOut" }}
-            className="text-[#ff4500] font-black"
-          >
-            ●
-          </motion.span>
-          <span className="tracking-widest">INDIVIDUAL → ARTIFACT → SYMBOL → IDENTITY</span>
-        </div>
-
-        <div className="flex items-center gap-2">
-          <span className="inline-block w-1.5 h-1.5 bg-[#ff4500] animate-pulse"></span>
-          <span className="text-[#ff4500] font-bold tracking-wider">[ EMBODY YOUR CONVICTION ]</span>
-        </div>
-      </motion.div>
-
+    <section className="relative pt-20 sm:pt-22 pb-20 sm:pb-24 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text overflow-hidden">
       {/* Main Hero Split Grid */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
         {/* Left Core Display Section */}
@@ -173,9 +110,9 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
           <motion.div variants={itemSlideUp} className="flex flex-wrap items-center gap-2.5">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-text text-brand-bg font-mono text-[10px] font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#ff4500]">
               <span className="inline-block w-1.5 h-1.5 bg-[#ff4500]"></span>
-              <span>POSSESSION & IDENTITY FOUNDRY</span>
+              <span>ARCHIVE REGISTRY</span>
               <span className="text-[#ff4500]">//</span>
-              <span className="text-brand-bg/80">CORPUS 01</span>
+              <span className="text-brand-bg/80">OBJECTS OF CONVICTION</span>
             </div>
           </motion.div>
 
@@ -212,7 +149,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                 variants={lineMaskVariant}
                 className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-mono font-bold uppercase tracking-tighter text-brand-text leading-[0.88]"
               >
-                WEAR WHAT YOU STAND FOR.
+                OBJECTS WITH SOMETHING TO SAY.
               </motion.h1>
             </div>
 
@@ -222,14 +159,13 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                 variants={lineMaskVariant}
                 className="text-2xl sm:text-4xl lg:text-5xl font-mono font-black text-[#ff4500] tracking-tight uppercase"
               >
-                NOT A BRAND'S LOGO.
+                MEANING, MADE VISIBLE.
               </motion.span>
             </div>
           </div>
 
-          {/* Dynamic Manifesto Quote with Expanding Architectural Accent */}
+          {/* Studio Axiom */}
           <motion.div variants={itemSlideUp} className="relative max-w-2xl pl-5 py-1">
-            {/* Animated left accent pillar that grows vertically */}
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
@@ -238,42 +174,9 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             />
             <div>
               <p className="text-sm sm:text-base font-mono uppercase tracking-wide text-brand-text font-bold leading-relaxed">
-                What we possess and wear should communicate who we are and what we stand for—not turn us into walking advertisements for another company.
+                A curated collection of physical artefacts carrying symbol, reflection, and quiet conviction.
               </p>
             </div>
-          </motion.div>
-
-          {/* Kinetic Telemetry Strip: Real-time Count-up Specs */}
-          <motion.div
-            variants={itemSlideUp}
-            className="grid grid-cols-2 sm:grid-cols-4 gap-2.5 pt-1"
-          >
-            {telemetryBadges.map((badge, idx) => {
-              const IconComp = badge.icon;
-              return (
-                <motion.div
-                  key={badge.label}
-                  initial={{ opacity: 0, y: 16 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.45 + idx * 0.08, duration: 0.5 }}
-                  whileHover={{ y: -3, transition: { duration: 0.15 } }}
-                  className="bg-brand-surface border-2 border-brand-text p-3 shadow-[3px_3px_0px_#050505] hover:shadow-[4px_4px_0px_#ff4500] transition-all group"
-                >
-                  <div className="flex items-center justify-between text-brand-text/60 mb-1.5">
-                    <span className="font-mono text-[8px] font-black tracking-widest uppercase">
-                      {badge.label}
-                    </span>
-                    <IconComp size={12} className="text-[#ff4500] group-hover:rotate-12 transition-transform" />
-                  </div>
-                  <div className="font-mono text-lg sm:text-xl font-black text-brand-text tracking-tight">
-                    <CountUpNumber end={badge.value} suffix={badge.suffix} delay={0.5 + idx * 0.1} />
-                  </div>
-                  <div className="font-mono text-[8.5px] text-brand-text/60 uppercase font-semibold mt-0.5 truncate">
-                    {badge.note}
-                  </div>
-                </motion.div>
-              );
-            })}
           </motion.div>
 
           {/* Interactive CTA Action Row */}
@@ -287,7 +190,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               className="px-8 py-4 text-xs font-mono font-black group"
             >
               <span className="flex items-center gap-2">
-                EXPLORE SPECIMEN CORPUS
+                ENTER THE COLLECTION
                 <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
               </span>
             </LiquidCarveButton>
@@ -298,7 +201,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               className="px-8 py-4 text-xs font-mono font-black group"
             >
               <span className="flex items-center gap-2">
-                INSPECT THE DOCTRINE
+                STUDIO PHILOSOPHY
                 <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </span>
             </LiquidCarveButton>
@@ -354,6 +257,37 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         </div>
       </div>
 
+      {/* The 5-Step Core Journey Protocol (Full-Width) */}
+      <motion.div
+        variants={itemSlideUp}
+        initial="hidden"
+        whileInView="visible"
+        viewport={{ once: true }}
+        className="relative z-10 mt-14 space-y-4"
+      >
+        <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono font-black uppercase tracking-widest text-brand-text/75">
+          <span className="w-2 h-2 bg-brand-accent inline-block border border-brand-text" />
+          <span>THE ARTEFACT ENCOUNTER // 5-STAGE PROTOCOL</span>
+        </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-mono">
+          {coreJourneySteps.map((s, idx) => (
+            <div 
+              key={s.step} 
+              className="bg-brand-surface border-2 border-brand-text p-4 shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[120px]"
+            >
+              <div className="flex items-center justify-between text-brand-accent text-xs font-black pb-2 border-b-2 border-brand-text/15">
+                <span>STAGE {s.step}</span>
+                <span className="text-[10px] uppercase font-black text-brand-text/50">{idx < 4 ? '→' : '■'}</span>
+              </div>
+              <div className="pt-2 flex-1 flex flex-col justify-start">
+                <div className="text-sm sm:text-[15px] font-black text-brand-text tracking-wide uppercase leading-tight">{s.name}</div>
+                <div className="text-[10px] sm:text-[11px] text-brand-text/80 font-bold uppercase leading-snug mt-1.5">{s.detail}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      </motion.div>
+
       {/* Repositioned Benchmark 04 Criteria Full-Width Section */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
@@ -381,7 +315,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             { num: "01", title: "SYMBOL OVER LOGO", desc: "The graphic carries personal meaning, not a corporation's status symbol." },
             { num: "02", title: "SECONDARY BRANDING", desc: "Brand identifiers are kept to discreet interior labels." },
             { num: "03", title: "DENSE SUBSTANCE", desc: "400 GSM combed cotton and high-fire ceramic built for years of daily use." },
-            { num: "04", title: "INTENTIONAL OWNERSHIP", desc: "Fewer, deliberate objects that reflect genuine conviction." }
+            { num: "04", title: "INTENTIONAL OWNERSHIP", desc: "Fewer, deliberate artefacts that reflect genuine conviction." }
           ].map((item) => (
             <motion.div
               key={item.num}

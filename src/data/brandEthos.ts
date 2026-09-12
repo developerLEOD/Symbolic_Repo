@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  * 
  * SYMBOLIC MUSLIMS — Core Brand Ethos, Values, Aims & Strategic Framework
- * Origin: Islamabad, Pakistan // Under the Let's Establish Our Deen (LEOD) Mission
+ * Under the Let's Establish Our Deen (LEOD) Mission
  * 
  * This file serves as the canonical source of truth for the studio's ideological,
  * conceptual, typographic, and architectural standards.
@@ -38,7 +38,7 @@ export const BRAND_IDENTITY = {
   name: "SYMBOLIC MUSLIMS",
   shortName: "SYMBOLIC",
   parentMission: "Let's Establish Our Deen (LEOD)",
-  provenance: "Islamabad, Pakistan // 33.6844° N, 73.0479° E",
+  provenance: "Atelier Archive // Ethical Production",
   tagline: "POSSESSION & IDENTITY STUDIO",
   creed: "CRAFTED WITH INTENT • WEAR WITH PURPOSE",
   colorSystem: {
@@ -50,7 +50,7 @@ export const BRAND_IDENTITY = {
 } as const;
 
 export const CONCEPTUAL_HIERARCHY = {
-  principle: "PERSON → SYMBOL → OBJECT → BRAND",
+  principle: "PERSON → SYMBOL → ARTEFACT → BRAND",
   layers: [
     {
       level: 1,
@@ -66,7 +66,7 @@ export const CONCEPTUAL_HIERARCHY = {
     },
     {
       level: 3,
-      subject: "THE OBJECT",
+      subject: "THE ARTEFACT",
       role: "Heavy-gauge physical instrument (400 GSM fleece, 18 oz canvas, dense stoneware). Carries the symbol into daily worship, transit, and study.",
       prominence: "Functional Instrument (10%)"
     },
@@ -82,7 +82,7 @@ export const CONCEPTUAL_HIERARCHY = {
 export const INSTITUTIONAL_RELATIONSHIPS = {
   leod: {
     entity: "LEOD (Let's Establish Our Deen)",
-    role: "The parent intellectual and spiritual movement originating in Islamabad. Focuses on theological literacy, spiritual revival, community fortitude, and moral revival. LEOD is the ideological root.",
+    role: "The parent intellectual and spiritual movement. Focuses on theological literacy, spiritual revival, community fortitude, and moral revival. LEOD is the ideological root.",
     relationship: "Root Directive & Civilizational Compass"
   },
   symbolic: {
@@ -149,8 +149,8 @@ export const FOUR_AXIOMS: Axiom[] = [
   {
     code: "02",
     title: "THE HIERARCHY OF PRESENCE",
-    subheading: "PERSON → SYMBOL → OBJECT → MAKER",
-    thesis: "In our hierarchy, the person is paramount. The symbol manifests their inner conviction. The object is the functional vessel that carries it through daily life. The maker remains discreetly tucked inside the collar. SYMBOLIC exists to empower the believer's public witness, never to eclipse it.",
+    subheading: "PERSON → SYMBOL → ARTEFACT → MAKER",
+    thesis: "In our hierarchy, the person is paramount. The symbol manifests their inner conviction. The artefact is the functional vessel that carries it through daily life. The maker remains discreetly tucked inside the collar. SYMBOLIC exists to empower the believer's public witness, never to eclipse it.",
     imperative: "Keep the maker secondary; keep the human conviction sovereign."
   },
   {
@@ -163,9 +163,9 @@ export const FOUR_AXIOMS: Axiom[] = [
   {
     code: "04",
     title: "TACTILE PERMANENCE OVER DISPOSABILITY",
-    subheading: "ENDURING ARTIFACTS FOR DELIBERATE LIVES",
+    subheading: "ENDURING ARTEFACTS FOR DELIBERATE LIVES",
     thesis: "Fast fashion manufactures disposable identities. When garments fall apart after three washes, the psychological relationship to material possessions becomes hollow and reckless. We craft 400 GSM loopback cotton, 18 oz canvas, and kiln-fired stoneware engineered to survive decades of continuous use.",
-    imperative: "Acquire fewer objects; ensure every object you possess stands firm."
+    imperative: "Acquire fewer artefacts; ensure every artefact you possess stands firm."
   }
 ];
 
@@ -236,14 +236,14 @@ export const CATEGORY_FRAMEWORK: CategoryPhilosophy[] = [
 ];
 
 export const LONG_TERM_SCALABILITY = {
-  seriesLogic: "Each SERIES represents a comprehensive, multi-object thematic investigation lasting 12 to 24 months (e.g. Series 01: The Transmission Corpus).",
+  seriesLogic: "Each SERIES represents a comprehensive, multi-artefact thematic investigation lasting 12 to 24 months (e.g. Series 01: The Transmission Corpus).",
   symbolSyntax: "SYM-[SERIES_NO]-[CLASSIFICATION_ABBR]-[INDEX_NO] (e.g. SYM-01-EPS-01)",
-  objectSyntax: "OBJ-[CATEGORY_CODE]-[SERIES_NO]-[SPECIMEN_NO] (e.g. OBJ-W-01-01 for Wear Specimen 01)",
-  permanentSpecimens: [
+  artefactSyntax: "ART-[MEDIUM_CODE]-[SERIES_NO]-[ARTEFACT_NO] (e.g. ART-W-01-01 for Wear Artefact 01)",
+  permanentArtefacts: [
     "Core 400 GSM Black Drop-Shoulder Hooded Sweatshirt",
     "Core 280 GSM Bone Boxy Heavyweight Tee",
     "Core 6-Panel Low-Crown Brushed Twill Cap",
     "Core 450ml High-Fire Stoneware Studio Mug"
   ],
-  editionRules: "Permanent specimens remain indefinitely in inventory. Thematic Series symbols are cataloged forever in the Codex even when physical production runs conclude."
+  editionRules: "Permanent artefacts remain indefinitely in inventory. Thematic Series symbols are cataloged forever in the Codex even when physical production runs conclude."
 } as const;

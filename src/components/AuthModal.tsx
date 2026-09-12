@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { X, Lock, Mail, User as UserIcon, AlertCircle, CheckCircle2, ArrowRight, ShieldCheck } from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
@@ -8,10 +8,11 @@ interface AuthModalProps {
   isOpen: boolean;
   onClose: () => void;
   defaultTab?: "signin" | "signup";
+  notice?: string | null;
   onSuccess?: () => void;
 }
 
-export default function AuthModal({ isOpen, onClose, defaultTab = "signin", onSuccess }: AuthModalProps) {
+export default function AuthModal({ isOpen, onClose, defaultTab = "signin", notice, onSuccess }: AuthModalProps) {
   const { signInWithEmail, signUpWithEmail, signInWithGoogle, sendPasswordReset, formatAuthError } = useAuth();
   
   const [tab, setTab] = useState<"signin" | "signup" | "forgot">(defaultTab);
@@ -23,6 +24,14 @@ export default function AuthModal({ isOpen, onClose, defaultTab = "signin", onSu
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resetSent, setResetSent] = useState(false);
+
+  useEffect(() => {
+    if (isOpen) {
+      setTab(defaultTab);
+      setError(null);
+      setResetSent(false);
+    }
+  }, [isOpen, defaultTab]);
 
   if (!isOpen) return null;
 
@@ -82,7 +91,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = "signin", onSu
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/75 backdrop-blur-xs">
+      <div className="fixed inset-0 z-[150] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
         <motion.div 
           initial={{ opacity: 0, scale: 0.95, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
@@ -105,6 +114,21 @@ export default function AuthModal({ isOpen, onClose, defaultTab = "signin", onSu
               <X size={16} />
             </button>
           </div>
+
+          {/* Context Notice (e.g. Mandatory Registration for Checkout) */}
+          {notice && (
+            <div className="mb-5 p-3.5 bg-brand-accent/10 border-2 border-brand-accent text-brand-text flex items-start gap-2.5 font-mono shadow-[2px_2px_0px_#050505]">
+              <ShieldCheck size={16} className="text-brand-accent shrink-0 mt-0.5" />
+              <div className="space-y-0.5 text-left">
+                <span className="font-black text-[10px] uppercase tracking-wider text-brand-accent block">
+                  CUSTODY PROTOCOL NOTICE
+                </span>
+                <p className="text-[11px] font-bold uppercase leading-snug">
+                  {notice}
+                </p>
+              </div>
+            </div>
+          )}
 
           {/* Nav Tabs */}
           {tab !== "forgot" ? (

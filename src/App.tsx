@@ -25,7 +25,7 @@ import AuthModal from "./components/AuthModal";
 import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
-import { fetchCategories, deleteProductAndVariants, isProductLive } from "./lib/productService";
+import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 
 function StorefrontApp() {
@@ -44,6 +44,8 @@ function StorefrontApp() {
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [profileInitialTab, setProfileInitialTab] = useState<"profile" | "orders" | "referral">("orders");
   const [authDefaultTab, setAuthDefaultTab] = useState<"signin" | "signup">("signin");
+  const [authNotice, setAuthNotice] = useState<string | null>(null);
+  const [pendingOpenCheckoutAfterAuth, setPendingOpenCheckoutAfterAuth] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
   const [flagshipProduct, setFlagshipProduct] = useState<Product | null>(null);
   const [referralWelcomeBanner, setReferralWelcomeBanner] = useState<{ code: string; referrerName?: string } | null>(null);
@@ -62,11 +64,10 @@ function StorefrontApp() {
           setCategories(loadedCats);
         }
 
-        const prodsSnapshot = await getDocs(collection(db, "products"));
-        const prods = prodsSnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() } as Product));
+        const prods = await fetchProducts();
         // Never show drafted or hidden products as statement pieces
         const liveProds = prods.filter(isProductLive);
-        const flagship = liveProds.find(p => p.productId === "SYM-TSH-001") || liveProds[0] || null;
+        const flagship = liveProds.find(p => p.productId === "SYM-01" || p.productId === "SYM-TSH-001" || p.sku === "SYM-TSH-001") || liveProds[0] || null;
         setFlagshipProduct(flagship);
       } catch (err) {
         console.error("Initialization failed:", err);
@@ -137,6 +138,19 @@ function StorefrontApp() {
     }));
   };
 
+  const handleUpdateCartItem = (oldId: string, updatedItem: CartItem) => {
+    setCart(prev => {
+      // If new item composite id matches an existing item other than oldId, merge quantity
+      const existingIndex = prev.findIndex(i => i.id === updatedItem.id && i.id !== oldId);
+      if (existingIndex > -1) {
+        return prev
+          .filter(i => i.id !== oldId)
+          .map((item, idx) => idx === existingIndex ? { ...item, quantity: item.quantity + updatedItem.quantity } : item);
+      }
+      return prev.map(item => item.id === oldId ? updatedItem : item);
+    });
+  };
+
   const handleRemoveFromCart = (id: string) => {
     setCart(prev => prev.filter(item => item.id !== id));
   };
@@ -201,21 +215,21 @@ function StorefrontApp() {
   return (
     <div className="min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white">
       {referralWelcomeBanner && (
-        <div className="bg-[#ff5500] text-white px-4 py-2.5 font-mono text-xs flex flex-wrap items-center justify-between gap-3 border-b-2 border-neutral-900 shadow-[0_2px_0px_#050505] sticky top-0 z-[60]">
-          <div className="flex items-center gap-2">
-            <span className="font-black uppercase tracking-wider bg-white text-[#ff5500] px-2 py-0.5 text-[10px] shrink-0">
-              FRIEND PRIVILEGE LINKED
+        <div className="bg-brand-surface text-brand-text px-4 py-2 font-mono text-[11px] flex flex-wrap items-center justify-between gap-3 border-b-2 border-brand-text shadow-[0_2px_0px_#050505] sticky top-0 z-[60]">
+          <div className="flex items-center gap-2.5">
+            <span className="font-black uppercase tracking-wider bg-brand-text text-brand-bg px-2 py-0.5 text-[9px] shrink-0">
+              AFFILIATION LINKED
             </span>
-            <span className="text-[11px]">
-              Referred by <strong>{referralWelcomeBanner.referrerName || "a Member"}</strong> (Code: <strong>{referralWelcomeBanner.code}</strong>). Your referral discount will auto-apply when you checkout!
+            <span className="text-[11px] text-brand-text/90 uppercase tracking-wide">
+              ACCREDITED BY <strong className="font-black text-brand-text">{referralWelcomeBanner.referrerName || "COLLEAGUE"}</strong> (KEY: <strong className="font-black text-brand-accent">{referralWelcomeBanner.code}</strong>) — PRIVILEGE LOGGED FOR DISPATCH.
             </span>
           </div>
           <button 
             type="button"
             onClick={() => setReferralWelcomeBanner(null)} 
-            className="text-white hover:text-neutral-900 text-xs font-black uppercase px-2 py-0.5 border border-white hover:bg-white transition-colors cursor-pointer shrink-0"
+            className="text-brand-text hover:bg-brand-text hover:text-brand-bg text-[10px] font-black uppercase px-2 py-0.5 border border-brand-text transition-colors cursor-pointer shrink-0"
           >
-            DISMISS
+            DISMISS [X]
           </button>
         </div>
       )}
@@ -311,6 +325,7 @@ function StorefrontApp() {
             categoryLabel={activeCategoryId === 'mugs' ? 'GATHER' : activeCategoryId === 't-shirts' ? 'WEAR' : 'CARRY'}
             onClose={() => setSelectedProduct(null)}
             onAddToCart={handleAddToCart}
+            onOpenLedger={() => setIsCartOpen(true)}
             onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
             onDeleteProduct={isOwner ? handleDeleteProductFromDetail : undefined}
           />
@@ -322,10 +337,18 @@ function StorefrontApp() {
         onClose={() => setIsCartOpen(false)}
         items={cart}
         onUpdateQuantity={handleUpdateCartQuantity}
+        onUpdateItem={handleUpdateCartItem}
         onRemove={handleRemoveFromCart}
         onCheckout={() => {
           setIsCartOpen(false);
-          setIsCheckoutOpen(true);
+          if (!user) {
+            setAuthDefaultTab("signup");
+            setAuthNotice("REGISTRATION MANDATORY // In accordance with Symbolic studio protocol, all custodians must be registered to acquire physical artefacts.");
+            setPendingOpenCheckoutAfterAuth(true);
+            setIsAuthOpen(true);
+          } else {
+            setIsCheckoutOpen(true);
+          }
         }}
       />
 
@@ -334,8 +357,9 @@ function StorefrontApp() {
         onClose={() => setIsCheckoutOpen(false)}
         items={cart}
         onClearCart={() => setCart([])}
-        onOpenAuth={() => {
-          setAuthDefaultTab("signin");
+        onOpenAuth={(mode = "signup", customNotice) => {
+          setAuthDefaultTab(mode);
+          setAuthNotice(customNotice || "REGISTRATION MANDATORY // You must maintain a registered studio identity to finalize artefact custody.");
           setIsAuthOpen(true);
         }}
       />
@@ -343,8 +367,18 @@ function StorefrontApp() {
       {/* Auth Modal (Sign In / Register / Reset) */}
       <AuthModal
         isOpen={isAuthOpen}
-        onClose={() => setIsAuthOpen(false)}
+        onClose={() => {
+          setIsAuthOpen(false);
+          setAuthNotice(null);
+        }}
         defaultTab={authDefaultTab}
+        notice={authNotice}
+        onSuccess={() => {
+          if (pendingOpenCheckoutAfterAuth) {
+            setIsCheckoutOpen(true);
+            setPendingOpenCheckoutAfterAuth(false);
+          }
+        }}
       />
 
       {/* User Profile & Past Orders Modal */}

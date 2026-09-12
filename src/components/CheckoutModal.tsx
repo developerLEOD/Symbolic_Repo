@@ -13,7 +13,11 @@ import {
   Tag,
   CheckCircle2,
   AlertCircle,
-  Gift
+  Gift,
+  Copy,
+  ExternalLink,
+  Clock,
+  Smartphone
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { CartItem, ReferralSettings } from "../types";
@@ -35,14 +39,23 @@ interface CheckoutModalProps {
   onClose: () => void;
   items: CartItem[];
   onClearCart: () => void;
-  onOpenAuth?: () => void;
+  onOpenAuth?: (mode?: "signin" | "signup", customNotice?: string) => void;
 }
 
 export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onOpenAuth }: CheckoutModalProps) {
-  const { user, userProfile } = useAuth();
+  const { user, userProfile, signInWithGoogle } = useAuth();
   const [step, setStep] = useState<"details" | "shipping" | "payment" | "success">("details");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
+  const [isCopied, setIsCopied] = useState(false);
+
+  const handleGoogleSignInDirect = async () => {
+    try {
+      await signInWithGoogle();
+    } catch (err: any) {
+      console.error("Google sign in failed:", err);
+    }
+  };
 
   const [formData, setFormData] = useState({
     email: "",
@@ -55,7 +68,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     zip: "",
     country: "Pakistan",
     phone: "",
-    paymentMethod: "card"
+    paymentMethod: "whatsapp"
   });
 
   // Auto-fill from authenticated user profile
@@ -182,8 +195,67 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
+  const generateWhatsAppMessage = (orderNo?: string) => {
+    const currentOrderNo = orderNo || orderNumber || "SYM-ACQUISITION";
+    const itemsList = items.map((item, idx) => {
+      const opts = item.options ? Object.entries(item.options as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
+      return `${idx + 1}. *${item.name}*${opts ? ` (${opts})` : ''}\n   Qty: ${item.quantity} | Valuation: Rs. ${(item.price * item.quantity).toLocaleString()}`;
+    }).join('\n');
+    
+    const discountText = discount > 0 
+      ? `• Referral Privilege (${appliedReferral?.code}): -Rs. ${discount.toLocaleString()} (${appliedReferral?.discountPercentage}% OFF)\n` 
+      : '';
+      
+    const message = `*SYMBOLIC // ARTEFACT ACQUISITION DIRECTIVE*\n` +
+      `----------------------------------------\n` +
+      `*ORDER REGISTRY:* #${currentOrderNo}\n` +
+      `*STATUS:* Pending WhatsApp Settlement Confirmation\n` +
+      `----------------------------------------\n\n` +
+      `*POSSESSOR CREDENTIALS:*\n` +
+      `• Name: ${formData.firstName} ${formData.lastName}\n` +
+      `• Contact / WhatsApp: ${formData.phone}\n` +
+      `• Email: ${formData.email}\n` +
+      `• Dispatch Coordinates: House #${formData.houseNo}, ${formData.street}, ${formData.suburb}, ${formData.city} ${formData.zip ? `(Postcode: ${formData.zip})` : ''}\n` +
+      `• Country: ${formData.country}\n\n` +
+      `*RESERVED ARTEFACTS:*\n` +
+      `${itemsList}\n\n` +
+      `*FINANCIAL VALUATION MATRIX:*\n` +
+      `• Subtotal: Rs. ${subtotal.toLocaleString()}\n` +
+      `${discountText}` +
+      `• Archival Dispatch: ${shipping === 0 ? 'Complimentary' : `Rs. ${shipping.toLocaleString()}`}\n` +
+      `*• TOTAL SETTLEMENT: Rs. ${total.toLocaleString()} PKR*\n\n` +
+      `*SETTLEMENT PROTOCOL:*\n` +
+      `Direct WhatsApp Interaction (Bank payments on standby / Direct IBFT or Raast clearance requested).\n\n` +
+      `_Please confirm physical reservation and dispatch schedule for this artefact acquisition._`;
+
+    return message;
+  };
+
+  const handleSendWhatsAppOrder = (overrideOrderNo?: string) => {
+    const message = generateWhatsAppMessage(overrideOrderNo);
+    const encodedMessage = encodeURIComponent(message);
+    const whatsappUrl = `https://wa.me/923342764183?text=${encodedMessage}`;
+    window.open(whatsappUrl, '_blank');
+  };
+
+  const handleCopyDirective = (overrideOrderNo?: string) => {
+    const message = generateWhatsAppMessage(overrideOrderNo);
+    navigator.clipboard.writeText(message);
+    setIsCopied(true);
+    setTimeout(() => setIsCopied(false), 3000);
+  };
+
   const handleCompleteOrder = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    if (!user) {
+      setIsSubmitting(false);
+      if (onOpenAuth) {
+        onOpenAuth("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.");
+      }
+      return;
+    }
+
     setIsSubmitting(true);
 
     try {
@@ -191,6 +263,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       
       // Save order to Firestore
       const orderData = {
+        orderNumber: randomOrderNo,
         userId: user ? user.uid : null,
         items,
         subtotal,
@@ -199,7 +272,8 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
         total,
         referralCode: appliedReferral ? appliedReferral.code : null,
         referrerUid: appliedReferral?.referrerUid || null,
-        status: "pending",
+        status: "pending_wa_verification",
+        paymentMethod: "whatsapp_interaction",
         createdAt: Date.now(),
         customerInfo: {
           firstName: formData.firstName,
@@ -230,6 +304,9 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       setOrderNumber(randomOrderNo);
       setStep("success");
       onClearCart();
+
+      // Enforce mandatory transmission of order details to WhatsApp
+      handleSendWhatsAppOrder(randomOrderNo);
     } catch (err) {
       console.error("Error creating order record in Firestore:", err);
       // Fallback display success with local generated order number
@@ -237,24 +314,10 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       setOrderNumber(randomOrderNo);
       setStep("success");
       onClearCart();
+      handleSendWhatsAppOrder(randomOrderNo);
     } finally {
       setIsSubmitting(false);
     }
-  };
-
-  const handleSendWhatsAppOrder = () => {
-    const itemsList = items.map(item => {
-      const opts = item.options ? Object.entries(item.options as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
-      return `• ${item.name}${opts ? ` (${opts})` : ''} x ${item.quantity} - Rs. ${(item.price * item.quantity).toLocaleString()}`;
-    }).join('\n');
-    const discountText = discount > 0 
-      ? `Referral Discount (${appliedReferral?.code}): -Rs. ${discount.toLocaleString()} (${appliedReferral?.discountPercentage}% off)\n` 
-      : '';
-    const message = `🛍️ *NEW ORDER - SYMBOLIC*\n\n*Customer Details:*\nName: ${formData.firstName} ${formData.lastName}\nEmail: ${formData.email}\nPhone / WhatsApp: ${formData.phone}\nAddress: House #${formData.houseNo}, ${formData.street}, ${formData.suburb}, ${formData.city} ${formData.zip ? `(Postal: ${formData.zip})` : ''}\n\n*Order Items:*\n${itemsList}\n\nSubtotal: Rs. ${subtotal.toLocaleString()}\n${discountText}Shipping: Rs. ${shipping.toLocaleString()}\n*Total: Rs. ${total.toLocaleString()}*\n\nPayment Method: ${formData.paymentMethod.toUpperCase()}`;
-
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/923342764183?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
   };
 
   if (!isOpen) return null;
@@ -278,8 +341,11 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
           {/* Header */}
           <div className="px-8 py-6 border-b-2 border-brand-text flex items-center justify-between bg-brand-surface">
             <div className="flex items-center gap-3">
-              <ShoppingBag size={18} className="text-brand-accent" />
-              <h2 className="text-xs font-mono font-black uppercase tracking-[0.2em]">CLEARANCE PROTOCOL // REQUISITION</h2>
+              <ShieldCheck size={20} className="text-brand-accent" />
+              <div>
+                <h2 className="text-xs font-mono font-black uppercase tracking-[0.2em]">CUSTODY TRANSFER PROTOCOL</h2>
+                <p className="text-[9px] font-mono text-brand-text/60 uppercase">FINALIZATION OF ARTEFACT POSSESSION</p>
+              </div>
             </div>
             {step !== "success" && (
               <button 
@@ -293,47 +359,107 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
 
           <div className="p-8 sm:p-12">
             {step === "success" ? (
-              <div className="text-center py-10 space-y-8">
-                <div className="w-16 h-16 bg-brand-accent text-white mx-auto flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505]">
-                  <Check size={32} />
-                </div>
-                <div className="space-y-2">
-                  <span className="text-[10px] font-mono font-black uppercase tracking-[0.3em] text-brand-accent">[ REQUISITION RATIFIED ]</span>
-                  <h3 className="text-2xl sm:text-3xl font-mono font-black uppercase tracking-tight">TRANSMISSION CONFIRMED</h3>
-                  <p className="text-xs font-mono uppercase text-brand-text/70 max-w-sm mx-auto pt-2">
-                    REQUISITION IDENTIFIER #{orderNumber} DISPATCHED TO <span className="font-black text-brand-text">{formData.email}</span>.
-                  </p>
-                </div>
+              /* ACQUISITION CERTIFICATE / ARCHIVE ENTRY */
+              <div className="space-y-8 max-w-xl mx-auto">
+                <div className="border-[2.5px] border-brand-text bg-brand-surface p-6 sm:p-8 shadow-[8px_8px_0px_#ff4500] relative space-y-6">
+                  {/* Corner Crosshairs */}
+                  <span className="absolute -top-2 -left-2 font-mono text-[12px] font-black text-brand-text select-none">+</span>
+                  <span className="absolute -top-2 -right-2 font-mono text-[12px] font-black text-brand-text select-none">+</span>
+                  <span className="absolute -bottom-2 -left-2 font-mono text-[12px] font-black text-brand-text select-none">+</span>
+                  <span className="absolute -bottom-2 -right-2 font-mono text-[12px] font-black text-brand-text select-none">+</span>
 
-                <div className="bg-brand-surface p-6 max-w-md mx-auto text-left space-y-3 border-2 border-brand-text shadow-[4px_4px_0px_#050505]">
-                  <div className="flex justify-between text-xs font-mono font-black uppercase tracking-tight border-b border-brand-text/15 pb-2">
-                    <span>DISPATCH COORDINATES</span>
-                    <span className="text-brand-accent">SECURE TRANSIT</span>
+                  {/* Certificate Header */}
+                  <div className="border-b-2 border-brand-text pb-4 space-y-1">
+                    <div className="flex items-center justify-between text-[9px] font-mono font-black uppercase tracking-widest text-brand-accent">
+                      <span>[ OFFICIAL ARCHIVAL DEED ]</span>
+                      <span>STUDIO ARCHIVE // OFFICIAL REGISTRY</span>
+                    </div>
+                    <h3 className="text-xl sm:text-2xl font-mono font-black uppercase tracking-tight text-brand-text">
+                      CERTIFICATE OF ARTEFACT POSSESSION
+                    </h3>
+                    <p className="text-[10px] font-mono uppercase text-brand-text/70">
+                      ACQUISITION REGISTRY ENTRY NO. #{orderNumber}
+                    </p>
                   </div>
-                  <p className="text-xs text-brand-text/85 leading-relaxed font-mono uppercase font-bold">
-                    {formData.firstName} {formData.lastName}<br />
-                    House #{formData.houseNo}, {formData.street}, {formData.suburb}<br />
-                    {formData.city} {formData.zip ? `- ${formData.zip}` : ""}<br />
-                    {formData.country} (SECURE LINE: {formData.phone})
-                  </p>
+
+                  {/* Possessor & Coordinates */}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono border-b border-brand-text/20 pb-4">
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase font-bold text-brand-text/60 block">REGISTERED POSSESSOR:</span>
+                      <p className="font-black uppercase text-brand-text">
+                        {formData.firstName} {formData.lastName}
+                      </p>
+                      <p className="text-[10px] text-brand-text/75">{formData.email}</p>
+                      <p className="text-[10px] text-brand-text/75">LINE: {formData.phone}</p>
+                    </div>
+
+                    <div className="space-y-1">
+                      <span className="text-[9px] uppercase font-bold text-brand-text/60 block">DISPATCH COORDINATES:</span>
+                      <p className="text-[10px] font-bold uppercase leading-relaxed text-brand-text">
+                        House #{formData.houseNo}, {formData.street}<br />
+                        {formData.suburb && `${formData.suburb}, `}{formData.city}<br />
+                        {formData.country} {formData.zip ? `[POST: ${formData.zip}]` : ""}
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Settlement Total & Protocol Status */}
+                  <div className="flex items-center justify-between font-mono text-xs border-b border-brand-text/20 pb-4">
+                    <div>
+                      <span className="text-[8.5px] uppercase font-bold text-brand-text/60 block">SETTLEMENT METHOD</span>
+                      <span className="font-black uppercase text-[#128C7E]">WHATSAPP CONCIERGE INTERACTION</span>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[8.5px] uppercase font-bold text-brand-text/60 block">CUSTODY VALUATION</span>
+                      <span className="font-black text-base text-brand-accent">Rs. {total.toLocaleString()} PKR</span>
+                    </div>
+                  </div>
+
+                  {/* Status Banner */}
+                  <div className="bg-[#25D366]/10 border-2 border-[#25D366] p-4 text-center space-y-1.5">
+                    <div className="flex items-center justify-center gap-2 font-mono text-xs font-black uppercase text-[#128C7E]">
+                      <MessageCircle size={15} className="shrink-0" />
+                      <span>DIRECTIVE TRANSMITTED TO WHATSAPP (+92 334 2764183)</span>
+                    </div>
+                    <p className="font-mono text-[9.5px] sm:text-[10.5px] uppercase text-brand-text/85 font-bold leading-relaxed">
+                      Bank payments are currently on standby. Your order directive is dispatched directly to our WhatsApp concierge for customized payment instructions (Direct IBFT / Raast / Nayapay) and physical reservation clearance.
+                    </p>
+                  </div>
+
+                  {/* Archival Authenticity Statement */}
+                  <div className="space-y-2 pt-1">
+                    <p className="text-[10px] font-mono uppercase text-brand-text/80 leading-relaxed">
+                      "You have acquired an authentic artefact of conviction and steadfast identity. Our master artisans are now preparing your pieces under strict studio standards for physical custody transfer."
+                    </p>
+                    <div className="font-mono text-[8px] tracking-widest text-brand-text/40 uppercase font-bold pt-1">
+                      ||||| | ||||| || |||||| | [SYMBOLIC CORPUS — VERIFIED ARCHIVAL ENTRY]
+                    </div>
+                  </div>
                 </div>
 
-                <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+                <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                   <button
                     type="button"
-                    onClick={handleSendWhatsAppOrder}
-                    className="bg-[#25D366] text-white px-8 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
+                    onClick={() => handleSendWhatsAppOrder(orderNumber)}
+                    className="w-full sm:w-auto bg-[#25D366] text-white px-6 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
                   >
-                    <MessageCircle size={15} /> TRANSMIT VIA WHATSAPP (03342764183)
+                    <MessageCircle size={15} /> OPEN WHATSAPP (03342764183)
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => handleCopyDirective(orderNumber)}
+                    className="w-full sm:w-auto bg-brand-surface text-brand-text px-6 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:bg-brand-text hover:text-white transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
+                  >
+                    <Copy size={14} /> {isCopied ? "COPIED DIRECTIVE!" : "COPY DIRECTIVE"}
                   </button>
                   <button
                     onClick={() => {
                       onClose();
                       setStep("details");
                     }}
-                    className="bg-brand-text text-white px-8 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
+                    className="w-full sm:w-auto bg-brand-text text-white px-6 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:bg-neutral-800 transition-all border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
                   >
-                    RETURN TO SANCTUARY
+                    RETURN TO STUDIO
                   </button>
                 </div>
               </div>
@@ -343,11 +469,11 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                 <div className="flex items-center justify-between border-b-2 border-brand-text pb-5 font-mono">
                   <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-wider ${step === "details" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
                     <span className="w-5 h-5 border-2 border-current flex items-center justify-center text-[10px]">1</span>
-                    DOSSIER & DESTINATION
+                    POSSESSOR &amp; DESTINATION
                   </div>
                   <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-wider ${step === "shipping" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
                     <span className="w-5 h-5 border-2 border-current flex items-center justify-center text-[10px]">2</span>
-                    DISPATCH
+                    TRANSIT LOGISTICS
                   </div>
                   <div className={`flex items-center gap-2 text-xs font-black uppercase tracking-wider ${step === "payment" ? "text-brand-accent" : "text-brand-text opacity-40"}`}>
                     <span className="w-5 h-5 border-2 border-current flex items-center justify-center text-[10px]">3</span>
@@ -364,17 +490,78 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                           <Check size={12} />
                           <span>LOGGED IN AS {user.email}</span>
                         </div>
-                      ) : onOpenAuth ? (
-                        <button
-                          type="button"
-                          onClick={onOpenAuth}
-                          className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase text-brand-accent hover:underline cursor-pointer"
-                        >
-                          <UserIcon size={12} />
-                          <span>[ HAVE AN ACCOUNT? SIGN IN ]</span>
-                        </button>
-                      ) : null}
+                      ) : (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => onOpenAuth?.("signin")}
+                            className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase text-brand-text bg-brand-surface border-2 border-brand-text px-2.5 py-1.5 shadow-[2px_2px_0px_#050505] hover:bg-brand-text hover:text-brand-bg transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                          >
+                            <UserIcon size={12} className="text-brand-accent shrink-0" />
+                            <span>[ HAVE AN ACCOUNT? SIGN IN ]</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => onOpenAuth?.("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.")}
+                            className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase text-white bg-brand-accent border-2 border-brand-text px-2.5 py-1.5 shadow-[2px_2px_0px_#050505] hover:bg-brand-text hover:text-brand-bg transition-all active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                          >
+                            <ShieldCheck size={12} className="shrink-0" />
+                            <span>[ REGISTER FIRST ]</span>
+                          </button>
+                        </div>
+                      )}
                     </div>
+
+                    {!user && (
+                      <div className="p-4 sm:p-5 border-2 border-brand-text bg-amber-500/10 shadow-[4px_4px_0px_#050505] space-y-3">
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 border-b border-brand-text/20 pb-2.5">
+                          <div className="flex items-center gap-2 font-mono text-xs font-black uppercase text-brand-accent">
+                            <ShieldCheck size={16} className="shrink-0" />
+                            <span>ARCHIVAL DISCIPLINE // REGISTRATION MANDATORY</span>
+                          </div>
+                          <span className="self-start sm:self-auto text-[9px] font-mono font-black uppercase text-white bg-brand-accent px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                            MUST BE REGISTERED FIRST
+                          </span>
+                        </div>
+                        
+                        <p className="text-[11px] font-mono text-brand-text/90 uppercase font-bold leading-relaxed">
+                          In accordance with Symbolic studio protocol, physical artefact custody transfer requires an authenticated studio account. You must register your identity or sign in before dispatch logistics can be authorized.
+                        </p>
+
+                        <div className="flex flex-wrap items-center gap-2.5 pt-1">
+                          <button
+                            type="button"
+                            onClick={() => onOpenAuth?.("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.")}
+                            className="px-4 py-2.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                          >
+                            <UserIcon size={14} />
+                            <span>INITIALIZE REGISTRATION (REQUIRED)</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={() => onOpenAuth?.("signin")}
+                            className="px-4 py-2.5 bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                          >
+                            <span>SIGN IN TO IDENTITY</span>
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={handleGoogleSignInDirect}
+                            className="px-4 py-2.5 bg-white text-black hover:bg-neutral-100 font-mono text-xs font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                          >
+                            <svg className="w-3.5 h-3.5" viewBox="0 0 24 24">
+                              <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+                              <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z" />
+                              <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.06H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.94l2.85-2.22.81-.63z" />
+                              <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.06l3.66 2.84c.87-2.6 3.3-4.52 6.16-4.52z" />
+                            </svg>
+                            <span>CONTINUE WITH GOOGLE</span>
+                          </button>
+                        </div>
+                      </div>
+                    )}
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
                       <div className="space-y-2 sm:col-span-2">
                         <label className="text-[10px] font-bold uppercase tracking-tight opacity-70">Email Address</label>
@@ -485,10 +672,28 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                       </div>
                     </div>
 
-                    <div className="pt-6 flex justify-end">
+                    <div className="pt-6 flex flex-col sm:flex-row items-center justify-between gap-4 border-t border-brand-text/10">
+                      {!user ? (
+                        <div className="flex items-center gap-2 text-[11px] font-mono font-black uppercase text-brand-accent">
+                          <AlertCircle size={14} className="shrink-0" />
+                          <span>MANDATORY: REGISTER OR SIGN IN TO CONTINUE</span>
+                        </div>
+                      ) : (
+                        <div className="flex items-center gap-2 text-[11px] font-mono font-bold uppercase text-emerald-700">
+                          <Check size={14} className="shrink-0" />
+                          <span>AUTHENTICATED POSSESSOR CONFIRMED</span>
+                        </div>
+                      )}
+
                       <LiquidCarveButton
                         type="button"
                         onClick={() => {
+                          if (!user) {
+                            if (onOpenAuth) {
+                              onOpenAuth("signup", "REGISTRATION MANDATORY // Studio protocol mandates all custodians register before acquiring physical artefacts.");
+                            }
+                            return;
+                          }
                           if (formData.email && formData.firstName && formData.houseNo && formData.street && formData.suburb && formData.city && formData.phone) {
                             setStep("shipping");
                           } else {
@@ -496,9 +701,13 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                           }
                         }}
                         variant="primary"
-                        className="py-3.5 text-xs"
+                        className="w-full sm:w-auto py-3.5 text-xs"
                       >
-                        Continue to Shipping <ArrowRight size={14} />
+                        {!user ? (
+                          <>REGISTER / SIGN IN TO PROCEED <ArrowRight size={14} /></>
+                        ) : (
+                          <>Continue to Shipping <ArrowRight size={14} /></>
+                        )}
                       </LiquidCarveButton>
                     </div>
                   </div>
@@ -542,53 +751,91 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
 
                 {step === "payment" && (
                   <div className="space-y-6">
-                    <h3 className="font-mono font-black uppercase text-base tracking-tight">Payment Method</h3>
-                    <div className="grid grid-cols-2 gap-4">
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, paymentMethod: "card" })}
-                        className={`p-4 border text-left space-y-2 ${formData.paymentMethod === "card" ? "border-brand-accent bg-brand-surface" : "border-brand-text/10"}`}
-                      >
-                        <CreditCard size={18} className="text-brand-accent" />
-                        <p className="text-xs font-bold uppercase tracking-tight">Credit / Debit Card</p>
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setFormData({ ...formData, paymentMethod: "upi" })}
-                        className={`p-4 border text-left space-y-2 ${formData.paymentMethod === "upi" ? "border-brand-accent bg-brand-surface" : "border-brand-text/10"}`}
-                      >
-                        <ShieldCheck size={18} className="text-brand-accent" />
-                        <p className="text-xs font-bold uppercase tracking-tight">UPI / NetBanking</p>
-                      </button>
+                    <div>
+                      <div className="flex items-center justify-between">
+                        <h3 className="font-mono font-black uppercase text-base tracking-tight">
+                          SETTLEMENT PROTOCOL
+                        </h3>
+                        <span className="text-[9px] font-mono font-black text-brand-accent uppercase tracking-widest bg-brand-accent/10 px-2 py-0.5 border border-brand-accent/30">
+                          MANDATORY WA TRANSMISSION
+                        </span>
+                      </div>
+                      <p className="text-[10px] font-mono text-brand-text/60 uppercase mt-0.5">
+                        DIRECT CUSTODY CONFIRMATION VIA STUDIO LIAISON
+                      </p>
                     </div>
 
-                    <div className="bg-brand-surface p-6 border border-brand-text/10 space-y-4">
-                      <div className="space-y-2">
-                        <label className="text-[10px] font-bold uppercase tracking-tight opacity-70">Card Number</label>
-                        <input
-                          type="text"
-                          placeholder="4532 •••• •••• 8921"
-                          className="w-full bg-white border border-brand-text/10 px-4 py-3 text-xs focus:outline-none focus:border-brand-accent font-mono"
-                        />
+                    {/* Standby Notice Banner */}
+                    <div className="p-3.5 bg-amber-500/10 border-2 border-amber-500/40 space-y-1.5">
+                      <div className="flex items-center gap-2 text-amber-900 font-mono text-xs font-black uppercase tracking-wider">
+                        <AlertCircle size={14} className="text-amber-600 shrink-0" />
+                        <span>NOTICE // AUTOMATED BANK &amp; CARD CLEARING ON STANDBY</span>
                       </div>
-                      <div className="grid grid-cols-2 gap-4">
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-tight opacity-70">Expiry Date</label>
-                          <input
-                            type="text"
-                            placeholder="MM / YY"
-                            className="w-full bg-white border border-brand-text/10 px-4 py-3 text-xs focus:outline-none focus:border-brand-accent font-mono"
-                          />
+                      <p className="text-[10px] font-mono text-amber-900/80 uppercase leading-relaxed font-bold">
+                        Direct automated card/merchant gateways are temporarily set to standby. All order clearing (Direct IBFT, Meezan, Raast, Nayapay) and physical reservation are finalized through direct WhatsApp interactions (+92 334 2764183).
+                      </p>
+                    </div>
+
+                    {/* Method Selector */}
+                    <div className="space-y-3">
+                      {/* Active WhatsApp Method */}
+                      <div className="p-4 border-2 border-[#25D366] bg-[#25D366]/5 relative space-y-3">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <div className="w-6 h-6 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0">
+                              <MessageCircle size={14} />
+                            </div>
+                            <div>
+                              <p className="text-xs font-mono font-black uppercase tracking-tight text-brand-text">
+                                WhatsApp Concierge &amp; Direct Transfer Protocol
+                              </p>
+                              <p className="text-[9px] font-mono text-brand-text/60 uppercase">
+                                LINE: +92 334 2764183 // INSTANT RESPONSE
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[8px] font-mono font-black uppercase text-[#128C7E] bg-[#25D366]/20 px-2 py-0.5 border border-[#25D366]/40">
+                            [ ACTIVE &amp; MANDATORY ]
+                          </span>
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-[10px] font-bold uppercase tracking-tight opacity-70">CVV</label>
-                          <input
-                            type="password"
-                            placeholder="•••"
-                            maxLength={4}
-                            className="w-full bg-white border border-brand-text/10 px-4 py-3 text-xs focus:outline-none focus:border-brand-accent font-mono"
-                          />
+
+                        <div className="text-[10px] font-mono text-brand-text/80 space-y-1.5 border-t border-brand-text/10 pt-2.5">
+                          <div className="flex items-start gap-2">
+                            <span className="font-bold text-[#128C7E]">01.</span>
+                            <span>Order details and dispatch coordinates are formatted into an Archival Directive.</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="font-bold text-[#128C7E]">02.</span>
+                            <span>WhatsApp opens automatically to transmit specifications directly to our studio team.</span>
+                          </div>
+                          <div className="flex items-start gap-2">
+                            <span className="font-bold text-[#128C7E]">03.</span>
+                            <span>Studio coordinator provides verified IBFT / Raast / Nayapay settlement details.</span>
+                          </div>
                         </div>
+                      </div>
+
+                      {/* Standby Card/Bank Option */}
+                      <div className="p-4 border border-brand-text/20 bg-brand-surface/60 opacity-60 relative space-y-2">
+                        <div className="flex items-start justify-between">
+                          <div className="flex items-center gap-2.5">
+                            <CreditCard size={18} className="text-brand-text/40" />
+                            <div>
+                              <p className="text-xs font-mono font-bold uppercase tracking-tight text-brand-text/60">
+                                Automated Electronic Bank / Card Clearing
+                              </p>
+                              <p className="text-[9px] font-mono text-brand-text/40 uppercase">
+                                GATEWAYS: VISA / MASTERCARD / 1LINK
+                              </p>
+                            </div>
+                          </div>
+                          <span className="text-[8px] font-mono font-black uppercase text-brand-text/50 bg-brand-text/5 px-2 py-0.5 border border-brand-text/20">
+                            [ ON STANDBY ]
+                          </span>
+                        </div>
+                        <p className="text-[9px] font-mono text-brand-text/60 uppercase">
+                          Automated direct card clearing is currently on standby. All transactions are directed to WhatsApp.
+                        </p>
                       </div>
                     </div>
 
@@ -665,14 +912,14 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                               <div>
                                 <div className={`text-xs font-mono font-black uppercase tracking-wider ${
                                   appliedReferral.discountAmount > 0 ? "text-emerald-900" : "text-amber-900"
-                                }`}>
+                                }}`}>
                                   {appliedReferral.isReferrerReward
                                     ? `REWARD APPLIED: ${appliedReferral.code} (${appliedReferral.discountPercentage}% OFF)` 
                                     : `FRIEND PRIVILEGE APPLIED: ${appliedReferral.code} (${appliedReferral.discountPercentage}% OFF)`}
                                 </div>
                                 <div className={`text-[10px] font-sans ${
                                   appliedReferral.discountAmount > 0 ? "text-emerald-700" : "text-amber-800"
-                                }`}>
+                                }}`}>
                                   {appliedReferral.message}
                                 </div>
                               </div>
@@ -730,67 +977,58 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                     {/* Order Cost Breakdown */}
                     <div className="bg-brand-surface p-4 border border-brand-text/10 space-y-2.5">
                       <div className="flex justify-between text-xs text-brand-text/70">
-                        <span>Cart Subtotal</span>
+                        <span className="font-mono uppercase font-bold text-[10px]">Artefact Subtotal</span>
                         <span className="font-mono font-bold">Rs. {subtotal.toLocaleString()}</span>
                       </div>
 
                       {discount > 0 && (
                         <div className="flex justify-between text-xs text-brand-accent font-bold">
-                          <span className="flex items-center gap-1">
+                          <span className="flex items-center gap-1 font-mono uppercase text-[10px]">
                             <Tag size={12} />
-                            <span>{appliedReferral?.isReferrerReward ? "Referrer Reward" : "Friend Referral Discount"} ({appliedReferral?.discountPercentage}%)</span>
+                            <span>{appliedReferral?.isReferrerReward ? "Affiliation Reward" : "Accreditation Privilege"} ({appliedReferral?.discountPercentage}%)</span>
                           </span>
                           <span className="font-mono font-black">-Rs. {discount.toLocaleString()}</span>
                         </div>
                       )}
 
                       <div className="flex justify-between text-xs text-brand-text/70">
-                        <span>Standard Secure Delivery</span>
-                        <span className="font-mono font-bold">Rs. {shipping.toLocaleString()}</span>
+                        <span className="font-mono uppercase font-bold text-[10px]">Atelier Dispatch &amp; Logistics</span>
+                        <span className="font-mono font-bold">{shipping === 0 ? "COMPLIMENTARY" : `Rs. ${shipping.toLocaleString()}`}</span>
                       </div>
 
                       <div className="pt-2.5 border-t border-brand-text/10 flex items-center justify-between">
                         <div className="space-y-0.5">
-                          <p className="text-xs font-bold uppercase tracking-tight">Total Amount Due</p>
-                          <p className="text-[10px] text-brand-text/60">Inclusive of all taxes, discounts, and shipping</p>
+                          <p className="text-xs font-mono font-black uppercase tracking-tight">TOTAL VALUATION</p>
+                          <p className="text-[9px] font-mono text-brand-text/60 uppercase">Inclusive of direct packaging and custody deed</p>
                         </div>
                         <span className="text-lg font-mono font-black uppercase text-brand-text">
-                          Rs. {total.toLocaleString()}
+                          Rs. {total.toLocaleString()} PKR
                         </span>
                       </div>
                     </div>
 
-                    <div className="pt-6 flex flex-col sm:flex-row justify-between items-center gap-4">
+                    <div className="pt-4 flex flex-col sm:flex-row justify-between items-center gap-4">
                       <button
                         type="button"
                         onClick={() => setStep("shipping")}
-                        className="text-[10px] font-bold uppercase tracking-tight opacity-60 hover:opacity-100"
+                        className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-text/60 hover:text-brand-text cursor-pointer"
                       >
-                        Back
+                        ← BACK TO LOGISTICS
                       </button>
-                      <div className="flex items-center gap-3 w-full sm:w-auto justify-end">
-                        <button
-                          type="button"
-                          onClick={handleSendWhatsAppOrder}
-                          className="bg-[#25D366] text-white px-6 py-4 text-[10px] font-bold uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center gap-2 shadow-lg"
-                        >
-                          <MessageCircle size={14} /> Send via WhatsApp
-                        </button>
-                        <LiquidCarveButton
-                          type="submit"
-                          disabled={isSubmitting}
-                          variant="primary"
-                          className="py-4 text-xs"
-                        >
-                          {isSubmitting ? (
-                            "Processing..."
-                          ) : (
-                            <>
-                              <Lock size={13} /> Complete Order
-                            </>
-                          )}
-                        </LiquidCarveButton>
-                      </div>
+                      <button
+                        type="submit"
+                        disabled={isSubmitting}
+                        className="w-full sm:w-auto bg-[#25D366] text-white px-8 py-4 text-xs font-mono font-black uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer disabled:opacity-50"
+                      >
+                        {isSubmitting ? (
+                          "REGISTERING DIRECTIVE..."
+                        ) : (
+                          <>
+                            <MessageCircle size={16} />
+                            <span>CONFIRM ORDER &amp; TRANSMIT TO WHATSAPP</span>
+                          </>
+                        )}
+                      </button>
                     </div>
                   </div>
                 )}

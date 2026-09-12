@@ -4,21 +4,21 @@ export default function SystemSpec() {
   const specs = [
     {
       id: "01",
-      category: "TEXTILE TAXONOMY",
+      category: "WEAR MEDIUM",
       standard: "400 GSM COMBED ORGANIC COTTON",
       detail: "Dense, preshrunk heavyweight jersey with zero synthetic blending. Minimal exterior branding leaves the canvas for symbols of personal conviction.",
       mandate: "WEARER-FIRST CANVAS"
     },
     {
       id: "02",
-      category: "HEADWEAR TAXONOMY",
+      category: "HEADWEAR MEDIUM",
       standard: "280 GSM STRUCTURED COTTON TWILL",
       detail: "Clean 6-panel crown with matte steel tension clasp. Free from corporate logos, communicating focus and composure through clean form.",
       mandate: "ZERO BILLBOARDS"
     },
     {
       id: "03",
-      category: "VESSELS TAXONOMY",
+      category: "VESSELS MEDIUM",
       standard: "1,280°C HIGH-FIRE STONEWARE",
       detail: "High-density mineral ceramic with weighted thermal base. Engineered for daily routines of reflection, focus, and purposeful gathering.",
       mandate: "PERMANENT SUBSTANCE"
@@ -27,7 +27,7 @@ export default function SystemSpec() {
       id: "04",
       category: "PRODUCTION ETHIC",
       standard: "INTENTIONAL LIMITED RUNS",
-      detail: "Strict batch limits without artificial hype or fast-fashion drop cycles. Objects intended to be owned, maintained, and worn for years.",
+      detail: "Strict batch limits without artificial hype or fast-fashion drop cycles. Artefacts intended to be owned, maintained, and worn for years.",
       mandate: "OWN LESS, STAND FOR MORE"
     }
   ];

@@ -29,12 +29,21 @@ import {
   Search,
   X,
   Filter,
-  Users
+  Users,
+  FolderTree
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../lib/AuthContext";
-import { Product, ProductVariant, Category } from "../types";
+import { Product, ProductVariant, Category, GarmentTypeConfig, ProductColorConfig } from "../types";
 import OwnerReferralManager from "./OwnerReferralManager";
+import OwnerTaxonomyManager from "./OwnerTaxonomyManager";
+import ArtifactTaxonomySelector from "./ArtifactTaxonomySelector";
+import VariantMatrixManager, { 
+  DEFAULT_GARMENT_TYPES, 
+  PRESET_COLORS, 
+  PRESET_SIZES 
+} from "./VariantMatrixManager";
+import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
 import { 
   fetchCategories, 
   fetchProducts, 
@@ -135,10 +144,12 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"upload" | "catalog" | "referrals">("upload");
+  const [activeTab, setActiveTab] = useState<"upload" | "catalog" | "referrals" | "taxonomy">("upload");
   const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "list">("grid");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("all");
+  const [catalogClassificationFilter, setCatalogClassificationFilter] = useState("all");
+  const [catalogTagFilter, setCatalogTagFilter] = useState("all");
   const [existingProducts, setExistingProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
@@ -157,9 +168,33 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
   const [inventory, setInventory] = useState<number>(50);
   const [availability, setAvailability] = useState(true);
   
+  // Owner-only Artifact Classification & Tagging State
+  const [artifactClassification, setArtifactClassification] = useState<string>("WEAR");
+  const [artifactType, setArtifactType] = useState<string>("T-Shirts");
+  const [artifactTags, setArtifactTags] = useState<string[]>(["Heavyweight"]);
+  
   // Editorial Philosophy
   const [symbolicTagline, setSymbolicTagline] = useState("A symbol of reflective culture.");
   const [description, setDescription] = useState("");
+  
+  // Meaning & 4 Pillars of Symbolic Representation
+  const [inscription, setInscription] = useState("أَلِف");
+  const [pillar1Represents, setPillar1Represents] = useState(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.represents || "");
+  const [pillar2WhyChosen, setPillar2WhyChosen] = useState(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.whyChosen || "");
+  const [pillar3Communicates, setPillar3Communicates] = useState(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.communicates || "");
+  const [pillar4WearerCarries, setPillar4WearerCarries] = useState(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.wearerCarries || "");
+
+  const applySymbolPreset = (sym: string) => {
+    const data = PRESET_SYMBOL_KNOWLEDGE[sym];
+    if (data) {
+      setInscription(data.symbol);
+      setPillar1Represents(data.represents);
+      setPillar2WhyChosen(data.whyChosen);
+      setPillar3Communicates(data.communicates);
+      setPillar4WearerCarries(data.wearerCarries);
+      showNotification("success", `Loaded thesis for symbol "${sym}" (${data.name})`);
+    }
+  };
   
   // Materiality & Specs
   const [material, setMaterial] = useState("100% Organic Cotton");
@@ -175,9 +210,51 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
   const [customImageUrl, setCustomImageUrl] = useState("");
   const fileInputRef = useRef<HTMLInputElement | null>(null);
 
-  // Variants
+  // Multi-Axis Scalable Variant Architecture State
   const [hasVariants, setHasVariants] = useState(false);
+  const [garmentTypes, setGarmentTypes] = useState<GarmentTypeConfig[]>(DEFAULT_GARMENT_TYPES.slice(0, 3));
+  const [availableColors, setAvailableColors] = useState<ProductColorConfig[]>(PRESET_COLORS.slice(0, 3));
+  const [availableSizes, setAvailableSizes] = useState<string[]>(["S", "M", "L", "XL", "XXL"]);
   const [variants, setVariants] = useState<ProductVariant[]>([]);
+
+  // Helper to construct permutations
+  const buildInitialVariants = (
+    types: GarmentTypeConfig[],
+    cols: ProductColorConfig[],
+    szs: string[],
+    baseSku: string,
+    fallbackPrice: number
+  ): ProductVariant[] => {
+    const list: ProductVariant[] = [];
+    types.forEach(gType => {
+      const typeCode = (gType.skuPrefix || gType.name.slice(0, 3)).toUpperCase().replace(/[^A-Z0-9]/g, "");
+      cols.forEach(col => {
+        const colCode = col.name.slice(0, 3).toUpperCase().replace(/[^A-Z0-9]/g, "");
+        szs.forEach(sz => {
+          list.push({
+            id: `v-${gType.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${col.name.toLowerCase().replace(/[^a-z0-9]/g, "-")}-${sz.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+            productId: "",
+            sku: `${baseSku || "SYM-PROD"}-${typeCode}-${colCode}-${sz}`,
+            price: gType.basePrice || fallbackPrice || 3500,
+            priceOverride: null,
+            inventoryQuantity: 15,
+            inStock: true,
+            garmentType: gType.name,
+            color: col.name,
+            colorHex: col.hex,
+            size: sz,
+            option1Name: "Garment Type",
+            option1Value: gType.name,
+            option2Name: "Color",
+            option2Value: col.name,
+            option3Name: "Size",
+            option3Value: sz
+          });
+        });
+      });
+    });
+    return list;
+  };
 
   // Load existing products when catalog tab is opened
   const loadExistingProducts = async () => {
@@ -312,6 +389,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
   };
 
   // Quick Template Applicator
+  // Quick Template Applicator
   const applyTemplate = (templateKey: keyof typeof TEMPLATES) => {
     const tmpl = TEMPLATES[templateKey];
     setName(tmpl.name);
@@ -330,87 +408,83 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     setDescription(tmpl.description);
     setImages(tmpl.images);
 
-    if (tmpl.variants && tmpl.variants.length > 0) {
+    if (templateKey === "tshirt") {
+      setInscription("أَلِف");
+      setPillar1Represents(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.represents || "");
+      setPillar2WhyChosen(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.whyChosen || "");
+      setPillar3Communicates(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.communicates || "");
+      setPillar4WearerCarries(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.wearerCarries || "");
+      setArtifactClassification("WEAR");
+      setArtifactType("T-Shirts");
+      setArtifactTags(["Heavyweight", "Drop Shoulder", "Series 01"]);
+      const types: GarmentTypeConfig[] = [
+        { id: "regular-fit", name: "Regular Fit", basePrice: 2490, skuPrefix: "REG" },
+        { id: "drop-shoulder", name: "Drop Shoulder", basePrice: 2990, skuPrefix: "DRP" },
+        { id: "heavyweight-boxy", name: "Heavyweight Boxy", basePrice: 3490, skuPrefix: "HVY" }
+      ];
+      const cols: ProductColorConfig[] = [
+        { id: "obsidian-black", name: "Obsidian Black", hex: "#0c0c0c" },
+        { id: "washed-ecru", name: "Washed Raw Ecru", hex: "#f3eee4" },
+        { id: "matte-charcoal", name: "Matte Charcoal", hex: "#262626" }
+      ];
+      const szs = ["S", "M", "L", "XL", "XXL"];
+      setGarmentTypes(types);
+      setAvailableColors(cols);
+      setAvailableSizes(szs);
       setHasVariants(true);
-      setVariants(tmpl.variants.map((v, idx) => ({
-        id: `v-${idx + 1}-${Date.now()}`,
-        productId: "",
-        sku: v.sku,
-        price: v.price,
-        inventoryQuantity: v.inventoryQuantity,
-        option1Name: v.option1Name,
-        option1Value: v.option1Value,
-        option2Name: (v as any).option2Name,
-        option2Value: (v as any).option2Value
-      })));
+      setVariants(buildInitialVariants(types, cols, szs, tmpl.sku, tmpl.price));
+    } else if (templateKey === "mug") {
+      setInscription("أَدَب");
+      setPillar1Represents(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.represents || "");
+      setPillar2WhyChosen(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.whyChosen || "");
+      setPillar3Communicates(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.communicates || "");
+      setPillar4WearerCarries(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.wearerCarries || "");
+      setArtifactClassification("VESSELS");
+      setArtifactType("Mugs");
+      setArtifactTags(["Artisan Stoneware", "Archival"]);
+      const types: GarmentTypeConfig[] = [
+        { id: "ceramic-vessel", name: "Artisan Ceramic 350ml", basePrice: 1590, skuPrefix: "MUG" },
+        { id: "grand-vessel", name: "Grand Studio 480ml", basePrice: 1950, skuPrefix: "GRD" }
+      ];
+      const cols: ProductColorConfig[] = [
+        { id: "desert-sand", name: "Desert Sand", hex: "#c7bba5" },
+        { id: "matte-charcoal", name: "Matte Charcoal", hex: "#262626" }
+      ];
+      const szs = ["Standard 350ml"];
+      setGarmentTypes(types);
+      setAvailableColors(cols);
+      setAvailableSizes(szs);
+      setHasVariants(true);
+      setVariants(buildInitialVariants(types, cols, szs, tmpl.sku, tmpl.price));
+    } else if (templateKey === "cap") {
+      setInscription("صُمُود");
+      setPillar1Represents(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.represents || "");
+      setPillar2WhyChosen(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.whyChosen || "");
+      setPillar3Communicates(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.communicates || "");
+      setPillar4WearerCarries(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.wearerCarries || "");
+      setArtifactClassification("HEADWEAR");
+      setArtifactType("Caps");
+      setArtifactTags(["Steadfast Heritage", "Limited Edition"]);
+      const types: GarmentTypeConfig[] = [
+        { id: "structured-twill", name: "6-Panel Structured Twill", basePrice: 1950, skuPrefix: "CAP" }
+      ];
+      const cols: ProductColorConfig[] = [
+        { id: "midnight-olive", name: "Midnight Olive", hex: "#3b4334" },
+        { id: "charcoal-black", name: "Charcoal Black", hex: "#0c0c0c" },
+        { id: "desert-sand", name: "Desert Sand", hex: "#c7bba5" }
+      ];
+      const szs = ["Adjustable (56-62cm)"];
+      setGarmentTypes(types);
+      setAvailableColors(cols);
+      setAvailableSizes(szs);
+      setHasVariants(true);
+      setVariants(buildInitialVariants(types, cols, szs, tmpl.sku, tmpl.price));
     } else {
       setHasVariants(false);
       setVariants([]);
     }
 
     showNotification("success", `Applied "${tmpl.name}" template.`);
-  };
-
-  // Quick Variant Generation
-  const generateSizeVariants = () => {
-    const sizes = ["S", "M", "L", "XL", "XXL"];
-    const newVars: ProductVariant[] = sizes.map(sz => ({
-      id: `v-${sz.toLowerCase()}-${Date.now()}`,
-      productId: "",
-      sku: `${sku || "SYM-PROD"}-${sz}`,
-      price: price || 2490,
-      inventoryQuantity: Math.floor((inventory || 50) / sizes.length),
-      option1Name: "Size",
-      option1Value: sz,
-      option2Name: "Color",
-      option2Value: color || "Charcoal"
-    }));
-    setVariants(newVars);
-    setHasVariants(true);
-  };
-
-  const generateColorVariants = () => {
-    const colors = ["Charcoal", "Bone White", "Olive Sand"];
-    const newVars: ProductVariant[] = colors.map(c => ({
-      id: `v-${c.toLowerCase().replace(/\s+/g, '-')}-${Date.now()}`,
-      productId: "",
-      sku: `${sku || "SYM-PROD"}-${c.slice(0, 3).toUpperCase()}`,
-      price: price || 1950,
-      inventoryQuantity: Math.floor((inventory || 30) / colors.length),
-      option1Name: "Color",
-      option1Value: c
-    }));
-    setVariants(newVars);
-    setHasVariants(true);
-  };
-
-  const addEmptyVariant = () => {
-    const newVar: ProductVariant = {
-      id: `v-custom-${Date.now()}`,
-      productId: "",
-      sku: `${sku || "SYM-PROD"}-VAR-${variants.length + 1}`,
-      price: price || 1500,
-      inventoryQuantity: 10,
-      option1Name: categoryId === "t-shirts" ? "Size" : "Option",
-      option1Value: "Standard"
-    };
-    setVariants(prev => [...prev, newVar]);
-    setHasVariants(true);
-  };
-
-  const updateVariant = (index: number, field: keyof ProductVariant, value: any) => {
-    setVariants(prev => {
-      const copy = [...prev];
-      copy[index] = { ...copy[index], [field]: value };
-      return copy;
-    });
-  };
-
-  const removeVariant = (index: number) => {
-    setVariants(prev => prev.filter((_, i) => i !== index));
-    if (variants.length <= 1) {
-      setHasVariants(false);
-    }
   };
 
   // Reset form
@@ -423,8 +497,16 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     setPrice(1490);
     setInventory(50);
     setAvailability(true);
+    setArtifactClassification("WEAR");
+    setArtifactType("T-Shirts");
+    setArtifactTags(["Heavyweight"]);
     setSymbolicTagline("A symbol of reflective culture.");
     setDescription("");
+    setInscription("");
+    setPillar1Represents("");
+    setPillar2WhyChosen("");
+    setPillar3Communicates("");
+    setPillar4WearerCarries("");
     setMaterial("100% Organic Cotton");
     setColor("Matte Charcoal");
     setCapacity("");
@@ -434,6 +516,9 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     setImages([PRESET_IMAGES[0].url]);
     setThumbnailImage("");
     setHasVariants(false);
+    setGarmentTypes(DEFAULT_GARMENT_TYPES.slice(0, 3));
+    setAvailableColors(PRESET_COLORS.slice(0, 3));
+    setAvailableSizes(["S", "M", "L", "XL", "XXL"]);
     setVariants([]);
   };
 
@@ -447,8 +532,24 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     setPrice(prod.price);
     setInventory(prod.inventory);
     setAvailability(prod.availability);
+    
+    // Load taxonomy metadata
+    setArtifactClassification(prod.artifactClassification || (prod.categoryId ? prod.categoryId.toUpperCase() : "WEAR"));
+    setArtifactType(prod.artifactType || "T-Shirts");
+    setArtifactTags(Array.isArray(prod.artifactTags) ? prod.artifactTags : []);
+
     setSymbolicTagline(prod.symbolicTagline || "A symbol of reflective culture.");
     setDescription(prod.description);
+    
+    // Load 4 Pillars & Symbol
+    const cleanSym = prod.inscription?.replace(/^#\s*/, "").trim() || "";
+    const preset = PRESET_SYMBOL_KNOWLEDGE[cleanSym] || PRESET_SYMBOL_KNOWLEDGE[prod.name];
+    setInscription(prod.inscription || "");
+    setPillar1Represents(prod.pillar1Represents || prod.statementMeaning || preset?.represents || "");
+    setPillar2WhyChosen(prod.pillar2WhyChosen || prod.representation || preset?.whyChosen || "");
+    setPillar3Communicates(prod.pillar3Communicates || prod.wearingCommunicates || preset?.communicates || "");
+    setPillar4WearerCarries(prod.pillar4WearerCarries || prod.statement || preset?.wearerCarries || "");
+
     setMaterial(prod.material || "");
     setColor(prod.color || "");
     setCapacity(prod.capacity || "");
@@ -461,12 +562,52 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     // Load existing variants if any
     try {
       const vars = await fetchProductVariants(prod.id);
+      if (prod.garmentTypes && prod.garmentTypes.length > 0) {
+        setGarmentTypes(prod.garmentTypes);
+      }
+      if (prod.availableColors && prod.availableColors.length > 0) {
+        setAvailableColors(prod.availableColors);
+      }
+      if (prod.availableSizes && prod.availableSizes.length > 0) {
+        setAvailableSizes(prod.availableSizes);
+      }
+
       if (vars.length > 0) {
         setHasVariants(true);
         setVariants(vars);
+
+        // Backward compatibility: Extract garmentTypes, colors, and sizes if not saved in product document
+        if (!prod.garmentTypes || prod.garmentTypes.length === 0) {
+          const typeNames = Array.from(new Set(vars.map(v => v.garmentType || v.option1Value || "Regular Fit")));
+          setGarmentTypes(typeNames.map((tName, idx) => ({
+            id: `type-${idx}-${tName.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+            name: tName,
+            basePrice: vars.find(v => (v.garmentType || v.option1Value) === tName)?.price || prod.price || 3500
+          })));
+        }
+
+        if (!prod.availableColors || prod.availableColors.length === 0) {
+          const colNames = Array.from(new Set(vars.map(v => v.color || v.option2Value || prod.color || "Standard")));
+          setAvailableColors(colNames.map((cName, idx) => {
+            const foundPreset = PRESET_COLORS.find(p => p.name.toLowerCase() === cName.toLowerCase());
+            return {
+              id: `col-${idx}-${cName.toLowerCase().replace(/[^a-z0-9]/g, "-")}`,
+              name: cName,
+              hex: foundPreset ? foundPreset.hex : "#222222"
+            };
+          }));
+        }
+
+        if (!prod.availableSizes || prod.availableSizes.length === 0) {
+          const szNames = Array.from(new Set(vars.map(v => v.size || v.option3Value || "M")));
+          setAvailableSizes(szNames);
+        }
       } else {
         setHasVariants(false);
         setVariants([]);
+        if (!prod.garmentTypes || prod.garmentTypes.length === 0) {
+          setGarmentTypes(DEFAULT_GARMENT_TYPES.slice(0, 3).map(t => ({ ...t, basePrice: prod.price || t.basePrice })));
+        }
       }
     } catch (e) {
       console.error("Failed to load variants", e);
@@ -509,6 +650,10 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     try {
       const prodId = editingProductId || (sku ? sku.toLowerCase().replace(/[^a-z0-9_-]/g, "-") : `prod-${Date.now()}`);
       
+      const calculatedTotalInventory = hasVariants && variants.length > 0
+        ? variants.reduce((sum, v) => sum + (v.inStock !== false ? (v.inventoryQuantity || 0) : 0), 0)
+        : Number(inventory);
+
       const productPayload: Product = {
         id: prodId,
         name: name.trim(),
@@ -518,16 +663,32 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
         sku: sku.trim() || `SYM-${Date.now()}`,
         images,
         thumbnailImage: thumbnailImage || undefined,
-        inventory: Number(inventory),
+        inventory: calculatedTotalInventory,
         availability: Boolean(availability),
         collectionName: collectionName.trim(),
         symbolicTagline: symbolicTagline.trim(),
+        inscription: inscription.trim() || undefined,
+        pillar1Represents: pillar1Represents.trim() || undefined,
+        pillar2WhyChosen: pillar2WhyChosen.trim() || undefined,
+        pillar3Communicates: pillar3Communicates.trim() || undefined,
+        pillar4WearerCarries: pillar4WearerCarries.trim() || undefined,
+        // Legacy compatibility aliases
+        statementMeaning: pillar1Represents.trim() || undefined,
+        representation: pillar2WhyChosen.trim() || undefined,
+        wearingCommunicates: pillar3Communicates.trim() || undefined,
+        statement: pillar4WearerCarries.trim() || undefined,
         material: material.trim(),
         color: color.trim(),
         capacity: capacity.trim() || undefined,
         dimensions: dimensions.trim() || undefined,
         weight: weight.trim() || undefined,
-        careInstructions: careInstructions.trim() || undefined
+        careInstructions: careInstructions.trim() || undefined,
+        artifactClassification: artifactClassification.trim() || undefined,
+        artifactType: artifactType.trim() || undefined,
+        artifactTags: artifactTags && artifactTags.length > 0 ? artifactTags : undefined,
+        garmentTypes: hasVariants ? garmentTypes : undefined,
+        availableColors: hasVariants ? availableColors : undefined,
+        availableSizes: hasVariants ? availableSizes : undefined
       };
 
       const variantsPayload = hasVariants 
@@ -797,13 +958,28 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
     } else if (catalogCategoryFilter !== "all") {
       matchesCat = p.categoryId === catalogCategoryFilter;
     }
+
+    let matchesClassification = true;
+    if (catalogClassificationFilter !== "all") {
+      matchesClassification = (p.artifactClassification || "").toUpperCase() === catalogClassificationFilter.toUpperCase();
+    }
+
+    let matchesTag = true;
+    if (catalogTagFilter !== "all") {
+      matchesTag = Array.isArray(p.artifactTags) && p.artifactTags.some(t => t.toLowerCase() === catalogTagFilter.toLowerCase());
+    }
+
     const q = catalogSearch.toLowerCase().trim();
     const matchesQuery = !q || 
       p.name.toLowerCase().includes(q) || 
       (p.sku || "").toLowerCase().includes(q) || 
       (p.collectionName || "").toLowerCase().includes(q) ||
-      (p.description || "").toLowerCase().includes(q);
-    return matchesCat && matchesQuery;
+      (p.description || "").toLowerCase().includes(q) ||
+      (p.artifactClassification || "").toLowerCase().includes(q) ||
+      (p.artifactType || "").toLowerCase().includes(q) ||
+      (Array.isArray(p.artifactTags) && p.artifactTags.some(t => t.toLowerCase().includes(q)));
+      
+    return matchesCat && matchesClassification && matchesTag && matchesQuery;
   });
 
   const liveCount = existingProducts.filter(p => p.availability).length;
@@ -867,7 +1043,7 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
             ) : (
               <>
                 <Plus size={12} className="shrink-0 hidden xs:inline" />
-                <span>NEW OBJECT</span>
+                <span>NEW SPECIMEN</span>
               </>
             )}
           </button>
@@ -894,6 +1070,18 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
           >
             <Users size={12} className="shrink-0 hidden xs:inline" />
             <span>REFERRALS</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("taxonomy")}
+            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${
+              activeTab === "taxonomy" 
+                ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
+                : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+            }`}
+          >
+            <FolderTree size={12} className="shrink-0 hidden xs:inline text-brand-accent" />
+            <span>CLASSIFICATIONS &amp; TAGS</span>
           </button>
         </div>
 
@@ -991,7 +1179,11 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
 
       {/* Content Area */}
       <div className="flex-grow overflow-y-auto">
-        {activeTab === "referrals" ? (
+        {activeTab === "taxonomy" ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
+            <OwnerTaxonomyManager />
+          </div>
+        ) : activeTab === "referrals" ? (
           <OwnerReferralManager
             onNotify={(type, message) => {
               setNotification({ type, message });
@@ -1195,7 +1387,20 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                             />
                             <div>
                               <p className="font-mono font-black uppercase text-brand-text">{prod.name}</p>
-                              <p className="text-[10px] text-brand-text/60 truncate max-w-xs">{prod.description}</p>
+                              <div className="flex flex-wrap items-center gap-1.5 mt-1">
+                                {prod.artifactClassification && (
+                                  <span className="text-[8px] font-mono font-black px-1.5 py-0.2 bg-brand-accent/10 border border-brand-accent/30 text-brand-accent uppercase">
+                                    {prod.artifactClassification}
+                                    {prod.artifactType ? ` // ${prod.artifactType}` : ""}
+                                  </span>
+                                )}
+                                {Array.isArray(prod.artifactTags) && prod.artifactTags.slice(0, 2).map((t, idx) => (
+                                  <span key={idx} className="text-[8px] font-mono px-1 py-0.2 bg-brand-bg border border-brand-text/30 text-brand-text/70 uppercase">
+                                    #{t}
+                                  </span>
+                                ))}
+                              </div>
+                              <p className="text-[10px] text-brand-text/60 truncate max-w-xs mt-0.5">{prod.description}</p>
                             </div>
                           </td>
                           <td className="p-3.5">
@@ -1267,10 +1472,27 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                       </div>
 
                       <div>
-                        <p className="text-[9px] font-mono font-black text-brand-accent uppercase tracking-wider">{prod.collectionName || "BE SYMBOLIC"}</p>
-                        <h3 className="text-base font-mono font-black uppercase tracking-tight text-brand-text line-clamp-1">{prod.name}</h3>
+                        <div className="flex items-center justify-between gap-2">
+                          <p className="text-[9px] font-mono font-black text-brand-accent uppercase tracking-wider">{prod.collectionName || "BE SYMBOLIC"}</p>
+                          {prod.artifactClassification && (
+                            <span className="text-[8px] font-mono font-black px-1.5 py-0.2 bg-brand-accent/10 border border-brand-accent/30 text-brand-accent uppercase">
+                              {prod.artifactClassification} {prod.artifactType ? `// ${prod.artifactType}` : ""}
+                            </span>
+                          )}
+                        </div>
+                        <h3 className="text-base font-mono font-black uppercase tracking-tight text-brand-text line-clamp-1 mt-0.5">{prod.name}</h3>
                         <p className="text-sm font-mono font-black text-brand-text mt-1">Rs. {prod.price?.toLocaleString()}</p>
                         <p className="text-[10px] text-brand-text/60 uppercase tracking-wider mt-0.5">SKU: {prod.sku} • STOCK: {prod.inventory}</p>
+
+                        {Array.isArray(prod.artifactTags) && prod.artifactTags.length > 0 && (
+                          <div className="flex flex-wrap gap-1 mt-2">
+                            {prod.artifactTags.map((t, idx) => (
+                              <span key={idx} className="text-[8px] font-mono px-1.5 py-0.5 bg-brand-bg border border-brand-text/20 text-brand-text/70 uppercase">
+                                #{t}
+                              </span>
+                            ))}
+                          </div>
+                        )}
                       </div>
 
                       <p className="text-xs text-brand-text/70 line-clamp-2 leading-relaxed">
@@ -1530,13 +1752,24 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                   </div>
                 </div>
 
-                {/* 2. Editorial Philosophy */}
+                {/* 2. Owner-only Artifact Classification & Tag Architecture */}
+                <ArtifactTaxonomySelector
+                  selectedClassification={artifactClassification}
+                  selectedType={artifactType}
+                  selectedTags={artifactTags}
+                  onClassificationChange={val => setArtifactClassification(val)}
+                  onTypeChange={val => setArtifactType(val)}
+                  onTagsChange={val => setArtifactTags(val)}
+                  onOpenTaxonomyManager={() => setActiveTab("taxonomy")}
+                />
+
+                {/* 3. Editorial Philosophy */}
                 <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
                   <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">2</span>
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">3</span>
                       <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
-                        EDITORIAL PHILOSOPHY & STORY
+                        EDITORIAL PHILOSOPHY &amp; STORY
                       </h3>
                     </div>
                     <span className="text-[9px] font-mono text-brand-text/60 uppercase tracking-wider">THE SOUL OF THE OBJECT</span>
@@ -1575,11 +1808,172 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                   </div>
                 </div>
 
-                {/* 3. Media & Photography */}
+                {/* 4. Theological & Moral Thesis (The 4 Pillars of Symbolic Meaning) */}
+                <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-6">
+                  <div className="border-b-2 border-brand-text pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                    <div className="flex items-center gap-2.5">
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">4</span>
+                      <div>
+                        <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
+                          THEOLOGICAL &amp; MORAL THESIS (4 PILLARS OF MEANING)
+                        </h3>
+                        <p className="text-[9px] text-brand-text/60 uppercase">
+                          SCRIPTURAL ROOTS, PURPOSEFUL INTENT, PUBLIC WITNESS &amp; INWARD COVENANT
+                        </p>
+                      </div>
+                    </div>
+                    <span className="text-[9px] font-mono text-brand-accent bg-brand-accent/10 px-2 py-0.5 border border-brand-accent/30 uppercase tracking-wider">
+                      DOSSIER SECTION 03 ENGINE
+                    </span>
+                  </div>
+
+                  {/* Symbol Calligraphy / Inscription Identifier */}
+                  <div className="p-4 bg-brand-bg border-2 border-brand-text space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                        PRIMARY SYMBOL / CALLIGRAPHIC INSCRIPTION
+                      </label>
+                      <span className="text-[9px] font-mono text-brand-text/60 uppercase">
+                        APPEARS IN DOSSIER HEADER
+                      </span>
+                    </div>
+
+                    <div className="flex gap-2">
+                      <input 
+                        type="text"
+                        value={inscription}
+                        onChange={e => setInscription(e.target.value)}
+                        placeholder="e.g. أَلِف  or  صُمُود  or  أَدَب"
+                        className="flex-grow px-3.5 py-2.5 bg-brand-surface border-2 border-brand-text text-sm font-mono font-bold uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors"
+                      />
+                    </div>
+
+                    {/* Quick Preset Symbol Autofill Pills */}
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center gap-1.5 text-[9px] font-mono font-bold uppercase text-brand-text/60">
+                        <Sparkles size={11} className="text-brand-accent" />
+                        <span>PRE-COMPOSED SYMBOL THESES (CLICK TO AUTOLOAD 4 PILLARS):</span>
+                      </div>
+                      <div className="flex flex-wrap gap-1.5">
+                        {Object.entries(PRESET_SYMBOL_KNOWLEDGE).map(([symKey, symData]) => (
+                          <button
+                            key={symKey}
+                            type="button"
+                            onClick={() => applySymbolPreset(symKey)}
+                            className={`px-2.5 py-1 text-[9px] font-mono font-bold uppercase border border-brand-text transition-all ${
+                              inscription === symKey 
+                                ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
+                                : "bg-brand-surface hover:bg-brand-text hover:text-brand-bg"
+                            }`}
+                            title={`Load 4 pillars for ${symData.name}`}
+                          >
+                            <span className="font-black text-brand-accent mr-1.5">{symKey}</span>
+                            <span>{symData.name.split(" ")[0]}</span>
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* 4 Pillars Interactive Editor Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                    
+                    {/* Pillar 01: Doctrine */}
+                    <div className="p-4 bg-brand-bg border-2 border-brand-text space-y-2">
+                      <div className="flex items-center justify-between border-b border-brand-text/20 pb-1.5">
+                        <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                          PILLAR 01 // DOCTRINE
+                        </span>
+                        <span className="text-[9px] font-mono text-brand-text/50 uppercase">
+                          SCRIPTURAL ROOTS
+                        </span>
+                      </div>
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-tight text-brand-text">
+                        WHAT THE SYMBOL REPRESENTS *
+                      </label>
+                      <textarea
+                        value={pillar1Represents}
+                        onChange={e => setPillar1Represents(e.target.value)}
+                        rows={3}
+                        placeholder="Detail the spiritual, scriptural, or philosophical roots of the symbol..."
+                        className="w-full px-3 py-2 bg-brand-surface border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Pillar 02: Intent */}
+                    <div className="p-4 bg-brand-bg border-2 border-brand-text space-y-2">
+                      <div className="flex items-center justify-between border-b border-brand-text/20 pb-1.5">
+                        <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                          PILLAR 02 // INTENT
+                        </span>
+                        <span className="text-[9px] font-mono text-brand-text/50 uppercase">
+                          DELIBERATE SELECTION
+                        </span>
+                      </div>
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-tight text-brand-text">
+                        WHY IT WAS CHOSEN *
+                      </label>
+                      <textarea
+                        value={pillar2WhyChosen}
+                        onChange={e => setPillar2WhyChosen(e.target.value)}
+                        rows={3}
+                        placeholder="Explain why this exact symbol and motif was chosen for this specimen..."
+                        className="w-full px-3 py-2 bg-brand-surface border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Pillar 03: Transmission */}
+                    <div className="p-4 bg-brand-bg border-2 border-brand-text space-y-2">
+                      <div className="flex items-center justify-between border-b border-brand-text/20 pb-1.5">
+                        <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                          PILLAR 03 // TRANSMISSION
+                        </span>
+                        <span className="text-[9px] font-mono text-brand-text/50 uppercase">
+                          PUBLIC WITNESS
+                        </span>
+                      </div>
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-tight text-brand-text">
+                        WHAT THE SPECIMEN COMMUNICATES *
+                      </label>
+                      <textarea
+                        value={pillar3Communicates}
+                        onChange={e => setPillar3Communicates(e.target.value)}
+                        rows={3}
+                        placeholder="Describe the message communicated outward to observers and society..."
+                        className="w-full px-3 py-2 bg-brand-surface border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors leading-relaxed"
+                      />
+                    </div>
+
+                    {/* Pillar 04: Covenant */}
+                    <div className="p-4 bg-brand-bg border-2 border-brand-text space-y-2">
+                      <div className="flex items-center justify-between border-b border-brand-text/20 pb-1.5">
+                        <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
+                          PILLAR 04 // COVENANT
+                        </span>
+                        <span className="text-[9px] font-mono text-brand-text/50 uppercase">
+                          INWARD BURDEN
+                        </span>
+                      </div>
+                      <label className="block text-[10px] font-mono font-black uppercase tracking-tight text-brand-text">
+                        WHAT IDEA THE WEARER IS CARRYING *
+                      </label>
+                      <textarea
+                        value={pillar4WearerCarries}
+                        onChange={e => setPillar4WearerCarries(e.target.value)}
+                        rows={3}
+                        placeholder="Detail the internal oath, spiritual weight, or moral discipline carried by the custodian..."
+                        className="w-full px-3 py-2 bg-brand-surface border-2 border-brand-text text-xs font-mono uppercase tracking-wider focus:outline-none focus:ring-1 focus:ring-brand-accent transition-colors leading-relaxed"
+                      />
+                    </div>
+
+                  </div>
+                </div>
+
+                {/* 5. Media & Photography */}
                 <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
                   <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">3</span>
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">5</span>
                       <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
                         PHOTOGRAPHY & VISUAL REGISTRY
                       </h3>
@@ -1720,11 +2114,11 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                   </div>
                 </div>
 
-                {/* 4. Materiality & Specifications */}
+                {/* 6. Materiality & Specifications */}
                 <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
                   <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">4</span>
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">6</span>
                       <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
                         MATERIALITY & PHYSICAL SPECIFICATIONS
                       </h3>
@@ -1817,141 +2211,57 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                   </div>
                 </div>
 
-                {/* 5. Variant Architecture */}
+                {/* 7. Scalable Variant Architecture & Matrix Manager */}
                 <div className="border-2 border-brand-text bg-brand-surface p-5 sm:p-6 shadow-[4px_4px_0px_#050505] space-y-5">
-                  <div className="border-b-2 border-brand-text pb-3 flex items-center justify-between">
+                  <div className="border-b-2 border-brand-text pb-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div className="flex items-center gap-2.5">
-                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">5</span>
-                      <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
-                        VARIANT ARCHITECTURE (SIZES & OPTIONS)
-                      </h3>
+                      <span className="w-5 h-5 bg-brand-text text-brand-bg text-[10px] font-mono font-black flex items-center justify-center">7</span>
+                      <div>
+                        <h3 className="text-xs font-mono font-black uppercase tracking-wider text-brand-text">
+                          GARMENT TYPE, COLORWAY &amp; VARIANT PRICING SYSTEM
+                        </h3>
+                        <p className="text-[9px] text-brand-text/60 uppercase">
+                          CONFIGURE SILHOUETTES, VISUAL PALETTES, SIZES &amp; INHERITED BASE RATES
+                        </p>
+                      </div>
                     </div>
                     <div className="flex items-center gap-3">
                       <span className="text-[9px] font-mono text-brand-text/60 uppercase tracking-wider">
-                        {hasVariants ? `${variants.length} VARIANTS` : "SINGLE ITEM"}
+                        {hasVariants ? `${variants.length} PERMUTATIONS` : "SINGLE ITEM"}
                       </span>
                       <button
                         type="button"
                         onClick={() => {
                           if (!hasVariants && variants.length === 0) {
-                            generateSizeVariants();
+                            const newVars = buildInitialVariants(garmentTypes, availableColors, availableSizes, sku, price);
+                            setVariants(newVars);
+                            setHasVariants(true);
                           } else {
                             setHasVariants(!hasVariants);
                           }
                         }}
-                        className={`px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[1px_1px_0px_#050505] transition-all ${
-                          hasVariants ? "bg-brand-text text-brand-bg" : "bg-brand-bg text-brand-text/70"
+                        className={`px-3.5 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text shadow-[2px_2px_0px_#050505] transition-all cursor-pointer ${
+                          hasVariants ? "bg-brand-text text-brand-bg" : "bg-brand-bg text-brand-text/70 hover:text-brand-text"
                         }`}
                       >
-                        {hasVariants ? "ENABLED" : "ENABLE VARIANTS"}
+                        {hasVariants ? "✓ VARIANTS ACTIVE" : "ENABLE VARIANT SYSTEM"}
                       </button>
                     </div>
                   </div>
 
                   {hasVariants && (
-                    <div className="space-y-4 bg-brand-bg p-4 border-2 border-brand-text">
-                      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-brand-text pb-3">
-                        <div className="flex items-center gap-2">
-                          <span className="text-[9px] font-mono font-black uppercase tracking-wider text-brand-accent">GENERATORS:</span>
-                          <button
-                            type="button"
-                            onClick={generateSizeVariants}
-                            className="px-2.5 py-1 text-[9px] font-mono font-black uppercase tracking-wider bg-brand-surface border border-brand-text hover:bg-brand-text hover:text-brand-bg"
-                          >
-                            + SIZES (S-XXL)
-                          </button>
-                          <button
-                            type="button"
-                            onClick={generateColorVariants}
-                            className="px-2.5 py-1 text-[9px] font-mono font-black uppercase tracking-wider bg-brand-surface border border-brand-text hover:bg-brand-text hover:text-brand-bg"
-                          >
-                            + 3 COLORWAYS
-                          </button>
-                        </div>
-
-                        <button
-                          type="button"
-                          onClick={addEmptyVariant}
-                          className="flex items-center gap-1 px-3 py-1 text-[9px] font-mono font-black uppercase tracking-wider bg-brand-text text-brand-bg hover:bg-neutral-800"
-                        >
-                          <Plus size={11} /> ADD ROW
-                        </button>
-                      </div>
-
-                      <div className="overflow-x-auto">
-                        <table className="w-full text-left text-xs font-mono border-collapse">
-                          <thead>
-                            <tr className="border-b-2 border-brand-text text-[9px] font-black uppercase tracking-wider text-brand-text/70">
-                              <th className="pb-2">OPTION</th>
-                              <th className="pb-2">VALUE</th>
-                              <th className="pb-2">SKU</th>
-                              <th className="pb-2">PRICE (RS.)</th>
-                              <th className="pb-2">STOCK</th>
-                              <th className="pb-2 text-right">ACTION</th>
-                            </tr>
-                          </thead>
-                          <tbody className="divide-y divide-brand-text/10">
-                            {variants.map((v, idx) => (
-                              <tr key={v.id || idx}>
-                                <td className="py-2 pr-2">
-                                  <input 
-                                    type="text" 
-                                    value={v.option1Name || "Size"}
-                                    onChange={e => updateVariant(idx, "option1Name", e.target.value)}
-                                    placeholder="Size"
-                                    className="w-24 px-2 py-1 bg-brand-surface border border-brand-text text-xs uppercase"
-                                  />
-                                </td>
-                                <td className="py-2 pr-2">
-                                  <input 
-                                    type="text" 
-                                    value={v.option1Value || ""}
-                                    onChange={e => updateVariant(idx, "option1Value", e.target.value)}
-                                    placeholder="M"
-                                    className="w-20 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-black uppercase"
-                                  />
-                                </td>
-                                <td className="py-2 pr-2">
-                                  <input 
-                                    type="text" 
-                                    value={v.sku}
-                                    onChange={e => updateVariant(idx, "sku", e.target.value)}
-                                    placeholder="SKU"
-                                    className="w-32 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-mono uppercase"
-                                  />
-                                </td>
-                                <td className="py-2 pr-2">
-                                  <input 
-                                    type="number" 
-                                    value={v.price}
-                                    onChange={e => updateVariant(idx, "price", Number(e.target.value))}
-                                    className="w-24 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-bold"
-                                  />
-                                </td>
-                                <td className="py-2 pr-2">
-                                  <input 
-                                    type="number" 
-                                    value={v.inventoryQuantity}
-                                    onChange={e => updateVariant(idx, "inventoryQuantity", Number(e.target.value))}
-                                    className="w-16 px-2 py-1 bg-brand-surface border border-brand-text text-xs font-bold"
-                                  />
-                                </td>
-                                <td className="py-2 text-right">
-                                  <button
-                                    type="button"
-                                    onClick={() => removeVariant(idx)}
-                                    className="text-red-600 hover:text-red-800 p-1"
-                                    title="Remove variant"
-                                  >
-                                    <Trash2 size={13} />
-                                  </button>
-                                </td>
-                              </tr>
-                            ))}
-                          </tbody>
-                        </table>
-                      </div>
-                    </div>
+                    <VariantMatrixManager
+                      productSku={sku}
+                      defaultProductPrice={price}
+                      garmentTypes={garmentTypes}
+                      onChangeGarmentTypes={setGarmentTypes}
+                      colors={availableColors}
+                      onChangeColors={setAvailableColors}
+                      sizes={availableSizes}
+                      onChangeSizes={setAvailableSizes}
+                      variants={variants}
+                      onChangeVariants={setVariants}
+                    />
                   )}
                 </div>
 
@@ -2131,6 +2441,45 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
                           "{symbolicTagline || "A symbol of reflective culture."}"
                         </p>
                       </div>
+
+                      {/* Live 4 Pillars Preview */}
+                      {(pillar1Represents || pillar2WhyChosen || pillar3Communicates || pillar4WearerCarries || inscription) && (
+                        <div className="space-y-2 pt-3 border-t-2 border-brand-text text-[10px] font-mono">
+                          <div className="flex items-center justify-between">
+                            <span className="font-black text-brand-accent uppercase text-[9px] tracking-wider">
+                              # THE SYMBOL {inscription ? `// ${inscription}` : ""}
+                            </span>
+                            <span className="text-[8px] font-mono text-brand-text/50 uppercase">4 PILLARS</span>
+                          </div>
+                          
+                          <div className="space-y-1.5">
+                            {pillar1Represents && (
+                              <div className="p-2 bg-brand-bg border border-brand-text/20">
+                                <span className="font-black text-brand-accent block text-[8px]">01 // DOCTRINE (REPRESENTS)</span>
+                                <p className="text-brand-text/80 mt-0.5 line-clamp-2">{pillar1Represents}</p>
+                              </div>
+                            )}
+                            {pillar2WhyChosen && (
+                              <div className="p-2 bg-brand-bg border border-brand-text/20">
+                                <span className="font-black text-brand-accent block text-[8px]">02 // INTENT (WHY CHOSEN)</span>
+                                <p className="text-brand-text/80 mt-0.5 line-clamp-2">{pillar2WhyChosen}</p>
+                              </div>
+                            )}
+                            {pillar3Communicates && (
+                              <div className="p-2 bg-brand-bg border border-brand-text/20">
+                                <span className="font-black text-brand-accent block text-[8px]">03 // TRANSMISSION (COMMUNICATES)</span>
+                                <p className="text-brand-text/80 mt-0.5 line-clamp-2">{pillar3Communicates}</p>
+                              </div>
+                            )}
+                            {pillar4WearerCarries && (
+                              <div className="p-2 bg-brand-bg border border-brand-text/20">
+                                <span className="font-black text-brand-accent block text-[8px]">04 // COVENANT (WEARER CARRIES)</span>
+                                <p className="text-brand-text/80 mt-0.5 line-clamp-2">{pillar4WearerCarries}</p>
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      )}
 
                       {/* Variants Preview */}
                       {hasVariants && variants.length > 0 && (

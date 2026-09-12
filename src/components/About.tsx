@@ -25,7 +25,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
           onClick={onBack}
           className="inline-flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors mb-12 border-2 border-brand-text bg-brand-surface px-4 py-2 shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
-          <ArrowLeft size={14} /> [ RETURN TO OBJECTS ]
+          <ArrowLeft size={14} /> [ RETURN TO ARTEFACTS ]
         </motion.button>
 
         <div className="space-y-20">
@@ -49,7 +49,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                 SYMBOLIC is a manifestation of conviction, deliberate possession, and unapologetic identity. Rooted in the mission to establish our Deen through daily presence.
               </p>
               <p className="font-mono text-xs uppercase text-brand-text/70 leading-relaxed">
-                Islamabad, Pakistan // Under the Let’s Establish Our Deen (LEOD) Mission.
+                Atelier Archive // Under the Let’s Establish Our Deen (LEOD) Mission.
               </p>
             </div>
           </section>
@@ -187,7 +187,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                 </h2>
               </div>
               <span className="font-mono text-[10px] font-bold bg-brand-surface border border-brand-text px-2 py-0.5 uppercase">
-                ISLAMABAD // MISSION LEOD
+                ATELIER ARCHIVE // MISSION LEOD
               </span>
             </div>
 
@@ -226,7 +226,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                       FOUNDATIONAL ROOTS
                     </span>
                     <span className="flex items-center gap-1 font-mono text-xs font-bold text-brand-text uppercase">
-                      <MapPin size={14} className="text-brand-accent" /> ISLAMABAD, PAKISTAN
+                      <ShieldCheck size={14} className="text-brand-accent" /> ATELIER ARCHIVE
                     </span>
                   </div>
 
@@ -236,7 +236,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
 
                   <div className="font-mono text-xs sm:text-sm uppercase space-y-4 text-brand-text/90 leading-relaxed">
                     <p className="font-bold text-brand-accent">
-                      Symbolic is owned by a Muslim living in Islamabad, who initiated this brand as a sub-project under the Let’s Establish Our Deen (LEOD) mission.
+                      Symbolic is owned by a Muslim who initiated this brand as a sub-project under the Let’s Establish Our Deen (LEOD) mission.
                     </p>
                     <p>
                       The LEOD mission is grounded in a singular aspiration: reviving, establishing, and proudly upholding our Deen (the holistic Islamic System, principles, and comprehensive way of life) across every facet of modern daily experience.
@@ -266,8 +266,8 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                         <span className="font-black text-brand-text text-xs">LET’S ESTABLISH OUR DEEN (LEOD)</span>
                       </div>
                       <div>
-                        <span className="text-brand-text/60 block text-[9px]">ORIGIN CITY</span>
-                        <span className="font-bold text-brand-text">ISLAMABAD, PAKISTAN</span>
+                        <span className="text-brand-text/60 block text-[9px]">ORIGIN ARCHIVE</span>
+                        <span className="font-bold text-brand-text">ATELIER REGISTRY</span>
                       </div>
                       <div>
                         <span className="text-brand-text/60 block text-[9px]">CORE DIRECTIVE</span>
@@ -351,7 +351,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                 EXPLORE THE ARCHIVES
               </span>
               <h3 className="font-mono text-xl sm:text-2xl font-black uppercase text-brand-text">
-                EXPERIENCE THE PHYSICAL OBJECTS
+                EXPERIENCE THE PHYSICAL ARTEFACTS
               </h3>
             </div>
 

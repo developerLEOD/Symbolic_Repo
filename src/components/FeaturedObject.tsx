@@ -3,7 +3,7 @@ import { ShoppingBag, Check, FileText, ChevronLeft, ChevronRight } from "lucide-
 import { motion, AnimatePresence } from "motion/react";
 import { Product, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
-import { normalizeProductCategory, normalizeProductCollection, isProductDraftOrHidden } from "../lib/productService";
+import { normalizeProductCategory, normalizeProductCollection, isProductDraftOrHidden, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 
 interface FeaturedObjectProps {
@@ -18,22 +18,23 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
     return null;
   }
 
+  const images = resolveProductImages(product);
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
 
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     soundManager.playClick(0.06);
-    setActiveImageIndex(prev => (prev === 0 ? product.images.length - 1 : prev - 1));
+    setActiveImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
   };
 
   const handleNextImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     soundManager.playClick(0.06);
-    setActiveImageIndex(prev => (prev === product.images.length - 1 ? 0 : prev + 1));
+    setActiveImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
   };
 
-  const specimenType = normalizeProductCategory(product).toUpperCase();
+  const medium = normalizeProductCategory(product).toUpperCase();
   const collectionName = normalizeProductCollection(product);
   const collectionTag = collectionName.toUpperCase();
 
@@ -44,8 +45,8 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
       name: product.name,
       price: product.price,
       quantity: 1,
-      image: product.thumbnailImage || product.images[activeImageIndex] || product.images[0],
-      categoryLabel: `${specimenType} // ${collectionTag}`
+      image: images[activeImageIndex] || images[0],
+      categoryLabel: `${medium} // ${collectionTag}`
     });
     setAdded(true);
     setTimeout(() => setAdded(false), 2000);
@@ -61,13 +62,13 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 mb-10 gap-4">
         <div>
-          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 02 // FEATURED PIECE ]</span>
+          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 02 // FOCAL ARTEFACT ]</span>
           <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-1 text-brand-text">
-            STATEMENT PIECE
+            THE ANCHOR ARTEFACT
           </h2>
         </div>
         <div className="font-mono text-xs uppercase font-bold text-brand-text/70">
-          BATCH RUN // {product.edition || "050 PIECES"}
+          EDITION RUN // {product.edition?.replace(/SPECIMENS/gi, "ARTEFACTS") || "050 ARTEFACTS"}
         </div>
       </div>
 
@@ -95,8 +96,15 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               <AnimatePresence mode="wait">
                 <motion.img 
                   key={activeImageIndex}
-                  src={product.images[activeImageIndex] || product.images[0]} 
+                  src={images[activeImageIndex] || images[0] || STUDIO_FALLBACK_IMAGE} 
                   alt={product.name}
+                  referrerPolicy="no-referrer"
+                  onError={(e) => {
+                    const target = e.currentTarget;
+                    if (target.src !== STUDIO_FALLBACK_IMAGE) {
+                      target.src = STUDIO_FALLBACK_IMAGE;
+                    }
+                  }}
                   initial={{ opacity: 0.7, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0.6, scale: 1.01 }}
@@ -114,7 +122,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
 
               <div className="absolute top-3.5 left-3.5 z-10 flex flex-col gap-1 items-start">
                 <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-text text-brand-bg px-2.5 py-1 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-                  [ {specimenType} ]
+                  [ {medium} ]
                 </span>
                 <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
                   {collectionTag}
@@ -150,7 +158,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
 
               <div className="absolute bottom-4 right-4 bg-brand-bg text-brand-text font-mono text-[10px] font-black uppercase tracking-widest px-3 py-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 z-10">
                 <FileText size={12} />
-                <span>INSPECT OBJECT DETAILS →</span>
+                <span>INSPECT ARTEFACT DETAILS →</span>
               </div>
             </motion.div>
           </div>
@@ -175,7 +183,18 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                       : 'border-brand-text opacity-70 hover:opacity-100 shadow-[1px_1px_0px_#050505]'
                   }`}
                 >
-                  <img src={img} alt="" className="w-full h-full object-cover" />
+                  <img 
+                    src={img || STUDIO_FALLBACK_IMAGE} 
+                    alt="" 
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== STUDIO_FALLBACK_IMAGE) {
+                        target.src = STUDIO_FALLBACK_IMAGE;
+                      }
+                    }}
+                    className="w-full h-full object-cover" 
+                  />
                   <span className={`absolute bottom-0.5 right-0.5 font-mono text-[7px] font-black px-0.5 leading-none ${
                     activeImageIndex === idx ? 'bg-brand-accent text-white' : 'bg-brand-text text-brand-bg'
                   }`}>
@@ -193,7 +212,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 flex-wrap">
                 <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-text bg-brand-surface px-2 py-0.5 border border-brand-text">
-                  [ {specimenType} ]
+                  [ {medium} ]
                 </span>
                 <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
                   {collectionTag} // SERIES 01
@@ -207,9 +226,9 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             <h3 className="text-4xl sm:text-5xl font-mono font-black uppercase tracking-tight text-brand-text">
               {product.name}
             </h3>
-            <p className="text-2xl font-mono font-black text-brand-text">
-              Rs. {product.price.toLocaleString()}
-            </p>
+            <div className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 border border-brand-accent/30 inline-block">
+              EDITION: {product.edition?.replace(/SPECIMENS/gi, "ARTEFACTS") || "050 ARTEFACTS // FIRST RUN"}
+            </div>
           </div>
 
           <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/80 leading-relaxed border-l-2 border-brand-text pl-4">
@@ -240,18 +259,21 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             </div>
             <div className="flex justify-between">
               <span className="opacity-60">BATCH SPECIFICATION:</span>
-              <span className="font-black text-brand-text">{product.edition || "050 PIECES"}</span>
+              <span className="font-black text-brand-text">{product.edition?.replace(/SPECIMENS/gi, "ARTEFACTS") || "050 PIECES"}</span>
             </div>
           </div>
 
           {/* Actions */}
           <div className="flex flex-col sm:flex-row gap-4 pt-2">
             <LiquidCarveButton 
-              onClick={() => onViewProduct(product)}
+              onClick={() => {
+                soundManager.playClick(0.12);
+                onViewProduct(product);
+              }}
               variant="primary"
               className="flex-1 py-4 text-xs font-mono font-black"
             >
-              <span>VIEW FULL SPEC →</span>
+              <span>EXAMINE ARTEFACT DOSSIER →</span>
             </LiquidCarveButton>
             <LiquidCarveButton 
               onClick={handleQuickAdd}
@@ -261,13 +283,10 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               {added ? (
                 <>
                   <Check size={16} className="text-brand-accent" />
-                  <span>ADDED TO BAG</span>
+                  <span>REGISTERED FOR CUSTODY</span>
                 </>
               ) : (
-                <>
-                  <ShoppingBag size={16} />
-                  <span>ADD TO BAG →</span>
-                </>
+                <span>TAKE POSSESSION →</span>
               )}
             </LiquidCarveButton>
           </div>
