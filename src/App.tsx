@@ -15,6 +15,7 @@ import Philosophy from "./components/Philosophy";
 import ProductGrid from "./components/ProductGrid";
 import ProductDetail from "./components/ProductDetail";
 import ProductRouteHandler from "./components/ProductRouteHandler";
+import Manifesto from "./components/Manifesto";
 import WhyMerchandise from "./components/WhyMerchandise";
 import About from "./components/About";
 import Cart from "./components/Cart";
@@ -160,7 +161,7 @@ function HomeView({
           const el = document.getElementById("catalog-section");
           if (el) el.scrollIntoView({ behavior: "smooth" });
         }} 
-        onWhy={() => navigate("/why-merchandise")} 
+        onWhy={() => navigate("/manifesto")} 
       />
       
       <ProductGrid 
@@ -417,7 +418,7 @@ function StorefrontApp() {
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
                 onAddToCart={handleAddToCart}
-                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateManifesto={() => navigate("/manifesto")}
                 onNavigateAbout={() => navigate("/about")}
               />
             }
@@ -433,7 +434,7 @@ function StorefrontApp() {
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
                 onAddToCart={handleAddToCart}
-                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateManifesto={() => navigate("/manifesto")}
                 onNavigateAbout={() => navigate("/about")}
               />
             }
@@ -449,7 +450,7 @@ function StorefrontApp() {
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
                 onAddToCart={handleAddToCart}
-                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateManifesto={() => navigate("/manifesto")}
                 onNavigateAbout={() => navigate("/about")}
               />
             }
@@ -465,7 +466,7 @@ function StorefrontApp() {
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
                 onAddToCart={handleAddToCart}
-                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateManifesto={() => navigate("/manifesto")}
                 onNavigateAbout={() => navigate("/about")}
               />
             }
@@ -489,18 +490,29 @@ function StorefrontApp() {
             path="/about" 
             element={
               <About 
-                onBack={() => navigate("/artifacts")} 
-                onWhyWeWear={() => navigate("/why-merchandise")} 
+                onBack={() => navigate("/")} 
+                onWhyWeWear={() => navigate("/manifesto")} 
               />
             } 
           />
 
-          {/* Why We Wear This / Doctrine */}
+          {/* Foundational Manifesto & Doctrine */}
+          <Route 
+            path="/manifesto" 
+            element={
+              <Manifesto 
+                onBack={() => navigate("/")} 
+                onAbout={() => navigate("/about")} 
+              />
+            } 
+          />
+
+          {/* Backward compatibility route for /why-merchandise */}
           <Route 
             path="/why-merchandise" 
             element={
-              <WhyMerchandise 
-                onBack={() => navigate("/artifacts")} 
+              <Manifesto 
+                onBack={() => navigate("/")} 
                 onAbout={() => navigate("/about")} 
               />
             } 
@@ -516,7 +528,7 @@ function StorefrontApp() {
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
                 onAddToCart={handleAddToCart}
-                onNavigateManifesto={() => navigate("/why-merchandise")}
+                onNavigateManifesto={() => navigate("/manifesto")}
                 onNavigateAbout={() => navigate("/about")}
               />
             }
@@ -529,7 +541,7 @@ function StorefrontApp() {
         onCategoryClick={(catId) => {
           if (!catId) navigate("/artifacts");
           else if (catId === "about") navigate("/about");
-          else if (catId === "why-merchandise") navigate("/why-merchandise");
+          else if (catId === "manifesto" || catId === "why-merchandise") navigate("/manifesto");
           else if (catId === "be-symbolic") navigate("/collection/be-symbolic");
           else if (catId === "be-palestine" || catId === "palestine") navigate("/collection/be-palestine");
           else navigate(`/artifacts/${catId}`);

@@ -166,11 +166,11 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
                 </li>
                 <li>
                   <Link
-                    to="/why-merchandise"
-                    onClick={() => handleLinkClick("/why-merchandise", "why-merchandise")}
+                    to="/manifesto"
+                    onClick={() => handleLinkClick("/manifesto", "manifesto")}
                     className="hover:text-brand-accent transition-colors text-left cursor-pointer text-brand-accent block"
                   >
-                    &gt; WHY WE WEAR THIS
+                    &gt; FOUNDATIONAL MANIFESTO
                   </Link>
                 </li>
                 {isOwner && onOwnerClick && (

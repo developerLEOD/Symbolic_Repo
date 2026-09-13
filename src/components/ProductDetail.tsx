@@ -315,7 +315,7 @@ export default function ProductDetail({
               className="flex items-center gap-2 font-mono text-[10.5px] sm:text-xs font-black uppercase tracking-wider text-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors cursor-pointer border-2 border-brand-text px-3 py-1.5 bg-brand-surface shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px]"
             >
               <ArrowLeft size={13} /> 
-              <span>[ RETURN TO ARCHIVE ]</span>
+              <span>[ RETURN TO HOMEPAGE ]</span>
             </button>
 
             <div className="hidden sm:flex items-center gap-2.5 font-mono text-[10.5px] font-black uppercase tracking-wider">

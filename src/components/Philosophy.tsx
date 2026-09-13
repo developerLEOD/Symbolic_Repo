@@ -45,7 +45,7 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
                 variant="outline"
                 className="py-3 text-xs font-mono font-black"
               >
-                <span>THE LOGO &amp; LEOD MISSION →</span>
+                <span>ABOUT THE MARK &amp; MISSION →</span>
               </LiquidCarveButton>
             )}
             {onReadManifesto && (
@@ -54,7 +54,7 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
                 variant="secondary"
                 className="py-3 text-xs font-mono font-black"
               >
-                <span>READ OBSERVATIONS →</span>
+                <span>READ FULL MANIFESTO →</span>
               </LiquidCarveButton>
             )}
           </div>

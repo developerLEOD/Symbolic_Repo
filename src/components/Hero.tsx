@@ -110,15 +110,15 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
           <motion.div variants={itemSlideUp} className="flex flex-wrap items-center gap-2.5">
             <div className="inline-flex items-center gap-2 px-3 py-1 bg-brand-text text-brand-bg font-mono text-[10px] font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#ff4500]">
               <span className="inline-block w-1.5 h-1.5 bg-[#ff4500]"></span>
-              <span>ARCHIVE REGISTRY</span>
+              <span>POSSESSION STUDIO</span>
               <span className="text-[#ff4500]">//</span>
-              <span className="text-brand-bg/80">OBJECTS OF CONVICTION</span>
+              <span className="text-brand-bg/80">PHYSICAL OBJECTS &amp; ARTIFACTS</span>
             </div>
           </motion.div>
 
-          {/* Staggered Kinetic Headline with Spring Physics */}
-          <div className="space-y-2.5">
-            {/* "BE SYMBOLIC." Stamp with 3D Pop & Hover Tilt */}
+          {/* Core Hierarchy: BE SYMBOLIC + Clear Explanation */}
+          <div className="space-y-4">
+            {/* Primary Headline: BE SYMBOLIC. */}
             <motion.div
               variants={itemSlideUp}
               className="inline-block"
@@ -137,35 +137,25 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                   rotate: -0.8,
                   transition: { type: "spring", stiffness: 450, damping: 14 },
                 }}
-                className="inline-block bg-brand-accent text-white pl-3.5 sm:pl-5 pr-5 pt-[14px] pb-1 mt-[-4px] ml-0 text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tighter leading-[0.88] border-2 border-brand-text shadow-[6px_6px_0px_#050505] cursor-default select-none transition-shadow hover:shadow-[8px_8px_0px_#050505]"
+                className="inline-block bg-brand-accent text-white pl-4 sm:pl-6 pr-6 pt-3.5 pb-2 text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tighter leading-[0.88] border-2 border-brand-text shadow-[6px_6px_0px_#050505] cursor-default select-none transition-shadow hover:shadow-[8px_8px_0px_#050505]"
               >
                 BE SYMBOLIC.
               </motion.span>
             </motion.div>
 
-            {/* Masked Slide-up Line 1 */}
-            <div className="overflow-hidden pt-1.5">
-              <motion.h1
+            {/* Clear Sub-headline: What BE SYMBOLIC means in human terms */}
+            <div className="overflow-hidden pt-1">
+              <motion.h2
                 variants={lineMaskVariant}
-                className="text-4xl sm:text-6xl lg:text-7xl xl:text-8xl font-mono font-bold uppercase tracking-tighter text-brand-text leading-[0.88]"
+                className="text-2xl sm:text-4xl lg:text-5xl font-mono font-black uppercase tracking-tight text-brand-text leading-[1.08]"
               >
-                OBJECTS WITH SOMETHING TO SAY.
-              </motion.h1>
-            </div>
-
-            {/* Masked Slide-up Line 2 */}
-            <div className="overflow-hidden pt-1 flex items-baseline gap-3">
-              <motion.span
-                variants={lineMaskVariant}
-                className="text-2xl sm:text-4xl lg:text-5xl font-mono font-black text-[#ff4500] tracking-tight uppercase"
-              >
-                MEANING, MADE VISIBLE.
-              </motion.span>
+                Objects that carry what you believe, value, and choose to represent.
+              </motion.h2>
             </div>
           </div>
 
-          {/* Studio Axiom */}
-          <motion.div variants={itemSlideUp} className="relative max-w-2xl pl-5 py-1">
+          {/* Clear Product Statement: What SYMBOLIC Muslims creates */}
+          <motion.div variants={itemSlideUp} className="relative max-w-2xl pl-5 py-2">
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
@@ -174,7 +164,11 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             />
             <div>
               <p className="text-sm sm:text-base font-mono uppercase tracking-wide text-brand-text font-bold leading-relaxed">
-                A curated collection of physical artifacts carrying symbol, reflection, and quiet conviction.
+                <span className="inline-flex flex-col items-end leading-none mr-1.5 align-baseline">
+                  <span className="font-black text-sm sm:text-base leading-none">SYMBOLIC</span>
+                  <span className="text-[9px] sm:text-[10px] font-bold italic text-brand-accent leading-none mt-0.5">MUSLIMS</span>
+                </span>
+                creates clothing and everyday objects designed to give Muslim identity a visible, intentional form.
               </p>
             </div>
           </motion.div>

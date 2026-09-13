@@ -1,3 +1,4 @@
+import { useEffect } from "react";
 import { motion } from "motion/react";
 import { ArrowLeft, Compass, ShieldCheck, MapPin, Sparkles, ExternalLink } from "lucide-react";
 import LiquidCarveButton from "./LiquidCarveButton";
@@ -9,6 +10,10 @@ interface AboutProps {
 }
 
 export default function About({ onBack, onWhyWeWear }: AboutProps) {
+  useEffect(() => {
+    document.title = "SYMBOLIC // About & Identity Dossier";
+  }, []);
+
   return (
     <motion.div 
       initial={{ opacity: 0 }}
@@ -25,7 +30,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
           onClick={onBack}
           className="inline-flex items-center gap-2 font-mono text-xs font-black uppercase tracking-widest text-brand-text hover:text-brand-accent transition-colors mb-12 border-2 border-brand-text bg-brand-surface px-4 py-2 shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
-          <ArrowLeft size={14} /> [ RETURN TO ARTIFACTS ]
+          <ArrowLeft size={14} /> [ RETURN TO HOMEPAGE ]
         </motion.button>
 
         <div className="space-y-20">
@@ -369,7 +374,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   variant="outline"
                   className="px-6 py-3.5 text-xs font-mono font-black"
                 >
-                  <span>READ WHY WE WEAR THIS →</span>
+                  <span>READ THE MANIFESTO →</span>
                 </LiquidCarveButton>
               )}
             </div>

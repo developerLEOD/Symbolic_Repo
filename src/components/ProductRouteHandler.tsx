@@ -55,15 +55,15 @@ export default function ProductRouteHandler({
   }, [id]);
 
   const handleClose = () => {
-    // Navigate back to artifacts directory or previous location
-    navigate("/artifacts");
+    // Navigate back to homepage
+    navigate("/");
   };
 
   const handleDelete = async (prodId: string, name: string) => {
     try {
       await deleteProductAndVariants(prodId);
       if (onProductDeleted) onProductDeleted();
-      navigate("/artifacts");
+      navigate("/");
     } catch (err) {
       console.error("Failed to remove product from route:", err);
     }
@@ -130,10 +130,10 @@ export default function ProductRouteHandler({
         </p>
         <button
           type="button"
-          onClick={() => navigate("/artifacts")}
+          onClick={() => navigate("/")}
           className="px-4 py-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-black text-xs uppercase border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
         >
-          RETURN TO DIRECTORY
+          RETURN TO HOMEPAGE
         </button>
       </div>
     );

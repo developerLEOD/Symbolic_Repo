@@ -107,13 +107,14 @@ export default function Header({
   ];
 
   const manifestoItems = [
-    { id: "why-merchandise", path: "/why-merchandise", label: "DOCTRINE // WHY MERCHANDISE", desc: "Foundational Manifesto & Philosophy" },
+    { id: "manifesto", path: "/manifesto", label: "FOUNDATIONAL MANIFESTO", desc: "Doctrine // Why We Wear What We Wear" },
     { id: "about", path: "/about", label: "PROVENANCE // ABOUT SYMBOLIC", desc: "Identity, Origin & Material Mandates" },
   ];
 
   const isMediumActive = location.pathname.startsWith("/artifacts");
   const isCollectionActive = location.pathname.startsWith("/collection");
-  const isManifestoActive = location.pathname === "/about" || location.pathname === "/why-merchandise";
+  const isManifestoActive = location.pathname === "/manifesto" || location.pathname === "/why-merchandise";
+  const isAboutActive = location.pathname === "/about";
 
   const handleItemSelect = (path: string, id: string | null) => {
     setOpenDropdown(null);
@@ -272,59 +273,37 @@ export default function Header({
               </AnimatePresence>
             </div>
 
-            {/* Dropdown 3: Manifesto / Doctrine / Provenance */}
-            <div className="relative">
-              <button 
-                type="button"
-                onClick={() => setOpenDropdown(prev => prev === "manifestoes" ? null : "manifestoes")}
-                className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                  openDropdown === "manifestoes" || isManifestoActive
-                    ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
-                    : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-                } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
-                aria-expanded={openDropdown === "manifestoes"}
-              >
-                <span>[ ABOUT &amp; MANIFESTO ]</span>
-                <ChevronDown size={11} className={`transition-transform duration-200 ${openDropdown === "manifestoes" ? "rotate-180" : ""}`} />
-              </button>
+            {/* Link 3: Manifesto */}
+            <Link
+              to="/manifesto"
+              onClick={() => {
+                setOpenDropdown(null);
+                setIsMenuOpen(false);
+              }}
+              className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+                isManifestoActive
+                  ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
+                  : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
+              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
+            >
+              <span>[ MANIFESTO ]</span>
+            </Link>
 
-              <AnimatePresence>
-                {openDropdown === "manifestoes" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-1.5 w-72 sm:w-80 bg-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
-                  >
-                    <div className="px-3 py-1.5 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
-                      <span>// PHILOSOPHICAL FOUNDATIONS</span>
-                      <span className="text-brand-text/40">2 FOLIOS</span>
-                    </div>
-                    <div className="divide-y divide-brand-text/10">
-                      {manifestoItems.map(item => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => handleItemSelect(item.path, item.id)}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer block"
-                        >
-                          <div>
-                            <div className="font-mono text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider group-hover:text-brand-bg text-brand-accent">
-                              [ {item.label} ]
-                            </div>
-                            <div className="font-mono text-[8.5px] text-brand-text/60 group-hover:text-brand-bg/80 mt-0.5">
-                              {item.desc}
-                            </div>
-                          </div>
-                          <ChevronRight size={12} className="text-brand-text/40 group-hover:text-brand-bg shrink-0 transition-transform group-hover:translate-x-0.5" />
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+            {/* Link 4: About */}
+            <Link
+              to="/about"
+              onClick={() => {
+                setOpenDropdown(null);
+                setIsMenuOpen(false);
+              }}
+              className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+                isAboutActive
+                  ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
+                  : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
+              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
+            >
+              <span>[ ABOUT ]</span>
+            </Link>
           </nav>
         </div>
 
@@ -439,20 +418,33 @@ export default function Header({
                 {/* Section 3: About & Manifestoes */}
                 <div>
                   <div className="text-[9px] font-mono font-black uppercase tracking-widest text-brand-text/50 mb-1.5 px-1">
-                    // ABOUT &amp; MANIFESTOES
+                    // SEPARATE FOLIOS &amp; ARCHIVES
                   </div>
                   <div className="space-y-1">
-                    {manifestoItems.map(item => (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => handleItemSelect(item.path, item.id)}
-                        className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors text-brand-accent font-black block"
-                      >
-                        <span>[ {item.label} ]</span>
-                        <ChevronRight size={13} className="text-brand-accent" />
-                      </Link>
-                    ))}
+                    <Link
+                      to="/manifesto"
+                      onClick={() => handleItemSelect("/manifesto", "manifesto")}
+                      className={`w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 border border-brand-text/15 cursor-pointer transition-colors block ${
+                        isManifestoActive 
+                          ? 'bg-brand-text text-brand-bg font-black' 
+                          : 'bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg text-brand-accent font-black'
+                      }`}
+                    >
+                      <span>[ MANIFESTO // WHY MERCHANDISE ]</span>
+                      <ChevronRight size={13} className={isManifestoActive ? 'text-brand-bg' : 'text-brand-accent'} />
+                    </Link>
+                    <Link
+                      to="/about"
+                      onClick={() => handleItemSelect("/about", "about")}
+                      className={`w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 border border-brand-text/15 cursor-pointer transition-colors block ${
+                        isAboutActive 
+                          ? 'bg-brand-text text-brand-bg font-black' 
+                          : 'bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg text-brand-accent font-black'
+                      }`}
+                    >
+                      <span>[ ABOUT SYMBOLIC // PROVENANCE ]</span>
+                      <ChevronRight size={13} className={isAboutActive ? 'text-brand-bg' : 'text-brand-accent'} />
+                    </Link>
                   </div>
                 </div>
               </div>
