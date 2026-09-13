@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
 import { Product, Category } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
@@ -35,6 +35,7 @@ export default function ProductGrid({
   const [products, setProducts] = useState<Product[]>(() => getCachedProducts());
   const [categories, setCategories] = useState<Category[]>(CANONICAL_CATEGORIES);
   const [loading, setLoading] = useState(false);
+  const [reverifying, setReverifying] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<"all" | "be-symbolic" | "be-palestine">("all");
   const [viewMode, setViewMode] = useState<"exhibition" | "grid" | "ledger">("exhibition");
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -48,41 +49,33 @@ export default function ProductGrid({
     }
   }, [activeCategoryId]);
 
-  useEffect(() => {
-    let isSubscribed = true;
+  const syncArchiveData = useCallback(async () => {
+    try {
+      setReverifying(true);
+      const [loadedCats, prods] = await Promise.all([
+        fetchCategories(),
+        fetchProducts()
+      ]);
 
-    const syncArchiveData = async () => {
-      try {
-        const [loadedCats, prods] = await Promise.all([
-          fetchCategories(),
-          fetchProducts()
-        ]);
-
-        if (!isSubscribed) return;
-
-        if (loadedCats && loadedCats.length > 0) {
-          setCategories(loadedCats);
-          if (onCategoriesLoaded) onCategoriesLoaded(loadedCats);
-        }
-
-        if (prods) {
-          setProducts(prods);
-        }
-      } catch (err) {
-        console.error("Archive background sync error:", err);
-      } finally {
-        if (isSubscribed) {
-          setLoading(false);
-        }
+      if (loadedCats && loadedCats.length > 0) {
+        setCategories(loadedCats);
+        if (onCategoriesLoaded) onCategoriesLoaded(loadedCats);
       }
-    };
 
+      if (prods) {
+        setProducts(prods);
+      }
+    } catch (err) {
+      console.error("Archive background sync error:", err);
+    } finally {
+      setLoading(false);
+      setReverifying(false);
+    }
+  }, [onCategoriesLoaded]);
+
+  useEffect(() => {
     syncArchiveData();
-
-    return () => {
-      isSubscribed = false;
-    };
-  }, [refreshKey]);
+  }, [refreshKey, syncArchiveData]);
 
   // Only show active/available products in storefront
   const activeProducts = products.filter(isProductLive);
@@ -373,6 +366,21 @@ export default function ProductGrid({
               className="px-6 py-3 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
             >
               EXPLORE ALL REGISTERED ARTIFACTS
+            </button>
+            <button 
+              type="button"
+              disabled={reverifying}
+              onClick={() => syncArchiveData()} 
+              className="px-6 py-3 bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg disabled:opacity-50 font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+            >
+              {reverifying ? (
+                <>
+                  <span className="w-2 h-2 rounded-full bg-brand-accent animate-ping" />
+                  <span>VERIFYING ARCHIVE (3 CHECKS)...</span>
+                </>
+              ) : (
+                <span>RE-VERIFY COLLECTION STATUS</span>
+              )}
             </button>
           </div>
         </div>

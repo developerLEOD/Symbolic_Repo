@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, orderBy, writeBatch } from "firebase/firestore";
+import { collection, doc, getDocs, getDocsFromServer, getDoc, setDoc, deleteDoc, query, orderBy, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import { Product, Category, ProductVariant } from "../types";
 import { handleFirestoreError, OperationType } from "./firestoreErrors";
@@ -82,7 +82,7 @@ let memoryProductsCache: Product[] | null = null;
 let memoryCategoriesCache: Category[] | null = null;
 
 export function getCachedProducts(): Product[] {
-  if (memoryProductsCache) {
+  if (memoryProductsCache && memoryProductsCache.length > 0) {
     return memoryProductsCache;
   }
   if (typeof window !== "undefined" && window.localStorage) {
@@ -90,7 +90,7 @@ export function getCachedProducts(): Product[] {
       const saved = localStorage.getItem(PRODUCTS_CACHE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           memoryProductsCache = parsed;
           return parsed;
         }
@@ -99,7 +99,8 @@ export function getCachedProducts(): Product[] {
       // Storage parse error ignored
     }
   }
-  return [];
+  // Return canonical seed objects when cache is unpopulated so storefront never starts blank
+  return CANONICAL_SEED_OBJECTS;
 }
 
 export function invalidateProductsCache(newProducts?: Product[]): void {
@@ -120,6 +121,83 @@ export function invalidateProductsCache(newProducts?: Product[]): void {
   }
 }
 
+/**
+ * Executes a Firestore collection query with multi-stage verification if the result is zero.
+ * If the collection appears empty (0 documents), it checks twice or thrice (with progressive delays
+ * and direct server verification) before authoritatively confirming the collection is genuinely empty.
+ */
+export async function queryCollectionWithZeroVerification(
+  path: string,
+  queryRefOrBuilder: any,
+  maxChecks: number = 3
+): Promise<any> {
+  let attempt = 0;
+  let lastSnapshot: any = null;
+
+  while (attempt < maxChecks) {
+    attempt++;
+    try {
+      if (attempt === 1) {
+        // Check 1: Primary query (may use cache or live webchannel)
+        lastSnapshot = await getDocs(queryRefOrBuilder);
+      } else {
+        // Check 2 (twice) & Check 3 (thrice):
+        // Query directly from server to bypass unpopulated/transient local cache
+        try {
+          lastSnapshot = await getDocsFromServer(queryRefOrBuilder);
+        } catch {
+          lastSnapshot = await getDocs(queryRefOrBuilder);
+        }
+      }
+
+      if (lastSnapshot && !lastSnapshot.empty && lastSnapshot.docs && lastSnapshot.docs.length > 0) {
+        if (attempt > 1) {
+          console.info(`[Collection Verification] Documents recovered on check ${attempt} of ${maxChecks} for "${path}". Count: ${lastSnapshot.docs.length}`);
+        }
+        return lastSnapshot;
+      }
+
+      console.info(`[Collection Verification] Zero documents returned on check ${attempt}/${maxChecks} for collection "${path}".`);
+
+      if (attempt < maxChecks) {
+        // Progressive pause before next check: 350ms before check 2 (twice), 650ms before check 3 (thrice)
+        const delay = attempt === 1 ? 350 : 650;
+        await new Promise((resolve) => setTimeout(resolve, delay));
+      }
+    } catch (err) {
+      console.warn(`[Collection Verification] Error on check ${attempt} for "${path}":`, err);
+      if (attempt < maxChecks) {
+        await new Promise((resolve) => setTimeout(resolve, 400));
+      }
+    }
+  }
+
+  console.info(`[Collection Verification] Authoritatively confirmed: collection "${path}" is empty after ${maxChecks} consecutive checks.`);
+  return lastSnapshot;
+}
+
+/**
+ * Authoritatively verifies whether a Firestore collection is empty.
+ * Checks twice or thrice if the result is zero before confirming emptiness.
+ */
+export async function isCollectionEmpty(
+  collectionPath: string = "products",
+  maxChecks: number = 3
+): Promise<{ isEmpty: boolean; count: number; checksPerformed: number }> {
+  try {
+    const colRef = collection(db, collectionPath);
+    const snap = await queryCollectionWithZeroVerification(collectionPath, colRef, maxChecks);
+    const count = snap && !snap.empty && snap.docs ? snap.docs.length : 0;
+    return {
+      isEmpty: count === 0,
+      count,
+      checksPerformed: maxChecks
+    };
+  } catch {
+    return { isEmpty: true, count: 0, checksPerformed: maxChecks };
+  }
+}
+
 export async function fetchCategories(): Promise<Category[]> {
   if (memoryCategoriesCache && memoryCategoriesCache.length > 0) {
     return memoryCategoriesCache;
@@ -127,19 +205,20 @@ export async function fetchCategories(): Promise<Category[]> {
 
   const path = "categories";
   
-  // Return canonical instantly if offline/slow by setting a strict 1.5s timeout
+  // Return canonical instantly if offline/slow by setting a safe 5s timeout
   const timeoutPromise = new Promise<null>((resolve) => {
-    setTimeout(() => resolve(null), 1500);
+    setTimeout(() => resolve(null), 5000);
   });
 
   try {
     const fetchPromise = (async () => {
       const q = query(collection(db, path), orderBy("order", "asc"));
-      const snapshot = await getDocs(q);
-      if (!snapshot.empty) {
+      // Check twice or thrice if the result is zero in categories collection
+      const snapshot = await queryCollectionWithZeroVerification(path, q, 3);
+      if (snapshot && !snapshot.empty && snapshot.docs && snapshot.docs.length > 0) {
         const cats = snapshot.docs
-          .map(d => ({ id: d.id, ...d.data() } as Category))
-          .filter(c => {
+          .map((d: any) => ({ id: d.id, ...d.data() } as Category))
+          .filter((c: Category) => {
             const id = (c.id || "").toLowerCase();
             const name = (c.name || "").toLowerCase();
             return id !== "garments" && name !== "garments" && id !== "palestine" && id !== "be-symbolic";
@@ -494,22 +573,23 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
 export async function fetchProducts(): Promise<Product[]> {
   const path = "products";
   
-  // Strict timeout race: If Firestore hangs or takes > 2.5s on mobile networks, return cached data immediately
+  // Safe timeout allows sufficient window for 3 consecutive checks (~2s total on empty result)
   const timeoutPromise = new Promise<null>((resolve) => {
-    setTimeout(() => resolve(null), 2500);
+    setTimeout(() => resolve(null), 8000);
   });
 
   try {
     const fetchPromise = (async () => {
-      const snapshot = await getDocs(collection(db, path));
-      if (snapshot.empty) {
+      // Check twice or thrice if the result is zero in the collection
+      const snapshot = await queryCollectionWithZeroVerification(path, collection(db, path), 3);
+      if (!snapshot || snapshot.empty || !snapshot.docs || snapshot.docs.length === 0) {
         invalidateProductsCache([]);
         return [];
       }
 
-      const rawProducts = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+      const rawProducts = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() } as Product));
       
-      return rawProducts.map(p => {
+      return rawProducts.map((p: Product) => {
         const { product, changed } = sanitizeProduct(p);
         if (changed) {
           const cleaned = cleanUndefined(product);
@@ -536,8 +616,11 @@ export async function fetchProducts(): Promise<Product[]> {
 export async function fetchProductVariants(productId: string): Promise<ProductVariant[]> {
   const path = `products/${productId}/variants`;
   try {
-    const snapshot = await getDocs(collection(db, "products", productId, "variants"));
-    return snapshot.docs.map(d => ({ id: d.id, ...d.data() } as ProductVariant));
+    const colRef = collection(db, "products", productId, "variants");
+    // Check twice or thrice if result is zero to ensure variants aren't missed during sync
+    const snapshot = await queryCollectionWithZeroVerification(path, colRef, 3);
+    if (!snapshot || snapshot.empty || !snapshot.docs) return [];
+    return snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() } as ProductVariant));
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
     return [];

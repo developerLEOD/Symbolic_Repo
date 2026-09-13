@@ -143,6 +143,29 @@ export default function ArtifactOverlappingCollection({
     setClosedTooltips((prev) => ({ ...prev, [productId]: true }));
   };
 
+  // Determine placement on side (desktop) or above (mobile) with fixed-header awareness
+  const calculatePlacement = (index: number): 'right' | 'left' | 'above' => {
+    const el = itemRefs.current[index];
+    if (!el || typeof window === "undefined") return "right";
+    
+    const isMobile = window.innerWidth < 768;
+    if (isMobile) return "above";
+
+    const rect = el.getBoundingClientRect();
+    const tooltipWidth = 315;
+    const spaceRight = window.innerWidth - rect.right;
+    const spaceLeft = rect.left;
+
+    // Check if right or left side has enough viewport room
+    if (spaceRight >= tooltipWidth + 24) {
+      return "right";
+    } else if (spaceLeft >= tooltipWidth + 24) {
+      return "left";
+    } else {
+      return "above";
+    }
+  };
+
   // Handle artifact card interaction
   const handleItemHover = (index: number, productId: string) => {
     if (isDragging || hasMovedDuringDrag) return;
@@ -152,26 +175,8 @@ export default function ArtifactOverlappingCollection({
       setClosedTooltips((prev) => ({ ...prev, [productId]: false }));
     }
 
-    // Determine placement on side (desktop) or above (mobile)
-    const el = itemRefs.current[index];
-    if (el && typeof window !== "undefined") {
-      const isMobile = window.innerWidth < 768;
-      if (isMobile) {
-        setPlacementMap((prev) => ({ ...prev, [index]: "above" }));
-      } else {
-        const rect = el.getBoundingClientRect();
-        const tooltipWidth = 315;
-        const spaceRight = window.innerWidth - rect.right;
-        const spaceLeft = rect.left;
-        if (spaceRight >= tooltipWidth + 24) {
-          setPlacementMap((prev) => ({ ...prev, [index]: "right" }));
-        } else if (spaceLeft >= tooltipWidth + 24) {
-          setPlacementMap((prev) => ({ ...prev, [index]: "left" }));
-        } else {
-          setPlacementMap((prev) => ({ ...prev, [index]: "above" }));
-        }
-      }
-    }
+    const nextPlacement = calculatePlacement(index);
+    setPlacementMap((prev) => ({ ...prev, [index]: nextPlacement }));
   };
 
   const handleItemLeave = (index: number) => {
@@ -188,35 +193,20 @@ export default function ArtifactOverlappingCollection({
   const handleItemClick = (product: Product, index: number) => {
     if (hasMovedDuringDrag) return;
 
-    // If clicking a card that is not currently selected/hovered (e.g. after moving/scrolling or when another product's tooltip was active),
-    // first select it to activate its HUD & tooltip inspection state rather than directly opening the detail view.
+    // If clicking a card that is not currently selected/active (e.g. after moving/scrolling,
+    // or when another product's tooltip was active and other cards shifted),
+    // strictly SELECT this product first to activate its HUD & elevation tooltip state.
+    // Never trigger detail view / modal on an unengaged item.
     if (activeIdx !== index) {
       soundManager.playClick(0.08);
       setActiveIdx(index);
       setClosedTooltips((prev) => ({ ...prev, [product.id]: false }));
-      
-      const el = itemRefs.current[index];
-      if (el && typeof window !== "undefined") {
-        const isMobile = window.innerWidth < 768;
-        if (isMobile) {
-          setPlacementMap((prev) => ({ ...prev, [index]: "above" }));
-        } else {
-          const rect = el.getBoundingClientRect();
-          const tooltipWidth = 315;
-          const spaceRight = window.innerWidth - rect.right;
-          const spaceLeft = rect.left;
-          if (spaceRight >= tooltipWidth + 24) {
-            setPlacementMap((prev) => ({ ...prev, [index]: "right" }));
-          } else if (spaceLeft >= tooltipWidth + 24) {
-            setPlacementMap((prev) => ({ ...prev, [index]: "left" }));
-          } else {
-            setPlacementMap((prev) => ({ ...prev, [index]: "above" }));
-          }
-        }
-      }
+      const nextPlacement = calculatePlacement(index);
+      setPlacementMap((prev) => ({ ...prev, [index]: nextPlacement }));
       return;
     }
 
+    // Only if the user deliberately clicks the card a second time while it is already selected/active
     soundManager.playClick(0.14);
     onProductClick(product);
   };
@@ -280,7 +270,7 @@ export default function ArtifactOverlappingCollection({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`w-full overflow-x-auto hide-scrollbar pt-14 pb-20 px-6 sm:px-12 cursor-grab active:cursor-grabbing transition-all ${
+        className={`w-full overflow-x-auto hide-scrollbar pt-20 sm:pt-24 pb-24 px-6 sm:px-12 cursor-grab active:cursor-grabbing transition-all ${
           isDragging ? "select-none" : ""
         }`}
       >
@@ -549,9 +539,9 @@ export default function ArtifactOverlappingCollection({
                       }}
                       className={`absolute z-[100] w-[min(315px,calc(100vw-32px))] bg-brand-bg border-2 border-brand-text p-3 shadow-[8px_8px_0px_#050505] pointer-events-auto cursor-default ${
                         placement === "right"
-                          ? "left-[calc(100%+14px)] top-0"
+                          ? "left-[calc(100%+14px)] top-2"
                           : placement === "left"
-                          ? "right-[calc(100%+14px)] left-auto top-0"
+                          ? "right-[calc(100%+14px)] left-auto top-2"
                           : "bottom-[calc(100%+14px)] left-1/2 -translate-x-1/2"
                       }`}
                     >
