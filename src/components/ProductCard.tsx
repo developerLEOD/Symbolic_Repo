@@ -205,7 +205,7 @@ export default function ProductCard({
         )}
       </div>
 
-      {/* PC BRUTALIST SCATTERED ELEVATION SATELLITES (Rendered outside the central image canvas on hover with dwell & exit grace) */}
+      {/* PC BRUTALIST SCATTERED angles SATELLITES (Rendered outside the central image canvas on hover with dwell & exit grace) */}
       <AnimatePresence>
         {showAngles && images.length > 1 && (
           <div 
@@ -271,7 +271,7 @@ export default function ProductCard({
                       ? "border-[#ff4500] shadow-[3px_3px_0px_#050505] bg-brand-bg ring-1 ring-[#ff4500]"
                       : "border-brand-text shadow-[2px_2px_0px_#050505] opacity-90 hover:opacity-100"
                   }`}
-                  title={`Elevation 0${i + 1}`}
+                  title={`angles 0${i + 1}`}
                 >
                   <div className="relative w-full h-full overflow-hidden border border-brand-text/30 bg-brand-bg">
                     <img src={img || STUDIO_FALLBACK_IMAGE} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />

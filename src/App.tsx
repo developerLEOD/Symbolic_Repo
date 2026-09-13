@@ -26,6 +26,7 @@ import AuthModal from "./components/AuthModal";
 import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import ScrollToTop from "./components/ScrollToTop";
+import Breadcrumbs from "./components/Breadcrumbs";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts, getCachedProducts } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
@@ -52,7 +53,7 @@ function ArtifactsDirectoryView({
   const navigate = useNavigate();
 
   return (
-    <div className="pt-20">
+    <div className="pt-4 sm:pt-6">
       <ProductGrid 
         activeCategoryId={categoryId || null} 
         onCategoryChange={(catId) => {
@@ -104,7 +105,7 @@ function CollectionDirectoryView({
   const navigate = useNavigate();
 
   return (
-    <div className="pt-20">
+    <div className="pt-4 sm:pt-6">
       <ProductGrid 
         activeCategoryId={collectionId || null} 
         onCategoryChange={(catId) => {
@@ -406,8 +407,10 @@ function StorefrontApp() {
         }}
       />
 
-      <main>
-        <Routes>
+      <div className="pt-14 sm:pt-16">
+        <Breadcrumbs categories={categories} />
+        <main>
+          <Routes>
           {/* Home Route */}
           <Route
             path="/"
@@ -535,6 +538,7 @@ function StorefrontApp() {
           />
         </Routes>
       </main>
+    </div>
 
       <Footer 
         categories={categories}

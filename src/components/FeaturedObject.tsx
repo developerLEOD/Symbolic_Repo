@@ -116,7 +116,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               {/* Blueprint Reticle Marker */}
               <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none select-none">
                 <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-bg text-brand-text px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
-                  ⌖ HERO // ELEVATION [0{activeImageIndex + 1}]
+                  ⌖ HERO // angles [0{activeImageIndex + 1}]
                 </span>
               </div>
 

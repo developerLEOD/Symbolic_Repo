@@ -26,14 +26,14 @@ const SPECIMEN_OFFSETS = [
   { y: 12, rotate: 0.8 },
 ];
 
-// Brutalist scattered coordinate matrices for outer angle elevations
+// Brutalist scattered coordinate matrices for outer angle angless
 const BRUTALIST_SCATTER_OFFSETS = [
-  { x: "-82px", y: "-42px", rotate: -4.5, shadow: "4px_4px_0px_#050505", label: "ELEV // 01 [ORTHO-TOP]" },
-  { x: "106%", y: "-36px", rotate: 3.5, shadow: "4px_4px_0px_#050505", label: "ELEV // 02 [ISO-EAST]" },
-  { x: "-76px", y: "108px", rotate: 2.8, shadow: "4px_4px_0px_#050505", label: "ELEV // 03 [LATERAL]" },
-  { x: "104%", y: "94px", rotate: -3.2, shadow: "4px_4px_0px_#050505", label: "ELEV // 04 [OBLIQUE]" },
-  { x: "-70px", y: "248px", rotate: -2.5, shadow: "4px_4px_0px_#050505", label: "ELEV // 05 [SECTION]" },
-  { x: "105%", y: "235px", rotate: 4.2, shadow: "4px_4px_0px_#050505", label: "ELEV // 06 [AXIAL]" },
+  { x: "-82px", y: "-42px", rotate: -4.5, shadow: "4px_4px_0px_#050505", label: "ANGLE // 01 [ORTHO-TOP]" },
+  { x: "106%", y: "-36px", rotate: 3.5, shadow: "4px_4px_0px_#050505", label: "ANGLE // 02 [ISO-EAST]" },
+  { x: "-76px", y: "108px", rotate: 2.8, shadow: "4px_4px_0px_#050505", label: "ANGLE // 03 [LATERAL]" },
+  { x: "104%", y: "94px", rotate: -3.2, shadow: "4px_4px_0px_#050505", label: "ANGLE // 04 [OBLIQUE]" },
+  { x: "-70px", y: "248px", rotate: -2.5, shadow: "4px_4px_0px_#050505", label: "ANGLE // 05 [SECTION]" },
+  { x: "105%", y: "235px", rotate: 4.2, shadow: "4px_4px_0px_#050505", label: "ANGLE // 06 [AXIAL]" },
 ];
 
 export default function ArtifactOverlappingCollection({
@@ -67,7 +67,10 @@ export default function ArtifactOverlappingCollection({
   const [scatterVisibleIdx, setScatterVisibleIdx] = useState<number | null>(null);
   const scatterEnterTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scatterLeaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [openElevationProductId, setOpenElevationProductId] = useState<string | null>(null);
+  const isInteractingWithAnglesRef = useRef(false);
+  const angleInteractionExitTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const pendingSwitchTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const [openanglesProductId, setOpenanglesProductId] = useState<string | null>(null);
   const [hoveredThumbMap, setHoveredThumbMap] = useState<Record<string, number | null>>({});
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
@@ -95,6 +98,8 @@ export default function ArtifactOverlappingCollection({
     return () => {
       if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
       if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
+      if (angleInteractionExitTimerRef.current) clearTimeout(angleInteractionExitTimerRef.current);
+      if (pendingSwitchTimerRef.current) clearTimeout(pendingSwitchTimerRef.current);
     };
   }, []);
 
@@ -181,10 +186,69 @@ export default function ArtifactOverlappingCollection({
   const handleDesktopItemHover = (index: number) => {
     if (isDragging || hasMovedDuringDrag) return;
     
+    // If the mouse is on the currently active card, cancel any pending leave or switch
+    if (activeIdx === index) {
+      if (pendingSwitchTimerRef.current) {
+        clearTimeout(pendingSwitchTimerRef.current);
+        pendingSwitchTimerRef.current = null;
+      }
+      if (scatterLeaveTimerRef.current) {
+        clearTimeout(scatterLeaveTimerRef.current);
+        scatterLeaveTimerRef.current = null;
+      }
+      if (angleInteractionExitTimerRef.current) {
+        clearTimeout(angleInteractionExitTimerRef.current);
+        angleInteractionExitTimerRef.current = null;
+      }
+      return;
+    }
+
+    // If another card is currently active and its angles are displayed, or the user is navigating angles:
+    // Do NOT immediately switch active product! Buffer the switch so moving between angle satellites
+    // across adjacent cards does NOT accidentally select the card underneath.
+    if (activeIdx !== null && activeIdx !== index) {
+      if (isInteractingWithAnglesRef.current || scatterVisibleIdx === activeIdx) {
+        if (pendingSwitchTimerRef.current) {
+          clearTimeout(pendingSwitchTimerRef.current);
+        }
+        // Require intentional dwell on the other card before transferring focus
+        pendingSwitchTimerRef.current = setTimeout(() => {
+          if (scatterLeaveTimerRef.current) {
+            clearTimeout(scatterLeaveTimerRef.current);
+            scatterLeaveTimerRef.current = null;
+          }
+          if (angleInteractionExitTimerRef.current) {
+            clearTimeout(angleInteractionExitTimerRef.current);
+            angleInteractionExitTimerRef.current = null;
+          }
+          isInteractingWithAnglesRef.current = false;
+
+          const product = products[index];
+          if (product) {
+            mobileTooltipManager.onProductRevealed(product.id);
+          }
+          soundManager.playHover(0.04);
+          setActiveIdx(index);
+
+          if (scatterEnterTimerRef.current) {
+            clearTimeout(scatterEnterTimerRef.current);
+          }
+          scatterEnterTimerRef.current = setTimeout(() => {
+            setScatterVisibleIdx(index);
+          }, 320);
+        }, 360);
+        return;
+      }
+    }
+
     // Clear any pending exit dismiss timer
     if (scatterLeaveTimerRef.current) {
       clearTimeout(scatterLeaveTimerRef.current);
       scatterLeaveTimerRef.current = null;
+    }
+    if (pendingSwitchTimerRef.current) {
+      clearTimeout(pendingSwitchTimerRef.current);
+      pendingSwitchTimerRef.current = null;
     }
 
     const product = products[index];
@@ -197,7 +261,7 @@ export default function ArtifactOverlappingCollection({
       setActiveIdx(index);
     }
 
-    // Dwell waiting time (320ms) before popping out the scattered elevation satellites
+    // Dwell waiting time (320ms) before popping out the scattered angles satellites
     if (scatterVisibleIdx !== index) {
       if (scatterEnterTimerRef.current) {
         clearTimeout(scatterEnterTimerRef.current);
@@ -209,26 +273,39 @@ export default function ArtifactOverlappingCollection({
   };
 
   const handleDesktopItemLeave = (index: number) => {
+    // Clear pending switch timer for this card if mouse quickly moves out
+    if (pendingSwitchTimerRef.current) {
+      clearTimeout(pendingSwitchTimerRef.current);
+      pendingSwitchTimerRef.current = null;
+    }
+
     // Clear pending enter timer if mouse quickly passed over
     if (scatterEnterTimerRef.current) {
       clearTimeout(scatterEnterTimerRef.current);
       scatterEnterTimerRef.current = null;
     }
 
-    // Graceful exit buffer (280ms) so transitions aren't chaotic and user can smoothly move to satellites
+    // If currently actively interacting with angle satellites, keep state alive
+    if (isInteractingWithAnglesRef.current) {
+      return;
+    }
+
+    // Graceful exit buffer (350ms) so transitions aren't chaotic and user can smoothly move to satellites
     if (scatterLeaveTimerRef.current) {
       clearTimeout(scatterLeaveTimerRef.current);
     }
     
     scatterLeaveTimerRef.current = setTimeout(() => {
-      setScatterVisibleIdx(null);
-      setActiveIdx(null);
-      setOpenElevationProductId(null);
-      const product = products[index];
-      if (product) {
-        setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
+      if (!isInteractingWithAnglesRef.current) {
+        setScatterVisibleIdx(null);
+        setActiveIdx(null);
+        setOpenanglesProductId(null);
+        const product = products[index];
+        if (product) {
+          setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
+        }
       }
-    }, 280);
+    }, 350);
   };
 
   const handleDesktopItemClick = (product: Product, index: number) => {
@@ -490,11 +567,11 @@ export default function ArtifactOverlappingCollection({
               </div>
             </div>
 
-            {/* Inline Angle/Elevation Switcher (No intrusive floating tooltips) */}
+            {/* Inline Angle/angles Switcher (No intrusive floating tooltips) */}
             {mobileImages.length > 1 && (
               <div className="pt-2 border-t border-brand-bg/15 flex items-center gap-2 overflow-x-auto hide-scrollbar">
                 <span className="text-[8px] text-brand-bg/60 font-bold uppercase shrink-0">
-                  ELEVATIONS:
+                  anglesS:
                 </span>
                 {mobileImages.map((_, imgIdx) => (
                   <button
@@ -540,7 +617,7 @@ export default function ArtifactOverlappingCollection({
   // =========================================================================
   // DESKTOP EXHIBITION LAYOUT (>= 768px)
   // Preserves curated horizontal overlapping presentation with refined tactile
-  // displacement, docked elevation control, and streamlined dossier activation.
+  // displacement, docked angles control, and streamlined dossier activation.
   // =========================================================================
   return (
     <div className="relative w-full overflow-hidden select-none py-4">
@@ -621,7 +698,7 @@ export default function ArtifactOverlappingCollection({
 
             const isHovered = activeIdx === idx;
             const isAnyHovered = activeIdx !== null;
-            const isElevationOpen = openElevationProductId === product.id;
+            const isanglesOpen = openanglesProductId === product.id;
 
             const baseOffset = SPECIMEN_OFFSETS[idx % SPECIMEN_OFFSETS.length];
             const artifactNum = String(idx + 1).padStart(2, "0");
@@ -732,12 +809,12 @@ export default function ArtifactOverlappingCollection({
                     </span>
                   </div>
 
-                  {/* UNHOVERED SPECIMEN ELEVATION COUNT BADGE (Resting State) */}
+                  {/* UNHOVERED SPECIMEN angles COUNT BADGE (Resting State) */}
                   {!isHovered && images.length > 1 && (
                     <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-brand-surface/95 border border-brand-text shadow-[2px_2px_0px_#050505] px-2 py-0.5 pointer-events-none font-mono">
                       <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
                       <span className="text-[8px] font-black uppercase tracking-wider text-brand-text">
-                        ELEV 0{activeAngleIdx + 1}/0{images.length}
+                        ANGLE 0{activeAngleIdx + 1}/0{images.length}
                       </span>
                     </div>
                   )}
@@ -823,7 +900,7 @@ export default function ArtifactOverlappingCollection({
                   </AnimatePresence>
                 </div>
 
-                {/* PC BRUTALIST SCATTERED ELEVATION ANGLE SATELLITES (Render outside the preview frame on intentional hover) */}
+                {/* PC BRUTALIST SCATTERED angles ANGLE SATELLITES (Render outside the preview frame on intentional hover) */}
                 <AnimatePresence>
                   {scatterVisibleIdx === idx && images.length > 1 && (
                     <>
@@ -834,24 +911,41 @@ export default function ArtifactOverlappingCollection({
                         exit={{ opacity: 0, y: 4, scale: 0.95 }}
                         transition={{ duration: 0.22, ease: "easeOut" }}
                         onMouseEnter={() => {
+                          if (pendingSwitchTimerRef.current) {
+                            clearTimeout(pendingSwitchTimerRef.current);
+                            pendingSwitchTimerRef.current = null;
+                          }
                           if (scatterLeaveTimerRef.current) {
                             clearTimeout(scatterLeaveTimerRef.current);
                             scatterLeaveTimerRef.current = null;
                           }
+                          if (angleInteractionExitTimerRef.current) {
+                            clearTimeout(angleInteractionExitTimerRef.current);
+                            angleInteractionExitTimerRef.current = null;
+                          }
+                          isInteractingWithAnglesRef.current = true;
                           setScatterVisibleIdx(idx);
+                          setActiveIdx(idx);
                         }}
-                        onMouseLeave={() => handleDesktopItemLeave(idx)}
+                        onMouseLeave={() => {
+                          if (angleInteractionExitTimerRef.current) {
+                            clearTimeout(angleInteractionExitTimerRef.current);
+                          }
+                          angleInteractionExitTimerRef.current = setTimeout(() => {
+                            isInteractingWithAnglesRef.current = false;
+                            handleDesktopItemLeave(idx);
+                          }, 400);
+                        }}
                         className="absolute -top-10 inset-x-0 z-50 flex items-center justify-between px-2.5 py-1 bg-brand-surface border-2 border-brand-text shadow-[3px_3px_0px_#050505] font-mono text-[8px] font-black uppercase tracking-widest text-brand-text pointer-events-auto"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-center gap-1.5">
                           <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block animate-ping" />
-                          <span>SCATTERED ELEVATION MATRIX</span>
                         </div>
                         <span className="text-[#ff4500]">0{activeAngleIdx + 1}/0{images.length} ACTIVE</span>
                       </motion.div>
 
-                      {/* Scattered Brutalist Elevation Plates positioned around the exterior */}
+                      {/* Scattered Brutalist angles Plates positioned around the exterior */}
                       {images.map((img, imgIdx) => {
                         const scatter = BRUTALIST_SCATTER_OFFSETS[imgIdx % BRUTALIST_SCATTER_OFFSETS.length];
                         const isSelected = activeAngleIdx === imgIdx;
@@ -877,18 +971,34 @@ export default function ArtifactOverlappingCollection({
                             whileHover={{ scale: 1.15, rotate: 0, zIndex: 60 }}
                             onMouseEnter={(e) => {
                               e.stopPropagation();
+                              if (pendingSwitchTimerRef.current) {
+                                clearTimeout(pendingSwitchTimerRef.current);
+                                pendingSwitchTimerRef.current = null;
+                              }
                               if (scatterLeaveTimerRef.current) {
                                 clearTimeout(scatterLeaveTimerRef.current);
                                 scatterLeaveTimerRef.current = null;
                               }
+                              if (angleInteractionExitTimerRef.current) {
+                                clearTimeout(angleInteractionExitTimerRef.current);
+                                angleInteractionExitTimerRef.current = null;
+                              }
+                              isInteractingWithAnglesRef.current = true;
                               setScatterVisibleIdx(idx);
+                              setActiveIdx(idx);
                               soundManager.playHover(0.02);
                               setHoveredThumbMap((prev) => ({ ...prev, [product.id]: imgIdx }));
                             }}
                             onMouseLeave={(e) => {
                               e.stopPropagation();
                               setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
-                              handleDesktopItemLeave(idx);
+                              if (angleInteractionExitTimerRef.current) {
+                                clearTimeout(angleInteractionExitTimerRef.current);
+                              }
+                              angleInteractionExitTimerRef.current = setTimeout(() => {
+                                isInteractingWithAnglesRef.current = false;
+                                handleDesktopItemLeave(idx);
+                              }, 400);
                             }}
                             onClick={(e) => {
                               e.stopPropagation();
@@ -905,19 +1015,19 @@ export default function ArtifactOverlappingCollection({
                                 ? "border-brand-text shadow-[4px_4px_0px_#050505] hover:border-brand-text"
                                 : "border-brand-text/80 shadow-[3px_3px_0px_#050505] hover:border-brand-text opacity-90 hover:opacity-100"
                             }`}
-                            title={`Elevation 0${imgIdx + 1} — Click to switch, hover to preview`}
+                            title={`angles 0${imgIdx + 1} — Click to switch, hover to preview`}
                           >
-                            {/* Raw Brutalist Elevation Identification Tag */}
+                            {/* Raw Brutalist angles Identification Tag */}
                             <div className="flex items-center justify-between pb-0.5 mb-1 border-b border-brand-text/30 text-[7px] sm:text-[7.5px] font-black uppercase text-brand-text">
                               <span className={isSelected ? "text-[#ff4500]" : ""}>V.0{imgIdx + 1}</span>
                               <span className="text-[6.5px] text-brand-text/50">[{imgIdx === 0 ? "PRIMARY" : `ANG-${imgIdx}`}]</span>
                             </div>
 
-                            {/* Crisp Elevation Thumbnail */}
+                            {/* Crisp angles Thumbnail */}
                             <div className="relative aspect-square w-full border border-brand-text/40 overflow-hidden bg-brand-bg">
                               <img
                                 src={img || STUDIO_FALLBACK_IMAGE}
-                                alt={`Elevation 0${imgIdx + 1}`}
+                                alt={`angles 0${imgIdx + 1}`}
                                 referrerPolicy="no-referrer"
                                 className="w-full h-full object-cover select-none pointer-events-none"
                               />

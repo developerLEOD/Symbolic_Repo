@@ -264,7 +264,7 @@ export default function ProductDetail({
   // Documentation Perspectives
   const documentationPlates = [
     {
-      title: "PRIMARY ELEVATION",
+      title: "PRIMARY angles",
       subtitle: "FRONTAL FORM & SILHOUETTE",
       detail: "Overall physical presence, architectural proportions, and structural balance."
     },
@@ -285,7 +285,7 @@ export default function ProductDetail({
     },
     {
       title: "SOVEREIGNTY PROFILE",
-      subtitle: "REVERSE ELEVATION & INTERNAL MARK",
+      subtitle: "REVERSE angles & INTERNAL MARK",
       detail: "Clean unadorned back. The surface belongs completely to the sovereign wearer."
     }
   ];
@@ -549,7 +549,7 @@ export default function ProductDetail({
             <div className="font-mono text-[10px] uppercase font-bold text-brand-text/70 flex items-center gap-3">
               <span>UNFILTERED STUDIO LIGHT</span>
               <span>•</span>
-              <span className="text-brand-accent font-black">RATIO: 3:4 ARCHIVAL ELEVATION</span>
+              <span className="text-brand-accent font-black">RATIO: 3:4 ARCHIVAL angles</span>
               <span>•</span>
               <span>SCALE: 1:1 PHYSICAL FIDELITY</span>
             </div>
@@ -594,7 +594,7 @@ export default function ProductDetail({
                       PLATE 0{activeImageIndex + 1} // {documentationPlates[activeImageIndex]?.title || "DOCUMENTATION"}
                     </span>
                     <span className="font-mono text-[8.5px] font-black uppercase tracking-widest bg-brand-surface/95 text-brand-text px-2 py-0.5 border border-brand-text">
-                      {documentationPlates[activeImageIndex]?.subtitle || "ELEVATION RECORD [3:4]"}
+                      {documentationPlates[activeImageIndex]?.subtitle || "angles RECORD [3:4]"}
                     </span>
                   </div>
 

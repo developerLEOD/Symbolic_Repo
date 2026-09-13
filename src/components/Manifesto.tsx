@@ -51,7 +51,7 @@ export default function Manifesto({ onBack, onAbout }: ManifestoProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-brand-bg pt-28 pb-24 border-b-2 border-brand-text"
+      className="min-h-screen bg-brand-bg pt-10 sm:pt-14 pb-24 border-b-2 border-brand-text"
     >
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
         <motion.button 

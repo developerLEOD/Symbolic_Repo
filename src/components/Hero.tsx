@@ -96,7 +96,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
   ];
 
   return (
-    <section className="relative pt-20 sm:pt-22 pb-20 sm:pb-24 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text overflow-hidden">
+    <section className="relative pt-10 sm:pt-14 pb-20 sm:pb-24 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text overflow-hidden">
       {/* Main Hero Split Grid */}
       <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
         {/* Left Core Display Section */}
