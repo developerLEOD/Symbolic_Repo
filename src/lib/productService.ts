@@ -82,7 +82,7 @@ let memoryProductsCache: Product[] | null = null;
 let memoryCategoriesCache: Category[] | null = null;
 
 export function getCachedProducts(): Product[] {
-  if (memoryProductsCache && memoryProductsCache.length > 0) {
+  if (memoryProductsCache) {
     return memoryProductsCache;
   }
   if (typeof window !== "undefined" && window.localStorage) {
@@ -90,7 +90,7 @@ export function getCachedProducts(): Product[] {
       const saved = localStorage.getItem(PRODUCTS_CACHE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           memoryProductsCache = parsed;
           return parsed;
         }
@@ -99,7 +99,7 @@ export function getCachedProducts(): Product[] {
       // Storage parse error ignored
     }
   }
-  return CANONICAL_SEED_OBJECTS;
+  return [];
 }
 
 export function invalidateProductsCache(newProducts?: Product[]): void {
@@ -494,7 +494,7 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
 export async function fetchProducts(): Promise<Product[]> {
   const path = "products";
   
-  // Strict timeout race: If Firestore hangs or takes > 2.5s on mobile networks, return cached/canonical data immediately
+  // Strict timeout race: If Firestore hangs or takes > 2.5s on mobile networks, return cached data immediately
   const timeoutPromise = new Promise<null>((resolve) => {
     setTimeout(() => resolve(null), 2500);
   });
@@ -503,7 +503,8 @@ export async function fetchProducts(): Promise<Product[]> {
     const fetchPromise = (async () => {
       const snapshot = await getDocs(collection(db, path));
       if (snapshot.empty) {
-        return CANONICAL_SEED_OBJECTS;
+        invalidateProductsCache([]);
+        return [];
       }
 
       const rawProducts = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product));
@@ -520,12 +521,11 @@ export async function fetchProducts(): Promise<Product[]> {
 
     const result = await Promise.race([fetchPromise, timeoutPromise]);
     
-    if (result && Array.isArray(result) && result.length > 0) {
+    if (result && Array.isArray(result)) {
       invalidateProductsCache(result);
       return result;
     }
 
-    // Return cached/canonical products on timeout
     return getCachedProducts();
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);

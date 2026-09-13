@@ -65,7 +65,7 @@ export default function ProductGrid({
           if (onCategoriesLoaded) onCategoriesLoaded(loadedCats);
         }
 
-        if (prods && prods.length > 0) {
+        if (prods) {
           setProducts(prods);
         }
       } catch (err) {
