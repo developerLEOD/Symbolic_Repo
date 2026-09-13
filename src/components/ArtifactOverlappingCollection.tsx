@@ -188,11 +188,32 @@ export default function ArtifactOverlappingCollection({
   const handleItemClick = (product: Product, index: number) => {
     if (hasMovedDuringDrag) return;
 
-    // On touch/mobile: first tap selects to inspect, second tap navigates
-    const isTouch = typeof window !== "undefined" && window.matchMedia("(hover: none)").matches;
-    if (isTouch && activeIdx !== index) {
+    // If clicking a card that is not currently selected/hovered (e.g. after moving/scrolling or when another product's tooltip was active),
+    // first select it to activate its HUD & tooltip inspection state rather than directly opening the detail view.
+    if (activeIdx !== index) {
       soundManager.playClick(0.08);
       setActiveIdx(index);
+      setClosedTooltips((prev) => ({ ...prev, [product.id]: false }));
+      
+      const el = itemRefs.current[index];
+      if (el && typeof window !== "undefined") {
+        const isMobile = window.innerWidth < 768;
+        if (isMobile) {
+          setPlacementMap((prev) => ({ ...prev, [index]: "above" }));
+        } else {
+          const rect = el.getBoundingClientRect();
+          const tooltipWidth = 315;
+          const spaceRight = window.innerWidth - rect.right;
+          const spaceLeft = rect.left;
+          if (spaceRight >= tooltipWidth + 24) {
+            setPlacementMap((prev) => ({ ...prev, [index]: "right" }));
+          } else if (spaceLeft >= tooltipWidth + 24) {
+            setPlacementMap((prev) => ({ ...prev, [index]: "left" }));
+          } else {
+            setPlacementMap((prev) => ({ ...prev, [index]: "above" }));
+          }
+        }
+      }
       return;
     }
 

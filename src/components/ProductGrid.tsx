@@ -1,7 +1,5 @@
 import { useEffect, useState } from "react";
-import { collection, getDocs, query, orderBy } from "firebase/firestore";
 import { motion, AnimatePresence } from "motion/react";
-import { db } from "../lib/firebase";
 import { Product, Category } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
 import ProductCard from "./ProductCard";
@@ -11,6 +9,9 @@ import {
   normalizeProductCollection, 
   isProductLive, 
   fetchProducts,
+  fetchCategories,
+  getCachedProducts,
+  CANONICAL_CATEGORIES,
   CANONICAL_SEED_OBJECTS 
 } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
@@ -30,9 +31,10 @@ export default function ProductGrid({
   refreshKey = 0, 
   onCategoriesLoaded 
 }: ProductGridProps) {
-  const [products, setProducts] = useState<Product[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
+  // Start immediately with cached or canonical seed products — eliminates blank screen and stuck skeletons
+  const [products, setProducts] = useState<Product[]>(() => getCachedProducts());
+  const [categories, setCategories] = useState<Category[]>(CANONICAL_CATEGORIES);
+  const [loading, setLoading] = useState(false);
   const [selectedCollection, setSelectedCollection] = useState<"all" | "be-symbolic" | "be-palestine">("all");
   const [viewMode, setViewMode] = useState<"exhibition" | "grid" | "ledger">("exhibition");
   const [inStockOnly, setInStockOnly] = useState(false);
@@ -47,33 +49,39 @@ export default function ProductGrid({
   }, [activeCategoryId]);
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        setLoading(true);
-        // 1. Fetch categories
-        const catsSnapshot = await getDocs(query(collection(db, "categories"), orderBy("order")));
-        const cats = catsSnapshot.docs
-          .map(doc => ({ id: doc.id, ...doc.data() } as Category))
-          .filter(c => {
-            const id = (c.id || "").toLowerCase();
-            const name = (c.name || "").toLowerCase();
-            const label = (c.label || "").toLowerCase();
-            return id !== "garments" && name !== "garments" && label !== "garments" && id !== "palestine" && id !== "be-symbolic";
-          });
-        setCategories(cats);
-        if (onCategoriesLoaded) onCategoriesLoaded(cats);
+    let isSubscribed = true;
 
-        // 2. Fetch products through canonical service with seed fallback
-        const prods = await fetchProducts();
-        setProducts(prods && prods.length > 0 ? prods : CANONICAL_SEED_OBJECTS);
+    const syncArchiveData = async () => {
+      try {
+        const [loadedCats, prods] = await Promise.all([
+          fetchCategories(),
+          fetchProducts()
+        ]);
+
+        if (!isSubscribed) return;
+
+        if (loadedCats && loadedCats.length > 0) {
+          setCategories(loadedCats);
+          if (onCategoriesLoaded) onCategoriesLoaded(loadedCats);
+        }
+
+        if (prods && prods.length > 0) {
+          setProducts(prods);
+        }
       } catch (err) {
-        console.error("Data fetching failed, loading canonical objects:", err);
-        setProducts(CANONICAL_SEED_OBJECTS);
+        console.error("Archive background sync error:", err);
       } finally {
-        setLoading(false);
+        if (isSubscribed) {
+          setLoading(false);
+        }
       }
     };
-    fetchData();
+
+    syncArchiveData();
+
+    return () => {
+      isSubscribed = false;
+    };
   }, [refreshKey]);
 
   // Only show active/available products in storefront
@@ -138,7 +146,8 @@ export default function ProductGrid({
   const isCurrentCategoryEmpty = Boolean(filteredProducts.length === 0);
   const currentCategoryName = activeMedium ? activeMedium.toUpperCase() : (selectedCollection !== "all" ? selectedCollection.toUpperCase() : "");
 
-  if (loading) {
+  // Only render skeleton state if there are zero products loaded
+  if (loading && products.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-6 sm:px-10 py-24 space-y-12 bg-brand-bg">
         <div className="flex justify-between items-center border-b-2 border-brand-text pb-6">

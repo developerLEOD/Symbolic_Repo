@@ -26,7 +26,7 @@ import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import ScrollToTop from "./components/ScrollToTop";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
-import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts } from "./lib/productService";
+import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts, getCachedProducts } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 
 // Wrapper for /artifacts and /artifacts/:category views
@@ -211,7 +211,11 @@ function StorefrontApp() {
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [pendingOpenCheckoutAfterAuth, setPendingOpenCheckoutAfterAuth] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
-  const [flagshipProduct, setFlagshipProduct] = useState<Product | null>(null);
+  const [flagshipProduct, setFlagshipProduct] = useState<Product | null>(() => {
+    const cached = getCachedProducts();
+    const live = cached.filter(isProductLive);
+    return live.find(p => p.productId === "SYM-01" || p.productId === "SYM-TSH-001" || p.sku === "SYM-TSH-001") || live[0] || null;
+  });
   const [referralWelcomeBanner, setReferralWelcomeBanner] = useState<{ code: string; referrerName?: string } | null>(null);
   const [categories, setCategories] = useState<Category[]>([
     { id: "wear", name: "Wear", description: "Daily armor of modesty and dignified public posture", label: "WEAR", order: 1 },
@@ -223,13 +227,15 @@ function StorefrontApp() {
   useEffect(() => {
     const init = async () => {
       try {
-        const loadedCats = await fetchCategories();
+        const [loadedCats, prods] = await Promise.all([
+          fetchCategories(),
+          fetchProducts()
+        ]);
+
         if (loadedCats.length > 0) {
           setCategories(loadedCats);
         }
 
-        const prods = await fetchProducts();
-        // Never show drafted or hidden products as statement pieces
         const liveProds = prods.filter(isProductLive);
         const flagship = liveProds.find(p => p.productId === "SYM-01" || p.productId === "SYM-TSH-001" || p.sku === "SYM-TSH-001") || liveProds[0] || null;
         setFlagshipProduct(flagship);

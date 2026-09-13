@@ -76,29 +76,85 @@ export const CANONICAL_COLLECTIONS = [
   }
 ];
 
-export async function fetchCategories(): Promise<Category[]> {
-  const path = "categories";
-  try {
-    const q = query(collection(db, path), orderBy("order", "asc"));
-    const snapshot = await getDocs(q);
-    
-    // Asynchronously delete any legacy non-medium category docs in Firestore
-    for (const d of snapshot.docs) {
-      const docId = d.id.toLowerCase();
-      const isCanonicalMedium = CANONICAL_CATEGORIES.some(c => c.id === docId);
-      if (!isCanonicalMedium) {
-        deleteDoc(doc(db, path, d.id)).catch(() => {});
+// Global fast in-memory & persistent cache keys
+const PRODUCTS_CACHE_KEY = "sym_products_cache_v2";
+let memoryProductsCache: Product[] | null = null;
+let memoryCategoriesCache: Category[] | null = null;
+
+export function getCachedProducts(): Product[] {
+  if (memoryProductsCache && memoryProductsCache.length > 0) {
+    return memoryProductsCache;
+  }
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      const saved = localStorage.getItem(PRODUCTS_CACHE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          memoryProductsCache = parsed;
+          return parsed;
+        }
       }
+    } catch (e) {
+      // Storage parse error ignored
     }
+  }
+  return CANONICAL_SEED_OBJECTS;
+}
 
-    // Unconditionally ensure canonical medium categories exist in Firestore
-    for (const cat of CANONICAL_CATEGORIES) {
-      setDoc(doc(db, path, cat.id), cat).catch(() => {});
+export function invalidateProductsCache(newProducts?: Product[]): void {
+  if (newProducts && newProducts.length > 0) {
+    memoryProductsCache = newProducts;
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(newProducts));
+      } catch (e) {}
     }
+  } else {
+    memoryProductsCache = null;
+    if (typeof window !== "undefined" && window.localStorage) {
+      try {
+        localStorage.removeItem(PRODUCTS_CACHE_KEY);
+      } catch (e) {}
+    }
+  }
+}
 
-    return CANONICAL_CATEGORIES;
+export async function fetchCategories(): Promise<Category[]> {
+  if (memoryCategoriesCache && memoryCategoriesCache.length > 0) {
+    return memoryCategoriesCache;
+  }
+
+  const path = "categories";
+  
+  // Return canonical instantly if offline/slow by setting a strict 1.5s timeout
+  const timeoutPromise = new Promise<null>((resolve) => {
+    setTimeout(() => resolve(null), 1500);
+  });
+
+  try {
+    const fetchPromise = (async () => {
+      const q = query(collection(db, path), orderBy("order", "asc"));
+      const snapshot = await getDocs(q);
+      if (!snapshot.empty) {
+        const cats = snapshot.docs
+          .map(d => ({ id: d.id, ...d.data() } as Category))
+          .filter(c => {
+            const id = (c.id || "").toLowerCase();
+            const name = (c.name || "").toLowerCase();
+            return id !== "garments" && name !== "garments" && id !== "palestine" && id !== "be-symbolic";
+          });
+        if (cats.length > 0) return cats;
+      }
+      return CANONICAL_CATEGORIES;
+    })();
+
+    const result = await Promise.race([fetchPromise, timeoutPromise]);
+    const finalCategories = result || CANONICAL_CATEGORIES;
+    memoryCategoriesCache = finalCategories;
+    return finalCategories;
   } catch (error) {
-    handleFirestoreError(error, OperationType.LIST, path);
+    memoryCategoriesCache = CANONICAL_CATEGORIES;
     return CANONICAL_CATEGORIES;
   }
 }
@@ -437,28 +493,43 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
 
 export async function fetchProducts(): Promise<Product[]> {
   const path = "products";
+  
+  // Strict timeout race: If Firestore hangs or takes > 2.5s on mobile networks, return cached/canonical data immediately
+  const timeoutPromise = new Promise<null>((resolve) => {
+    setTimeout(() => resolve(null), 2500);
+  });
+
   try {
-    const snapshot = await getDocs(collection(db, path));
-    if (snapshot.empty) {
-      for (const obj of CANONICAL_SEED_OBJECTS) {
-        setDoc(doc(db, path, obj.id), cleanUndefined(obj)).catch(() => {});
+    const fetchPromise = (async () => {
+      const snapshot = await getDocs(collection(db, path));
+      if (snapshot.empty) {
+        return CANONICAL_SEED_OBJECTS;
       }
-      return CANONICAL_SEED_OBJECTS;
+
+      const rawProducts = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product));
+      
+      return rawProducts.map(p => {
+        const { product, changed } = sanitizeProduct(p);
+        if (changed) {
+          const cleaned = cleanUndefined(product);
+          setDoc(doc(db, path, product.id), cleaned, { merge: true }).catch(() => {});
+        }
+        return product;
+      });
+    })();
+
+    const result = await Promise.race([fetchPromise, timeoutPromise]);
+    
+    if (result && Array.isArray(result) && result.length > 0) {
+      invalidateProductsCache(result);
+      return result;
     }
 
-    const rawProducts = snapshot.docs.map(d => ({ id: d.id, ...d.data() } as Product));
-    
-    return rawProducts.map(p => {
-      const { product, changed } = sanitizeProduct(p);
-      if (changed) {
-        const cleaned = cleanUndefined(product);
-        setDoc(doc(db, path, product.id), cleaned, { merge: true }).catch(() => {});
-      }
-      return product;
-    });
+    // Return cached/canonical products on timeout
+    return getCachedProducts();
   } catch (error) {
     handleFirestoreError(error, OperationType.LIST, path);
-    return CANONICAL_SEED_OBJECTS;
+    return getCachedProducts();
   }
 }
 
@@ -505,6 +576,9 @@ export async function saveProductWithVariants(
       batch.set(variantRef, cleanedVariant, { merge: true });
     }
     await batch.commit();
+
+    // Invalidate products cache so fresh data is loaded
+    invalidateProductsCache();
   } catch (error) {
     handleFirestoreError(error, OperationType.WRITE, productPath);
   }
@@ -521,6 +595,9 @@ export async function deleteProductAndVariants(productId: string): Promise<void>
     });
     batch.delete(doc(db, "products", productId));
     await batch.commit();
+
+    // Invalidate products cache so fresh data is loaded
+    invalidateProductsCache();
   } catch (error) {
     handleFirestoreError(error, OperationType.DELETE, productPath);
   }
