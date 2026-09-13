@@ -11,8 +11,7 @@ import {
   fetchProducts,
   fetchCategories,
   getCachedProducts,
-  CANONICAL_CATEGORIES,
-  CANONICAL_SEED_OBJECTS 
+  CANONICAL_CATEGORIES
 } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 

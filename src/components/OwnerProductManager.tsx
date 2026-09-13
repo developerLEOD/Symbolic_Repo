@@ -61,81 +61,13 @@ interface OwnerProductManagerProps {
   initialEditProductId?: string | null;
 }
 
-// Pre-curated SYMBOLIC editorial asset images
+// Pre-curated SYMBOLIC editorial asset images for quick photo selection
 const PRESET_IMAGES = [
   { name: "Be Symbolic Mug", url: "/src/assets/images/mug_be_symbolic_1788008321905.jpg", category: "mugs" },
   { name: "Seek Wisdom Mug", url: "/src/assets/images/mug_seek_wisdom_1788008333595.jpg", category: "mugs" },
   { name: "Find Clarity Mug", url: "/src/assets/images/mug_find_clarity_1788008345150.jpg", category: "mugs" },
   { name: "Editorial Apparel & Cap", url: "/src/assets/images/store_hero_editorial_1788008309317.jpg", category: "t-shirts" },
 ];
-
-const TEMPLATES = {
-  tshirt: {
-    name: "Quiet Contemplation Heavyweight Tee",
-    collectionName: "Be Symbolic",
-    categoryId: "wear",
-    sku: "SYM-TSH-003",
-    price: 2490,
-    inventory: 60,
-    availability: true,
-    material: "100% Organic Ring-Spun Cotton (240 GSM)",
-    color: "Washed Charcoal",
-    dimensions: "Relaxed Boxy Fit",
-    weight: "260g",
-    careInstructions: "Machine wash cold inside out with similar colors. Line dry in shade. Do not iron directly on print.",
-    symbolicTagline: "A silent affirmation of the reflective life.",
-    description: "An understated garment tailored for the reader, the scholar, and the thinker. Cut from heavyweight combed organic cotton, it features subtle typographic coordinates celebrating the quiet discipline of contemplation.",
-    images: ["/src/assets/images/store_hero_editorial_1788008309317.jpg"],
-    variants: [
-      { id: "v-s", sku: "SYM-TSH-003-S", option1Name: "Size", option1Value: "S", price: 2490, inventoryQuantity: 15 },
-      { id: "v-m", sku: "SYM-TSH-003-M", option1Name: "Size", option1Value: "M", price: 2490, inventoryQuantity: 20 },
-      { id: "v-l", sku: "SYM-TSH-003-L", option1Name: "Size", option1Value: "L", price: 2490, inventoryQuantity: 15 },
-      { id: "v-xl", sku: "SYM-TSH-003-XL", option1Name: "Size", option1Value: "XL", price: 2490, inventoryQuantity: 10 }
-    ]
-  },
-  mug: {
-    name: "The Student of Adab Vessel",
-    collectionName: "Be Symbolic",
-    categoryId: "vessels",
-    sku: "SYM-MUG-004",
-    price: 1590,
-    inventory: 80,
-    availability: true,
-    material: "High-fired Artisan Ceramic",
-    color: "Matte Desert Sand",
-    capacity: "350ml",
-    dimensions: "9.6cm Height x 8.4cm Diameter",
-    weight: "340g",
-    careInstructions: "Hand wash recommended to preserve the satin matte texture. Microwave safe.",
-    symbolicTagline: "Carry what you seek. Drink with intention.",
-    description: "Crafted to ground your daily reading ritual. Tactile matte finish on the exterior with an unglazed mineral rim, engineered for contemplative pauses between passages of profound texts.",
-    images: ["/src/assets/images/mug_seek_wisdom_1788008333595.jpg"],
-    variants: [
-      { id: "v-standard", sku: "SYM-MUG-004-STD", option1Name: "Capacity", option1Value: "350ml", option2Name: "Finish", option2Value: "Matte", price: 1590, inventoryQuantity: 80 }
-    ]
-  },
-  cap: {
-    name: "Be Palestine Olive & Stone Structured Cap",
-    collectionName: "Be Palestine",
-    categoryId: "headwear",
-    sku: "SYM-PAL-002",
-    price: 1950,
-    inventory: 40,
-    availability: true,
-    material: "100% Washed Cotton Chino Twill",
-    color: "Midnight Olive",
-    dimensions: "Adjustable Antique Brass Clasp (56-62cm)",
-    weight: "110g",
-    careInstructions: "Spot clean with mild soapy water. Reshape and air dry.",
-    symbolicTagline: "Rooted steadfastness, unwavering conviction.",
-    description: "A minimalist 6-panel unstructured silhouette adorned with high-density tonal embroidery honoring the enduring spirit and steadfast roots of Falasteen.",
-    images: ["/src/assets/images/store_hero_editorial_1788008309317.jpg"],
-    variants: [
-      { id: "v-navy", sku: "SYM-PAL-002-NVY", option1Name: "Color", option1Value: "Midnight Olive", price: 1950, inventoryQuantity: 25 },
-      { id: "v-charcoal", sku: "SYM-CAP-002-CHR", option1Name: "Color", option1Value: "Charcoal Black", price: 1950, inventoryQuantity: 15 }
-    ]
-  }
-};
 
 export default function OwnerProductManager({ onClose, onProductPublished, categories, initialEditProductId }: OwnerProductManagerProps) {
   const { user, isOwner, signInWithEmail, signInWithGoogle, signOutUser, formatAuthError } = useAuth();
@@ -386,105 +318,6 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
       const [selected] = copy.splice(index, 1);
       return [selected, ...copy];
     });
-  };
-
-  // Quick Template Applicator
-  // Quick Template Applicator
-  const applyTemplate = (templateKey: keyof typeof TEMPLATES) => {
-    const tmpl = TEMPLATES[templateKey];
-    setName(tmpl.name);
-    setCollectionName(tmpl.collectionName);
-    setCategoryId(tmpl.categoryId);
-    setSku(tmpl.sku);
-    setPrice(tmpl.price);
-    setInventory(tmpl.inventory);
-    setAvailability(tmpl.availability);
-    setMaterial(tmpl.material);
-    setColor(tmpl.color);
-    setDimensions(tmpl.dimensions || "");
-    setWeight(tmpl.weight || "");
-    setCareInstructions(tmpl.careInstructions);
-    setSymbolicTagline(tmpl.symbolicTagline);
-    setDescription(tmpl.description);
-    setImages(tmpl.images);
-
-    if (templateKey === "tshirt") {
-      setInscription("أَلِف");
-      setPillar1Represents(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.represents || "");
-      setPillar2WhyChosen(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.whyChosen || "");
-      setPillar3Communicates(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.communicates || "");
-      setPillar4WearerCarries(PRESET_SYMBOL_KNOWLEDGE["أَلِف"]?.wearerCarries || "");
-      setArtifactClassification("WEAR");
-      setArtifactType("T-Shirts");
-      setArtifactTags(["Heavyweight", "Drop Shoulder", "Series 01"]);
-      const types: GarmentTypeConfig[] = [
-        { id: "regular-fit", name: "Regular Fit", basePrice: 2490, skuPrefix: "REG" },
-        { id: "drop-shoulder", name: "Drop Shoulder", basePrice: 2990, skuPrefix: "DRP" },
-        { id: "heavyweight-boxy", name: "Heavyweight Boxy", basePrice: 3490, skuPrefix: "HVY" }
-      ];
-      const cols: ProductColorConfig[] = [
-        { id: "obsidian-black", name: "Obsidian Black", hex: "#0c0c0c" },
-        { id: "washed-ecru", name: "Washed Raw Ecru", hex: "#f3eee4" },
-        { id: "matte-charcoal", name: "Matte Charcoal", hex: "#262626" }
-      ];
-      const szs = ["S", "M", "L", "XL", "XXL"];
-      setGarmentTypes(types);
-      setAvailableColors(cols);
-      setAvailableSizes(szs);
-      setHasVariants(true);
-      setVariants(buildInitialVariants(types, cols, szs, tmpl.sku, tmpl.price));
-    } else if (templateKey === "mug") {
-      setInscription("أَدَب");
-      setPillar1Represents(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.represents || "");
-      setPillar2WhyChosen(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.whyChosen || "");
-      setPillar3Communicates(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.communicates || "");
-      setPillar4WearerCarries(PRESET_SYMBOL_KNOWLEDGE["أَدَب"]?.wearerCarries || "");
-      setArtifactClassification("VESSELS");
-      setArtifactType("Mugs");
-      setArtifactTags(["Artisan Stoneware", "Archival"]);
-      const types: GarmentTypeConfig[] = [
-        { id: "ceramic-vessel", name: "Artisan Ceramic 350ml", basePrice: 1590, skuPrefix: "MUG" },
-        { id: "grand-vessel", name: "Grand Studio 480ml", basePrice: 1950, skuPrefix: "GRD" }
-      ];
-      const cols: ProductColorConfig[] = [
-        { id: "desert-sand", name: "Desert Sand", hex: "#c7bba5" },
-        { id: "matte-charcoal", name: "Matte Charcoal", hex: "#262626" }
-      ];
-      const szs = ["Standard 350ml"];
-      setGarmentTypes(types);
-      setAvailableColors(cols);
-      setAvailableSizes(szs);
-      setHasVariants(true);
-      setVariants(buildInitialVariants(types, cols, szs, tmpl.sku, tmpl.price));
-    } else if (templateKey === "cap") {
-      setInscription("صُمُود");
-      setPillar1Represents(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.represents || "");
-      setPillar2WhyChosen(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.whyChosen || "");
-      setPillar3Communicates(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.communicates || "");
-      setPillar4WearerCarries(PRESET_SYMBOL_KNOWLEDGE["صُمُود"]?.wearerCarries || "");
-      setArtifactClassification("HEADWEAR");
-      setArtifactType("Caps");
-      setArtifactTags(["Steadfast Heritage", "Limited Edition"]);
-      const types: GarmentTypeConfig[] = [
-        { id: "structured-twill", name: "6-Panel Structured Twill", basePrice: 1950, skuPrefix: "CAP" }
-      ];
-      const cols: ProductColorConfig[] = [
-        { id: "midnight-olive", name: "Midnight Olive", hex: "#3b4334" },
-        { id: "charcoal-black", name: "Charcoal Black", hex: "#0c0c0c" },
-        { id: "desert-sand", name: "Desert Sand", hex: "#c7bba5" }
-      ];
-      const szs = ["Adjustable (56-62cm)"];
-      setGarmentTypes(types);
-      setAvailableColors(cols);
-      setAvailableSizes(szs);
-      setHasVariants(true);
-      setVariants(buildInitialVariants(types, cols, szs, tmpl.sku, tmpl.price));
-    } else {
-      setHasVariants(false);
-      setVariants([]);
-    }
-
-    showNotification("success", `Applied "${tmpl.name}" template.`);
   };
 
   // Reset form
@@ -1538,55 +1371,20 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
         ) : (
           /* Upload Form + Live Preview Split Layout */
           <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8 space-y-8">
-            {/* Quick Templates Bar */}
-            <div className="p-4 sm:p-5 bg-brand-surface border-2 border-brand-text shadow-[4px_4px_0px_#050505]">
-              <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="space-y-1">
-                  <div className="flex items-center gap-2">
-                    <Sparkles size={14} className="text-brand-accent" />
-                    <span className="text-[10px] font-mono font-black uppercase tracking-wider text-brand-accent">
-                      QUICK EDITORIAL TEMPLATES
-                    </span>
-                  </div>
-                  <p className="text-xs text-brand-text/70">
-                    Instantly load authentic specifications, philosophy copy, and size variations:
-                  </p>
-                </div>
-
-                <div className="flex flex-wrap items-center gap-2">
-                  <button
-                    type="button"
-                    onClick={() => applyTemplate("tshirt")}
-                    className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-all shadow-[1px_1px_0px_#050505]"
-                  >
-                    + T-SHIRT (240 GSM)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyTemplate("mug")}
-                    className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-all shadow-[1px_1px_0px_#050505]"
-                  >
-                    + CERAMIC VESSEL (350ML)
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => applyTemplate("cap")}
-                    className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-all shadow-[1px_1px_0px_#050505]"
-                  >
-                    + ARCHIVAL CAP (6-PANEL)
-                  </button>
-                  {editingProductId && (
-                    <button
-                      type="button"
-                      onClick={resetForm}
-                      className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-red-600 text-red-600 bg-brand-bg hover:bg-red-600 hover:text-white transition-all shadow-[1px_1px_0px_#050505]"
-                    >
-                      CLEAR / NEW FORM
-                    </button>
-                  )}
-                </div>
+            {editingProductId && (
+              <div className="flex items-center justify-between p-3 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+                <span className="text-xs font-mono font-bold uppercase tracking-wider text-brand-text">
+                  EDITING SPECIMEN: <span className="text-brand-accent">{name || editingProductId}</span>
+                </span>
+                <button
+                  type="button"
+                  onClick={resetForm}
+                  className="px-3 py-1.5 text-[9px] font-mono font-black uppercase tracking-wider border-2 border-red-600 text-red-600 bg-brand-bg hover:bg-red-600 hover:text-white transition-all shadow-[1px_1px_0px_#050505]"
+                >
+                  CANCEL EDIT / NEW FORM
+                </button>
               </div>
-            </div>
+            )}
 
             {/* Main Form & Preview Grid */}
             <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">

@@ -3,15 +3,7 @@ import { db } from "./firebase";
 import { Product, Category, ProductVariant } from "../types";
 import { handleFirestoreError, OperationType } from "./firestoreErrors";
 
-import FalasteenHoodieImg from "../assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg";
-import CanvasBagImg from "../assets/images/canvas_field_bag_1789233558525.jpg";
-import TwillCapImg from "../assets/images/structured_twill_cap_1789233572064.jpg";
 import BlankComingSoonImg from "../assets/images/completely_blank_coming_soon_1789235306808.jpg";
-import StonewareVesselImg from "../assets/images/ceramic_stoneware_vessel_1789233585625.jpg";
-import MugBeSymbolicImg from "../assets/images/mug_be_symbolic_1788008321905.jpg";
-import MugSeekWisdomImg from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
-import MugFindClarityImg from "../assets/images/mug_find_clarity_1788008345150.jpg";
-import StoreHeroImg from "../assets/images/store_hero_editorial_1788008309317.jpg";
 
 function cleanUndefined<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
@@ -87,7 +79,7 @@ let memoryProductsCache: Product[] | null = null;
 let memoryCategoriesCache: Category[] | null = null;
 
 export function getCachedProducts(): Product[] {
-  if (memoryProductsCache && memoryProductsCache.length > 0) {
+  if (memoryProductsCache) {
     return memoryProductsCache;
   }
   if (typeof window !== "undefined" && window.localStorage) {
@@ -95,7 +87,7 @@ export function getCachedProducts(): Product[] {
       const saved = localStorage.getItem(PRODUCTS_CACHE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed) && parsed.length > 0) {
+        if (Array.isArray(parsed)) {
           memoryProductsCache = parsed;
           return parsed;
         }
@@ -104,8 +96,7 @@ export function getCachedProducts(): Product[] {
       // Storage parse error ignored
     }
   }
-  // Return canonical seed objects when cache is unpopulated so storefront never starts blank
-  return CANONICAL_SEED_OBJECTS;
+  return [];
 }
 
 export function invalidateProductsCache(newProducts?: Product[]): void {
@@ -243,7 +234,7 @@ export async function fetchCategories(): Promise<Category[]> {
   }
 }
 
-export const STUDIO_FALLBACK_IMAGE = StoreHeroImg;
+export const STUDIO_FALLBACK_IMAGE = BlankComingSoonImg;
 
 /**
  * Resolves a list of clean, valid image URLs for a product with graceful fallbacks.
@@ -413,169 +404,6 @@ function sanitizeProduct(p: Product): { product: Product; changed: boolean } {
 
   return { product: sanitized, changed };
 }
-
-export const CANONICAL_SEED_OBJECTS: Product[] = [
-  {
-    id: "sym-obj-01",
-    productId: "SYM-01",
-    sku: "SYM-TSH-001",
-    name: "THE ALIF HEAVYWEIGHT TEE",
-    inscription: "أَلِف",
-    symbolicTagline: "STEADFAST MORAL INTEGRITY.",
-    statement: "WE DO NOT TURN OUR WEARERS INTO UNPAID BILLBOARDS.",
-    wearingCommunicates: "STANDING UPRIGHT UPON UNCOMPROMISED PRINCIPLES.",
-    statementMeaning: "THE UPRIGHT STROKE OF ALIF REPRESENTS DIVINE ONENESS AND UNFLINCHING MORAL HONESTY IN THE PUBLIC ARENA.",
-    description: "Cut from heavyweight 280 GSM combed organic cotton with a relaxed boxy drape. All maker marks are placed inside the collar—the exterior remains clean and sovereign.",
-    categoryId: "wear",
-    collectionName: "Be Symbolic",
-    price: 2950,
-    inventory: 42,
-    availability: true,
-    isComingSoon: false,
-    edition: "050 ARTIFACTS // FIRST EDITION",
-    material: "100% COMBED ORGANIC RING-SPUN COTTON (280 GSM)",
-    fit: "BOXY RELAXED ARCHITECTURAL CUT",
-    color: "Washed Raw Ecru",
-    images: [
-      StoreHeroImg,
-      StoreHeroImg
-    ]
-  },
-  {
-    id: "sym-obj-02",
-    productId: "SYM-02",
-    sku: "SYM-HOD-002",
-    name: "SUMUD FIELD HOODIE",
-    inscription: "صُمُود",
-    symbolicTagline: "STEADFASTNESS, MATERIALIZED.",
-    statement: "UNYIELDING SOLIDARITY WITH FALASTEEN.",
-    wearingCommunicates: "ENDURING RESILIENCE AND AN ANCHORED SPIRIT.",
-    statementMeaning: "SUMUD: THE DISCIPLINE OF REMAINING FIRM ON ONE'S ANCESTRAL SOIL AND ROOTED CONVICTION REGARDLESS OF OPPRESSION.",
-    description: "A 450 GSM French Terry thermal armor piece. Engineered with double-layered hood construction, concealed thumb-cuffs, and tonal embroidery of the olive root.",
-    categoryId: "wear",
-    collectionName: "Be Palestine",
-    price: 5800,
-    inventory: 36,
-    availability: true,
-    isComingSoon: false,
-    edition: "050 ARTIFACTS // FALASTEEN COLLECTION",
-    material: "450 GSM ARCHIVAL FRENCH TERRY",
-    fit: "SUBSTANTIAL BOXY THERMAL DRAPE",
-    color: "Midnight Carbon / Olive Stitch",
-    images: [
-      FalasteenHoodieImg,
-      StoreHeroImg
-    ]
-  },
-  {
-    id: "sym-obj-03",
-    productId: "SYM-03",
-    sku: "SYM-MUG-001",
-    name: "THE STUDENT OF ADAB VESSEL",
-    inscription: "أَدَب",
-    symbolicTagline: "REVERENCE IN THE PURSUIT OF TRUTH.",
-    statement: "A TACTILE RITUAL FOR THE SCHOLAR & SEEKER.",
-    wearingCommunicates: "CONSCIENTIOUS MANNERS PRECEDING ACCUMULATED KNOWLEDGE.",
-    statementMeaning: "ADAB: THE SPIRITUAL ETIQUETTE AND REFINED RESTRAINT THAT ELEVATES MERE INTELLECT INTO TRANSMITTED WISDOM.",
-    description: "High-fired artisan stoneware with a textured mineral rim and debossed tactile thumb-rest. Engineered for deliberate, unhurried contemplation.",
-    categoryId: "vessels",
-    collectionName: "Be Symbolic",
-    price: 1850,
-    inventory: 58,
-    availability: true,
-    isComingSoon: false,
-    edition: "100 ARTIFACTS // ARTISAN STONEWARE",
-    material: "HIGH-FIRED ARTISAN CERAMIC // SATIN MATTE",
-    capacity: "350ML // WEIGHT: 380G",
-    color: "Matte Desert Sand",
-    images: [
-      MugSeekWisdomImg,
-      MugBeSymbolicImg,
-      MugFindClarityImg,
-      StonewareVesselImg
-    ]
-  },
-  {
-    id: "sym-obj-04",
-    productId: "SYM-04",
-    sku: "SYM-CAP-001",
-    name: "BE PALESTINE OLIVE & STONE CAP",
-    inscription: "صُمُود",
-    symbolicTagline: "ROOTED FOCUS. GAZE-RESTRAINED DIGNITY.",
-    statement: "A LOW-PROFILE CROWN OF DISCIPLINES.",
-    wearingCommunicates: "STEADFAST ALLIANCE WITH ENDURING ROOTS.",
-    statementMeaning: "AN UNASSUMING SILHOUETTE DESIGNED TO SHIELD THE GAZE AND DIRECT THOUGHT TOWARD ESSENTIAL PURPOSES.",
-    description: "Constructed from washed cotton chino twill with a weathered patina and antique solid brass hardware. Minimal tonal olive crest debossed beneath brim.",
-    categoryId: "headwear",
-    collectionName: "Be Palestine",
-    price: 2200,
-    inventory: 30,
-    availability: true,
-    isComingSoon: false,
-    edition: "050 ARTIFACTS // RUN 01",
-    material: "100% WASHED COTTON TWILL // BRASS FASTENER",
-    fit: "UNSTRUCTURED 6-PANEL LOW PROFILE",
-    color: "Olive & Earth",
-    images: [
-      TwillCapImg,
-      StoreHeroImg
-    ]
-  },
-  {
-    id: "sym-obj-05",
-    productId: "SYM-05",
-    sku: "SYM-MUG-002",
-    name: "FIND CLARITY STONEWARE VESSEL",
-    inscription: "بَصِيرَة",
-    symbolicTagline: "DISTINGUISHING ESSENCE FROM NOISE.",
-    statement: "GROUNDED DAWN CONTEMPLATION.",
-    wearingCommunicates: "INNER PERCEPTION OVER SUPERFICIAL APPEARANCE.",
-    statementMeaning: "BASIRAH: THE INNER LIGHT OF INTELLECT THAT PIERCES ILLUSION TO APPREHEND REALITY AS IT TRULY IS.",
-    description: "Durable stoneware with a deep reactive glaze and sand-blasted base. Retains thermal equilibrium for extended early-morning study sessions.",
-    categoryId: "vessels",
-    collectionName: "Be Symbolic",
-    price: 1850,
-    inventory: 45,
-    availability: true,
-    isComingSoon: false,
-    edition: "075 ARTIFACTS // SERIES 02",
-    material: "DENSE GLAZED EARTHENWARE",
-    capacity: "340ML // WEIGHT: 390G",
-    color: "Smoked Basalt & Bone",
-    images: [
-      MugFindClarityImg,
-      MugSeekWisdomImg,
-      MugBeSymbolicImg,
-      StonewareVesselImg
-    ]
-  },
-  {
-    id: "sym-obj-06",
-    productId: "SYM-06",
-    sku: "SYM-BAG-001",
-    name: "THE STEWARD UTILITY FIELD TOTE",
-    inscription: "أَمَانَة",
-    symbolicTagline: "FAITHFUL CUSTODY OF WHAT WE BEAR.",
-    statement: "BUILT FOR SCRIPTURE, FIELD NOTES & APPARATUS.",
-    wearingCommunicates: "ACTIVE RESPONSIBILITY AND MEASURED INTENT.",
-    statementMeaning: "AMANAH: THE SACRED TRUST ENTRUSTED TO HUMAN BEINGS TO ACT AS STEWARDS RATHER THAN EXPLOITERS OF CREATION.",
-    description: "Crafted from indestructible 18 oz unbleached cotton duck canvas with reinforced box-x bar tacking, copper rivets, and a designated interior folio sleeve.",
-    categoryId: "carry",
-    collectionName: "Be Symbolic",
-    price: 3400,
-    inventory: 28,
-    availability: true,
-    isComingSoon: false,
-    edition: "040 ARTIFACTS // FIRST EDITION",
-    material: "18 OZ WATER-REPELLENT DUCK CANVAS",
-    dimensions: "42CM X 38CM X 14CM",
-    color: "Natural Unbleached Bone / Carbon",
-    images: [
-      CanvasBagImg,
-      StoreHeroImg
-    ]
-  }
-];
 
 export async function fetchProducts(): Promise<Product[]> {
   const path = "products";
