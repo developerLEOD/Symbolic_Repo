@@ -71,10 +71,49 @@ export default function ProductRouteHandler({
 
   if (loading) {
     return (
-      <div className="fixed inset-0 z-50 bg-brand-bg/95 flex flex-col items-center justify-center font-mono">
-        <div className="w-10 h-10 border-2 border-brand-text border-t-brand-accent animate-spin mb-4" />
-        <div className="text-xs font-black uppercase tracking-widest text-brand-text">
-          RETRIEVING ARTIFACT RECORD // {id}
+      <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-brand-bg px-4 py-8 sm:py-12 select-none font-mono">
+        <div className="absolute inset-0 opacity-[0.025] pointer-events-none bg-[radial-gradient(#050505_1px,transparent_1px)] [background-size:18px_18px]" />
+
+        <div className="h-4 sm:h-8 w-full shrink-0" />
+
+        <div className="relative z-10 flex flex-col items-center max-w-md w-full text-center my-auto">
+          <div className="relative w-32 h-32 sm:w-40 sm:h-40 mb-5 shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 sm:border-[3px] border-brand-text shadow-[6px_6px_0px_#050505]">
+            <img 
+              src="/Logo_NoName.jpg" 
+              alt="SYMBOLIC" 
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-contain p-3.5"
+            />
+          </div>
+
+          <div className="text-center flex flex-col items-center">
+            <div className="inline-flex flex-col items-end leading-none">
+              <span className="text-2xl sm:text-3xl md:text-4xl font-mono font-black tracking-tight uppercase text-brand-text leading-none">
+                SYMBOLIC
+              </span>
+              <span className="text-sm sm:text-base md:text-lg font-mono font-black italic tracking-normal text-brand-accent uppercase leading-none mt-0.5">
+                MUSLIMS
+              </span>
+            </div>
+            <p className="text-[9px] font-mono tracking-widest text-brand-text/50 uppercase mt-2 font-semibold">
+              RETRIEVING ARTIFACT DOSSIER // {id?.toUpperCase()}
+            </p>
+          </div>
+        </div>
+
+        <div className="relative z-10 flex flex-col items-center max-w-md w-full text-center pb-2 sm:pb-4 shrink-0">
+          <div className="w-56 sm:w-64 h-2 bg-brand-surface border-2 border-brand-text overflow-hidden shadow-[3px_3px_0px_#050505] mb-3">
+            <div className="h-full bg-brand-accent animate-[pulse_1.2s_ease-in-out_infinite]" />
+          </div>
+
+          <div className="flex flex-col items-center text-center space-y-1 w-full">
+            <p className="text-[11px] sm:text-xs font-mono font-black tracking-[0.16em] uppercase text-brand-text leading-tight">
+              RESOLVING SPECIMEN IDENTIFIER
+            </p>
+            <p className="text-[9px] sm:text-[10px] font-mono tracking-[0.2em] text-brand-accent font-bold uppercase leading-tight">
+              PREPARING TACTILE ARCHIVE DOSSIER
+            </p>
+          </div>
         </div>
       </div>
     );
