@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, MoveRight, Layers, X, Check } from "lucide-r
 import { Product, Category } from "../types";
 import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
+import { mobileTooltipManager } from "../lib/mobileTooltipManager";
 
 interface ArtifactOverlappingCollectionProps {
   products: Product[];
@@ -23,6 +24,16 @@ const SPECIMEN_OFFSETS = [
   { y: 18, rotate: 0.7 },
   { y: -10, rotate: -0.6 },
   { y: 12, rotate: 0.8 },
+];
+
+// Brutalist scattered coordinate matrices for outer angle elevations
+const BRUTALIST_SCATTER_OFFSETS = [
+  { x: "-82px", y: "-42px", rotate: -4.5, shadow: "4px_4px_0px_#050505", label: "ELEV // 01 [ORTHO-TOP]" },
+  { x: "106%", y: "-36px", rotate: 3.5, shadow: "4px_4px_0px_#050505", label: "ELEV // 02 [ISO-EAST]" },
+  { x: "-76px", y: "108px", rotate: 2.8, shadow: "4px_4px_0px_#050505", label: "ELEV // 03 [LATERAL]" },
+  { x: "104%", y: "94px", rotate: -3.2, shadow: "4px_4px_0px_#050505", label: "ELEV // 04 [OBLIQUE]" },
+  { x: "-70px", y: "248px", rotate: -2.5, shadow: "4px_4px_0px_#050505", label: "ELEV // 05 [SECTION]" },
+  { x: "105%", y: "235px", rotate: 4.2, shadow: "4px_4px_0px_#050505", label: "ELEV // 06 [AXIAL]" },
 ];
 
 export default function ArtifactOverlappingCollection({
@@ -53,6 +64,9 @@ export default function ArtifactOverlappingCollection({
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
+  const [scatterVisibleIdx, setScatterVisibleIdx] = useState<number | null>(null);
+  const scatterEnterTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const scatterLeaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [openElevationProductId, setOpenElevationProductId] = useState<string | null>(null);
   const [hoveredThumbMap, setHoveredThumbMap] = useState<Record<string, number | null>>({});
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
@@ -75,6 +89,14 @@ export default function ArtifactOverlappingCollection({
       setActiveMobileIdx(0);
     }
   }, [products.length, activeMobileIdx]);
+
+  // Clear timers on unmount
+  useEffect(() => {
+    return () => {
+      if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
+      if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
+    };
+  }, []);
 
   // Monitor desktop scroll bounds
   const updateScrollBounds = useCallback(() => {
@@ -158,21 +180,55 @@ export default function ArtifactOverlappingCollection({
   // Desktop interaction
   const handleDesktopItemHover = (index: number) => {
     if (isDragging || hasMovedDuringDrag) return;
+    
+    // Clear any pending exit dismiss timer
+    if (scatterLeaveTimerRef.current) {
+      clearTimeout(scatterLeaveTimerRef.current);
+      scatterLeaveTimerRef.current = null;
+    }
+
+    const product = products[index];
+    if (product) {
+      mobileTooltipManager.onProductRevealed(product.id);
+    }
+    
     if (activeIdx !== index) {
       soundManager.playHover(0.04);
       setActiveIdx(index);
     }
+
+    // Dwell waiting time (320ms) before popping out the scattered elevation satellites
+    if (scatterVisibleIdx !== index) {
+      if (scatterEnterTimerRef.current) {
+        clearTimeout(scatterEnterTimerRef.current);
+      }
+      scatterEnterTimerRef.current = setTimeout(() => {
+        setScatterVisibleIdx(index);
+      }, 320);
+    }
   };
 
   const handleDesktopItemLeave = (index: number) => {
-    if (activeIdx === index) {
+    // Clear pending enter timer if mouse quickly passed over
+    if (scatterEnterTimerRef.current) {
+      clearTimeout(scatterEnterTimerRef.current);
+      scatterEnterTimerRef.current = null;
+    }
+
+    // Graceful exit buffer (280ms) so transitions aren't chaotic and user can smoothly move to satellites
+    if (scatterLeaveTimerRef.current) {
+      clearTimeout(scatterLeaveTimerRef.current);
+    }
+    
+    scatterLeaveTimerRef.current = setTimeout(() => {
+      setScatterVisibleIdx(null);
+      setActiveIdx(null);
+      setOpenElevationProductId(null);
       const product = products[index];
       if (product) {
         setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
       }
-      setActiveIdx(null);
-      setOpenElevationProductId(null);
-    }
+    }, 280);
   };
 
   const handleDesktopItemClick = (product: Product, index: number) => {
@@ -576,7 +632,7 @@ export default function ArtifactOverlappingCollection({
             let targetZ = 10 + idx;
             let targetY = baseOffset.y;
             let targetRotate = baseOffset.rotate;
-            let targetOpacity = 1;
+            const targetOpacity = 1; // Strict high contrast: never dim non-hovered products
 
             if (isAnyHovered) {
               if (isHovered) {
@@ -585,21 +641,18 @@ export default function ArtifactOverlappingCollection({
                 targetZ = 50;
                 targetY = -18;
                 targetRotate = 0;
-                targetOpacity = 1;
               } else if (idx < activeIdx) {
                 const distanceFactor = Math.max(0, activeIdx - idx - 1);
                 displacementX = -(175 + distanceFactor * 25);
                 targetScale = 0.96;
                 targetZ = 10 + idx;
                 targetY = baseOffset.y + 4;
-                targetOpacity = 0.82;
               } else if (idx > activeIdx) {
                 const distanceFactor = Math.max(0, idx - activeIdx - 1);
                 displacementX = +(175 + distanceFactor * 25);
                 targetScale = 0.96;
                 targetZ = 10 + idx;
                 targetY = baseOffset.y + 4;
-                targetOpacity = 0.82;
               }
             }
 
@@ -679,38 +732,13 @@ export default function ArtifactOverlappingCollection({
                     </span>
                   </div>
 
-                  {/* TACTILE ELEVATION CHIP (With in-place arrow controls; no unsolicited floating tooltip) */}
-                  {images.length > 1 && (
-                    <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1 bg-brand-surface/95 border border-brand-text shadow-[2px_2px_0px_#050505] p-0.5">
-                      <button
-                        type="button"
-                        onClick={(e) => handlePrevAngle(product.id, images.length, e)}
-                        aria-label="Previous angle"
-                        className="p-1 hover:bg-brand-text hover:text-white text-brand-text transition-colors cursor-pointer"
-                      >
-                        <ChevronLeft size={10} />
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          soundManager.playToggle(0.06);
-                          setOpenElevationProductId((prev) => (prev === product.id ? null : product.id));
-                        }}
-                        className="px-1.5 py-0.5 text-[8px] font-mono font-black uppercase tracking-wider text-brand-text hover:text-[#ff4500] transition-colors cursor-pointer"
-                      >
+                  {/* UNHOVERED SPECIMEN ELEVATION COUNT BADGE (Resting State) */}
+                  {!isHovered && images.length > 1 && (
+                    <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-brand-surface/95 border border-brand-text shadow-[2px_2px_0px_#050505] px-2 py-0.5 pointer-events-none font-mono">
+                      <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
+                      <span className="text-[8px] font-black uppercase tracking-wider text-brand-text">
                         ELEV 0{activeAngleIdx + 1}/0{images.length}
-                      </button>
-
-                      <button
-                        type="button"
-                        onClick={(e) => handleNextAngle(product.id, images.length, e)}
-                        aria-label="Next angle"
-                        className="p-1 hover:bg-brand-text hover:text-white text-brand-text transition-colors cursor-pointer"
-                      >
-                        <ChevronRight size={10} />
-                      </button>
+                      </span>
                     </div>
                   )}
 
@@ -795,58 +823,114 @@ export default function ArtifactOverlappingCollection({
                   </AnimatePresence>
                 </div>
 
-                {/* OPTIONAL EXPLICIT ELEVATION INSPECTION PANEL (Only opened when user explicitly clicks ELEV chip) */}
+                {/* PC BRUTALIST SCATTERED ELEVATION ANGLE SATELLITES (Render outside the preview frame on intentional hover) */}
                 <AnimatePresence>
-                  {isElevationOpen && images.length > 1 && (
-                    <motion.div
-                      initial={{ opacity: 0, scale: 0.95, y: -6 }}
-                      animate={{ opacity: 1, scale: 1, y: 0 }}
-                      exit={{ opacity: 0, scale: 0.95, y: -6 }}
-                      transition={{ duration: 0.16 }}
-                      onClick={(e) => e.stopPropagation()}
-                      className="absolute top-12 left-2.5 z-40 bg-brand-bg border-2 border-brand-text p-2.5 shadow-[6px_6px_0px_#050505] font-mono text-[9px] w-[240px]"
-                    >
-                      <div className="flex items-center justify-between border-b border-brand-text pb-1 mb-2 font-black uppercase tracking-wider">
-                        <span>ARCHIVAL ELEVATIONS</span>
-                        <button
-                          type="button"
-                          onClick={() => setOpenElevationProductId(null)}
-                          className="p-0.5 hover:bg-brand-accent hover:text-white transition-colors cursor-pointer"
-                        >
-                          <X size={12} />
-                        </button>
-                      </div>
+                  {scatterVisibleIdx === idx && images.length > 1 && (
+                    <>
+                      {/* Architectural Header Bar floating above card */}
+                      <motion.div
+                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                        exit={{ opacity: 0, y: 4, scale: 0.95 }}
+                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        onMouseEnter={() => {
+                          if (scatterLeaveTimerRef.current) {
+                            clearTimeout(scatterLeaveTimerRef.current);
+                            scatterLeaveTimerRef.current = null;
+                          }
+                          setScatterVisibleIdx(idx);
+                        }}
+                        onMouseLeave={() => handleDesktopItemLeave(idx)}
+                        className="absolute -top-10 inset-x-0 z-50 flex items-center justify-between px-2.5 py-1 bg-brand-surface border-2 border-brand-text shadow-[3px_3px_0px_#050505] font-mono text-[8px] font-black uppercase tracking-widest text-brand-text pointer-events-auto"
+                        onClick={(e) => e.stopPropagation()}
+                      >
+                        <div className="flex items-center gap-1.5">
+                          <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block animate-ping" />
+                          <span>SCATTERED ELEVATION MATRIX</span>
+                        </div>
+                        <span className="text-[#ff4500]">0{activeAngleIdx + 1}/0{images.length} ACTIVE</span>
+                      </motion.div>
 
-                      <div className="grid grid-cols-3 gap-2">
-                        {images.map((img, imgIdx) => {
-                          const isCommitted = permanentAngleIdx === imgIdx;
-                          return (
-                            <div
-                              key={imgIdx}
-                              onClick={(e) => {
-                                handleAngleSwitch(product.id, imgIdx, e);
-                                setOpenElevationProductId(null);
-                              }}
-                              className={`relative aspect-square border-2 cursor-pointer transition-all overflow-hidden ${
-                                isCommitted
-                                  ? "border-[#ff4500] shadow-[2px_2px_0px_#050505]"
-                                  : "border-brand-text/50 hover:border-brand-text"
-                              }`}
-                            >
+                      {/* Scattered Brutalist Elevation Plates positioned around the exterior */}
+                      {images.map((img, imgIdx) => {
+                        const scatter = BRUTALIST_SCATTER_OFFSETS[imgIdx % BRUTALIST_SCATTER_OFFSETS.length];
+                        const isSelected = activeAngleIdx === imgIdx;
+                        const isCommitted = permanentAngleIdx === imgIdx;
+
+                        return (
+                          <motion.button
+                            key={`scatter-${product.id}-${imgIdx}`}
+                            type="button"
+                            initial={{ opacity: 0, scale: 0.4, rotate: scatter.rotate * 2 }}
+                            animate={{
+                              opacity: 1,
+                              scale: isSelected ? 1.08 : 1,
+                              rotate: scatter.rotate,
+                              transition: {
+                                delay: imgIdx * 0.05,
+                                type: "spring",
+                                stiffness: 380,
+                                damping: 24,
+                              },
+                            }}
+                            exit={{ opacity: 0, scale: 0.6, rotate: 0, transition: { duration: 0.16 } }}
+                            whileHover={{ scale: 1.15, rotate: 0, zIndex: 60 }}
+                            onMouseEnter={(e) => {
+                              e.stopPropagation();
+                              if (scatterLeaveTimerRef.current) {
+                                clearTimeout(scatterLeaveTimerRef.current);
+                                scatterLeaveTimerRef.current = null;
+                              }
+                              setScatterVisibleIdx(idx);
+                              soundManager.playHover(0.02);
+                              setHoveredThumbMap((prev) => ({ ...prev, [product.id]: imgIdx }));
+                            }}
+                            onMouseLeave={(e) => {
+                              e.stopPropagation();
+                              setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
+                              handleDesktopItemLeave(idx);
+                            }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleAngleSwitch(product.id, imgIdx, e);
+                            }}
+                            style={{
+                              left: scatter.x,
+                              top: scatter.y,
+                            }}
+                            className={`absolute z-50 w-16 sm:w-20 md:w-22 p-1 bg-brand-surface border-2 cursor-pointer pointer-events-auto font-mono text-left transition-colors ${
+                              isSelected
+                                ? "border-[#ff4500] shadow-[5px_5px_0px_#050505] bg-brand-bg ring-2 ring-[#ff4500]/40"
+                                : isCommitted
+                                ? "border-brand-text shadow-[4px_4px_0px_#050505] hover:border-brand-text"
+                                : "border-brand-text/80 shadow-[3px_3px_0px_#050505] hover:border-brand-text opacity-90 hover:opacity-100"
+                            }`}
+                            title={`Elevation 0${imgIdx + 1} — Click to switch, hover to preview`}
+                          >
+                            {/* Raw Brutalist Elevation Identification Tag */}
+                            <div className="flex items-center justify-between pb-0.5 mb-1 border-b border-brand-text/30 text-[7px] sm:text-[7.5px] font-black uppercase text-brand-text">
+                              <span className={isSelected ? "text-[#ff4500]" : ""}>V.0{imgIdx + 1}</span>
+                              <span className="text-[6.5px] text-brand-text/50">[{imgIdx === 0 ? "PRIMARY" : `ANG-${imgIdx}`}]</span>
+                            </div>
+
+                            {/* Crisp Elevation Thumbnail */}
+                            <div className="relative aspect-square w-full border border-brand-text/40 overflow-hidden bg-brand-bg">
                               <img
                                 src={img || STUDIO_FALLBACK_IMAGE}
-                                alt={`Elevation ${imgIdx + 1}`}
+                                alt={`Elevation 0${imgIdx + 1}`}
                                 referrerPolicy="no-referrer"
-                                className="w-full h-full object-cover"
+                                className="w-full h-full object-cover select-none pointer-events-none"
                               />
-                              <span className="absolute bottom-0 inset-x-0 bg-brand-text/90 text-white text-[7px] font-black text-center py-0.5 uppercase">
-                                V.0{imgIdx + 1}
-                              </span>
+                              {isSelected && (
+                                <span className="absolute bottom-0 inset-x-0 bg-[#ff4500] text-white text-[6.5px] font-black text-center uppercase py-px">
+                                  LIVE
+                                </span>
+                              )}
                             </div>
-                          );
-                        })}
-                      </div>
-                    </motion.div>
+                          </motion.button>
+                        );
+                      })}
+                    </>
                   )}
                 </AnimatePresence>
               </motion.div>

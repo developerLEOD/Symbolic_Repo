@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Product } from "../types";
 import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
@@ -22,6 +22,16 @@ export default function ProductCard({
 }: ProductCardProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const [showAngles, setShowAngles] = useState(false);
+  const enterTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (enterTimerRef.current) clearTimeout(enterTimerRef.current);
+      if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+    };
+  }, []);
 
   const displayId = product.productId || product.sku || `SYM-0${(index ?? 0) + 1}`;
   const editionLabel = product.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 ARTIFACTS";
@@ -52,12 +62,36 @@ export default function ProductCard({
   };
 
   const handleMouseEnter = () => {
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+      leaveTimerRef.current = null;
+    }
     soundManager.playHover();
     setIsHovered(true);
+
+    if (enterTimerRef.current) {
+      clearTimeout(enterTimerRef.current);
+    }
+    // Dwell delay of 320ms before revealing satellite angle plates
+    enterTimerRef.current = setTimeout(() => {
+      setShowAngles(true);
+    }, 320);
   };
 
   const handleMouseLeave = () => {
+    if (enterTimerRef.current) {
+      clearTimeout(enterTimerRef.current);
+      enterTimerRef.current = null;
+    }
     setIsHovered(false);
+
+    // Graceful exit buffer of 280ms
+    if (leaveTimerRef.current) {
+      clearTimeout(leaveTimerRef.current);
+    }
+    leaveTimerRef.current = setTimeout(() => {
+      setShowAngles(false);
+    }, 280);
   };
 
   return (
@@ -170,6 +204,87 @@ export default function ProductCard({
           </>
         )}
       </div>
+
+      {/* PC BRUTALIST SCATTERED ELEVATION SATELLITES (Rendered outside the central image canvas on hover with dwell & exit grace) */}
+      <AnimatePresence>
+        {showAngles && images.length > 1 && (
+          <div 
+            className="hidden sm:block pointer-events-none"
+            onMouseEnter={() => {
+              if (leaveTimerRef.current) {
+                clearTimeout(leaveTimerRef.current);
+                leaveTimerRef.current = null;
+              }
+              setShowAngles(true);
+            }}
+            onMouseLeave={handleMouseLeave}
+          >
+            {images.map((img, i) => {
+              const offsets = [
+                { top: "-18px", right: "-28px", rotate: 4.5 },
+                { top: "68px", right: "-32px", rotate: -3.8 },
+                { top: "154px", right: "-26px", rotate: 3.2 },
+                { top: "240px", right: "-30px", rotate: -4.0 },
+              ];
+              const off = offsets[i % offsets.length];
+              const isSelected = activeImageIndex === i;
+
+              return (
+                <motion.button
+                  key={i}
+                  type="button"
+                  initial={{ opacity: 0, scale: 0.5, rotate: off.rotate * 2 }}
+                  animate={{
+                    opacity: 1,
+                    scale: isSelected ? 1.12 : 1,
+                    rotate: off.rotate,
+                    transition: {
+                      delay: i * 0.04,
+                      type: "spring",
+                      stiffness: 400,
+                      damping: 24,
+                    },
+                  }}
+                  exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.16 } }}
+                  whileHover={{ scale: 1.2, rotate: 0, zIndex: 60 }}
+                  onMouseEnter={(e) => {
+                    e.stopPropagation();
+                    if (leaveTimerRef.current) {
+                      clearTimeout(leaveTimerRef.current);
+                      leaveTimerRef.current = null;
+                    }
+                    setShowAngles(true);
+                    soundManager.playHover(0.02);
+                    setActiveImageIndex(i);
+                  }}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    soundManager.playClick(0.08);
+                    setActiveImageIndex(i);
+                  }}
+                  style={{
+                    top: off.top,
+                    right: off.right,
+                  }}
+                  className={`absolute z-40 w-13 h-13 p-0.5 bg-brand-surface border-2 font-mono pointer-events-auto cursor-pointer transition-colors ${
+                    isSelected
+                      ? "border-[#ff4500] shadow-[3px_3px_0px_#050505] bg-brand-bg ring-1 ring-[#ff4500]"
+                      : "border-brand-text shadow-[2px_2px_0px_#050505] opacity-90 hover:opacity-100"
+                  }`}
+                  title={`Elevation 0${i + 1}`}
+                >
+                  <div className="relative w-full h-full overflow-hidden border border-brand-text/30 bg-brand-bg">
+                    <img src={img || STUDIO_FALLBACK_IMAGE} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                    <span className={`absolute bottom-0 inset-x-0 text-[6px] font-black text-center uppercase py-px ${isSelected ? "bg-[#ff4500] text-white" : "bg-brand-text text-brand-bg"}`}>
+                      0{i + 1}
+                    </span>
+                  </div>
+                </motion.button>
+              );
+            })}
+          </div>
+        )}
+      </AnimatePresence>
 
       {/* ─── 3. ARTIFACT INFORMATION & CONVICTION ─── */}
       <div className="space-y-2.5 flex-1 flex flex-col justify-between">
