@@ -7,6 +7,11 @@ import FalasteenHoodieImg from "../assets/images/falasteen_kuffiyeh_hoodie_17892
 import CanvasBagImg from "../assets/images/canvas_field_bag_1789233558525.jpg";
 import TwillCapImg from "../assets/images/structured_twill_cap_1789233572064.jpg";
 import BlankComingSoonImg from "../assets/images/completely_blank_coming_soon_1789235306808.jpg";
+import StonewareVesselImg from "../assets/images/ceramic_stoneware_vessel_1789233585625.jpg";
+import MugBeSymbolicImg from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+import MugSeekWisdomImg from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+import MugFindClarityImg from "../assets/images/mug_find_clarity_1788008345150.jpg";
+import StoreHeroImg from "../assets/images/store_hero_editorial_1788008309317.jpg";
 
 function cleanUndefined<T>(obj: T): T {
   if (obj === null || typeof obj !== 'object') {
@@ -238,7 +243,7 @@ export async function fetchCategories(): Promise<Category[]> {
   }
 }
 
-export const STUDIO_FALLBACK_IMAGE = "/images/store_hero_editorial_1788008309317.jpg";
+export const STUDIO_FALLBACK_IMAGE = StoreHeroImg;
 
 /**
  * Resolves a list of clean, valid image URLs for a product with graceful fallbacks.
@@ -432,8 +437,8 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     fit: "BOXY RELAXED ARCHITECTURAL CUT",
     color: "Washed Raw Ecru",
     images: [
-      "/images/store_hero_editorial_1788008309317.jpg",
-      "/images/store_hero_editorial_1788008309317.jpg"
+      StoreHeroImg,
+      StoreHeroImg
     ]
   },
   {
@@ -459,7 +464,7 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     color: "Midnight Carbon / Olive Stitch",
     images: [
       FalasteenHoodieImg,
-      "/images/store_hero_editorial_1788008309317.jpg"
+      StoreHeroImg
     ]
   },
   {
@@ -484,9 +489,10 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     capacity: "350ML // WEIGHT: 380G",
     color: "Matte Desert Sand",
     images: [
-      "/images/mug_seek_wisdom_1788008333595.jpg",
-      "/images/mug_be_symbolic_1788008321905.jpg",
-      "/images/mug_find_clarity_1788008345150.jpg"
+      MugSeekWisdomImg,
+      MugBeSymbolicImg,
+      MugFindClarityImg,
+      StonewareVesselImg
     ]
   },
   {
@@ -512,7 +518,7 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     color: "Olive & Earth",
     images: [
       TwillCapImg,
-      "/images/store_hero_editorial_1788008309317.jpg"
+      StoreHeroImg
     ]
   },
   {
@@ -537,9 +543,10 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     capacity: "340ML // WEIGHT: 390G",
     color: "Smoked Basalt & Bone",
     images: [
-      "/images/mug_find_clarity_1788008345150.jpg",
-      "/images/mug_seek_wisdom_1788008333595.jpg",
-      "/images/mug_be_symbolic_1788008321905.jpg"
+      MugFindClarityImg,
+      MugSeekWisdomImg,
+      MugBeSymbolicImg,
+      StonewareVesselImg
     ]
   },
   {
@@ -565,7 +572,7 @@ export const CANONICAL_SEED_OBJECTS: Product[] = [
     color: "Natural Unbleached Bone / Carbon",
     images: [
       CanvasBagImg,
-      "/images/store_hero_editorial_1788008309317.jpg"
+      StoreHeroImg
     ]
   }
 ];

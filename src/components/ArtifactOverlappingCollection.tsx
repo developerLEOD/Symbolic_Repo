@@ -1,8 +1,8 @@
 import React, { useState, useRef, useEffect, useCallback } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Eye, MoveRight, Layers, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoveRight, Layers, X, Check } from "lucide-react";
 import { Product, Category } from "../types";
-import { resolveProductImages, normalizeProductCategory, normalizeProductCollection, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 
 interface ArtifactOverlappingCollectionProps {
@@ -11,7 +11,7 @@ interface ArtifactOverlappingCollectionProps {
   onProductClick: (product: Product) => void;
 }
 
-// Curated architectural vertical & angular offsets to simulate raw physical placement
+// Curated architectural vertical & angular offsets to simulate physical placement on desktop
 const SPECIMEN_OFFSETS = [
   { y: -12, rotate: -0.7 },
   { y: 16, rotate: 0.8 },
@@ -25,30 +25,36 @@ const SPECIMEN_OFFSETS = [
   { y: 12, rotate: 0.8 },
 ];
 
-// Deterministic brutalist angles and offsets for scatter deck preview layout
-const SCATTER_STYLES = [
-  { rotate: "-4.5deg", x: "-6px", y: "2px", zIndex: 10 },
-  { rotate: "4deg", x: "8px", y: "-4px", zIndex: 12 },
-  { rotate: "-3deg", x: "-2px", y: "6px", zIndex: 11 },
-  { rotate: "5.5deg", x: "10px", y: "-2px", zIndex: 13 },
-  { rotate: "-5deg", x: "-8px", y: "4px", zIndex: 10 },
-  { rotate: "3deg", x: "4px", y: "-5px", zIndex: 14 }
-];
-
 export default function ArtifactOverlappingCollection({
   products,
   categories,
   onProductClick,
 }: ArtifactOverlappingCollectionProps) {
+  // Viewport detection
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  // Shared state
+  const [activeAngles, setActiveAngles] = useState<Record<string, number>>({});
+  
+  // Desktop state
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
-
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
-  const [activeAngles, setActiveAngles] = useState<Record<string, number>>({});
-  const [closedTooltips, setClosedTooltips] = useState<Record<string, boolean>>({});
+  const [openElevationProductId, setOpenElevationProductId] = useState<string | null>(null);
   const [hoveredThumbMap, setHoveredThumbMap] = useState<Record<string, number | null>>({});
-  const [placementMap, setPlacementMap] = useState<Record<number, 'right' | 'left' | 'above'>>({});
-  const [isTooltipHovered, setIsTooltipHovered] = useState(false);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -58,7 +64,19 @@ export default function ArtifactOverlappingCollection({
   const [canScrollLeft, setCanScrollLeft] = useState(false);
   const [canScrollRight, setCanScrollRight] = useState(true);
 
-  // Monitor scroll bounds
+  // Mobile state
+  const mobileContainerRef = useRef<HTMLDivElement>(null);
+  const mobileCardRefs = useRef<(HTMLDivElement | null)[]>([]);
+  const [activeMobileIdx, setActiveMobileIdx] = useState<number>(0);
+
+  // Keep activeMobileIdx within bounds
+  useEffect(() => {
+    if (activeMobileIdx >= products.length && products.length > 0) {
+      setActiveMobileIdx(0);
+    }
+  }, [products.length, activeMobileIdx]);
+
+  // Monitor desktop scroll bounds
   const updateScrollBounds = useCallback(() => {
     if (!containerRef.current) return;
     const { scrollLeft, scrollWidth, clientWidth } = containerRef.current;
@@ -74,7 +92,7 @@ export default function ArtifactOverlappingCollection({
     return () => el.removeEventListener("scroll", updateScrollBounds);
   }, [products, updateScrollBounds]);
 
-  // Smooth manual pan controls
+  // Smooth desktop manual pan
   const handlePan = (direction: "left" | "right") => {
     if (!containerRef.current) return;
     soundManager.playToggle(0.06);
@@ -85,7 +103,7 @@ export default function ArtifactOverlappingCollection({
     });
   };
 
-  // Mouse Drag-to-pan implementation
+  // Desktop Mouse Drag-to-pan
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
     setIsDragging(true);
@@ -98,7 +116,7 @@ export default function ArtifactOverlappingCollection({
     if (!isDragging || !containerRef.current) return;
     e.preventDefault();
     const x = e.pageX - containerRef.current.offsetLeft;
-    const walk = (x - startX) * 1.35; // scroll speed multiplier
+    const walk = (x - startX) * 1.35;
     if (Math.abs(x - startX) > 6) {
       setHasMovedDuringDrag(true);
     }
@@ -109,7 +127,7 @@ export default function ArtifactOverlappingCollection({
     setIsDragging(false);
   };
 
-  // Switch image angle for a given product
+  // Angle switching helpers
   const handleAngleSwitch = (productId: string, angleIndex: number, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     soundManager.playToggle(0.08);
@@ -137,80 +155,337 @@ export default function ArtifactOverlappingCollection({
     });
   };
 
-  const handleCloseTooltip = (productId: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    soundManager.playToggle(0.05);
-    setClosedTooltips((prev) => ({ ...prev, [productId]: true }));
-  };
-
-  // Determine placement on side (desktop) or above (mobile) with fixed-header awareness
-  const calculatePlacement = (index: number): 'right' | 'left' | 'above' => {
-    const el = itemRefs.current[index];
-    if (!el || typeof window === "undefined") return "right";
-    
-    const isMobile = window.innerWidth < 768;
-    if (isMobile) return "above";
-
-    const rect = el.getBoundingClientRect();
-    const tooltipWidth = 315;
-    const spaceRight = window.innerWidth - rect.right;
-    const spaceLeft = rect.left;
-
-    // Check if right or left side has enough viewport room
-    if (spaceRight >= tooltipWidth + 24) {
-      return "right";
-    } else if (spaceLeft >= tooltipWidth + 24) {
-      return "left";
-    } else {
-      return "above";
-    }
-  };
-
-  // Handle artifact card interaction
-  const handleItemHover = (index: number, productId: string) => {
+  // Desktop interaction
+  const handleDesktopItemHover = (index: number) => {
     if (isDragging || hasMovedDuringDrag) return;
     if (activeIdx !== index) {
       soundManager.playHover(0.04);
       setActiveIdx(index);
-      setClosedTooltips((prev) => ({ ...prev, [productId]: false }));
     }
-
-    const nextPlacement = calculatePlacement(index);
-    setPlacementMap((prev) => ({ ...prev, [index]: nextPlacement }));
   };
 
-  const handleItemLeave = (index: number) => {
-    if (isTooltipHovered) return;
+  const handleDesktopItemLeave = (index: number) => {
     if (activeIdx === index) {
       const product = products[index];
       if (product) {
         setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
       }
       setActiveIdx(null);
+      setOpenElevationProductId(null);
     }
   };
 
-  const handleItemClick = (product: Product, index: number) => {
+  const handleDesktopItemClick = (product: Product, index: number) => {
     if (hasMovedDuringDrag) return;
 
-    // If clicking a card that is not currently selected/active (e.g. after moving/scrolling,
-    // or when another product's tooltip was active and other cards shifted),
-    // strictly SELECT this product first to activate its HUD & elevation tooltip state.
-    // Never trigger detail view / modal on an unengaged item.
     if (activeIdx !== index) {
       soundManager.playClick(0.08);
       setActiveIdx(index);
-      setClosedTooltips((prev) => ({ ...prev, [product.id]: false }));
-      const nextPlacement = calculatePlacement(index);
-      setPlacementMap((prev) => ({ ...prev, [index]: nextPlacement }));
       return;
     }
 
-    // Only if the user deliberately clicks the card a second time while it is already selected/active
     soundManager.playClick(0.14);
     onProductClick(product);
   };
 
+  // Mobile selection and navigation
+  const selectMobileItem = (index: number) => {
+    soundManager.playClick(0.08);
+    setActiveMobileIdx(index);
+    const targetCard = mobileCardRefs.current[index];
+    if (targetCard && mobileContainerRef.current) {
+      targetCard.scrollIntoView({
+        behavior: "smooth",
+        inline: "center",
+        block: "nearest",
+      });
+    }
+  };
+
+  const handleMobileCardClick = (product: Product, index: number) => {
+    if (activeMobileIdx === index) {
+      // Direct opening when already engaged
+      soundManager.playClick(0.14);
+      onProductClick(product);
+    } else {
+      // Focus and select first
+      selectMobileItem(index);
+    }
+  };
+
+  // Mobile scroll synchronization to detect current card
+  const handleMobileScroll = () => {
+    const container = mobileContainerRef.current;
+    if (!container) return;
+
+    const containerRect = container.getBoundingClientRect();
+    const containerCenter = containerRect.left + containerRect.width / 2;
+
+    let closestIdx = 0;
+    let minDistance = Infinity;
+
+    mobileCardRefs.current.forEach((el, idx) => {
+      if (!el) return;
+      const rect = el.getBoundingClientRect();
+      const cardCenter = rect.left + rect.width / 2;
+      const distance = Math.abs(cardCenter - containerCenter);
+      if (distance < minDistance) {
+        minDistance = distance;
+        closestIdx = idx;
+      }
+    });
+
+    if (closestIdx !== activeMobileIdx) {
+      setActiveMobileIdx(closestIdx);
+    }
+  };
+
+  // Current product on mobile
+  const activeMobileProduct = products[activeMobileIdx] || products[0];
+
+  // If no products available, render empty state cleanly
+  if (!products || products.length === 0) {
+    return (
+      <div className="w-full py-16 text-center font-mono border-2 border-dashed border-brand-text/30 p-8">
+        <p className="text-xs uppercase font-bold text-brand-text/60">NO ARTIFACTS LOADED IN EXHIBITION</p>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // MOBILE EXHIBITION LAYOUT (< 768px)
+  // Dedicated touch-first architecture: no overlapping collision, clean pill index,
+  // snap carousel, inline angle switcher, and docked curatorial dossier.
+  // =========================================================================
+  if (isMobile) {
+    const mobileImages = resolveProductImages(activeMobileProduct);
+    const activeMobileAngle = activeAngles[activeMobileProduct?.id] || 0;
+    const currentMobileImg = mobileImages[activeMobileAngle] || mobileImages[0];
+
+    const mobileSpecimenCategory = categories.find((c) => c.id === activeMobileProduct?.categoryId);
+    const mobileCategoryLabel = activeMobileProduct?.artifactClassification || mobileSpecimenCategory?.label || (activeMobileProduct ? normalizeProductCategory(activeMobileProduct).toUpperCase() : "");
+    const mobileTagline = activeMobileProduct?.symbolicTagline || activeMobileProduct?.inscription || activeMobileProduct?.wearingCommunicates || "CONVICTION, MATERIALIZED.";
+    const isMobileComingSoon = Boolean(activeMobileProduct?.isComingSoon || activeMobileProduct?.comingSoon || activeMobileProduct?.status === "coming-soon");
+    const isMobileSoldOut = !isMobileComingSoon && activeMobileProduct?.inventory !== undefined && activeMobileProduct?.inventory <= 0;
+
+    return (
+      <div className="relative w-full overflow-hidden select-none py-2 font-mono">
+        {/* 1. MOBILE TELEMETRY HEADER */}
+        <div className="flex items-center justify-between px-4 pb-3 border-b-2 border-brand-text text-[9px] uppercase tracking-widest text-brand-text">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-[#ff4500] inline-block animate-pulse" />
+            <span className="font-black text-brand-text">EXHIBITION ARRAY</span>
+            <span className="text-brand-text/40">•</span>
+            <span className="font-black text-[#ff4500]">0{activeMobileIdx + 1} / 0{products.length}</span>
+          </div>
+          <span className="text-[8.5px] font-bold text-brand-text/60">[ TAP TO ENGAGE ]</span>
+        </div>
+
+        {/* 2. SPECIMEN QUICK-SELECT INDEX BAR */}
+        <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar px-4 py-2.5 bg-brand-surface border-b border-brand-text/20">
+          <span className="text-[8px] font-black uppercase tracking-wider text-brand-text/50 shrink-0 mr-1">
+            SPECIMEN:
+          </span>
+          {products.map((p, idx) => {
+            const isCurrent = activeMobileIdx === idx;
+            return (
+              <button
+                key={p.id}
+                type="button"
+                onClick={() => selectMobileItem(idx)}
+                className={`shrink-0 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider border transition-all ${
+                  isCurrent
+                    ? "bg-[#ff4500] text-white border-brand-text shadow-[2px_2px_0px_#050505]"
+                    : "bg-brand-bg text-brand-text border-brand-text/30 active:border-brand-text"
+                }`}
+              >
+                0{idx + 1}
+              </button>
+            );
+          })}
+        </div>
+
+        {/* 3. MOBILE SNAP CAROUSEL VIEWPORT (No negative overlapping margins) */}
+        <div
+          ref={mobileContainerRef}
+          onScroll={handleMobileScroll}
+          className="w-full overflow-x-auto snap-x snap-mandatory flex gap-4 px-6 pt-5 pb-4 hide-scrollbar"
+        >
+          {products.map((product, idx) => {
+            const isCurrent = activeMobileIdx === idx;
+            const images = resolveProductImages(product);
+            const currentAngle = activeAngles[product.id] || 0;
+            const displayImg = images[currentAngle] || images[0];
+            const isItemComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
+
+            return (
+              <div
+                key={product.id}
+                ref={(el) => {
+                  mobileCardRefs.current[idx] = el;
+                }}
+                onClick={() => handleMobileCardClick(product, idx)}
+                className={`shrink-0 w-[78vw] max-w-[300px] aspect-[3/4] snap-center relative transition-all duration-300 ${
+                  isCurrent
+                    ? "scale-100 opacity-100"
+                    : "scale-[0.94] opacity-75"
+                }`}
+              >
+                <div
+                  className={`w-full h-full relative overflow-hidden bg-brand-surface border-2 border-brand-text transition-all ${
+                    isCurrent
+                      ? "shadow-[8px_8px_0px_#050505,0_0_0_2px_#ff4500]"
+                      : "shadow-[4px_4px_0px_#050505]"
+                  }`}
+                >
+                  <img
+                    src={displayImg || STUDIO_FALLBACK_IMAGE}
+                    alt={product.name}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget;
+                      if (target.src !== STUDIO_FALLBACK_IMAGE) {
+                        target.src = STUDIO_FALLBACK_IMAGE;
+                      }
+                    }}
+                    className="w-full h-full object-cover select-none pointer-events-none"
+                    loading="lazy"
+                  />
+
+                  {/* Corner crosshair registration markers on active card */}
+                  {isCurrent && (
+                    <>
+                      <span className="absolute top-1.5 left-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
+                      <span className="absolute top-1.5 right-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
+                      <span className="absolute bottom-1.5 left-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
+                      <span className="absolute bottom-1.5 right-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
+                    </>
+                  )}
+
+                  {/* Specimen Index Tag */}
+                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1 pointer-events-none">
+                    <span className="font-mono text-[8.5px] font-black text-brand-text bg-brand-surface/90 px-1.5 py-0.5 border border-brand-text">
+                      0{idx + 1}
+                    </span>
+                    {isItemComingSoon && (
+                      <span className="font-mono text-[8px] font-black text-white bg-[#ff4500] px-1.5 py-0.5 border border-brand-text">
+                        UPCOMING
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Direct tap badge */}
+                  <div className="absolute bottom-2.5 right-2.5 pointer-events-none">
+                    <span className={`font-mono text-[8px] font-black px-2 py-0.5 border border-brand-text transition-colors ${
+                      isCurrent
+                        ? "bg-[#ff4500] text-white"
+                        : "bg-brand-surface/90 text-brand-text"
+                    }`}>
+                      {isCurrent ? "ACTIVE" : "SELECT"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* 4. DOCKED MOBILE CURATORIAL DOSSIER PANEL */}
+        {activeMobileProduct && (
+          <div className="mx-4 mt-1 p-4 bg-brand-text text-brand-bg border-2 border-brand-text shadow-[6px_6px_0px_#050505] space-y-3">
+            {/* Header: Accession & Identity */}
+            <div className="flex items-center justify-between text-[8.5px] text-[#ff4500] font-black uppercase tracking-widest border-b border-brand-bg/20 pb-1.5">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
+                OBJECT / 0{activeMobileIdx + 1}
+              </span>
+              <span className="text-brand-bg/70">
+                ACCESSION: TWL-{(activeMobileProduct.productId || activeMobileProduct.sku || activeMobileProduct.id).toUpperCase().slice(0, 8)}
+              </span>
+            </div>
+
+            {/* Name & Arabic Inscription */}
+            <div className="flex items-baseline justify-between gap-2">
+              <h3 className="text-sm font-black uppercase tracking-tight text-brand-bg">
+                # {activeMobileProduct.name}
+              </h3>
+              {activeMobileProduct.inscription && (
+                <span className="font-serif text-sm font-black text-[#ff4500]" dir="rtl">
+                  {activeMobileProduct.inscription}
+                </span>
+              )}
+            </div>
+
+            <p className="text-[9.5px] font-bold text-brand-bg/85 uppercase tracking-wide border-l-2 border-[#ff4500] pl-2">
+              {mobileTagline}
+            </p>
+
+            {/* Specifications */}
+            <div className="grid grid-cols-2 gap-2 text-[8.5px] uppercase border-t border-brand-bg/15 pt-2">
+              <div>
+                <span className="text-brand-bg/50 block text-[7.5px] font-bold">MEDIUM:</span>
+                <span className="font-black text-brand-bg/90 tracking-wide truncate block">{mobileCategoryLabel}</span>
+              </div>
+              <div>
+                <span className="text-brand-bg/50 block text-[7.5px] font-bold">MATERIAL:</span>
+                <span className="font-black text-brand-bg/90 tracking-wide truncate block">
+                  {activeMobileProduct.material || "ARCHIVAL STRUCTURE"}
+                </span>
+              </div>
+            </div>
+
+            {/* Inline Angle/Elevation Switcher (No intrusive floating tooltips) */}
+            {mobileImages.length > 1 && (
+              <div className="pt-2 border-t border-brand-bg/15 flex items-center gap-2 overflow-x-auto hide-scrollbar">
+                <span className="text-[8px] text-brand-bg/60 font-bold uppercase shrink-0">
+                  ELEVATIONS:
+                </span>
+                {mobileImages.map((_, imgIdx) => (
+                  <button
+                    key={imgIdx}
+                    type="button"
+                    onClick={() => handleAngleSwitch(activeMobileProduct.id, imgIdx)}
+                    className={`shrink-0 px-2 py-1 text-[8.5px] font-black uppercase border transition-all ${
+                      activeMobileAngle === imgIdx
+                        ? "bg-[#ff4500] text-white border-brand-bg shadow-[1px_1px_0px_#050505]"
+                        : "bg-brand-bg text-brand-text border-brand-bg/40"
+                    }`}
+                  >
+                    V.0{imgIdx + 1}
+                  </button>
+                ))}
+              </div>
+            )}
+
+            {/* Primary Action Button */}
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playClick(0.14);
+                onProductClick(activeMobileProduct);
+              }}
+              className="w-full py-3 bg-[#ff4500] hover:bg-[#ea3e00] text-white text-xs font-black uppercase tracking-widest border border-brand-bg shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+            >
+              <span>{isMobileComingSoon ? "PREVIEW ARCHIVAL DOSSIER" : "OPEN ARCHIVAL DOSSIER"}</span>
+              <MoveRight size={14} />
+            </button>
+          </div>
+        )}
+
+        {/* Mobile Footer Instruction */}
+        <div className="px-4 pt-3 flex items-center justify-between text-[8px] uppercase tracking-widest text-brand-text/50">
+          <span>SWIPE CAROUSEL TO BROWSE</span>
+          <span className="text-brand-text/70 font-bold">TOTAL: {products.length} OBJECTS</span>
+        </div>
+      </div>
+    );
+  }
+
+  // =========================================================================
+  // DESKTOP EXHIBITION LAYOUT (>= 768px)
+  // Preserves curated horizontal overlapping presentation with refined tactile
+  // displacement, docked elevation control, and streamlined dossier activation.
+  // =========================================================================
   return (
     <div className="relative w-full overflow-hidden select-none py-4">
       {/* 1. ARCHITECTURAL STAGE HEADER & TELEMETRY */}
@@ -219,16 +494,16 @@ export default function ArtifactOverlappingCollection({
           <span className="inline-block w-2 h-2 bg-[#ff4500] animate-pulse" />
           <span className="font-black text-brand-text">HORIZONTAL ARTIFACT ARRAY</span>
           <span className="text-brand-text/30">//</span>
-          <span className="hidden sm:inline">OVERLAPPING CURATION [3:4 FORMAT]</span>
+          <span>CURATED 3:4 SPECIMEN SEQUENCE</span>
         </div>
 
         <div className="flex items-center gap-4">
-          <div className="hidden md:flex items-center gap-2">
+          <div className="flex items-center gap-2">
             <span className="text-[#ff4500] font-black">
               {activeIdx !== null ? `ARTIFACT 0${activeIdx + 1} ENGAGED` : "RESTING STATE"}
             </span>
             <span className="text-brand-text/40">•</span>
-            <span>HOVER TO DISPLACE & EXAMINE</span>
+            <span>CLICK TO FOCUS & EXAMINE</span>
           </div>
 
           {/* Pan Navigation Assists */}
@@ -283,7 +558,6 @@ export default function ArtifactOverlappingCollection({
             const images = resolveProductImages(product);
             const permanentAngleIdx = activeAngles[product.id] || 0;
             const tempHoveredAngle = hoveredThumbMap[product.id];
-            // Render temporary preview if user is hovering thumbnail, reverting to permanent angle when mouse leaves
             const activeAngleIdx = (typeof tempHoveredAngle === "number" && tempHoveredAngle !== null)
               ? tempHoveredAngle
               : permanentAngleIdx;
@@ -291,11 +565,12 @@ export default function ArtifactOverlappingCollection({
 
             const isHovered = activeIdx === idx;
             const isAnyHovered = activeIdx !== null;
+            const isElevationOpen = openElevationProductId === product.id;
 
             const baseOffset = SPECIMEN_OFFSETS[idx % SPECIMEN_OFFSETS.length];
             const artifactNum = String(idx + 1).padStart(2, "0");
 
-            // Compute Physical Spatial Separation Displacement
+            // Spatial Separation Displacement on focus
             let displacementX = 0;
             let targetScale = 1;
             let targetZ = 10 + idx;
@@ -305,15 +580,13 @@ export default function ArtifactOverlappingCollection({
 
             if (isAnyHovered) {
               if (isHovered) {
-                // The selected artifact comes forward
                 displacementX = 0;
                 targetScale = 1.05;
                 targetZ = 50;
                 targetY = -18;
-                targetRotate = 0; // straightens cleanly in architectural focus
+                targetRotate = 0;
                 targetOpacity = 1;
               } else if (idx < activeIdx) {
-                // Artifacts to the left shift to the left
                 const distanceFactor = Math.max(0, activeIdx - idx - 1);
                 displacementX = -(175 + distanceFactor * 25);
                 targetScale = 0.96;
@@ -321,7 +594,6 @@ export default function ArtifactOverlappingCollection({
                 targetY = baseOffset.y + 4;
                 targetOpacity = 0.82;
               } else if (idx > activeIdx) {
-                // Artifacts to the right shift to the right
                 const distanceFactor = Math.max(0, idx - activeIdx - 1);
                 displacementX = +(175 + distanceFactor * 25);
                 targetScale = 0.96;
@@ -338,17 +610,15 @@ export default function ArtifactOverlappingCollection({
             const isComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
             const isSoldOut = !isComingSoon && product.inventory !== undefined && product.inventory <= 0;
 
-            const placement = placementMap[idx] || "right";
-
             return (
               <motion.div
                 key={product.id}
                 ref={(el) => {
                   itemRefs.current[idx] = el;
                 }}
-                onMouseEnter={() => handleItemHover(idx, product.id)}
-                onMouseLeave={() => handleItemLeave(idx)}
-                onClick={() => handleItemClick(product, idx)}
+                onMouseEnter={() => handleDesktopItemHover(idx)}
+                onMouseLeave={() => handleDesktopItemLeave(idx)}
+                onClick={() => handleDesktopItemClick(product, idx)}
                 animate={{
                   x: displacementX,
                   y: targetY,
@@ -364,7 +634,6 @@ export default function ArtifactOverlappingCollection({
                   mass: 0.8,
                 }}
                 style={{
-                  // Overlapping layout: all items after the first overlap the previous by negative margin
                   marginLeft: idx === 0 ? "0px" : "-140px",
                   zIndex: targetZ,
                 }}
@@ -380,7 +649,6 @@ export default function ArtifactOverlappingCollection({
                       : "shadow-[6px_6px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
                   }`}
                 >
-                  {/* High Resolution Artifact Image with Robust Error Fallback */}
                   <img
                     src={currentImg || STUDIO_FALLBACK_IMAGE}
                     alt={product.name}
@@ -395,7 +663,7 @@ export default function ArtifactOverlappingCollection({
                     loading="lazy"
                   />
 
-                  {/* SUBTLE UNHOVERED DISCREET SPECIMEN TICK & COMING SOON PILL */}
+                  {/* UNHOVERED SPECIMEN TICK & COMING SOON BADGE */}
                   <div
                     className={`absolute bottom-2.5 right-2.5 pointer-events-none transition-opacity duration-200 flex items-center gap-1.5 ${
                       isHovered ? "opacity-0" : "opacity-90 group-hover:opacity-100"
@@ -411,26 +679,42 @@ export default function ArtifactOverlappingCollection({
                     </span>
                   </div>
 
-                  {/* Multi-Angle Elevation Indicator Chip */}
+                  {/* TACTILE ELEVATION CHIP (With in-place arrow controls; no unsolicited floating tooltip) */}
                   {images.length > 1 && (
-                    <button
-                      type="button"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        soundManager.playToggle(0.06);
-                        setClosedTooltips((prev) => ({ ...prev, [product.id]: false }));
-                      }}
-                      className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 px-2 py-0.5 bg-brand-surface/90 text-brand-text border border-brand-text text-[8px] font-mono font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505] hover:bg-brand-accent hover:text-white transition-colors cursor-pointer"
-                    >
-                      <Layers size={10} />
-                      <span>ELEVATION 0{activeAngleIdx + 1}/0{images.length}</span>
-                      {tempHoveredAngle !== null && tempHoveredAngle !== undefined && tempHoveredAngle !== permanentAngleIdx && (
-                        <span className="text-brand-accent font-black ml-0.5">[PREVIEW]</span>
-                      )}
-                    </button>
+                    <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1 bg-brand-surface/95 border border-brand-text shadow-[2px_2px_0px_#050505] p-0.5">
+                      <button
+                        type="button"
+                        onClick={(e) => handlePrevAngle(product.id, images.length, e)}
+                        aria-label="Previous angle"
+                        className="p-1 hover:bg-brand-text hover:text-white text-brand-text transition-colors cursor-pointer"
+                      >
+                        <ChevronLeft size={10} />
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          soundManager.playToggle(0.06);
+                          setOpenElevationProductId((prev) => (prev === product.id ? null : product.id));
+                        }}
+                        className="px-1.5 py-0.5 text-[8px] font-mono font-black uppercase tracking-wider text-brand-text hover:text-[#ff4500] transition-colors cursor-pointer"
+                      >
+                        ELEV 0{activeAngleIdx + 1}/0{images.length}
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={(e) => handleNextAngle(product.id, images.length, e)}
+                        aria-label="Next angle"
+                        className="p-1 hover:bg-brand-text hover:text-white text-brand-text transition-colors cursor-pointer"
+                      >
+                        <ChevronRight size={10} />
+                      </button>
+                    </div>
                   )}
 
-                  {/* 4. TEMPORARY ARTIFACT INFORMATION DOSSIER (Revealed only when hovered/active) */}
+                  {/* CURATORIAL SPECIMEN DOSSIER (Revealed smoothly when card is hovered or focused) */}
                   <AnimatePresence>
                     {isHovered && (
                       <motion.div
@@ -469,7 +753,7 @@ export default function ArtifactOverlappingCollection({
                           </p>
                         </div>
 
-                        {/* Middle Curatorial Specifications (NO PRICING - Curatorial Exhibition Context) */}
+                        {/* Specifications */}
                         <div className="grid grid-cols-2 gap-2 pt-1 border-t border-brand-bg/15 text-[8.5px] sm:text-[9px] uppercase">
                           <div>
                             <span className="text-brand-bg/50 block text-[7.5px] font-bold">MEDIUM:</span>
@@ -485,7 +769,7 @@ export default function ArtifactOverlappingCollection({
                           </div>
                         </div>
 
-                        {/* Bottom Curatorial Status & Dossier Trigger */}
+                        {/* Bottom Status & Direct Open Button */}
                         <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-brand-bg/20">
                           <div className="flex items-center gap-1.5 text-[8.5px] font-black uppercase tracking-wider">
                             <span className={`w-1.5 h-1.5 rounded-none inline-block ${isComingSoon ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
@@ -511,189 +795,56 @@ export default function ArtifactOverlappingCollection({
                   </AnimatePresence>
                 </div>
 
-                {/* Brutalist Angle Preview Tooltip (Pops out on side of product preview on desktop, above on mobile) */}
+                {/* OPTIONAL EXPLICIT ELEVATION INSPECTION PANEL (Only opened when user explicitly clicks ELEV chip) */}
                 <AnimatePresence>
-                  {isHovered && images.length > 1 && !closedTooltips[product.id] && (
+                  {isElevationOpen && images.length > 1 && (
                     <motion.div
-                      initial={
-                        placement === "right"
-                          ? { opacity: 0, x: -14, scale: 0.96 }
-                          : placement === "left"
-                          ? { opacity: 0, x: 14, scale: 0.96 }
-                          : { opacity: 0, y: 14, scale: 0.96 }
-                      }
-                      animate={{ opacity: 1, x: 0, y: 0, scale: 1 }}
-                      exit={
-                        placement === "right"
-                          ? { opacity: 0, x: -8, scale: 0.97 }
-                          : placement === "left"
-                          ? { opacity: 0, x: 8, scale: 0.97 }
-                          : { opacity: 0, y: 8, scale: 0.97 }
-                      }
-                      transition={{ type: "spring", stiffness: 400, damping: 28 }}
+                      initial={{ opacity: 0, scale: 0.95, y: -6 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.95, y: -6 }}
+                      transition={{ duration: 0.16 }}
                       onClick={(e) => e.stopPropagation()}
-                      onMouseEnter={() => setIsTooltipHovered(true)}
-                      onMouseLeave={() => {
-                        setIsTooltipHovered(false);
-                        setActiveIdx(null);
-                      }}
-                      className={`absolute z-[100] w-[min(315px,calc(100vw-32px))] bg-brand-bg border-2 border-brand-text p-3 shadow-[8px_8px_0px_#050505] pointer-events-auto cursor-default ${
-                        placement === "right"
-                          ? "left-[calc(100%+14px)] top-2"
-                          : placement === "left"
-                          ? "right-[calc(100%+14px)] left-auto top-2"
-                          : "bottom-[calc(100%+14px)] left-1/2 -translate-x-1/2"
-                      }`}
+                      className="absolute top-12 left-2.5 z-40 bg-brand-bg border-2 border-brand-text p-2.5 shadow-[6px_6px_0px_#050505] font-mono text-[9px] w-[240px]"
                     >
-                      {/* Invisible hover bridge to eliminate gap when moving cursor between card and side tooltip */}
-                      {placement === "right" && (
-                        <div className="absolute -left-4 top-0 bottom-0 w-4 pointer-events-auto" />
-                      )}
-                      {placement === "left" && (
-                        <div className="absolute -right-4 top-0 bottom-0 w-4 pointer-events-auto" />
-                      )}
-                      {placement === "above" && (
-                        <div className="absolute -bottom-4 left-0 right-0 h-4 pointer-events-auto" />
-                      )}
-
-                      {/* Brutalist Directional Pointer Anchor */}
-                      {placement === "above" && (
-                        <div className="absolute -bottom-2 left-1/2 -translate-x-1/2 w-3.5 h-3.5 bg-brand-bg border-r-2 border-b-2 border-brand-text rotate-45 pointer-events-none" />
-                      )}
-                      {placement === "right" && (
-                        <div className="absolute -left-2 top-8 w-3.5 h-3.5 bg-brand-bg border-l-2 border-b-2 border-brand-text rotate-45 pointer-events-none" />
-                      )}
-                      {placement === "left" && (
-                        <div className="absolute -right-2 top-8 w-3.5 h-3.5 bg-brand-bg border-r-2 border-t-2 border-brand-text rotate-45 pointer-events-none" />
-                      )}
-
-                      {/* Tooltip Header Bar with Navigation Arrows & Close Button */}
-                      <div className="flex items-center justify-between border-b-2 border-brand-text pb-2 mb-3 bg-brand-surface -mx-3 -mt-3 p-2.5">
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-2 h-2 bg-brand-accent inline-block border border-brand-text" />
-                          <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-text">
-                            [ ELEVATION // {product.productId || `ARTIFACT ${artifactNum}`} ]
-                          </span>
-                        </div>
-
-                        {/* Arrow Controls on Tooltip */}
-                        <div className="flex items-center gap-1">
-                          <button
-                            type="button"
-                            onClick={(e) => handlePrevAngle(product.id, images.length, e)}
-                            aria-label="Previous angle"
-                            className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-text hover:text-white text-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
-                          >
-                            <ChevronLeft size={12} />
-                          </button>
-                          <span className="font-mono text-[8px] font-black px-1 text-brand-text">
-                            0{activeAngleIdx + 1}/0{images.length}
-                          </span>
-                          <button
-                            type="button"
-                            onClick={(e) => handleNextAngle(product.id, images.length, e)}
-                            aria-label="Next angle"
-                            className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-text hover:text-white text-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
-                          >
-                            <ChevronRight size={12} />
-                          </button>
-                          <button
-                            type="button"
-                            onClick={(e) => handleCloseTooltip(product.id, e)}
-                            className="p-1 border border-brand-text bg-brand-bg hover:bg-brand-accent hover:text-white text-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer ml-1"
-                            aria-label="Close angles preview"
-                            title="Close preview"
-                          >
-                            <X size={12} />
-                          </button>
-                        </div>
+                      <div className="flex items-center justify-between border-b border-brand-text pb-1 mb-2 font-black uppercase tracking-wider">
+                        <span>ARCHIVAL ELEVATIONS</span>
+                        <button
+                          type="button"
+                          onClick={() => setOpenElevationProductId(null)}
+                          className="p-0.5 hover:bg-brand-accent hover:text-white transition-colors cursor-pointer"
+                        >
+                          <X size={12} />
+                        </button>
                       </div>
 
-                      {/* Brutalist Random Placement / Scatter Gallery Deck */}
-                      <div 
-                        className="relative py-2 px-1 flex flex-wrap justify-center items-center gap-2 min-h-[110px]"
-                        onMouseLeave={() => setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }))}
-                      >
+                      <div className="grid grid-cols-3 gap-2">
                         {images.map((img, imgIdx) => {
-                          const scatter = SCATTER_STYLES[imgIdx % SCATTER_STYLES.length];
-                          const isCommittedActive = permanentAngleIdx === imgIdx;
-                          const isThumbHovered = hoveredThumbMap[product.id] === imgIdx;
-
+                          const isCommitted = permanentAngleIdx === imgIdx;
                           return (
-                            <motion.div
+                            <div
                               key={imgIdx}
-                              animate={{
-                                rotate: isThumbHovered || isCommittedActive ? "0deg" : scatter.rotate,
-                                scale: isThumbHovered ? 1.15 : isCommittedActive ? 1.06 : 0.95,
-                                x: isThumbHovered || isCommittedActive ? "0px" : scatter.x,
-                                y: isThumbHovered || isCommittedActive ? "-3px" : scatter.y,
-                                zIndex: isThumbHovered ? 40 : isCommittedActive ? 30 : scatter.zIndex,
-                              }}
-                              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-                              onMouseEnter={() => {
-                                soundManager.playHover(0.035);
-                                // Temporarily preview angle without permanently committing it
-                                setHoveredThumbMap((prev) => ({ ...prev, [product.id]: imgIdx }));
-                              }}
-                              onMouseLeave={() => {
-                                setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
-                              }}
                               onClick={(e) => {
-                                e.stopPropagation();
-                                // Permanently commit the selected angle on click
                                 handleAngleSwitch(product.id, imgIdx, e);
-                                setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
+                                setOpenElevationProductId(null);
                               }}
-                              className={`relative w-20 aspect-square p-1 bg-brand-surface border-2 transition-colors cursor-pointer ${
-                                isCommittedActive
-                                  ? "border-brand-accent shadow-[4px_4px_0px_#050505] ring-2 ring-brand-accent/40"
-                                  : isThumbHovered
-                                  ? "border-brand-text shadow-[4px_4px_0px_#050505] ring-1 ring-brand-text"
-                                  : "border-brand-text shadow-[3px_3px_0px_#050505] hover:border-brand-text"
+                              className={`relative aspect-square border-2 cursor-pointer transition-all overflow-hidden ${
+                                isCommitted
+                                  ? "border-[#ff4500] shadow-[2px_2px_0px_#050505]"
+                                  : "border-brand-text/50 hover:border-brand-text"
                               }`}
                             >
                               <img
                                 src={img || STUDIO_FALLBACK_IMAGE}
-                                alt={`Angle ${imgIdx + 1}`}
+                                alt={`Elevation ${imgIdx + 1}`}
                                 referrerPolicy="no-referrer"
-                                onError={(e) => {
-                                  const target = e.currentTarget;
-                                  if (target.src !== STUDIO_FALLBACK_IMAGE) {
-                                    target.src = STUDIO_FALLBACK_IMAGE;
-                                  }
-                                }}
-                                className="w-full h-full object-cover select-none"
+                                className="w-full h-full object-cover"
                               />
-
-                              {/* Angle Tag Badge */}
-                              <div className="absolute -bottom-1.5 left-1/2 -translate-x-1/2 whitespace-nowrap">
-                                <span
-                                  className={`font-mono text-[7px] font-black uppercase px-1 py-0.2 border border-brand-text ${
-                                    isCommittedActive 
-                                      ? "bg-brand-accent text-white" 
-                                      : isThumbHovered
-                                      ? "bg-brand-text text-brand-bg font-black"
-                                      : "bg-brand-text text-brand-bg"
-                                  }`}
-                                >
-                                  {isCommittedActive 
-                                    ? `V.0${imgIdx + 1} [LOCKED]` 
-                                    : isThumbHovered 
-                                    ? `V.0${imgIdx + 1} [PREVIEW]` 
-                                    : `V.0${imgIdx + 1}`}
-                                </span>
-                              </div>
-                            </motion.div>
+                              <span className="absolute bottom-0 inset-x-0 bg-brand-text/90 text-white text-[7px] font-black text-center py-0.5 uppercase">
+                                V.0{imgIdx + 1}
+                              </span>
+                            </div>
                           );
                         })}
-                      </div>
-
-                      {/* Tooltip Footer Instruction */}
-                      <div className="mt-3 pt-1.5 border-t border-brand-text/20 flex justify-between items-center text-[8px] font-mono tracking-wider text-brand-text/70 uppercase">
-                        <span className="flex items-center gap-1 text-brand-accent font-bold">
-                          <Layers size={10} /> {images.length} ARCHIVAL ELEVATIONS
-                        </span>
-                        <span className="font-bold text-brand-text">CLICK TO LOCK • HOVER TO PREVIEW</span>
                       </div>
                     </motion.div>
                   )}
@@ -704,12 +855,12 @@ export default function ArtifactOverlappingCollection({
         </div>
       </div>
 
-      {/* 5. ARCHITECTURAL FOOTER REGISTER WITH SCROLL INSTRUCTION & TICKER */}
+      {/* 3. ARCHITECTURAL FOOTER REGISTER */}
       <div className="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 pt-3 border-t border-brand-text/20 font-mono text-[9.5px] uppercase tracking-widest text-brand-text/60">
         <div className="flex items-center gap-2">
           <span>ARRAY REGISTER // {products.length} {products.length === 1 ? "ARTIFACT" : "ARTIFACTS"}</span>
           <span className="text-brand-text/30">•</span>
-          <span className="hidden sm:inline">DRAG HORIZONTALLY OR USE TRACKPAD TO PAN</span>
+          <span>DRAG HORIZONTALLY OR USE TRACKPAD TO PAN</span>
         </div>
 
         <div className="flex items-center gap-3 font-bold text-brand-text">
