@@ -45,6 +45,9 @@ export default function ProductGrid({
       setSelectedCollection("be-palestine");
     } else if (activeCategoryId === "be-symbolic") {
       setSelectedCollection("be-symbolic");
+    } else {
+      // If we navigated to a specific category (e.g. wear) or all artifacts, reset the collection filter to all
+      setSelectedCollection("all");
     }
   }, [activeCategoryId]);
 

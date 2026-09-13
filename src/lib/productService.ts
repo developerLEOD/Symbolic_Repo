@@ -326,27 +326,44 @@ export function isProductLive(product: Product | null | undefined): boolean {
 }
 
 export function normalizeProductCategory(p: Product): string {
-  const cat = (p.categoryId || "").toLowerCase();
+  const cat = (p.categoryId || "").toLowerCase().trim();
+  
+  // 1. Explicit matches take precedence
+  if (cat === "wear" || cat === "carry" || cat === "headwear" || cat === "vessels") {
+    return cat;
+  }
+
+  // 2. Fuzzy matches if explicit category is missing or unknown
   const name = (p.name || "").toLowerCase();
   const sku = (p.sku || p.productId || "").toLowerCase();
 
-  if (cat === "wear" || cat === "t-shirts" || cat === "apparel" || cat === "hoodies" || sku.includes("tsh") || sku.includes("hood") || name.includes("tee") || name.includes("shirt") || name.includes("hoodie")) {
+  if (cat === "t-shirts" || cat === "apparel" || cat === "hoodies" || sku.includes("tsh") || sku.includes("hood") || name.includes("tee") || name.includes("shirt") || name.includes("hoodie")) {
     return "wear";
   }
-  if (cat === "carry" || cat === "bags" || cat === "totes" || sku.includes("bag") || sku.includes("tot") || name.includes("bag") || name.includes("tote") || name.includes("pack")) {
+  if (cat === "bags" || cat === "totes" || sku.includes("bag") || sku.includes("tot") || name.includes("bag") || name.includes("tote") || name.includes("pack")) {
     return "carry";
   }
-  if (cat === "headwear" || cat === "caps" || cat === "hats" || sku.includes("cap") || sku.includes("hat") || name.includes("cap") || name.includes("hat")) {
+  if (cat === "caps" || cat === "hats" || sku.includes("cap") || sku.includes("hat") || name.includes("cap") || name.includes("hat")) {
     return "headwear";
   }
-  if (cat === "vessels" || cat === "mugs" || cat === "ceramics" || sku.includes("mug") || sku.includes("ves") || name.includes("mug") || name.includes("vessel") || name.includes("ceramic")) {
+  if (cat === "mugs" || cat === "ceramics" || sku.includes("mug") || sku.includes("ves") || name.includes("mug") || name.includes("vessel") || name.includes("ceramic")) {
     return "vessels";
   }
   return "wear";
 }
 
 export function normalizeProductCollection(p: Product): "Be Symbolic" | "Be Palestine" {
-  const col = (p.collectionName || "").toLowerCase();
+  const col = (p.collectionName || "").toLowerCase().trim();
+  
+  // 1. Explicit match
+  if (col === "be palestine" || col === "be-palestine") {
+    return "Be Palestine";
+  }
+  if (col === "be symbolic" || col === "be-symbolic") {
+    return "Be Symbolic";
+  }
+
+  // 2. Fuzzy match
   const cat = (p.categoryId || "").toLowerCase();
   const name = (p.name || "").toLowerCase();
 
