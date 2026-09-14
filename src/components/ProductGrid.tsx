@@ -73,7 +73,8 @@ export default function ProductGrid({
       setLoading(false);
       setReverifying(false);
     }
-  }, [onCategoriesLoaded]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   useEffect(() => {
     syncArchiveData();
