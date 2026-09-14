@@ -5,6 +5,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Category } from "../types";
 import { useAuth } from "../lib/AuthContext";
 import { fetchCategories } from "../lib/productService";
+import { soundManager } from "../lib/soundEffects";
 
 interface HeaderProps {
   onCartClick: () => void;
@@ -314,9 +315,15 @@ export default function Header({
         {/* Right: Actions (Auth, Possessions, Drawer Toggle) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* User Account / Identity Authentication */}
-          <button
-            onClick={onAuthClick}
-            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 flex items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2 sm:px-3'}`}
+          <motion.button
+            onClick={() => {
+              soundManager.playClick(0.12);
+              onAuthClick();
+            }}
+            onMouseEnter={() => soundManager.playHover(0.03)}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.95 }}
+            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 flex items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2 sm:px-3'}`}
             title={user ? "Inspect Identity Record & Orders" : "Authenticate Identity"}
           >
             {user ? (
@@ -333,20 +340,37 @@ export default function Header({
                 <span className="hidden sm:inline shrink-0">AUTHENTICATE</span>
               </>
             )}
-          </button>
+          </motion.button>
 
-          <button 
-            onClick={onCartClick}
-            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-none border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3.5'}`}
+          <motion.button 
+            onClick={() => {
+              soundManager.playClick(0.14);
+              onCartClick();
+            }}
+            onMouseEnter={() => soundManager.playHover(0.03)}
+            whileHover={{ y: -1 }}
+            whileTap={{ scale: 0.95 }}
+            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-none border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3.5'}`}
             title="Open Possession Ledger"
           >
             <span className="w-2 h-2 bg-brand-accent inline-block shrink-0" />
             <span className="hidden sm:inline shrink-0">POSSESSIONS // </span>
-            <span className="shrink-0">[ {formattedCartCount} ]</span>
-          </button>
+            <motion.span 
+              key={formattedCartCount}
+              initial={{ scale: 1.4, color: "#ff4500" }}
+              animate={{ scale: 1, color: "inherit" }}
+              transition={{ type: "spring", stiffness: 450, damping: 15 }}
+              className="shrink-0 font-black"
+            >
+              [ {formattedCartCount} ]
+            </motion.span>
+          </motion.button>
 
           <button 
-            onClick={() => setIsMenuOpen(!isMenuOpen)}
+            onClick={() => {
+              soundManager.playToggle(0.08);
+              setIsMenuOpen(!isMenuOpen);
+            }}
             className="md:hidden h-8.5 w-8.5 sm:h-9 sm:w-9 shrink-0 flex items-center justify-center bg-brand-surface hover:bg-brand-text hover:text-brand-bg rounded-none transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >

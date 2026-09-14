@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { motion } from "motion/react";
 import { 
   ShieldCheck, 
@@ -10,6 +10,7 @@ import {
   MoveRight
 } from "lucide-react";
 import LiquidCarveButton from "./LiquidCarveButton";
+import { soundManager } from "../lib/soundEffects";
 
 interface HeroProps {
   onExplore: () => void;
@@ -51,6 +52,8 @@ function CountUpNumber({ end, duration = 1.2, suffix = "", delay = 0.2 }: { end:
 }
 
 export default function Hero({ onExplore, onWhy }: HeroProps) {
+  const [activeStep, setActiveStep] = useState<string | null>(null);
+
   // Container animation variants
   const containerVariants = {
     hidden: { opacity: 0 },
@@ -205,7 +208,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         {/* Right Prominent Official Emblem Display */}
         <div className="lg:col-span-5 flex flex-col items-center justify-start pt-10 lg:pt-16">
           <div className="flex flex-col items-center justify-center text-center px-2 pb-2 sm:px-4 sm:pb-4 w-full">
-            {/* The Actual Official SYMBOLIC Logo Emblem with Pop-up Spring Entrance and 2D Tilt */}
+            {/* The Actual Official SYMBOLIC Logo Emblem */}
             <motion.div
               initial={{ opacity: 0, scale: 0.45, rotate: -8, y: 40 }}
               animate={{ opacity: 1, scale: 1, rotate: -3, y: 0 }}
@@ -264,21 +267,44 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
           <span>THE ARTIFACT ENCOUNTER // 5-STAGE PROTOCOL</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-mono">
-          {coreJourneySteps.map((s, idx) => (
-            <div 
-              key={s.step} 
-              className="bg-brand-surface border-2 border-brand-text p-4 shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] hover:-translate-y-0.5 transition-all flex flex-col justify-between min-h-[120px]"
-            >
-              <div className="flex items-center justify-between text-brand-accent text-xs font-black pb-2 border-b-2 border-brand-text/15">
-                <span>STAGE {s.step}</span>
-                <span className="text-[10px] uppercase font-black text-brand-text/50">{idx < 4 ? '→' : '■'}</span>
-              </div>
-              <div className="pt-2 flex-1 flex flex-col justify-start">
-                <div className="text-sm sm:text-[15px] font-black text-brand-text tracking-wide uppercase leading-tight">{s.name}</div>
-                <div className="text-[10px] sm:text-[11px] text-brand-text/80 font-bold uppercase leading-snug mt-1.5">{s.detail}</div>
-              </div>
-            </div>
-          ))}
+          {coreJourneySteps.map((s, idx) => {
+            const isSelected = activeStep === s.step;
+            return (
+              <motion.div 
+                key={s.step}
+                whileHover={{ y: -4, scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                transition={{ type: "spring", stiffness: 450, damping: 20 }}
+                onMouseEnter={() => soundManager.playHover(0.03)}
+                onClick={() => {
+                  soundManager.playClick(0.12);
+                  setActiveStep(isSelected ? null : s.step);
+                }}
+                className={`border-2 border-brand-text p-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-colors flex flex-col justify-between min-h-[120px] cursor-pointer select-none ${
+                  isSelected ? "bg-brand-text text-brand-bg shadow-[6px_6px_0px_#ff4500]" : "bg-brand-surface text-brand-text"
+                }`}
+              >
+                <div className={`flex items-center justify-between text-xs font-black pb-2 border-b-2 ${isSelected ? "border-brand-bg/20 text-brand-accent" : "border-brand-text/15 text-brand-accent"}`}>
+                  <span>STAGE {s.step}</span>
+                  <motion.span 
+                    animate={{ x: isSelected ? [0, 3, 0] : 0 }}
+                    transition={{ repeat: isSelected ? Infinity : 0, duration: 1 }}
+                    className={`text-[10px] uppercase font-black ${isSelected ? "text-brand-bg" : "text-brand-text/50"}`}
+                  >
+                    {idx < 4 ? '→' : '■'}
+                  </motion.span>
+                </div>
+                <div className="pt-2 flex-1 flex flex-col justify-start">
+                  <div className={`text-sm sm:text-[15px] font-black tracking-wide uppercase leading-tight ${isSelected ? "text-brand-bg" : "text-brand-text"}`}>
+                    {s.name}
+                  </div>
+                  <div className={`text-[10px] sm:text-[11px] font-bold uppercase leading-snug mt-1.5 ${isSelected ? "text-brand-bg/80" : "text-brand-text/80"}`}>
+                    {s.detail}
+                  </div>
+                </div>
+              </motion.div>
+            );
+          })}
         </div>
       </motion.div>
 

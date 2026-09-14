@@ -426,10 +426,11 @@ export default function Cart({
 
                           {/* Quantity Controls & Line Settlement */}
                           <div className="flex items-center justify-between gap-3 pt-2 border-t-2 border-brand-text/20">
-                            {/* Tactile Quantity Stepper */}
+                            {/* Tactile Quantity Stepper with Spring Buttons */}
                             <div className="flex items-center border-2 border-brand-text bg-brand-bg shadow-[2px_2px_0px_#050505]">
-                              <button 
+                              <motion.button 
                                 type="button"
+                                whileTap={{ scale: 0.8 }}
                                 onClick={() => {
                                   soundManager.playToggle(0.06);
                                   if (item.quantity === 1) {
@@ -438,27 +439,34 @@ export default function Cart({
                                     onUpdateQuantity(item.id, -1);
                                   }
                                 }}
-                                className="p-1.5 sm:p-2 hover:bg-brand-text hover:text-white transition-colors cursor-pointer"
+                                className="p-1.5 sm:p-2 hover:bg-brand-text hover:text-white transition-colors cursor-pointer select-none"
                                 title="Reduce Allotment"
                               >
                                 <Minus size={11} />
-                              </button>
+                              </motion.button>
                               
-                              <span className="w-8 text-center font-mono text-xs font-black select-none">
+                              <motion.span 
+                                key={item.quantity}
+                                initial={{ scale: 1.3, color: "#ff4500" }}
+                                animate={{ scale: 1, color: "inherit" }}
+                                transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                                className="w-8 text-center font-mono text-xs font-black select-none"
+                              >
                                 {item.quantity}
-                              </span>
+                              </motion.span>
 
-                              <button 
+                              <motion.button 
                                 type="button"
+                                whileTap={{ scale: 0.8 }}
                                 onClick={() => {
                                   soundManager.playToggle(0.06);
                                   onUpdateQuantity(item.id, 1);
                                 }}
-                                className="p-1.5 sm:p-2 hover:bg-brand-text hover:text-white transition-colors cursor-pointer"
+                                className="p-1.5 sm:p-2 hover:bg-brand-text hover:text-white transition-colors cursor-pointer select-none"
                                 title="Increase Allotment"
                               >
                                 <Plus size={11} />
-                              </button>
+                              </motion.button>
                             </div>
 
                             {/* Extended Line Total */}
@@ -528,17 +536,20 @@ export default function Cart({
 
                 {/* Primary CTA: PROCEED TO POSSESSION */}
                 <div className="space-y-2 pt-1">
-                  <button 
+                  <motion.button 
                     type="button"
+                    whileHover={{ y: -2 }}
+                    whileTap={{ scale: 0.97 }}
+                    transition={{ type: "spring", stiffness: 450, damping: 18 }}
                     onClick={() => {
                       soundManager.playClick(0.18);
                       onCheckout();
                     }}
-                    className="w-full py-4 px-6 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs sm:text-sm font-black uppercase tracking-widest border-2 border-brand-text shadow-[4px_4px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-3"
+                    className="w-full py-4 px-6 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs sm:text-sm font-black uppercase tracking-widest border-2 border-brand-text shadow-[4px_4px_0px_#050505] active:shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer flex items-center justify-center gap-3 select-none group"
                   >
                     <span>PROCEED TO POSSESSION</span>
-                    <ArrowRight size={16} />
-                  </button>
+                    <ArrowRight size={16} className="group-hover:translate-x-1.5 transition-transform" />
+                  </motion.button>
 
                   <button 
                     type="button"

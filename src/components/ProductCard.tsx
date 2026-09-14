@@ -107,11 +107,35 @@ export default function ProductCard({
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Architectural Corner Registration Crosshairs */}
-      <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
-      <span className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
-      <span className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
-      <span className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
+      {/* Architectural Corner Registration Crosshairs with Juicy Spin & Color Shift */}
+      <motion.span 
+        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.35 : 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+        className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
+      >
+        +
+      </motion.span>
+      <motion.span 
+        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.35 : 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+        className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
+      >
+        +
+      </motion.span>
+      <motion.span 
+        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.35 : 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+        className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
+      >
+        +
+      </motion.span>
+      <motion.span 
+        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.35 : 1 }}
+        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+        className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
+      >
+        +
+      </motion.span>
 
       {/* ─── 1. TOP ARTIFACT IDENTIFICATION HEADER ─── */}
       <div className="flex items-center justify-between border-b-2 border-brand-text pb-2.5 mb-3">
@@ -315,7 +339,15 @@ export default function ProductCard({
         <div className="border-t-2 border-brand-text pt-2.5">
           <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
             <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE ARTIFACT"}</span>
-            <ArrowUpRight size={12} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
+            <motion.div
+              animate={{ 
+                x: isHovered ? [0, 3, 0] : 0,
+                y: isHovered ? [0, -3, 0] : 0
+              }}
+              transition={{ repeat: isHovered ? Infinity : 0, duration: 0.9, ease: "easeInOut" }}
+            >
+              <ArrowUpRight size={12} className="group-hover:text-brand-accent transition-colors" />
+            </motion.div>
           </div>
         </div>
       </div>

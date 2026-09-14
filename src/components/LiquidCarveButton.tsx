@@ -1,10 +1,12 @@
-import React from "react";
+import React, { useState } from "react";
 import { motion, HTMLMotionProps } from "motion/react";
+import { soundManager } from "../lib/soundEffects";
 
 interface LiquidCarveButtonProps extends HTMLMotionProps<"button"> {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "dark" | "outline";
   className?: string;
+  disableSound?: boolean;
 }
 
 export default function LiquidCarveButton({
@@ -12,27 +14,77 @@ export default function LiquidCarveButton({
   variant = "primary",
   className = "",
   onClick,
+  onMouseEnter,
   disabled,
+  disableSound = false,
   type = "button",
   ...props
 }: LiquidCarveButtonProps) {
+  const [isHovered, setIsHovered] = useState(false);
+
   // Brutalist tactile variants with stark borders, hard offset shadows, crisp hover/press
   const variantStyles = {
-    primary: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#050505] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
-    dark: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#050505] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
-    secondary: "bg-brand-surface text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#050505] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none",
-    outline: "bg-transparent text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:translate-x-[2px] hover:translate-y-[2px] hover:shadow-[2px_2px_0px_#050505] active:translate-x-[4px] active:translate-y-[4px] active:shadow-none"
+    primary: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
+    dark: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
+    secondary: "bg-brand-surface text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
+    outline: "bg-transparent text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]"
+  };
+
+  const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !disableSound) {
+      soundManager.playClick(0.16);
+    }
+    if (onClick) {
+      onClick(e);
+    }
+  };
+
+  const handleMouseEnter = (e: React.MouseEvent<HTMLButtonElement>) => {
+    if (!disabled && !disableSound) {
+      soundManager.playHover(0.04);
+    }
+    setIsHovered(true);
+    if (onMouseEnter) {
+      onMouseEnter(e);
+    }
   };
 
   return (
     <motion.button
       type={type}
       disabled={disabled}
-      onClick={onClick}
-      whileTap={{ scale: 0.98 }}
-      className={`relative px-7 py-3.5 rounded-none font-mono text-[11px] uppercase tracking-widest font-black transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none ${variantStyles[variant]} ${className}`}
+      onClick={handleClick}
+      onMouseEnter={handleMouseEnter}
+      onMouseLeave={() => setIsHovered(false)}
+      whileHover={{ y: -2, transition: { type: "spring", stiffness: 450, damping: 18 } }}
+      whileTap={{ scale: 0.97, y: 1, transition: { type: "spring", stiffness: 600, damping: 15 } }}
+      className={`relative px-7 py-3.5 rounded-none font-mono text-[11px] uppercase tracking-widest font-black transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none overflow-hidden group ${variantStyles[variant]} ${className}`}
       {...props}
     >
+      {/* Corner crosshairs micro-interaction */}
+      <motion.span 
+        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.2 : 1 }}
+        transition={{ type: "spring", stiffness: 500, damping: 20 }}
+        className="absolute top-0.5 left-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity"
+      >
+        +
+      </motion.span>
+      <motion.span 
+        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.2 : 1 }}
+        transition={{ type: "spring", stiffness: 500, damping: 20 }}
+        className="absolute top-0.5 right-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity"
+      >
+        +
+      </motion.span>
+
+      {/* Diagonal scanline glint sweep on hover */}
+      <motion.span
+        initial={{ x: "-120%", skewX: -25 }}
+        animate={{ x: isHovered ? "220%" : "-120%", skewX: -25 }}
+        transition={{ duration: 0.65, ease: "easeInOut" }}
+        className="absolute inset-y-0 w-1/3 bg-white/20 pointer-events-none z-0"
+      />
+
       <span className="relative z-10 flex items-center gap-2">
         {children}
       </span>

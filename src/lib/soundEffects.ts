@@ -9,6 +9,8 @@ class TactileSoundManager {
   private lastHoverTime: number = 0;
   private impulseNoiseBuffer: AudioBuffer | null = null;
 
+  private listeners: Set<(sound: string) => void> = new Set();
+
   constructor() {
     if (typeof window !== "undefined") {
       const savedMute = localStorage.getItem("symbolic_audio_muted");
@@ -16,6 +18,18 @@ class TactileSoundManager {
         this.isMuted = savedMute === "true";
       }
     }
+  }
+
+  public subscribe(fn: (sound: string) => void): () => void {
+    this.listeners.add(fn);
+    return () => this.listeners.delete(fn);
+  }
+
+  private notify(sound: string) {
+    if (this.isMuted) return;
+    this.listeners.forEach(fn => {
+      try { fn(sound); } catch { /* noop */ }
+    });
   }
 
   private getContext(): AudioContext | null {
@@ -104,6 +118,7 @@ class TactileSoundManager {
       oscGain.connect(filter);
       osc.start(t);
       osc.stop(t + 0.016);
+      this.notify("hover");
     } catch {
       // AudioContext fallback
     }
@@ -162,6 +177,7 @@ class TactileSoundManager {
       gain2.connect(filter);
       osc2.start(t + 0.006);
       osc2.stop(t + 0.036);
+      this.notify("click");
     } catch {
       // AudioContext fallback
     }
@@ -173,6 +189,42 @@ class TactileSoundManager {
 
   public playSuccess(volumeInput: number = 0.2) {
     this.playClick(volumeInput);
+  }
+
+  // --- ACQUIRE SPECIMEN CHIME (Mechanical Metallic Lock) ---
+  public playAcquire(volumeInput: number = 0.28) {
+    if (this.isMuted) return;
+
+    try {
+      const ctx = this.getContext();
+      if (!ctx) return;
+
+      const t = ctx.currentTime;
+      const pitch = this.pitchMultiplier;
+      const effectiveVol = volumeInput * this.masterVolume;
+
+      // Stage 1: Initial crisp strike
+      this.playClick(volumeInput * 0.9);
+
+      // Stage 2: Resonant Harmonic Lock (Two chime harmonics)
+      [587.33, 880.0, 1174.66].forEach((freq, i) => {
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.type = "sine";
+        osc.frequency.setValueAtTime(freq * pitch, t + 0.04 * i);
+        
+        gain.gain.setValueAtTime(effectiveVol * 0.35, t + 0.04 * i);
+        gain.gain.exponentialRampToValueAtTime(0.0001, t + 0.32 + 0.05 * i);
+
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(t + 0.04 * i);
+        osc.stop(t + 0.35 + 0.05 * i);
+      });
+      this.notify("acquire");
+    } catch {
+      // AudioContext fallback
+    }
   }
 }
 

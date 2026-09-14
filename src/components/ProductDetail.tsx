@@ -234,7 +234,7 @@ export default function ProductDetail({
   const optionNames = Array.from(new Set(variants.flatMap(v => [v.option1Name, v.option2Name, v.option3Name].filter(Boolean) as string[])));
 
   const handlePossess = () => {
-    soundManager.playClick(0.15);
+    soundManager.playAcquire(0.28);
     onAddToCart({
       id: `${product.id}-${selectedVariant?.id || 'default'}`,
       productId: product.id,
@@ -1248,8 +1248,9 @@ export default function ProductDetail({
                     <span className="w-12 text-center font-mono text-sm font-black select-none">
                       {quantity}
                     </span>
-                    <button 
+                    <motion.button 
                       type="button"
+                      whileTap={{ scale: 0.85 }}
                       onClick={() => {
                         soundManager.playToggle(0.06);
                         setQuantity(quantity + 1);
@@ -1258,44 +1259,55 @@ export default function ProductDetail({
                       title="Increase Allotment"
                     >
                       <Plus size={16} />
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
 
-                {/* Primary Acquisition Buttons */}
+                {/* Primary Acquisition Buttons with Juicy Springs */}
                 <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-4">
                   <div className="sm:col-span-7">
-                    <button 
+                    <motion.button 
                       type="button"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      transition={{ type: "spring", stiffness: 450, damping: 18 }}
                       onClick={handlePossess}
-                      className="w-full py-5 px-6 font-mono text-sm font-black uppercase tracking-widest bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border-2 border-brand-text shadow-[5px_5px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-5 px-6 font-mono text-sm font-black uppercase tracking-widest bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border-2 border-brand-text shadow-[5px_5px_0px_#050505] active:shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer flex items-center justify-center gap-2 select-none"
                     >
                       {added ? (
-                        <>
-                          <Check size={18} className="text-brand-accent" />
+                        <motion.div 
+                          initial={{ scale: 0.7, opacity: 0 }}
+                          animate={{ scale: 1, opacity: 1 }}
+                          transition={{ type: "spring", stiffness: 500, damping: 15 }}
+                          className="flex items-center gap-2 text-white"
+                        >
+                          <Check size={18} className="text-white animate-bounce" />
                           <span>RECORDED IN POSSESSION LEDGER</span>
-                        </>
+                        </motion.div>
                       ) : (
                         <>
                           <span>ACQUIRE ARTIFACT</span>
                           <ArrowUpRight size={18} />
                         </>
                       )}
-                    </button>
+                    </motion.button>
                   </div>
 
                   <div className="sm:col-span-5">
-                    <button 
+                    <motion.button 
                       type="button"
+                      whileHover={{ y: -2 }}
+                      whileTap={{ scale: 0.96 }}
+                      transition={{ type: "spring", stiffness: 450, damping: 18 }}
                       onClick={() => {
                         handlePossess();
                         onClose();
                         if (onOpenLedger) onOpenLedger();
                       }}
-                      className="w-full py-5 px-6 font-mono text-sm font-black uppercase tracking-widest bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[5px_5px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all cursor-pointer flex items-center justify-center gap-2"
+                      className="w-full py-5 px-6 font-mono text-sm font-black uppercase tracking-widest bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[5px_5px_0px_#050505] active:shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer flex items-center justify-center gap-2 select-none"
                     >
                       <span>ACQUIRE &amp; PROCEED TO LEDGER →</span>
-                    </button>
+                    </motion.button>
                   </div>
                 </div>
               </>
