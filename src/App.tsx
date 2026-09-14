@@ -27,6 +27,7 @@ import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import ScrollToTop from "./components/ScrollToTop";
 import Breadcrumbs from "./components/Breadcrumbs";
+import { TileOverlay, formatRouteName } from "./components/TileTransition";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts, getCachedProducts } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
@@ -199,6 +200,17 @@ function StorefrontApp() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const [prevLocation, setPrevLocation] = useState(location);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [transitionDestination, setTransitionDestination] = useState("");
+
+  useEffect(() => {
+    if (location.pathname !== prevLocation.pathname) {
+      setTransitionDestination(formatRouteName(location.pathname));
+      setIsTransitioning(true);
+    }
+  }, [location.pathname, prevLocation.pathname]);
+
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -362,6 +374,17 @@ function StorefrontApp() {
   return (
     <div className="min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white">
       <ScrollToTop />
+      
+      <TileOverlay 
+        isActive={isTransitioning}
+        destinationName={transitionDestination}
+        onCover={() => {
+          // Tiles fully cover the screen, safe to remove the frozen old route
+          setPrevLocation(location);
+          setIsTransitioning(false);
+        }}
+      />
+
       {referralWelcomeBanner && (
         <div className="bg-brand-surface text-brand-text px-4 py-2 font-mono text-[11px] flex flex-wrap items-center justify-between gap-3 border-b-2 border-brand-text shadow-[0_2px_0px_#050505] sticky top-0 z-[60]">
           <div className="flex items-center gap-2.5">
@@ -409,9 +432,14 @@ function StorefrontApp() {
 
       <div className="pt-14 sm:pt-16">
         <Breadcrumbs categories={categories} />
-        <main>
-          <Routes>
-          {/* Home Route */}
+        
+        {/* Double-Render Transition Wrapper */}
+        <div className="relative">
+          {/* New Route (loads immediately in background) */}
+          <div style={{ opacity: isTransitioning ? 0 : 1 }} className="min-h-screen">
+            <main>
+              <Routes location={location}>
+                {/* Home Route */}
           <Route
             path="/"
             element={
@@ -539,6 +567,27 @@ function StorefrontApp() {
         </Routes>
       </main>
     </div>
+
+    {/* Old Route (frozen visually while tiles animate in) */}
+          {isTransitioning && (
+            <div className="absolute inset-0 z-0 pointer-events-none min-h-screen">
+              <main>
+                <Routes location={prevLocation}>
+                  <Route path="/" element={<HomeView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
+                  <Route path="/artifacts" element={<ArtifactsDirectoryView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
+                  <Route path="/artifacts/:categoryId" element={<ArtifactsDirectoryView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
+                  <Route path="/collection/:collectionId" element={<CollectionDirectoryView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
+                  <Route path="/artifact/:id" element={<ProductRouteHandler onAddToCart={handleAddToCart} onOpenLedger={() => setIsCartOpen(true)} onEditProduct={isOwner ? handleEditProductFromDetail : undefined} onProductDeleted={handleProductPublished} />} />
+                  <Route path="/about" element={<About onBack={() => navigate("/")} onWhyWeWear={() => navigate("/manifesto")} />} />
+                  <Route path="/manifesto" element={<Manifesto onBack={() => navigate("/")} onAbout={() => navigate("/about")} />} />
+                  <Route path="/why-merchandise" element={<Manifesto onBack={() => navigate("/")} onAbout={() => navigate("/about")} />} />
+                  <Route path="*" element={<HomeView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
+                </Routes>
+              </main>
+            </div>
+          )}
+        </div>
+      </div>
 
       <Footer 
         categories={categories}
