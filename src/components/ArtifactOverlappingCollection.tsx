@@ -380,7 +380,7 @@ export default function ArtifactOverlappingCollection({
   if (!products || products.length === 0) {
     return (
       <div className="w-full py-16 text-center font-mono border-2 border-dashed border-brand-text/30 p-8">
-        <p className="text-xs uppercase font-bold text-brand-text/60">NO ARTIFACTS LOADED IN EXHIBITION</p>
+        <p className="text-xs uppercase font-bold text-brand-text/60">NO SPECIMENS LOADED IN EXHIBITION</p>
       </div>
     );
   }
@@ -998,7 +998,7 @@ export default function ArtifactOverlappingCollection({
       {/* 3. ARCHITECTURAL FOOTER REGISTER */}
       <div className="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 pt-3 border-t border-brand-text/20 font-mono text-[9.5px] uppercase tracking-widest text-brand-text/60">
         <div className="flex items-center gap-2">
-          <span>ARRAY REGISTER // {products.length} {products.length === 1 ? "ARTIFACT" : "ARTIFACTS"}</span>
+          <span>ARRAY REGISTER // {products.length} {products.length === 1 ? "SPECIMEN" : "SPECIMENS"}</span>
           <span className="text-brand-text/30">•</span>
           <span>DRAG HORIZONTALLY OR USE TRACKPAD TO PAN</span>
         </div>

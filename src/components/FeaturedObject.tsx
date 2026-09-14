@@ -62,13 +62,13 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 mb-10 gap-4">
         <div>
-          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 02 // FOCAL ARTIFACT ]</span>
+          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 02 // FOCAL SPECIMEN ]</span>
           <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-1 text-brand-text">
-            THE ANCHOR ARTIFACT
+            THE ANCHOR SPECIMEN
           </h2>
         </div>
         <div className="font-mono text-xs uppercase font-bold text-brand-text/70">
-          EDITION RUN // {product.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 ARTIFACTS"}
+          EDITION RUN // {product.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS"}
         </div>
       </div>
 
@@ -220,14 +220,14 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               </div>
               <span className="font-mono text-xs font-bold text-brand-text/50">|</span>
               <span className="font-mono text-xs font-bold text-brand-text/70 uppercase">
-                AVAILABLE: {product.inventory} UNITS
+                AVAILABLE: {product.inventory} SPECIMENS
               </span>
             </div>
             <h3 className="text-4xl sm:text-5xl font-mono font-black uppercase tracking-tight text-brand-text">
               {product.name}
             </h3>
             <div className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 border border-brand-accent/30 inline-block">
-              EDITION: {product.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 ARTIFACTS // FIRST RUN"}
+              EDITION: {product.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS // FIRST RUN"}
             </div>
           </div>
 
@@ -259,7 +259,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             </div>
             <div className="flex justify-between">
               <span className="opacity-60">BATCH SPECIFICATION:</span>
-              <span className="font-black text-brand-text">{product.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 PIECES"}</span>
+              <span className="font-black text-brand-text">{product.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS"}</span>
             </div>
           </div>
 
@@ -273,7 +273,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               variant="primary"
               className="flex-1 py-4 text-xs font-mono font-black"
             >
-              <span>EXAMINE ARTIFACT DOSSIER →</span>
+              <span>EXAMINE SPECIMEN DOSSIER →</span>
             </LiquidCarveButton>
             <LiquidCarveButton 
               onClick={handleQuickAdd}

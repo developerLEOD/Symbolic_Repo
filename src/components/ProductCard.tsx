@@ -34,7 +34,7 @@ export default function ProductCard({
   }, []);
 
   const displayId = product.productId || product.sku || `SYM-0${(index ?? 0) + 1}`;
-  const editionLabel = product.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 ARTIFACTS";
+  const editionLabel = product.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS";
   const medium = (categoryLabel || normalizeProductCategory(product)).toUpperCase();
   const collectionName = normalizeProductCollection(product);
   const collectionTag = collectionName.toUpperCase();
@@ -141,7 +141,7 @@ export default function ProductCard({
       <div className="flex items-center justify-between border-b-2 border-brand-text pb-2.5 mb-3">
         <div className="flex items-center gap-1.5">
           <span className="font-mono text-[9.5px] font-black uppercase tracking-wider text-brand-text bg-brand-text/10 px-1.5 py-0.5 border border-brand-text/40">
-            {artifactNum ? `ARTIFACT ${artifactNum}` : displayId}
+            {artifactNum ? `SPECIMEN ${artifactNum}` : displayId}
           </span>
           <span className="font-mono text-[8.5px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
             {medium}
@@ -338,7 +338,7 @@ export default function ProductCard({
         {/* ─── 4. ACTION BAR ─── */}
         <div className="border-t-2 border-brand-text pt-2.5">
           <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
-            <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE ARTIFACT"}</span>
+            <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE SPECIMEN"}</span>
             <motion.div
               animate={{ 
                 x: isHovered ? [0, 3, 0] : 0,

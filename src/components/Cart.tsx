@@ -186,10 +186,10 @@ export default function Cart({
                   </h1>
 
                   <div className="flex items-center gap-2 text-[10px] text-brand-text/75 uppercase font-black">
-                    <span className="text-brand-accent">SELECTED ARTIFACTS</span>
+                    <span className="text-brand-accent">SELECTED SPECIMENS</span>
                     <span className="opacity-30">/</span>
                     <span className="bg-brand-text text-brand-bg px-2 py-0.5 border border-brand-text">
-                      [ {totalQuantity < 10 ? `0${totalQuantity}` : totalQuantity} {totalQuantity === 1 ? "ARTIFACT" : "ARTIFACTS"} ]
+                      [ {totalQuantity < 10 ? `0${totalQuantity}` : totalQuantity} {totalQuantity === 1 ? "SPECIMEN" : "SPECIMENS"} ]
                     </span>
                   </div>
                 </div>
@@ -209,17 +209,17 @@ export default function Cart({
               </div>
             </header>
 
-            {/* 2. SELECTED ARTIFACTS LIST (NO DISTRACTIONS, NO UPSELLS) */}
+            {/* 2. SELECTED SPECIMENS LIST (NO DISTRACTIONS, NO UPSELLS) */}
             <div className="flex-grow overflow-y-auto p-5 sm:p-6 space-y-6">
               {items.length === 0 ? (
                 /* Empty Possessions State */
                 <div className="h-full flex flex-col items-center justify-center text-center space-y-6 border-2 border-dashed border-brand-text/30 p-8 sm:p-12 bg-brand-surface/30 my-auto">
                   <div className="space-y-3 max-w-sm">
                     <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 border border-brand-accent/30 inline-block">
-                      [ CUSTODY LEDGER: ZERO ARTIFACTS ]
+                      [ CUSTODY LEDGER: ZERO SPECIMENS ]
                     </span>
                     <h2 className="text-xl font-mono font-black uppercase tracking-tight text-brand-text">
-                      NO ARTIFACTS CURRENTLY SELECTED
+                      NO SPECIMENS CURRENTLY SELECTED
                     </h2>
                     <p className="text-brand-text/75 font-mono text-xs uppercase leading-relaxed">
                       You have not yet registered physical instruments for custody transfer. Explore the collection to inspect artifacts carrying enduring conviction.
@@ -496,7 +496,7 @@ export default function Cart({
                 {/* Financial Ledger Calculation Matrix */}
                 <div className="space-y-2 font-mono text-xs uppercase border-b-2 border-brand-text/20 pb-4">
                   <div className="flex justify-between items-center text-brand-text/75">
-                    <span>ARTIFACTS VALUATION ({totalQuantity} {totalQuantity === 1 ? "ARTIFACT" : "ARTIFACTS"})</span>
+                    <span>SPECIMENS VALUATION ({totalQuantity} {totalQuantity === 1 ? "SPECIMEN" : "SPECIMENS"})</span>
                     <span className="font-bold text-brand-text">Rs. {subtotal.toLocaleString()} PKR</span>
                   </div>
 

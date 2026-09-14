@@ -176,7 +176,7 @@ export default function ProductGrid({
                 THE COLLECTION
               </h2>
               <span className="font-mono text-xs font-bold text-brand-text/50 uppercase tracking-widest">
-                [{sortedProducts.length < 10 ? `0${sortedProducts.length}` : sortedProducts.length} {sortedProducts.length === 1 ? "ARTIFACT" : "ARTIFACTS"}]
+                [{sortedProducts.length < 10 ? `0${sortedProducts.length}` : sortedProducts.length} {sortedProducts.length === 1 ? "SPECIMEN" : "SPECIMENS"}]
               </span>
             </div>
           </div>
@@ -393,7 +393,7 @@ export default function ProductGrid({
           <table className="w-full text-left font-mono border-collapse">
             <thead>
               <tr className="border-b-2 border-brand-text bg-brand-text text-brand-bg text-[9.5px] uppercase tracking-widest font-black">
-                <th className="p-3.5">ID // ARTIFACT</th>
+                <th className="p-3.5">ID // SPECIMEN</th>
                 <th className="p-3.5">SYMBOL / INSCRIPTION</th>
                 <th className="p-3.5">MEDIUM</th>
                 <th className="p-3.5">MATERIAL & STRUCTURE</th>
@@ -418,7 +418,7 @@ export default function ProductGrid({
                   >
                     <td className="p-3.5">
                       <div className="flex items-center gap-3">
-                        <span className="font-bold text-brand-accent text-[10px]">[artifact {artifactNum}]</span>
+                        <span className="font-bold text-brand-accent text-[10px]">[specimen {artifactNum}]</span>
                         <div>
                           <div className="font-black uppercase tracking-tight text-brand-text group-hover:text-brand-accent transition-colors flex items-center gap-2">
                             <span>{p.name}</span>
@@ -456,7 +456,7 @@ export default function ProductGrid({
                       </span>
                     </td>
                     <td className="p-3.5 font-bold uppercase text-[10px] text-brand-accent">
-                      {p.edition?.replace(/SPECIMENS/gi, "ARTIFACTS") || "050 ARTIFACTS"}
+                      {p.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS"}
                     </td>
                     <td className="p-3.5 text-right">
                       <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg group-hover:bg-brand-accent group-hover:text-white border border-brand-text transition-all">

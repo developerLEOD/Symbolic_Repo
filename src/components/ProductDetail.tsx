@@ -135,7 +135,7 @@ export default function ProductDetail({
     .replace(/\s+(HEAVYWEIGHT|FIELD|VESSEL|CAP|TOTE|TEE|HOODIE|STONEWARE)/gi, "")
     .trim() || rawName;
 
-  const editionLabel = product.edition || "050 ARTIFACTS // FIRST EDITION";
+  const editionLabel = product.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS // FIRST EDITION";
 
   // Conceptual tagline / thesis
   const conceptualStatement = product.symbolicTagline || 
@@ -478,7 +478,7 @@ export default function ProductDetail({
             <div className="flex items-center gap-3 font-mono text-[10px] sm:text-xs uppercase font-bold text-brand-text/75">
               <span>ALLOTMENT STATUS:</span>
               <span className={`font-black px-2 py-0.5 border border-brand-text ${isSoldOut ? "bg-red-600 text-white" : "text-brand-text bg-brand-surface"}`}>
-                {isSoldOut ? "ALL ARTIFACTS IN CUSTODY // SOLD OUT" : `${product.inventory} PIECES AVAILABLE`}
+                {isSoldOut ? "ALL SPECIMENS IN CUSTODY // SOLD OUT" : `${product.inventory} SPECIMENS AVAILABLE`}
               </span>
             </div>
           </div>
@@ -1081,7 +1081,7 @@ export default function ProductDetail({
                   BATCH ALLOTMENT STATUS
                 </span>
                 <div className="text-sm sm:text-base font-black uppercase text-brand-accent">
-                  {product.inventory > 0 ? "ARTIFACTS AVAILABLE" : "ALLOTTED // WAITLIST ONLY"}
+                  {product.inventory > 0 ? "SPECIMENS AVAILABLE" : "ALLOTTED // WAITLIST ONLY"}
                 </div>
                 <div className="text-[10px] text-brand-text/70 uppercase">
                   BATCH: {editionLabel}
@@ -1286,7 +1286,7 @@ export default function ProductDetail({
                         </motion.div>
                       ) : (
                         <>
-                          <span>ACQUIRE ARTIFACT</span>
+                          <span>ACQUIRE SPECIMEN</span>
                           <ArrowUpRight size={18} />
                         </>
                       )}
