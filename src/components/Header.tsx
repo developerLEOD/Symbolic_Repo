@@ -127,17 +127,18 @@ export default function Header({
 
   return (
     <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-brand-bg/95 backdrop-blur-sm border-b-2 border-brand-text shadow-[0_4px_0px_#050505]' : 'bg-brand-bg border-b-2 border-brand-text'}`}>
-      <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 transition-all duration-300 ${scrolled ? 'h-13 sm:h-14' : 'h-16'}`}>
-        <div className="flex items-center gap-3 lg:gap-5 xl:gap-8 shrink-0">
+      <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 transition-all duration-300 ${scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
+        {/* Left: Prominent Brand Identity & Large Logo */}
+        <div className="flex items-center shrink-0">
           <Link 
             to="/"
             onClick={() => {
               if (onCategoryClick) onCategoryClick(null);
               setIsMenuOpen(false);
             }}
-            className="group flex items-center gap-2 sm:gap-2.5 text-left focus:outline-none cursor-pointer shrink-0 select-none"
+            className="group flex items-center gap-2.5 sm:gap-3.5 text-left focus:outline-none cursor-pointer shrink-0 select-none"
           >
-            <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text group-hover:border-brand-accent group-hover:shadow-[2px_2px_0px_#050505] transition-all duration-200 ${scrolled ? 'w-8 h-8 sm:w-9 sm:h-9' : 'w-9 h-9 sm:w-10 sm:h-10'}`}>
+            <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 sm:border-3 border-brand-text group-hover:border-brand-accent group-hover:shadow-[3px_3px_0px_#050505] transition-all duration-200 ${scrolled ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14'}`}>
               <img 
                 src="/Logo_NoName.jpg" 
                 alt="SYMBOLIC" 
@@ -147,34 +148,37 @@ export default function Header({
             </div>
             <div className="flex flex-col justify-center text-left shrink-0">
               <div className="w-fit inline-flex flex-col">
-                <span className={`block font-mono font-black tracking-wider uppercase text-brand-text leading-none transition-all duration-200 ${scrolled ? 'text-xs sm:text-[13px]' : 'text-sm sm:text-[14px]'}`}>
+                <span className={`block font-mono font-black tracking-tight sm:tracking-normal uppercase text-brand-text leading-none transition-all duration-200 ${scrolled ? 'text-sm sm:text-base md:text-lg' : 'text-base sm:text-xl md:text-2xl lg:text-[25px]'}`}>
                   SYMBOLIC
                 </span>
-                <span className={`self-end font-mono font-bold italic tracking-wider text-brand-accent leading-none mt-0.5 transition-all duration-200 ${scrolled ? 'text-[9px] sm:text-[9.5px]' : 'text-[10px] sm:text-[10.5px]'}`}>
+                <span className={`self-end font-mono font-black italic tracking-wider text-brand-accent leading-none mt-0.5 sm:mt-1 transition-all duration-200 ${scrolled ? 'text-[9.5px] sm:text-[11px]' : 'text-xs sm:text-sm lg:text-base'}`}>
                   MUSLIMS
                 </span>
               </div>
-              <span className={`font-mono uppercase tracking-widest text-brand-text/50 leading-none transition-all duration-200 ${scrolled ? 'hidden' : 'hidden 2xl:block text-[8px] mt-0.5'}`}>
+              <span className={`font-mono uppercase tracking-widest text-brand-text/50 leading-none transition-all duration-200 ${scrolled ? 'hidden' : 'hidden sm:block text-[8px] sm:text-[9px] mt-1'}`}>
                 POSSESSION &amp; IDENTITY
               </span>
             </div>
           </Link>
-          
-          {/* PC Navigation: Visible on desktop (lg:flex) */}
+        </div>
+
+        {/* Center: Navigation on md+ / Brutalist Status Ticker on mobile to eliminate empty space */}
+        <div className="flex-1 flex items-center justify-center min-w-0 px-1 sm:px-2">
+          {/* Tablet & PC Navigation (Visible starting from md: 768px) */}
           <nav 
             ref={navRef}
-            className="hidden lg:flex items-center gap-1.5 xl:gap-2 shrink-0 select-none font-mono"
+            className="hidden md:flex items-center justify-center gap-1.5 lg:gap-2 xl:gap-2.5 shrink-0 select-none font-mono"
           >
             {/* Dropdown 1: Mediums */}
             <div className="relative">
               <button 
                 type="button"
                 onClick={() => setOpenDropdown(prev => prev === "corpus" ? null : "corpus")}
-                className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+                className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                   openDropdown === "corpus" || isMediumActive
                     ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                     : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-                } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
+                } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
                 aria-expanded={openDropdown === "corpus"}
               >
                 <span>[ MEDIUMS ]</span>
@@ -224,11 +228,11 @@ export default function Header({
               <button 
                 type="button"
                 onClick={() => setOpenDropdown(prev => prev === "collections" ? null : "collections")}
-                className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+                className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                   openDropdown === "collections" || isCollectionActive
                     ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                     : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-                } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
+                } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
                 aria-expanded={openDropdown === "collections"}
               >
                 <span>[ COLLECTIONS ]</span>
@@ -280,11 +284,11 @@ export default function Header({
                 setOpenDropdown(null);
                 setIsMenuOpen(false);
               }}
-              className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+              className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                 isManifestoActive
                   ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                   : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
+              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
             >
               <span>[ MANIFESTO ]</span>
             </Link>
@@ -296,22 +300,23 @@ export default function Header({
                 setOpenDropdown(null);
                 setIsMenuOpen(false);
               }}
-              className={`whitespace-nowrap shrink-0 rounded-none text-[9.5px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+              className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                 isAboutActive
                   ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                   : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2.5 lg:px-3 py-1.5'}`}
+              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
             >
               <span>[ ABOUT ]</span>
             </Link>
           </nav>
         </div>
 
+        {/* Right: Actions (Auth, Possessions, Drawer Toggle) */}
         <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
           {/* User Account / Identity Authentication */}
           <button
             onClick={onAuthClick}
-            className={`whitespace-nowrap shrink-0 h-8 sm:h-8.5 flex items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2 sm:px-3'}`}
+            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 flex items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2 sm:px-3'}`}
             title={user ? "Inspect Identity Record & Orders" : "Authenticate Identity"}
           >
             {user ? (
@@ -332,7 +337,7 @@ export default function Header({
 
           <button 
             onClick={onCartClick}
-            className={`whitespace-nowrap shrink-0 h-8 sm:h-8.5 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-none border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3.5'}`}
+            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-none border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-all shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3.5'}`}
             title="Open Possession Ledger"
           >
             <span className="w-2 h-2 bg-brand-accent inline-block shrink-0" />
@@ -342,7 +347,7 @@ export default function Header({
 
           <button 
             onClick={() => setIsMenuOpen(!isMenuOpen)}
-            className="lg:hidden h-8 w-8 shrink-0 flex items-center justify-center bg-brand-surface hover:bg-brand-text hover:text-brand-bg rounded-none transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
+            className="md:hidden h-8.5 w-8.5 sm:h-9 sm:w-9 shrink-0 flex items-center justify-center bg-brand-surface hover:bg-brand-text hover:text-brand-bg rounded-none transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {isMenuOpen ? <X size={16} /> : <Menu size={16} />}

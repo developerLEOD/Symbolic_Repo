@@ -430,7 +430,7 @@ function StorefrontApp() {
         }}
       />
 
-      <div className="pt-14 sm:pt-16">
+      <div className="pt-16 sm:pt-20">
         <Breadcrumbs categories={categories} />
         
         {/* Double-Render Transition Wrapper */}
