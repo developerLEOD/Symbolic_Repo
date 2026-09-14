@@ -63,7 +63,7 @@ export default function LoadingScreen() {
             <span className="text-3xl sm:text-4xl md:text-5xl font-mono font-black tracking-tight uppercase text-brand-text leading-none">
               SYMBOLIC
             </span>
-            <span className="text-base sm:text-lg md:text-xl font-mono font-black italic tracking-normal text-brand-accent uppercase leading-none mt-0.5 sm:mt-1">
+            <span className="text-base sm:text-lg md:text-xl font-mono font-black italic tracking-normal text-brand-accent uppercase leading-none mt-0 sm:mt-0">
               MUSLIMS
             </span>
           </div>

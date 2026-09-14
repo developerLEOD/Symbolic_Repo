@@ -151,7 +151,7 @@ export default function Header({
                 <span className={`block font-mono font-black tracking-tight sm:tracking-normal uppercase text-brand-text leading-none transition-all duration-200 ${scrolled ? 'text-sm sm:text-base md:text-lg' : 'text-base sm:text-xl md:text-2xl lg:text-[25px]'}`}>
                   SYMBOLIC
                 </span>
-                <span className={`self-end font-mono font-black italic tracking-wider text-brand-accent leading-none mt-0.5 sm:mt-1 transition-all duration-200 ${scrolled ? 'text-[9.5px] sm:text-[11px]' : 'text-xs sm:text-sm lg:text-base'}`}>
+                <span className={`self-end font-mono font-black italic tracking-wider text-brand-accent leading-none mt-0 sm:mt-0 transition-all duration-200 ${scrolled ? 'text-[9.5px] sm:text-[11px]' : 'text-xs sm:text-sm lg:text-base'}`}>
                   MUSLIMS
                 </span>
               </div>

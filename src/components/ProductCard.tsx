@@ -130,7 +130,7 @@ export default function ProductCard({
       </div>
 
       {/* ─── 2. CENTRAL VISUAL ARTIFACT CANVAS (Clean 4:5 Aspect Ratio) ─── */}
-      <div className="relative aspect-[4/5] overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
+      <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
         <AnimatePresence mode="wait">
           <motion.img 
             key={activeImageIndex}
@@ -147,7 +147,7 @@ export default function ProductCard({
             animate={{ opacity: 1, scale: isHovered ? 1.03 : 1 }}
             exit={{ opacity: 0.7, scale: 1.01 }}
             transition={{ type: "spring", stiffness: 320, damping: 28 }}
-            className="w-full h-full object-cover"
+            className="w-full h-full object-contain object-center p-3"
           />
         </AnimatePresence>
 

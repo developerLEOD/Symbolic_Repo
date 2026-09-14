@@ -403,17 +403,6 @@ export default function ArtifactOverlappingCollection({
 
     return (
       <div className="relative w-full overflow-hidden select-none py-2 font-mono">
-        {/* 1. MOBILE TELEMETRY HEADER */}
-        <div className="flex items-center justify-between px-4 pb-3 border-b-2 border-brand-text text-[9px] uppercase tracking-widest text-brand-text">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 bg-[#ff4500] inline-block animate-pulse" />
-            <span className="font-black text-brand-text">EXHIBITION ARRAY</span>
-            <span className="text-brand-text/40">•</span>
-            <span className="font-black text-[#ff4500]">0{activeMobileIdx + 1} / 0{products.length}</span>
-          </div>
-          <span className="text-[8.5px] font-bold text-brand-text/60">[ TAP TO ENGAGE ]</span>
-        </div>
-
         {/* 2. SPECIMEN QUICK-SELECT INDEX BAR */}
         <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar px-4 py-2.5 bg-brand-surface border-b border-brand-text/20">
           <span className="text-[8px] font-black uppercase tracking-wider text-brand-text/50 shrink-0 mr-1">
@@ -621,56 +610,6 @@ export default function ArtifactOverlappingCollection({
   // =========================================================================
   return (
     <div className="relative w-full overflow-hidden select-none py-4">
-      {/* 1. ARCHITECTURAL STAGE HEADER & TELEMETRY */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 pb-4 border-b-2 border-brand-text font-mono text-[10px] uppercase tracking-widest text-brand-text/70">
-        <div className="flex items-center gap-3">
-          <span className="inline-block w-2 h-2 bg-[#ff4500] animate-pulse" />
-          <span className="font-black text-brand-text">HORIZONTAL ARTIFACT ARRAY</span>
-          <span className="text-brand-text/30">//</span>
-          <span>CURATED 3:4 SPECIMEN SEQUENCE</span>
-        </div>
-
-        <div className="flex items-center gap-4">
-          <div className="flex items-center gap-2">
-            <span className="text-[#ff4500] font-black">
-              {activeIdx !== null ? `ARTIFACT 0${activeIdx + 1} ENGAGED` : "RESTING STATE"}
-            </span>
-            <span className="text-brand-text/40">•</span>
-            <span>CLICK TO FOCUS & EXAMINE</span>
-          </div>
-
-          {/* Pan Navigation Assists */}
-          <div className="flex items-center gap-1.5">
-            <button
-              type="button"
-              disabled={!canScrollLeft}
-              onClick={() => handlePan("left")}
-              className={`p-1.5 border-2 border-brand-text transition-all ${
-                canScrollLeft
-                  ? "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-                  : "opacity-30 border-brand-text/30 cursor-not-allowed text-brand-text/40"
-              }`}
-              title="Traverse West"
-            >
-              <ChevronLeft size={14} />
-            </button>
-            <button
-              type="button"
-              disabled={!canScrollRight}
-              onClick={() => handlePan("right")}
-              className={`p-1.5 border-2 border-brand-text transition-all ${
-                canScrollRight
-                  ? "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
-                  : "opacity-30 border-brand-text/30 cursor-not-allowed text-brand-text/40"
-              }`}
-              title="Traverse East"
-            >
-              <ChevronRight size={14} />
-            </button>
-          </div>
-        </div>
-      </div>
-
       {/* 2. THE HORIZONTAL OVERLAPPING STAGING AREA */}
       <div
         ref={containerRef}
@@ -684,7 +623,7 @@ export default function ArtifactOverlappingCollection({
       >
         <div
           ref={trackRef}
-          className="flex items-center min-w-max pl-4 pr-16 sm:pr-32"
+          className="flex items-center min-w-max mx-auto w-fit pl-4 pr-16 sm:pr-32"
           style={{ minHeight: "620px" }}
         >
           {products.map((product, idx) => {
@@ -773,7 +712,7 @@ export default function ArtifactOverlappingCollection({
               >
                 {/* PHYSICAL 3:4 SPECIMEN FRAME */}
                 <div
-                  className={`w-full h-full relative overflow-hidden bg-brand-surface border-3 sm:border-4 border-brand-text transition-all duration-300 ${
+                  className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-surface border-3 sm:border-4 border-brand-text transition-all duration-300 ${
                     isHovered
                       ? "shadow-[14px_14px_0px_#050505,0_0_0_2px_#ff4500]"
                       : "shadow-[6px_6px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
@@ -795,7 +734,7 @@ export default function ArtifactOverlappingCollection({
                           target.src = STUDIO_FALLBACK_IMAGE;
                         }
                       }}
-                      className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-[1.02]"
+                      className="absolute inset-0 w-full h-full object-contain object-center select-none pointer-events-none transition-transform duration-500 group-hover:scale-[1.02] p-4"
                       loading="lazy"
                     />
                   </AnimatePresence>
