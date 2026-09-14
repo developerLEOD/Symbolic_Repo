@@ -568,23 +568,23 @@ export default function ProductDetail({
               {/* Primary Image Viewport (Strict 3:4 Archival Specification) */}
               <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center">
                 <div className="w-full max-w-[480px] aspect-[3/4] max-h-[620px] relative bg-brand-bg border-2 border-brand-text overflow-hidden group shadow-[4px_4px_0px_#050505]">
-                  <AnimatePresence mode="wait">
+                  <AnimatePresence>
                     <motion.img 
                       key={activeImageIndex}
                       src={images[activeImageIndex] || STUDIO_FALLBACK_IMAGE} 
                       alt={`${artifactTitle} - Perspective 0${activeImageIndex + 1}`}
                       referrerPolicy="no-referrer"
                       onError={(e) => {
-                        const target = e.currentTarget;
+                        const target = e.currentTarget as HTMLImageElement;
                         if (target.src !== STUDIO_FALLBACK_IMAGE) {
                           target.src = STUDIO_FALLBACK_IMAGE;
                         }
                       }}
-                      initial={{ opacity: 0.8, scale: 0.99 }}
-                      animate={{ opacity: 1, scale: 1 }}
-                      exit={{ opacity: 0.7, scale: 1.01 }}
-                      transition={{ duration: 0.25 }}
-                      className="w-full h-full object-cover"
+                      initial={{ clipPath: "inset(100% 0% 0% 0%)", filter: "contrast(120%) grayscale(100%)" }}
+                      animate={{ clipPath: "inset(0% 0% 0% 0%)", filter: "contrast(100%) grayscale(0%)" }}
+                      exit={{ clipPath: "inset(0% 0% 100% 0%)", filter: "contrast(120%) grayscale(100%)" }}
+                      transition={{ duration: 0.4, ease: [0.85, 0, 0.15, 1] }}
+                      className="absolute inset-0 w-full h-full object-cover"
                     />
                   </AnimatePresence>
 

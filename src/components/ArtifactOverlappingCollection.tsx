@@ -779,19 +779,26 @@ export default function ArtifactOverlappingCollection({
                       : "shadow-[6px_6px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
                   }`}
                 >
-                  <img
-                    src={currentImg || STUDIO_FALLBACK_IMAGE}
-                    alt={product.name}
-                    referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (target.src !== STUDIO_FALLBACK_IMAGE) {
-                        target.src = STUDIO_FALLBACK_IMAGE;
-                      }
-                    }}
-                    className="w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-[1.02]"
-                    loading="lazy"
-                  />
+                  <AnimatePresence>
+                    <motion.img
+                      key={currentImg || STUDIO_FALLBACK_IMAGE}
+                      initial={{ clipPath: "inset(100% 0% 0% 0%)", filter: "contrast(120%) grayscale(100%)" }}
+                      animate={{ clipPath: "inset(0% 0% 0% 0%)", filter: "contrast(100%) grayscale(0%)" }}
+                      exit={{ clipPath: "inset(0% 0% 100% 0%)", filter: "contrast(120%) grayscale(100%)" }}
+                      transition={{ duration: 0.4, ease: [0.85, 0, 0.15, 1] }}
+                      src={currentImg || STUDIO_FALLBACK_IMAGE}
+                      alt={product.name}
+                      referrerPolicy="no-referrer"
+                      onError={(e) => {
+                        const target = e.currentTarget as HTMLImageElement;
+                        if (target.src !== STUDIO_FALLBACK_IMAGE) {
+                          target.src = STUDIO_FALLBACK_IMAGE;
+                        }
+                      }}
+                      className="absolute inset-0 w-full h-full object-cover select-none pointer-events-none transition-transform duration-500 group-hover:scale-[1.02]"
+                      loading="lazy"
+                    />
+                  </AnimatePresence>
 
                   {/* UNHOVERED SPECIMEN TICK & COMING SOON BADGE */}
                   <div
