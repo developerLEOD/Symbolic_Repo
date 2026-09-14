@@ -21,7 +21,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
       exit={{ opacity: 0 }}
       className="min-h-screen bg-brand-bg pt-10 sm:pt-14 pb-24 border-b-2 border-brand-text"
     >
-      <div className="max-w-7xl mx-auto px-6 sm:px-10">
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-10">
         {/* Navigation Return Button */}
         <motion.button 
           whileHover={{ scale: 1.04, x: -3 }}
@@ -61,14 +61,14 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
 
           {/* SECTION 1: THE LOGO */}
           <section className="space-y-8">
-            <div className="flex items-center justify-between border-b-2 border-brand-text pb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-brand-accent inline-block" />
-                <h2 className="font-mono text-sm sm:text-base font-black uppercase tracking-widest text-brand-text">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b-2 border-brand-text pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 bg-brand-accent inline-block shrink-0" />
+                <h2 className="font-mono text-xs sm:text-sm md:text-base font-black uppercase tracking-widest text-brand-text">
                   SECTION 01 // THE LOGO
                 </h2>
               </div>
-              <span className="font-mono text-[10px] font-bold bg-brand-surface border border-brand-text px-2 py-0.5 uppercase">
+              <span className="self-start sm:self-auto font-mono text-[9px] sm:text-[10px] font-bold bg-brand-surface border border-brand-text px-2.5 py-1 uppercase whitespace-nowrap shadow-[2px_2px_0px_#050505]">
                 EMBLEM DECODED
               </span>
             </div>
@@ -183,30 +183,31 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
           </section>
 
           {/* SECTION 2: THE BACKGROUND & ROOTS */}
-          <section className="space-y-8">
-            <div className="flex items-center justify-between border-b-2 border-brand-text pb-3">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-brand-accent inline-block" />
-                <h2 className="font-mono text-sm sm:text-base font-black uppercase tracking-widest text-brand-text">
+          <section className="space-y-6 sm:space-y-8">
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 border-b-2 border-brand-text pb-3">
+              <div className="flex items-center gap-2.5">
+                <span className="w-2.5 h-2.5 bg-brand-accent inline-block shrink-0" />
+                <h2 className="font-mono text-xs sm:text-sm md:text-base font-black uppercase tracking-widest text-brand-text">
                   SECTION 02 // BACKGROUND &amp; ORIGIN
                 </h2>
               </div>
-              <span className="font-mono text-[10px] font-bold bg-brand-surface border border-brand-text px-2 py-0.5 uppercase">
+              <span className="self-start sm:self-auto font-mono text-[9px] sm:text-[10px] font-bold bg-brand-surface border border-brand-text px-2.5 py-1 uppercase whitespace-nowrap shadow-[2px_2px_0px_#050505]">
                 ATELIER ARCHIVE // MISSION LEOD
               </span>
             </div>
 
-            <div className="relative bg-brand-surface border-2 border-brand-text p-8 sm:p-12 shadow-[6px_6px_0px_#050505] space-y-10">
+            {/* Main Card with Diamond Specimen on Top-Right Corner */}
+            <div className="relative mt-8 sm:mt-12 md:mt-16 bg-brand-surface border-2 border-brand-text p-6 sm:p-10 md:p-12 shadow-[6px_6px_0px_#050505] space-y-8 sm:space-y-10">
               {/* Overlapping Corner Specimen: 90-degree rotated square containing owner portrait */}
               <div 
-                className="absolute -top-6 -right-4 sm:-top-8 sm:-right-6 md:-top-10 md:-right-8 z-20 group"
+                className="absolute -top-8 -right-4 sm:-top-12 sm:-right-6 md:-top-14 md:-right-8 z-20 group"
                 title="Symbolic Founder & Architect // LEOD Mission"
               >
                 {/* 90-Degree Rotated Square Frame (Diamond) overlapping the card boundaries */}
                 <div 
                   onMouseEnter={() => soundManager.playHover()}
                   onClick={() => soundManager.playClick()}
-                  className="relative w-22 h-22 sm:w-28 sm:h-28 md:w-32 md:h-32 bg-white group-hover:bg-brand-accent hover:bg-brand-accent border-2 sm:border-3 border-brand-text shadow-[4px_4px_0px_#050505] rotate-45 overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-[6px_6px_0px_#050505] cursor-pointer"
+                  className="relative w-26 h-26 sm:w-36 sm:h-36 md:w-44 md:h-44 bg-white group-hover:bg-brand-accent hover:bg-brand-accent border-2 sm:border-3 md:border-4 border-brand-text shadow-[5px_5px_0px_#050505] sm:shadow-[7px_7px_0px_#050505] rotate-45 overflow-hidden flex items-center justify-center transition-all duration-300 group-hover:scale-105 group-hover:shadow-[8px_8px_0px_#050505] cursor-pointer"
                 >
                   {/* Counter-rotated image container so the owner picture remains upright and balanced */}
                   <div className="-rotate-45 w-[145%] h-[145%] flex items-center justify-center overflow-hidden">
@@ -220,22 +221,29 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                 </div>
 
                 {/* Overlapping Brutalist Identifier Tag */}
-                <div className="absolute -bottom-2.5 left-1/2 -translate-x-1/2 sm:-bottom-3 bg-brand-text text-brand-bg px-2 sm:px-2.5 py-0.5 font-mono text-[8px] sm:text-[9px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] border border-brand-surface whitespace-nowrap z-30">
+                <div className="absolute -bottom-3 left-1/2 -translate-x-1/2 sm:-bottom-3.5 md:-bottom-4 bg-brand-text text-brand-bg px-2.5 sm:px-3.5 py-0.5 sm:py-1 font-mono text-[8px] sm:text-[10px] md:text-xs font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] sm:shadow-[3px_3px_0px_#050505] border border-brand-surface whitespace-nowrap z-30">
                   [ ARCHITECT // OWNER ]
                 </div>
               </div>
+
+              {/* Card Badges: Padded on the right so the enlarged corner diamond never overlaps the badges */}
+              <div className="pr-28 sm:pr-40 md:pr-56">
+                <div className="flex flex-wrap items-center gap-2.5">
+                  <span className="px-3 py-1 bg-brand-accent text-white font-mono text-xs font-black uppercase tracking-widest border border-brand-text shadow-[2px_2px_0px_#050505]">
+                    FOUNDATIONAL ROOTS
+                  </span>
+                  <span className="flex items-center gap-1.5 font-mono text-xs font-bold text-brand-text uppercase bg-brand-bg px-2.5 py-1 border border-brand-text/30 shadow-[1px_1px_0px_#050505]">
+                    <ShieldCheck size={14} className="text-brand-accent shrink-0" /> ATELIER ARCHIVE
+                  </span>
+                </div>
+                <div className="font-mono text-[10px] uppercase font-bold text-brand-text/60 tracking-wider mt-2">
+                  SOVEREIGN INITIATIVE // EST. DEEN MISSION
+                </div>
+              </div>
+
               <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
                 <div className="lg:col-span-8 space-y-6">
-                  <div className="flex items-center gap-3">
-                    <span className="px-3 py-1 bg-brand-accent text-white font-mono text-xs font-black uppercase tracking-widest border border-brand-text shadow-[2px_2px_0px_#050505]">
-                      FOUNDATIONAL ROOTS
-                    </span>
-                    <span className="flex items-center gap-1 font-mono text-xs font-bold text-brand-text uppercase">
-                      <ShieldCheck size={14} className="text-brand-accent" /> ATELIER ARCHIVE
-                    </span>
-                  </div>
-
-                  <h3 className="text-3xl sm:text-4xl lg:text-5xl font-mono font-black uppercase text-brand-text tracking-tight leading-tight">
+                  <h3 className="text-2xl sm:text-3xl lg:text-4xl xl:text-5xl font-mono font-black uppercase text-brand-text tracking-tight leading-tight">
                     BORN AS A SUB-PROJECT UNDER THE LET’S ESTABLISH OUR DEEN (LEOD) MISSION.
                   </h3>
 
