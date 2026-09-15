@@ -1,18 +1,34 @@
-import React, { useState, useRef, useEffect, useCallback } from "react";
+import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, MoveRight, Layers, X, Check } from "lucide-react";
-import { Product, Category } from "../types";
+import { ChevronLeft, ChevronRight, MoveRight, Layers, Box, Check, Sparkles } from "lucide-react";
+import { Artifact, Specimen, Product, Category } from "../types";
 import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
-import { mobileTooltipManager } from "../lib/mobileTooltipManager";
 
 interface ArtifactOverlappingCollectionProps {
-  products: Product[];
-  categories: Category[];
-  onProductClick: (product: Product) => void;
+  artifacts?: Artifact[];
+  specimens?: Specimen[];
+  products?: Product[];
+  categories?: Category[];
+  onProductClick: (entity: Artifact | Product, specimenId?: string) => void;
 }
 
-// Curated architectural vertical & angular offsets to simulate physical placement on desktop
+interface DisplayArtifact {
+  id: string;
+  artifactId: string;
+  name: string;
+  inscription?: string;
+  concept?: string;
+  symbolicTagline?: string;
+  wearingCommunicates?: string;
+  collectionName?: string;
+  graphic: string;
+  specimens: Specimen[];
+  rawEntity: Artifact | Product;
+}
+
+// Curated architectural vertical & angular offsets to simulate physical exhibition
 const SPECIMEN_OFFSETS = [
   { y: -12, rotate: -0.7 },
   { y: 16, rotate: 0.8 },
@@ -26,19 +42,21 @@ const SPECIMEN_OFFSETS = [
   { y: 12, rotate: 0.8 },
 ];
 
-// Brutalist scattered coordinate matrices for outer angle angless
-const BRUTALIST_SCATTER_OFFSETS = [
-  { x: "-82px", y: "-42px", rotate: -4.5, shadow: "4px_4px_0px_#050505", label: "ANGLE // 01 [ORTHO-TOP]" },
-  { x: "106%", y: "-36px", rotate: 3.5, shadow: "4px_4px_0px_#050505", label: "ANGLE // 02 [ISO-EAST]" },
-  { x: "-76px", y: "108px", rotate: 2.8, shadow: "4px_4px_0px_#050505", label: "ANGLE // 03 [LATERAL]" },
-  { x: "104%", y: "94px", rotate: -3.2, shadow: "4px_4px_0px_#050505", label: "ANGLE // 04 [OBLIQUE]" },
-  { x: "-70px", y: "248px", rotate: -2.5, shadow: "4px_4px_0px_#050505", label: "ANGLE // 05 [SECTION]" },
-  { x: "105%", y: "235px", rotate: 4.2, shadow: "4px_4px_0px_#050505", label: "ANGLE // 06 [AXIAL]" },
+// Brutalist coordinate offsets for orbiting specimen plates
+const SPECIMEN_SCATTER_OFFSETS = [
+  { x: "-86px", y: "-40px", rotate: -4 },
+  { x: "106%", y: "-34px", rotate: 3.5 },
+  { x: "-80px", y: "110px", rotate: 2.5 },
+  { x: "104%", y: "96px", rotate: -3 },
+  { x: "-74px", y: "250px", rotate: -2 },
+  { x: "105%", y: "238px", rotate: 4 },
 ];
 
 export default function ArtifactOverlappingCollection({
+  artifacts,
+  specimens = [],
   products,
-  categories,
+  categories = [],
   onProductClick,
 }: ArtifactOverlappingCollectionProps) {
   // Viewport detection
@@ -57,9 +75,80 @@ export default function ArtifactOverlappingCollection({
     return () => window.removeEventListener("resize", handleResize);
   }, []);
 
-  // Shared state
-  const [activeAngles, setActiveAngles] = useState<Record<string, number>>({});
-  
+  // Transform input into DisplayArtifact items
+  const displayItems = useMemo<DisplayArtifact[]>(() => {
+    if (artifacts && artifacts.length > 0) {
+      return artifacts.map((art) => {
+        const childSpecs = specimens.filter(
+          (s) => s.parentArtifactId === art.id || art.specimenIds?.includes(s.id)
+        );
+        return {
+          id: art.id,
+          artifactId: art.artifactId || `ART-${art.id.slice(0, 4).toUpperCase()}`,
+          name: art.name,
+          inscription: art.inscription,
+          concept: art.concept || art.shortDescription,
+          symbolicTagline: art.symbolicTagline || art.concept,
+          wearingCommunicates: (art as any).wearingCommunicates || art.pillar3Communicates,
+          collectionName: art.collectionName || "CANONICAL",
+          graphic: art.graphic || art.images?.[0] || STUDIO_FALLBACK_IMAGE,
+          specimens: childSpecs,
+          rawEntity: art,
+        };
+      });
+    }
+
+    // Fallback if only legacy products are passed: group by parentArtifactId or name
+    if (products && products.length > 0) {
+      const grouped = new Map<string, Product[]>();
+      products.forEach((p) => {
+        const groupKey = p.parentArtifactId || p.name.split(" - ")[0].split(" // ")[0];
+        if (!grouped.has(groupKey)) {
+          grouped.set(groupKey, []);
+        }
+        grouped.get(groupKey)!.push(p);
+      });
+
+      return Array.from(grouped.entries()).map(([key, groupProds], idx) => {
+        const first = groupProds[0];
+        const synthSpecimens: Specimen[] = groupProds.map((p) => ({
+          id: p.id,
+          parentArtifactId: key,
+          sku: p.sku || p.productId || `SP-${p.id}`,
+          medium: (categories.find((c) => c.id === p.categoryId)?.label || normalizeProductCategory(p)).toUpperCase(),
+          material: p.material || "PREMIUM STRUCTURE",
+          fit: p.fit || "RELAXED ARCHIVAL FIT",
+          price: p.price,
+          availability: p.inventory > 0,
+          inventory: p.inventory,
+          status: (p.status === "coming-soon" ? "allotted" : p.inventory > 0 ? "available" : "sold_out") as any,
+          images: resolveProductImages(p),
+          thumbnailImage: p.thumbnailImage || resolveProductImages(p)[0],
+          edition: p.edition || "ARCHIVAL EDITION",
+        }));
+
+        return {
+          id: first.id,
+          artifactId: first.productId || `ART-${String(idx + 1).padStart(2, "0")}`,
+          name: key,
+          inscription: first.inscription,
+          concept: (first as any).story || first.description,
+          symbolicTagline: first.symbolicTagline || first.wearingCommunicates,
+          wearingCommunicates: first.wearingCommunicates,
+          collectionName: first.collectionName || "CANONICAL",
+          graphic: first.graphic || resolveProductImages(first)[0] || STUDIO_FALLBACK_IMAGE,
+          specimens: synthSpecimens,
+          rawEntity: first,
+        };
+      });
+    }
+
+    return [];
+  }, [artifacts, specimens, products, categories]);
+
+  // Track active specimen preview per artifact card
+  const [selectedSpecimenMap, setSelectedSpecimenMap] = useState<Record<string, string | null>>({});
+
   // Desktop state
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
@@ -67,11 +156,8 @@ export default function ArtifactOverlappingCollection({
   const [scatterVisibleIdx, setScatterVisibleIdx] = useState<number | null>(null);
   const scatterEnterTimerRef = useRef<NodeJS.Timeout | null>(null);
   const scatterLeaveTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const isInteractingWithAnglesRef = useRef(false);
-  const angleInteractionExitTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const pendingSwitchTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const [openanglesProductId, setOpenanglesProductId] = useState<string | null>(null);
-  const [hoveredThumbMap, setHoveredThumbMap] = useState<Record<string, number | null>>({});
+  const isInteractingWithSatellitesRef = useRef(false);
+  const satelliteExitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
   const [isDragging, setIsDragging] = useState(false);
@@ -88,18 +174,17 @@ export default function ArtifactOverlappingCollection({
 
   // Keep activeMobileIdx within bounds
   useEffect(() => {
-    if (activeMobileIdx >= products.length && products.length > 0) {
+    if (activeMobileIdx >= displayItems.length && displayItems.length > 0) {
       setActiveMobileIdx(0);
     }
-  }, [products.length, activeMobileIdx]);
+  }, [displayItems.length, activeMobileIdx]);
 
   // Clear timers on unmount
   useEffect(() => {
     return () => {
       if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
       if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
-      if (angleInteractionExitTimerRef.current) clearTimeout(angleInteractionExitTimerRef.current);
-      if (pendingSwitchTimerRef.current) clearTimeout(pendingSwitchTimerRef.current);
+      if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
     };
   }, []);
 
@@ -117,7 +202,7 @@ export default function ArtifactOverlappingCollection({
     el.addEventListener("scroll", updateScrollBounds, { passive: true });
     updateScrollBounds();
     return () => el.removeEventListener("scroll", updateScrollBounds);
-  }, [products, updateScrollBounds]);
+  }, [displayItems, updateScrollBounds]);
 
   // Smooth desktop manual pan
   const handlePan = (direction: "left" | "right") => {
@@ -154,214 +239,75 @@ export default function ArtifactOverlappingCollection({
     setIsDragging(false);
   };
 
-  // Angle switching helpers
-  const handleAngleSwitch = (productId: string, angleIndex: number, e?: React.MouseEvent) => {
+  // Specimen switching handlers
+  const handleSelectSpecimen = (artifactId: string, specimenId: string | null, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     soundManager.playToggle(0.08);
-    setActiveAngles((prev) => ({
+    setSelectedSpecimenMap((prev) => ({
       ...prev,
-      [productId]: angleIndex,
+      [artifactId]: prev[artifactId] === specimenId ? null : specimenId,
     }));
   };
 
-  const handleNextAngle = (productId: string, totalImages: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    soundManager.playToggle(0.06);
-    setActiveAngles((prev) => {
-      const current = prev[productId] || 0;
-      return { ...prev, [productId]: (current + 1) % totalImages };
-    });
-  };
-
-  const handlePrevAngle = (productId: string, totalImages: number, e: React.MouseEvent) => {
-    e.stopPropagation();
-    soundManager.playToggle(0.06);
-    setActiveAngles((prev) => {
-      const current = prev[productId] || 0;
-      return { ...prev, [productId]: (current - 1 + totalImages) % totalImages };
-    });
-  };
-
-  // Desktop interaction
+  // Desktop card hover interaction
   const handleDesktopItemHover = (index: number) => {
     if (isDragging || hasMovedDuringDrag) return;
-    
-    // If the mouse is on the currently active card, cancel any pending leave or switch
+
     if (activeIdx === index) {
-      if (pendingSwitchTimerRef.current) {
-        clearTimeout(pendingSwitchTimerRef.current);
-        pendingSwitchTimerRef.current = null;
-      }
       if (scatterLeaveTimerRef.current) {
         clearTimeout(scatterLeaveTimerRef.current);
         scatterLeaveTimerRef.current = null;
       }
-      if (angleInteractionExitTimerRef.current) {
-        clearTimeout(angleInteractionExitTimerRef.current);
-        angleInteractionExitTimerRef.current = null;
+      if (satelliteExitTimerRef.current) {
+        clearTimeout(satelliteExitTimerRef.current);
+        satelliteExitTimerRef.current = null;
       }
       return;
     }
 
-    // If another card is currently active and its angles are displayed, or the user is navigating angles:
-    // Do NOT immediately switch active product! Buffer the switch so moving between angle satellites
-    // across adjacent cards does NOT accidentally select the card underneath.
-    if (activeIdx !== null && activeIdx !== index) {
-      if (isInteractingWithAnglesRef.current || scatterVisibleIdx === activeIdx) {
-        if (pendingSwitchTimerRef.current) {
-          clearTimeout(pendingSwitchTimerRef.current);
-        }
-        // Require intentional dwell on the other card before transferring focus
-        pendingSwitchTimerRef.current = setTimeout(() => {
-          if (scatterLeaveTimerRef.current) {
-            clearTimeout(scatterLeaveTimerRef.current);
-            scatterLeaveTimerRef.current = null;
-          }
-          if (angleInteractionExitTimerRef.current) {
-            clearTimeout(angleInteractionExitTimerRef.current);
-            angleInteractionExitTimerRef.current = null;
-          }
-          isInteractingWithAnglesRef.current = false;
+    if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
+    if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
+    if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
 
-          const product = products[index];
-          if (product) {
-            mobileTooltipManager.onProductRevealed(product.id);
-          }
-          soundManager.playHover(0.04);
-          setActiveIdx(index);
-
-          if (scatterEnterTimerRef.current) {
-            clearTimeout(scatterEnterTimerRef.current);
-          }
-          scatterEnterTimerRef.current = setTimeout(() => {
-            setScatterVisibleIdx(index);
-          }, 320);
-        }, 360);
-        return;
-      }
-    }
-
-    // Clear any pending exit dismiss timer
-    if (scatterLeaveTimerRef.current) {
-      clearTimeout(scatterLeaveTimerRef.current);
-      scatterLeaveTimerRef.current = null;
-    }
-    if (pendingSwitchTimerRef.current) {
-      clearTimeout(pendingSwitchTimerRef.current);
-      pendingSwitchTimerRef.current = null;
-    }
-
-    const product = products[index];
-    if (product) {
-      mobileTooltipManager.onProductRevealed(product.id);
-    }
-    
-    if (activeIdx !== index) {
-      soundManager.playHover(0.04);
-      setActiveIdx(index);
-    }
-
-    // Dwell waiting time (320ms) before popping out the scattered angles satellites
-    if (scatterVisibleIdx !== index) {
-      if (scatterEnterTimerRef.current) {
-        clearTimeout(scatterEnterTimerRef.current);
-      }
-      scatterEnterTimerRef.current = setTimeout(() => {
-        setScatterVisibleIdx(index);
-      }, 320);
-    }
+    soundManager.playHover(0.03);
+    setActiveIdx(index);
+    setScatterVisibleIdx(index);
   };
 
   const handleDesktopItemLeave = (index: number) => {
-    // Clear pending switch timer for this card if mouse quickly moves out
-    if (pendingSwitchTimerRef.current) {
-      clearTimeout(pendingSwitchTimerRef.current);
-      pendingSwitchTimerRef.current = null;
-    }
+    if (isInteractingWithSatellitesRef.current) return;
 
-    // Clear pending enter timer if mouse quickly passed over
-    if (scatterEnterTimerRef.current) {
-      clearTimeout(scatterEnterTimerRef.current);
-      scatterEnterTimerRef.current = null;
-    }
+    if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
+    if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
 
-    // If currently actively interacting with angle satellites, keep state alive
-    if (isInteractingWithAnglesRef.current) {
-      return;
-    }
-
-    // Graceful exit buffer (350ms) so transitions aren't chaotic and user can smoothly move to satellites
-    if (scatterLeaveTimerRef.current) {
-      clearTimeout(scatterLeaveTimerRef.current);
-    }
-    
     scatterLeaveTimerRef.current = setTimeout(() => {
-      if (!isInteractingWithAnglesRef.current) {
-        setScatterVisibleIdx(null);
-        setActiveIdx(null);
-        setOpenanglesProductId(null);
-        const product = products[index];
-        if (product) {
-          setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
-        }
+      if (!isInteractingWithSatellitesRef.current) {
+        if (activeIdx === index) setActiveIdx(null);
+        if (scatterVisibleIdx === index) setScatterVisibleIdx(null);
       }
-    }, 350);
+    }, 120);
   };
 
-  const handleDesktopItemClick = (product: Product, index: number) => {
+  const handleDesktopItemClick = (item: DisplayArtifact, index: number) => {
     if (hasMovedDuringDrag) return;
-
-    if (activeIdx !== index) {
-      soundManager.playClick(0.08);
-      setActiveIdx(index);
-      return;
-    }
-
     soundManager.playClick(0.14);
-    onProductClick(product);
+    const selectedSpecId = selectedSpecimenMap[item.id] || undefined;
+    onProductClick(item.rawEntity, selectedSpecId);
   };
 
-  // Mobile selection and navigation
-  const selectMobileItem = (index: number) => {
-    soundManager.playClick(0.08);
-    setActiveMobileIdx(index);
-    const targetCard = mobileCardRefs.current[index];
-    if (targetCard && mobileContainerRef.current) {
-      targetCard.scrollIntoView({
-        behavior: "smooth",
-        inline: "center",
-        block: "nearest",
-      });
-    }
-  };
-
-  const handleMobileCardClick = (product: Product, index: number) => {
-    if (activeMobileIdx === index) {
-      // Direct opening when already engaged
-      soundManager.playClick(0.14);
-      onProductClick(product);
-    } else {
-      // Focus and select first
-      selectMobileItem(index);
-    }
-  };
-
-  // Mobile scroll synchronization to detect current card
+  // Mobile scroll tracking
   const handleMobileScroll = () => {
+    if (!mobileContainerRef.current) return;
     const container = mobileContainerRef.current;
-    if (!container) return;
-
-    const containerRect = container.getBoundingClientRect();
-    const containerCenter = containerRect.left + containerRect.width / 2;
+    const scrollCenter = container.scrollLeft + container.clientWidth / 2;
 
     let closestIdx = 0;
     let minDistance = Infinity;
 
     mobileCardRefs.current.forEach((el, idx) => {
       if (!el) return;
-      const rect = el.getBoundingClientRect();
-      const cardCenter = rect.left + rect.width / 2;
-      const distance = Math.abs(cardCenter - containerCenter);
+      const cardCenter = el.offsetLeft + el.offsetWidth / 2;
+      const distance = Math.abs(scrollCenter - cardCenter);
       if (distance < minDistance) {
         minDistance = distance;
         closestIdx = idx;
@@ -369,248 +315,245 @@ export default function ArtifactOverlappingCollection({
     });
 
     if (closestIdx !== activeMobileIdx) {
+      soundManager.playToggle(0.04);
       setActiveMobileIdx(closestIdx);
     }
   };
 
-  // Current product on mobile
-  const activeMobileProduct = products[activeMobileIdx] || products[0];
+  const handleMobileSelectIdx = (idx: number) => {
+    const el = mobileCardRefs.current[idx];
+    if (el && mobileContainerRef.current) {
+      soundManager.playClick(0.08);
+      el.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      setActiveMobileIdx(idx);
+    }
+  };
 
-  // If no products available, render empty state cleanly
-  if (!products || products.length === 0) {
-    return (
-      <div className="w-full py-16 text-center font-mono border-2 border-dashed border-brand-text/30 p-8">
-        <p className="text-xs uppercase font-bold text-brand-text/60">NO SPECIMENS LOADED IN EXHIBITION</p>
-      </div>
-    );
+  if (displayItems.length === 0) {
+    return null;
   }
 
   // =========================================================================
   // MOBILE EXHIBITION LAYOUT (< 768px)
-  // Dedicated touch-first architecture: no overlapping collision, clean pill index,
-  // snap carousel, inline angle switcher, and docked curatorial dossier.
   // =========================================================================
   if (isMobile) {
-    const mobileImages = resolveProductImages(activeMobileProduct);
-    const activeMobileAngle = activeAngles[activeMobileProduct?.id] || 0;
-    const currentMobileImg = mobileImages[activeMobileAngle] || mobileImages[0];
-
-    const mobileSpecimenCategory = categories.find((c) => c.id === activeMobileProduct?.categoryId);
-    const mobileCategoryLabel = activeMobileProduct?.artifactClassification || mobileSpecimenCategory?.label || (activeMobileProduct ? normalizeProductCategory(activeMobileProduct).toUpperCase() : "");
-    const mobileTagline = activeMobileProduct?.symbolicTagline || activeMobileProduct?.inscription || activeMobileProduct?.wearingCommunicates || "CONVICTION, MATERIALIZED.";
-    const isMobileComingSoon = Boolean(activeMobileProduct?.isComingSoon || activeMobileProduct?.comingSoon || activeMobileProduct?.status === "coming-soon");
-    const isMobileSoldOut = !isMobileComingSoon && activeMobileProduct?.inventory !== undefined && activeMobileProduct?.inventory <= 0;
+    const activeMobileItem = displayItems[activeMobileIdx] || displayItems[0];
+    const mobileChildSpecs = activeMobileItem?.specimens || [];
+    const mobileSelectedSpecId = selectedSpecimenMap[activeMobileItem.id];
+    const activeMobileSpecimen = mobileChildSpecs.find((s) => s.id === mobileSelectedSpecId) || null;
+    const mobileDisplayImg = activeMobileSpecimen?.images?.[0] || activeMobileSpecimen?.thumbnailImage || activeMobileItem.graphic;
+    const minMobilePrice = mobileChildSpecs.length > 0 ? Math.min(...mobileChildSpecs.map((s) => s.price)) : 0;
 
     return (
-      <div className="relative w-full overflow-hidden select-none py-2 font-mono">
-        {/* 2. SPECIMEN QUICK-SELECT INDEX BAR */}
-        <div className="flex items-center gap-1.5 overflow-x-auto hide-scrollbar px-4 py-2.5 bg-brand-surface border-b border-brand-text/20">
-          <span className="text-[8px] font-black uppercase tracking-wider text-brand-text/50 shrink-0 mr-1">
-            SPECIMEN:
+      <div className="w-full select-none py-2 space-y-4">
+        {/* Mobile Header Bar */}
+        <div className="px-4 flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 bg-brand-accent inline-block" />
+            <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-text">
+              ARTIFACT {String(activeMobileIdx + 1).padStart(2, "0")} / {String(displayItems.length).padStart(2, "0")}
+            </span>
+          </div>
+          <span className="font-mono text-[8.5px] font-black uppercase bg-brand-text text-brand-bg px-2 py-0.5">
+            {activeMobileItem.collectionName?.toUpperCase() || "CANONICAL"}
           </span>
-          {products.map((p, idx) => {
-            const isCurrent = activeMobileIdx === idx;
-            return (
-              <button
-                key={p.id}
-                type="button"
-                onClick={() => selectMobileItem(idx)}
-                className={`shrink-0 px-2.5 py-1 text-[9px] font-black uppercase tracking-wider border transition-all ${
-                  isCurrent
-                    ? "bg-[#ff4500] text-white border-brand-text shadow-[2px_2px_0px_#050505]"
-                    : "bg-brand-bg text-brand-text border-brand-text/30 active:border-brand-text"
-                }`}
-              >
-                0{idx + 1}
-              </button>
-            );
-          })}
         </div>
 
-        {/* 3. MOBILE SNAP CAROUSEL VIEWPORT (No negative overlapping margins) */}
+        {/* Mobile Horizontal Carousel */}
         <div
           ref={mobileContainerRef}
           onScroll={handleMobileScroll}
-          className="w-full overflow-x-auto snap-x snap-mandatory flex gap-4 px-6 pt-5 pb-4 hide-scrollbar"
+          className="w-full flex gap-4 overflow-x-auto snap-x snap-mandatory hide-scrollbar px-6 py-2"
         >
-          {products.map((product, idx) => {
+          {displayItems.map((item, idx) => {
             const isCurrent = activeMobileIdx === idx;
-            const images = resolveProductImages(product);
-            const currentAngle = activeAngles[product.id] || 0;
-            const displayImg = images[currentAngle] || images[0];
-            const isItemComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
+            const itemSelectedSpecId = selectedSpecimenMap[item.id];
+            const itemActiveSpec = item.specimens.find((s) => s.id === itemSelectedSpecId);
+            const cardImg = itemActiveSpec?.images?.[0] || itemActiveSpec?.thumbnailImage || item.graphic;
 
             return (
               <div
-                key={product.id}
+                key={item.id}
                 ref={(el) => {
                   mobileCardRefs.current[idx] = el;
                 }}
-                onClick={() => handleMobileCardClick(product, idx)}
-                className={`shrink-0 w-[78vw] max-w-[300px] aspect-[3/4] snap-center relative transition-all duration-300 ${
+                onClick={() => handleMobileSelectIdx(idx)}
+                className={`shrink-0 w-[78vw] max-w-[320px] snap-center aspect-[4/5] bg-brand-surface border-3 border-brand-text transition-all duration-300 relative cursor-pointer ${
                   isCurrent
-                    ? "scale-100 opacity-100"
-                    : "scale-[0.94] opacity-75"
+                    ? "shadow-[8px_8px_0px_#050505] scale-100 ring-2 ring-brand-accent"
+                    : "shadow-[3px_3px_0px_#050505] opacity-80 scale-95"
                 }`}
               >
-                <div
-                  className={`w-full h-full relative overflow-hidden bg-brand-surface border-2 border-brand-text transition-all ${
-                    isCurrent
-                      ? "shadow-[8px_8px_0px_#050505,0_0_0_2px_#ff4500]"
-                      : "shadow-[4px_4px_0px_#050505]"
-                  }`}
-                >
+                {/* Central Artwork Graphic */}
+                <div className="w-full h-full relative p-4 flex items-center justify-center bg-brand-bg">
                   <img
-                    src={displayImg || STUDIO_FALLBACK_IMAGE}
-                    alt={product.name}
+                    src={cardImg}
+                    alt={item.name}
                     referrerPolicy="no-referrer"
-                    onError={(e) => {
-                      const target = e.currentTarget;
-                      if (target.src !== STUDIO_FALLBACK_IMAGE) {
-                        target.src = STUDIO_FALLBACK_IMAGE;
-                      }
-                    }}
-                    className="w-full h-full object-cover select-none pointer-events-none"
+                    className="w-full h-full object-contain object-center select-none"
                     loading="lazy"
                   />
 
-                  {/* Corner crosshair registration markers on active card */}
-                  {isCurrent && (
-                    <>
-                      <span className="absolute top-1.5 left-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
-                      <span className="absolute top-1.5 right-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
-                      <span className="absolute bottom-1.5 left-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
-                      <span className="absolute bottom-1.5 right-1.5 text-[10px] font-black text-[#ff4500] leading-none pointer-events-none">+</span>
-                    </>
-                  )}
-
-                  {/* Specimen Index Tag */}
-                  <div className="absolute top-2.5 left-2.5 flex items-center gap-1 pointer-events-none">
-                    <span className="font-mono text-[8.5px] font-black text-brand-text bg-brand-surface/90 px-1.5 py-0.5 border border-brand-text">
-                      0{idx + 1}
+                  {/* Top Accession Tag */}
+                  <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1">
+                    <span className="font-mono text-[8px] font-black bg-brand-surface text-brand-text px-1.5 py-0.5 border border-brand-text">
+                      {item.artifactId}
                     </span>
-                    {isItemComingSoon && (
-                      <span className="font-mono text-[8px] font-black text-white bg-[#ff4500] px-1.5 py-0.5 border border-brand-text">
-                        UPCOMING
+                    {itemActiveSpec && (
+                      <span className="font-mono text-[7.5px] font-black uppercase bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text">
+                        {itemActiveSpec.medium}
                       </span>
                     )}
                   </div>
 
-                  {/* Direct tap badge */}
-                  <div className="absolute bottom-2.5 right-2.5 pointer-events-none">
-                    <span className={`font-mono text-[8px] font-black px-2 py-0.5 border border-brand-text transition-colors ${
-                      isCurrent
-                        ? "bg-[#ff4500] text-white"
-                        : "bg-brand-surface/90 text-brand-text"
-                    }`}>
-                      {isCurrent ? "ACTIVE" : "SELECT"}
+                  {/* Top Mode Badge */}
+                  <div className="absolute top-2.5 right-2.5 z-10">
+                    <span className="font-mono text-[7.5px] font-black uppercase bg-brand-surface/90 text-brand-text/75 px-1.5 py-0.5 border border-brand-text/50">
+                      {itemActiveSpec ? "SPECIMEN" : "CENTRAL GRAPHIC"}
                     </span>
                   </div>
+
+                  {/* Arabic Inscription */}
+                  {item.inscription && (
+                    <div className="absolute bottom-2.5 left-2.5 z-10 bg-brand-bg/95 border-2 border-brand-text px-2 py-0.5 shadow-[1.5px_1.5px_0px_#050505]">
+                      <span className="font-serif text-sm font-black text-brand-accent leading-none" dir="rtl">
+                        {item.inscription.startsWith("#") ? item.inscription : `# ${item.inscription}`}
+                      </span>
+                    </div>
+                  )}
                 </div>
               </div>
             );
           })}
         </div>
 
-        {/* 4. DOCKED MOBILE CURATORIAL DOSSIER PANEL */}
-        {activeMobileProduct && (
-          <div className="mx-4 mt-1 p-4 bg-brand-text text-brand-bg border-2 border-brand-text shadow-[6px_6px_0px_#050505] space-y-3">
+        {/* Mobile Curatorial Dossier & Specimen Selector */}
+        {activeMobileItem && (
+          <div className="mx-4 p-4 bg-brand-surface border-2 border-brand-text shadow-[6px_6px_0px_#050505] space-y-3 font-mono">
             {/* Header: Accession & Identity */}
-            <div className="flex items-center justify-between text-[8.5px] text-[#ff4500] font-black uppercase tracking-widest border-b border-brand-bg/20 pb-1.5">
+            <div className="flex items-center justify-between text-[8.5px] text-brand-accent font-black uppercase tracking-widest border-b-2 border-brand-text pb-1.5">
               <span className="flex items-center gap-1">
-                <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
-                SPECIMEN / 0{activeMobileIdx + 1}
+                <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
+                ARTIFACT // {String(activeMobileIdx + 1).padStart(2, "0")}
               </span>
-              <span className="text-brand-bg/70">
-                ACCESSION: TWL-{(activeMobileProduct.productId || activeMobileProduct.sku || activeMobileProduct.id).toUpperCase().slice(0, 8)}
+              <span className="text-brand-text/70">
+                {activeMobileItem.artifactId}
               </span>
             </div>
 
-            {/* Name & Arabic Inscription */}
+            {/* Name & Inscription */}
             <div className="flex items-baseline justify-between gap-2">
-              <h3 className="text-sm font-black uppercase tracking-tight text-brand-bg">
-                # {activeMobileProduct.name}
+              <h3 className="text-base font-black uppercase tracking-tight text-brand-text">
+                # {activeMobileItem.name}
               </h3>
-              {activeMobileProduct.inscription && (
-                <span className="font-serif text-sm font-black text-[#ff4500]" dir="rtl">
-                  {activeMobileProduct.inscription}
-                </span>
-              )}
+              <span className="text-xs font-black text-brand-text">
+                {activeMobileSpecimen
+                  ? `PKR ${activeMobileSpecimen.price.toLocaleString()}`
+                  : minMobilePrice > 0
+                    ? `FROM PKR ${minMobilePrice.toLocaleString()}`
+                    : "CANONICAL"}
+              </span>
             </div>
 
-            <p className="text-[9.5px] font-bold text-brand-bg/85 uppercase tracking-wide border-l-2 border-[#ff4500] pl-2">
-              {mobileTagline}
+            <p className="text-[10px] font-bold text-brand-text/80 uppercase tracking-wide border-l-2 border-brand-accent pl-2">
+              {activeMobileItem.concept || activeMobileItem.symbolicTagline || "Steadfast conviction materialized across multiple physical media."}
             </p>
 
-            {/* Specifications */}
-            <div className="grid grid-cols-2 gap-2 text-[8.5px] uppercase border-t border-brand-bg/15 pt-2">
-              <div>
-                <span className="text-brand-bg/50 block text-[7.5px] font-bold">MEDIUM:</span>
-                <span className="font-black text-brand-bg/90 tracking-wide truncate block">{mobileCategoryLabel}</span>
-              </div>
-              <div>
-                <span className="text-brand-bg/50 block text-[7.5px] font-bold">MATERIAL:</span>
-                <span className="font-black text-brand-bg/90 tracking-wide truncate block">
-                  {activeMobileProduct.material || "ARCHIVAL STRUCTURE"}
+            {/* SEPARATE SPECIMENS SELECTOR INSIDE ARTIFACT */}
+            <div className="border-t border-brand-text/20 pt-2 space-y-1.5">
+              <div className="flex items-center justify-between text-[8px] font-black uppercase text-brand-text/80">
+                <span className="flex items-center gap-1">
+                  <Layers size={10} className="text-brand-accent" />
+                  <span>SEPARATE SPECIMENS ({mobileChildSpecs.length}):</span>
                 </span>
+                <span className="text-brand-accent">TAP TO PREVIEW</span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-1.5">
+                {mobileChildSpecs.map((spec) => {
+                  const isSelected = mobileSelectedSpecId === spec.id;
+                  return (
+                    <button
+                      key={spec.id}
+                      type="button"
+                      onClick={(e) => handleSelectSpecimen(activeMobileItem.id, spec.id, e)}
+                      className={`p-1.5 text-left border font-mono transition-all flex flex-col justify-between ${
+                        isSelected
+                          ? "bg-brand-text text-brand-bg border-brand-text shadow-[2px_2px_0px_#050505]"
+                          : "bg-brand-bg text-brand-text border-brand-text/40 hover:border-brand-text"
+                      }`}
+                    >
+                      <div className="text-[8.5px] font-black uppercase truncate flex items-center justify-between">
+                        <span className="truncate">{spec.medium}</span>
+                        {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
+                      </div>
+                      <div className={`text-[8px] font-bold ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                        PKR {spec.price.toLocaleString()}
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Inline Angle/angles Switcher (No intrusive floating tooltips) */}
-            {mobileImages.length > 1 && (
-              <div className="pt-2 border-t border-brand-bg/15 flex items-center gap-2 overflow-x-auto hide-scrollbar">
-                <span className="text-[8px] text-brand-bg/60 font-bold uppercase shrink-0">
-                  anglesS:
-                </span>
-                {mobileImages.map((_, imgIdx) => (
-                  <button
-                    key={imgIdx}
-                    type="button"
-                    onClick={() => handleAngleSwitch(activeMobileProduct.id, imgIdx)}
-                    className={`shrink-0 px-2 py-1 text-[8.5px] font-black uppercase border transition-all ${
-                      activeMobileAngle === imgIdx
-                        ? "bg-[#ff4500] text-white border-brand-bg shadow-[1px_1px_0px_#050505]"
-                        : "bg-brand-bg text-brand-text border-brand-bg/40"
-                    }`}
-                  >
-                    V.0{imgIdx + 1}
-                  </button>
-                ))}
-              </div>
-            )}
-
-            {/* Primary Action Button */}
+            {/* Direct Open Artifact & Specimens Button */}
             <button
               type="button"
               onClick={() => {
                 soundManager.playClick(0.14);
-                onProductClick(activeMobileProduct);
+                onProductClick(activeMobileItem.rawEntity, mobileSelectedSpecId || undefined);
               }}
-              className="w-full py-3 bg-[#ff4500] hover:bg-[#ea3e00] text-white text-xs font-black uppercase tracking-widest border border-brand-bg shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
+              className="w-full py-3 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-xs font-black uppercase tracking-widest border border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
             >
-              <span>{isMobileComingSoon ? "PREVIEW ARCHIVAL DOSSIER" : "OPEN ARCHIVAL DOSSIER"}</span>
+              <span>
+                {activeMobileSpecimen
+                  ? `OPEN ${activeMobileSpecimen.medium.toUpperCase()} DOSSIER`
+                  : "EXPLORE ARTIFACT & SPECIMENS"}
+              </span>
               <MoveRight size={14} />
             </button>
           </div>
         )}
-
-        {/* Mobile Footer Instruction */}
-        <div className="px-4 pt-3 flex items-center justify-between text-[8px] uppercase tracking-widest text-brand-text/50">
-          <span>SWIPE CAROUSEL TO BROWSE</span>
-          <span className="text-brand-text/70 font-bold">TOTAL: {products.length} OBJECTS</span>
-        </div>
       </div>
     );
   }
 
   // =========================================================================
   // DESKTOP EXHIBITION LAYOUT (>= 768px)
-  // Preserves curated horizontal overlapping presentation with refined tactile
-  // displacement, docked angles control, and streamlined dossier activation.
+  // Curated horizontal overlapping presentation of ARTIFACTS featuring their
+  // Central Graphics with interactive separate specimen satellites & dossier.
   // =========================================================================
   return (
     <div className="relative w-full overflow-hidden select-none py-4">
-      {/* 2. THE HORIZONTAL OVERLAPPING STAGING AREA */}
+      {/* Desktop Exhibition Controls */}
+      <div className="flex items-center justify-between px-6 sm:px-12 mb-2 font-mono text-[9px] font-black uppercase tracking-wider text-brand-text/70">
+        <div className="flex items-center gap-2">
+          <span className="w-2 h-2 bg-brand-accent inline-block" />
+          <span>CURATED ARTIFACT EXHIBITION // {displayItems.length} MASTER ARTIFACTS</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => handlePan("left")}
+            disabled={!canScrollLeft}
+            className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505]"
+            title="Pan Left"
+          >
+            <ChevronLeft size={14} />
+          </button>
+          <button
+            type="button"
+            onClick={() => handlePan("right")}
+            disabled={!canScrollRight}
+            className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505]"
+            title="Pan Right"
+          >
+            <ChevronRight size={14} />
+          </button>
+        </div>
+      </div>
+
+      {/* Horizontal Overlapping Staging Area */}
       <div
         ref={containerRef}
         onMouseDown={handleMouseDown}
@@ -626,29 +569,26 @@ export default function ArtifactOverlappingCollection({
           className="flex items-center min-w-max mx-auto w-fit pl-4 pr-16 sm:pr-32"
           style={{ minHeight: "620px" }}
         >
-          {products.map((product, idx) => {
-            const images = resolveProductImages(product);
-            const permanentAngleIdx = activeAngles[product.id] || 0;
-            const tempHoveredAngle = hoveredThumbMap[product.id];
-            const activeAngleIdx = (typeof tempHoveredAngle === "number" && tempHoveredAngle !== null)
-              ? tempHoveredAngle
-              : permanentAngleIdx;
-            const currentImg = images[activeAngleIdx] || images[0];
-
+          {displayItems.map((item, idx) => {
             const isHovered = activeIdx === idx;
             const isAnyHovered = activeIdx !== null;
-            const isanglesOpen = openanglesProductId === product.id;
-
             const baseOffset = SPECIMEN_OFFSETS[idx % SPECIMEN_OFFSETS.length];
             const artifactNum = String(idx + 1).padStart(2, "0");
 
-            // Spatial Separation Displacement on focus
+            const selectedSpecId = selectedSpecimenMap[item.id];
+            const activeSpecimen = item.specimens.find((s) => s.id === selectedSpecId) || null;
+            const currentImg = activeSpecimen?.images?.[0] || activeSpecimen?.thumbnailImage || item.graphic;
+
+            const childSpecimens = item.specimens;
+            const minPrice = childSpecimens.length > 0 ? Math.min(...childSpecimens.map((s) => s.price)) : 0;
+            const setCalculation = calculateArtifactSetPrice(item.rawEntity as any, childSpecimens);
+
+            // Spatial Separation Displacement on hover
             let displacementX = 0;
             let targetScale = 1;
             let targetZ = 10 + idx;
             let targetY = baseOffset.y;
             let targetRotate = baseOffset.rotate;
-            const targetOpacity = 1; // Strict high contrast: never dim non-hovered products
 
             if (isAnyHovered) {
               if (isHovered) {
@@ -672,28 +612,21 @@ export default function ArtifactOverlappingCollection({
               }
             }
 
-            const specimenCategory = categories.find((c) => c.id === product.categoryId);
-            const categoryLabel = product.artifactClassification || specimenCategory?.label || normalizeProductCategory(product).toUpperCase();
-            const artifactTypeLabel = product.artifactType || normalizeProductCategory(product).toUpperCase();
-            const symbolicTagline = product.symbolicTagline || product.inscription || product.wearingCommunicates || "CONVICTION, MATERIALIZED.";
-            const isComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
-            const isSoldOut = !isComingSoon && product.inventory !== undefined && product.inventory <= 0;
-
             return (
               <motion.div
-                key={product.id}
+                key={item.id}
                 ref={(el) => {
                   itemRefs.current[idx] = el;
                 }}
                 onMouseEnter={() => handleDesktopItemHover(idx)}
                 onMouseLeave={() => handleDesktopItemLeave(idx)}
-                onClick={() => handleDesktopItemClick(product, idx)}
+                onClick={() => handleDesktopItemClick(item, idx)}
                 animate={{
                   x: displacementX,
                   y: targetY,
                   scale: targetScale,
                   rotate: targetRotate,
-                  opacity: targetOpacity,
+                  opacity: 1,
                   zIndex: targetZ,
                 }}
                 transition={{
@@ -706,11 +639,11 @@ export default function ArtifactOverlappingCollection({
                   marginLeft: idx === 0 ? "0px" : "-140px",
                   zIndex: targetZ,
                 }}
-                className={`relative shrink-0 w-[270px] sm:w-[320px] md:w-[360px] lg:w-[400px] aspect-[3/4] group cursor-pointer transition-shadow ${
+                className={`relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] group cursor-pointer transition-shadow ${
                   idx !== 0 ? "sm:-ml-[170px] md:-ml-[200px] lg:-ml-[230px]" : ""
                 }`}
               >
-                {/* PHYSICAL 3:4 SPECIMEN FRAME */}
+                {/* PHYSICAL 3:4 ARTIFACT FRAME */}
                 <div
                   className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-surface border-3 sm:border-4 border-brand-text transition-all duration-300 ${
                     isHovered
@@ -718,126 +651,180 @@ export default function ArtifactOverlappingCollection({
                       : "shadow-[6px_6px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
                   }`}
                 >
-                  <AnimatePresence>
-                    <motion.img
-                      key={currentImg || STUDIO_FALLBACK_IMAGE}
-                      initial={{ clipPath: "inset(100% 0% 0% 0%)", filter: "contrast(120%) grayscale(100%)" }}
-                      animate={{ clipPath: "inset(0% 0% 0% 0%)", filter: "contrast(100%) grayscale(0%)" }}
-                      exit={{ clipPath: "inset(0% 0% 100% 0%)", filter: "contrast(120%) grayscale(100%)" }}
-                      transition={{ duration: 0.4, ease: [0.85, 0, 0.15, 1] }}
-                      src={currentImg || STUDIO_FALLBACK_IMAGE}
-                      alt={product.name}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const target = e.currentTarget as HTMLImageElement;
-                        if (target.src !== STUDIO_FALLBACK_IMAGE) {
-                          target.src = STUDIO_FALLBACK_IMAGE;
-                        }
-                      }}
-                      className="absolute inset-0 w-full h-full object-contain object-center select-none pointer-events-none transition-transform duration-500 group-hover:scale-[1.02] p-4"
-                      loading="lazy"
-                    />
-                  </AnimatePresence>
+                  {/* Central Graphic Canvas */}
+                  <div className="w-full h-full relative p-5 flex items-center justify-center bg-brand-bg">
+                    <AnimatePresence mode="wait">
+                      <motion.img
+                        key={currentImg}
+                        initial={{ opacity: 0.85 }}
+                        animate={{ opacity: 1, scale: isHovered ? 1.02 : 1 }}
+                        exit={{ opacity: 0.85 }}
+                        transition={{ duration: 0.12, ease: "easeOut" }}
+                        src={currentImg}
+                        alt={item.name}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-contain object-center select-none pointer-events-none p-4"
+                        loading="lazy"
+                      />
+                    </AnimatePresence>
 
-                  {/* UNHOVERED SPECIMEN TICK & COMING SOON BADGE */}
-                  <div
-                    className={`absolute bottom-2.5 right-2.5 pointer-events-none transition-opacity duration-200 flex items-center gap-1.5 ${
-                      isHovered ? "opacity-0" : "opacity-90 group-hover:opacity-100"
-                    }`}
-                  >
-                    {isComingSoon && (
-                      <span className="font-mono text-[8.5px] font-black uppercase text-white bg-brand-accent px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
-                        COMING SOON
+                    {/* Top Accession & Collection Badge */}
+                    <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 font-mono">
+                      <span className="text-[8px] font-black uppercase bg-brand-surface text-brand-text px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                        {item.artifactId}
                       </span>
-                    )}
-                    <span className="font-mono text-[9px] font-black text-brand-text bg-brand-surface/90 px-1.5 py-0.5 border border-brand-text">
-                      {artifactNum}
-                    </span>
-                  </div>
+                      <span className="text-[7.5px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
+                        {item.collectionName?.toUpperCase() || "CANONICAL"}
+                      </span>
+                      {activeSpecimen && (
+                        <span className="text-[7.5px] font-black uppercase bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text">
+                          {activeSpecimen.medium}
+                        </span>
+                      )}
+                    </div>
 
-                  {/* UNHOVERED SPECIMEN angles COUNT BADGE (Resting State) */}
-                  {!isHovered && images.length > 1 && (
-                    <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 bg-brand-surface/95 border border-brand-text shadow-[2px_2px_0px_#050505] px-2 py-0.5 pointer-events-none font-mono">
-                      <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
-                      <span className="text-[8px] font-black uppercase tracking-wider text-brand-text">
-                        ANGLE 0{activeAngleIdx + 1}/0{images.length}
+                    {/* Top Graphic Mode Badge */}
+                    <div className="absolute top-2.5 right-2.5 z-20">
+                      <span className="font-mono text-[7.5px] font-black uppercase bg-brand-surface/95 text-brand-text/80 px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                        {activeSpecimen ? "SPECIMEN PREVIEW" : "CENTRAL GRAPHIC"}
                       </span>
                     </div>
-                  )}
 
-                  {/* CURATORIAL SPECIMEN DOSSIER (Revealed smoothly when card is hovered or focused) */}
+                    {/* Arabic Inscription Plaque */}
+                    {item.inscription && (
+                      <div className="absolute bottom-2.5 left-2.5 z-20">
+                        <div className="bg-brand-bg/95 border-2 border-brand-text px-2.5 py-1 shadow-[2px_2px_0px_#050505] flex items-center">
+                          <span className="font-serif text-base sm:text-lg font-black text-brand-accent leading-none" dir="rtl">
+                            {item.inscription.startsWith("#") ? item.inscription : `# ${item.inscription}`}
+                          </span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Unhovered Bottom Specimen Count */}
+                    {!isHovered && (
+                      <div className="absolute bottom-2.5 right-2.5 z-20 font-mono text-[8.5px] font-black uppercase bg-brand-surface text-brand-text px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+                        {childSpecimens.length} SPECIMENS
+                      </div>
+                    )}
+                  </div>
+
+                  {/* CURATORIAL ARTIFACT DOSSIER (Revealed smoothly on hover/focus) */}
                   <AnimatePresence>
                     {isHovered && (
                       <motion.div
-                        initial={{ opacity: 0, y: 20 }}
+                        initial={{ opacity: 0, y: 14 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 15 }}
-                        transition={{ duration: 0.22, ease: [0.16, 1, 0.3, 1] }}
-                        className="absolute inset-x-0 bottom-0 z-30 p-3 sm:p-3.5 bg-brand-text text-brand-bg border-t-3 border-brand-accent shadow-[0_-6px_20px_rgba(0,0,0,0.35)] flex flex-col justify-between gap-2.5 font-mono"
+                        exit={{ opacity: 0, y: 10 }}
+                        transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+                        style={{ willChange: "transform, opacity" }}
+                        className="absolute inset-x-0 bottom-0 z-30 p-3.5 bg-brand-surface text-brand-text border-t-3 border-brand-text shadow-[0_-6px_20px_rgba(0,0,0,0.25)] flex flex-col justify-between gap-2.5 font-mono"
                         onClick={(e) => e.stopPropagation()}
                       >
                         {/* Upper Identification Section */}
                         <div className="space-y-1">
-                          <div className="flex items-center justify-between text-[8.5px] sm:text-[9px] text-[#ff4500] font-black uppercase tracking-widest border-b border-brand-bg/20 pb-1">
+                          <div className="flex items-center justify-between text-[8.5px] text-brand-accent font-black uppercase tracking-widest border-b border-brand-text/20 pb-1">
                             <span className="flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
-                              SPECIMEN / {artifactNum}
+                              <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
+                              ARTIFACT / {artifactNum}
                             </span>
-                            <span className="text-brand-bg/60 font-bold">
-                              ACCESSION: TWL-{(product.productId || product.sku || product.id).toUpperCase().slice(0, 8)}
+                            <span className="text-brand-text/60 font-bold">
+                              {item.artifactId}
                             </span>
                           </div>
 
                           <div className="flex items-baseline justify-between gap-2">
-                            <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-brand-bg line-clamp-1">
-                              # {product.name}
+                            <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-brand-text line-clamp-1">
+                              # {item.name}
                             </h3>
-                            {product.inscription && (
-                              <span className="font-serif text-sm font-black text-[#ff4500] shrink-0" dir="rtl">
-                                {product.inscription}
-                              </span>
-                            )}
+                            <span className="font-mono text-xs font-black text-brand-text whitespace-nowrap">
+                              {activeSpecimen
+                                ? `PKR ${activeSpecimen.price.toLocaleString()}`
+                                : minPrice > 0
+                                  ? `FROM PKR ${minPrice.toLocaleString()}`
+                                  : "CANONICAL"}
+                            </span>
                           </div>
 
-                          <p className="text-[9.5px] sm:text-[10px] font-bold text-brand-bg/85 uppercase tracking-wide line-clamp-2 leading-tight border-l-2 border-[#ff4500] pl-2">
-                            {symbolicTagline}
+                          <p className="text-[9.5px] font-bold text-brand-text/80 uppercase tracking-wide line-clamp-2 leading-tight border-l-2 border-brand-accent pl-2">
+                            {item.concept || item.symbolicTagline || "Steadfast conviction materialized across multiple physical media."}
                           </p>
                         </div>
 
-                        {/* Specifications */}
-                        <div className="grid grid-cols-2 gap-2 pt-1 border-t border-brand-bg/15 text-[8.5px] sm:text-[9px] uppercase">
-                          <div>
-                            <span className="text-brand-bg/50 block text-[7.5px] font-bold">MEDIUM:</span>
-                            <span className="font-black text-brand-bg/90 tracking-wide truncate block">
-                              {categoryLabel} // {artifactTypeLabel}
+                        {/* SEPARATE SPECIMENS SELECTOR INSIDE DOSSIER */}
+                        <div className="border-t border-brand-text/20 pt-2 space-y-1 bg-brand-text/5 p-2 border border-brand-text/15">
+                          <div className="flex items-center justify-between text-[8px] font-black uppercase text-brand-text/80">
+                            <span className="flex items-center gap-1">
+                              <Layers size={10} className="text-brand-accent" />
+                              <span>SEPARATE SPECIMENS ({childSpecimens.length}):</span>
                             </span>
+                            {activeSpecimen && (
+                              <button
+                                type="button"
+                                onClick={(e) => handleSelectSpecimen(item.id, null, e)}
+                                className="text-[7.5px] font-black text-brand-accent underline hover:text-brand-text uppercase"
+                              >
+                                VIEW GRAPHIC
+                              </button>
+                            )}
                           </div>
-                          <div>
-                            <span className="text-brand-bg/50 block text-[7.5px] font-bold">MATERIAL / STRUCTURE:</span>
-                            <span className="font-black text-brand-bg/90 tracking-wide truncate block">
-                              {product.material || "280 GSM COMBED COTTON"}
-                            </span>
+
+                          <div className="grid grid-cols-3 gap-1">
+                            {childSpecimens.map((spec) => {
+                              const isSelected = selectedSpecId === spec.id;
+                              return (
+                                <button
+                                  key={spec.id}
+                                  type="button"
+                                  onClick={(e) => handleSelectSpecimen(item.id, spec.id, e)}
+                                  className={`px-1.5 py-1 text-left border font-mono transition-all flex flex-col justify-between ${
+                                    isSelected
+                                      ? "bg-brand-text text-brand-bg border-brand-text shadow-[1.5px_1.5px_0px_#050505]"
+                                      : "bg-brand-surface text-brand-text border-brand-text/40 hover:border-brand-text hover:bg-brand-bg"
+                                  }`}
+                                >
+                                  <div className="text-[8px] font-black uppercase truncate flex items-center justify-between">
+                                    <span className="truncate">{spec.medium}</span>
+                                    {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
+                                  </div>
+                                  <div className={`text-[7.5px] font-bold ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                                    PKR {spec.price.toLocaleString()}
+                                  </div>
+                                </button>
+                              );
+                            })}
                           </div>
                         </div>
 
-                        {/* Bottom Status & Direct Open Button */}
-                        <div className="flex items-center justify-between gap-2 pt-1.5 border-t border-brand-bg/20">
-                          <div className="flex items-center gap-1.5 text-[8.5px] font-black uppercase tracking-wider">
-                            <span className={`w-1.5 h-1.5 rounded-none inline-block ${isComingSoon ? "bg-amber-400 animate-pulse" : "bg-emerald-400"}`} />
-                            <span className="text-brand-bg/85">
-                              {isComingSoon ? "UPCOMING STUDIO RELEASE" : isSoldOut ? "ARCHIVAL COMMISSION" : "PERMANENT ATELIER HOLDING"}
-                            </span>
+                        {/* Complete Set Acquisition Bar */}
+                        {setCalculation.hasDiscount && setCalculation.setPrice > 0 && (
+                          <div className="bg-brand-accent/10 border border-brand-accent/40 p-1.5 flex items-center justify-between font-mono text-[8px]">
+                            <div className="flex items-center gap-1 font-black text-brand-text uppercase">
+                              <Box size={10} className="text-brand-accent" />
+                              <span>FULL SET ({setCalculation.specimenCount}):</span>
+                            </div>
+                            <div className="flex items-center gap-1">
+                              <span className="line-through text-brand-text/50">PKR {setCalculation.individualTotal.toLocaleString()}</span>
+                              <span className="font-black text-brand-accent">PKR {setCalculation.setPrice.toLocaleString()}</span>
+                            </div>
                           </div>
+                        )}
 
+                        {/* Primary Action Button */}
+                        <div className="pt-1">
                           <button
                             type="button"
                             onClick={() => {
                               soundManager.playClick(0.14);
-                              onProductClick(product);
+                              onProductClick(item.rawEntity, selectedSpecId || undefined);
                             }}
-                            className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-[#ff4500] hover:bg-[#ea3e00] text-white text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+                            className="w-full py-2 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-[9.5px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2"
                           >
-                            <span>{isComingSoon ? "PREVIEW DOSSIER" : "OPEN DOSSIER"}</span>
+                            <span>
+                              {activeSpecimen
+                                ? `EXPLORE ${activeSpecimen.medium.toUpperCase()} & ARCHIVE`
+                                : "EXPLORE ARTIFACT & SPECIMENS"}
+                            </span>
                             <MoveRight size={12} />
                           </button>
                         </div>
@@ -846,142 +833,109 @@ export default function ArtifactOverlappingCollection({
                   </AnimatePresence>
                 </div>
 
-                {/* PC BRUTALIST SCATTERED angles ANGLE SATELLITES (Render outside the preview frame on intentional hover) */}
+                {/* ORBITING SPECIMEN SATELLITES AROUND ARTIFACT CARD */}
                 <AnimatePresence>
-                  {scatterVisibleIdx === idx && images.length > 1 && (
+                  {scatterVisibleIdx === idx && childSpecimens.length > 0 && (
                     <>
-                      {/* Architectural Header Bar floating above card */}
+                      {/* Architectural Header floating above card */}
                       <motion.div
-                        initial={{ opacity: 0, y: 8, scale: 0.95 }}
-                        animate={{ opacity: 1, y: 0, scale: 1 }}
-                        exit={{ opacity: 0, y: 4, scale: 0.95 }}
-                        transition={{ duration: 0.22, ease: "easeOut" }}
+                        initial={{ opacity: 0, y: 4 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: 2 }}
+                        transition={{ duration: 0.1, ease: "easeOut" }}
+                        style={{ willChange: "transform, opacity" }}
                         onMouseEnter={() => {
-                          if (pendingSwitchTimerRef.current) {
-                            clearTimeout(pendingSwitchTimerRef.current);
-                            pendingSwitchTimerRef.current = null;
-                          }
-                          if (scatterLeaveTimerRef.current) {
-                            clearTimeout(scatterLeaveTimerRef.current);
-                            scatterLeaveTimerRef.current = null;
-                          }
-                          if (angleInteractionExitTimerRef.current) {
-                            clearTimeout(angleInteractionExitTimerRef.current);
-                            angleInteractionExitTimerRef.current = null;
-                          }
-                          isInteractingWithAnglesRef.current = true;
+                          if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
+                          if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
+                          isInteractingWithSatellitesRef.current = true;
                           setScatterVisibleIdx(idx);
                           setActiveIdx(idx);
                         }}
                         onMouseLeave={() => {
-                          if (angleInteractionExitTimerRef.current) {
-                            clearTimeout(angleInteractionExitTimerRef.current);
-                          }
-                          angleInteractionExitTimerRef.current = setTimeout(() => {
-                            isInteractingWithAnglesRef.current = false;
+                          if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
+                          satelliteExitTimerRef.current = setTimeout(() => {
+                            isInteractingWithSatellitesRef.current = false;
                             handleDesktopItemLeave(idx);
-                          }, 400);
+                          }, 120);
                         }}
                         className="absolute -top-10 inset-x-0 z-50 flex items-center justify-between px-2.5 py-1 bg-brand-surface border-2 border-brand-text shadow-[3px_3px_0px_#050505] font-mono text-[8px] font-black uppercase tracking-widest text-brand-text pointer-events-auto"
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block animate-ping" />
+                          <span className="w-1.5 h-1.5 bg-brand-accent inline-block animate-ping" />
+                          <span>SEPARATE PHYSICAL SPECIMENS</span>
                         </div>
-                        <span className="text-[#ff4500]">0{activeAngleIdx + 1}/0{images.length} ACTIVE</span>
+                        <span className="text-brand-accent">{childSpecimens.length} MEDIA TYPES</span>
                       </motion.div>
 
-                      {/* Scattered Brutalist angles Plates positioned around the exterior */}
-                      {images.map((img, imgIdx) => {
-                        const scatter = BRUTALIST_SCATTER_OFFSETS[imgIdx % BRUTALIST_SCATTER_OFFSETS.length];
-                        const isSelected = activeAngleIdx === imgIdx;
-                        const isCommitted = permanentAngleIdx === imgIdx;
+                      {/* Scattered Brutalist Specimen Thumbnail Plates */}
+                      {childSpecimens.map((spec, specIdx) => {
+                        const scatter = SPECIMEN_SCATTER_OFFSETS[specIdx % SPECIMEN_SCATTER_OFFSETS.length];
+                        const isSelected = selectedSpecId === spec.id;
+                        const specImg = spec.images?.[0] || spec.thumbnailImage || item.graphic;
 
                         return (
                           <motion.button
-                            key={`scatter-${product.id}-${imgIdx}`}
+                            key={`satellite-${spec.id}`}
                             type="button"
-                            initial={{ opacity: 0, scale: 0.4, rotate: scatter.rotate * 2 }}
+                            initial={{ opacity: 0, scale: 0.85 }}
                             animate={{
                               opacity: 1,
                               scale: isSelected ? 1.08 : 1,
                               rotate: scatter.rotate,
                               transition: {
-                                delay: imgIdx * 0.05,
-                                type: "spring",
-                                stiffness: 380,
-                                damping: 24,
+                                duration: 0.12,
+                                ease: [0.16, 1, 0.3, 1],
                               },
                             }}
-                            exit={{ opacity: 0, scale: 0.6, rotate: 0, transition: { duration: 0.16 } }}
-                            whileHover={{ scale: 1.15, rotate: 0, zIndex: 60 }}
+                            exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.08 } }}
+                            whileHover={{ scale: 1.15, rotate: 0, zIndex: 60, transition: { duration: 0.08 } }}
                             onMouseEnter={(e) => {
                               e.stopPropagation();
-                              if (pendingSwitchTimerRef.current) {
-                                clearTimeout(pendingSwitchTimerRef.current);
-                                pendingSwitchTimerRef.current = null;
-                              }
-                              if (scatterLeaveTimerRef.current) {
-                                clearTimeout(scatterLeaveTimerRef.current);
-                                scatterLeaveTimerRef.current = null;
-                              }
-                              if (angleInteractionExitTimerRef.current) {
-                                clearTimeout(angleInteractionExitTimerRef.current);
-                                angleInteractionExitTimerRef.current = null;
-                              }
-                              isInteractingWithAnglesRef.current = true;
+                              if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
+                              if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
+                              isInteractingWithSatellitesRef.current = true;
                               setScatterVisibleIdx(idx);
                               setActiveIdx(idx);
                               soundManager.playHover(0.02);
-                              setHoveredThumbMap((prev) => ({ ...prev, [product.id]: imgIdx }));
                             }}
                             onMouseLeave={(e) => {
                               e.stopPropagation();
-                              setHoveredThumbMap((prev) => ({ ...prev, [product.id]: null }));
-                              if (angleInteractionExitTimerRef.current) {
-                                clearTimeout(angleInteractionExitTimerRef.current);
-                              }
-                              angleInteractionExitTimerRef.current = setTimeout(() => {
-                                isInteractingWithAnglesRef.current = false;
+                              if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
+                              satelliteExitTimerRef.current = setTimeout(() => {
+                                isInteractingWithSatellitesRef.current = false;
                                 handleDesktopItemLeave(idx);
-                              }, 400);
+                              }, 120);
                             }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              handleAngleSwitch(product.id, imgIdx, e);
-                            }}
+                            onClick={(e) => handleSelectSpecimen(item.id, spec.id, e)}
                             style={{
-                              left: scatter.x,
+                              position: "absolute",
+                              left: scatter.x.includes("%") ? scatter.x : undefined,
+                              right: !scatter.x.includes("%") && !scatter.x.startsWith("-") ? scatter.x : undefined,
                               top: scatter.y,
+                              marginLeft: !scatter.x.includes("%") && scatter.x.startsWith("-") ? scatter.x : undefined,
+                              willChange: "transform, opacity",
                             }}
-                            className={`absolute z-50 w-16 sm:w-20 md:w-22 p-1 bg-brand-surface border-2 cursor-pointer pointer-events-auto font-mono text-left transition-colors ${
+                            className={`w-20 h-24 z-40 bg-brand-surface border-2 transition-all p-1 flex flex-col justify-between shadow-[3px_3px_0px_#050505] cursor-pointer ${
                               isSelected
-                                ? "border-[#ff4500] shadow-[5px_5px_0px_#050505] bg-brand-bg ring-2 ring-[#ff4500]/40"
-                                : isCommitted
-                                ? "border-brand-text shadow-[4px_4px_0px_#050505] hover:border-brand-text"
-                                : "border-brand-text/80 shadow-[3px_3px_0px_#050505] hover:border-brand-text opacity-90 hover:opacity-100"
+                                ? "border-brand-accent ring-2 ring-brand-accent bg-brand-text text-brand-bg"
+                                : "border-brand-text hover:border-brand-accent"
                             }`}
-                            title={`angles 0${imgIdx + 1} — Click to switch, hover to preview`}
+                            title={`Click to preview ${spec.medium} (PKR ${spec.price.toLocaleString()})`}
                           >
-                            {/* Raw Brutalist angles Identification Tag */}
-                            <div className="flex items-center justify-between pb-0.5 mb-1 border-b border-brand-text/30 text-[7px] sm:text-[7.5px] font-black uppercase text-brand-text">
-                              <span className={isSelected ? "text-[#ff4500]" : ""}>V.0{imgIdx + 1}</span>
-                              <span className="text-[6.5px] text-brand-text/50">[{imgIdx === 0 ? "PRIMARY" : `ANG-${imgIdx}`}]</span>
-                            </div>
-
-                            {/* Crisp angles Thumbnail */}
-                            <div className="relative aspect-square w-full border border-brand-text/40 overflow-hidden bg-brand-bg">
+                            <div className="w-full h-14 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30">
                               <img
-                                src={img || STUDIO_FALLBACK_IMAGE}
-                                alt={`angles 0${imgIdx + 1}`}
+                                src={specImg}
+                                alt={spec.medium}
                                 referrerPolicy="no-referrer"
-                                className="w-full h-full object-cover select-none pointer-events-none"
+                                className="w-full h-full object-contain p-1 select-none"
                               />
-                              {isSelected && (
-                                <span className="absolute bottom-0 inset-x-0 bg-[#ff4500] text-white text-[6.5px] font-black text-center uppercase py-px">
-                                  LIVE
-                                </span>
-                              )}
+                            </div>
+                            <div className="font-mono text-[7px] font-black uppercase truncate text-center leading-none mt-0.5">
+                              {spec.medium}
+                            </div>
+                            <div className={`font-mono text-[7px] font-bold text-center leading-none ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                              PKR {spec.price.toLocaleString()}
                             </div>
                           </motion.button>
                         );
@@ -992,19 +946,6 @@ export default function ArtifactOverlappingCollection({
               </motion.div>
             );
           })}
-        </div>
-      </div>
-
-      {/* 3. ARCHITECTURAL FOOTER REGISTER */}
-      <div className="flex flex-wrap items-center justify-between gap-4 px-4 sm:px-8 pt-3 border-t border-brand-text/20 font-mono text-[9.5px] uppercase tracking-widest text-brand-text/60">
-        <div className="flex items-center gap-2">
-          <span>ARRAY REGISTER // {products.length} {products.length === 1 ? "SPECIMEN" : "SPECIMENS"}</span>
-          <span className="text-brand-text/30">•</span>
-          <span>DRAG HORIZONTALLY OR USE TRACKPAD TO PAN</span>
-        </div>
-
-        <div className="flex items-center gap-3 font-bold text-brand-text">
-          <span className="text-[#ff4500]">[ 3:4 PERSISTENT ARTIFACT PREVIEW ]</span>
         </div>
       </div>
     </div>

@@ -361,10 +361,14 @@ function StorefrontApp() {
     }
   };
 
-  const handleProductSelect = (product: Product) => {
-    // Navigate to canonical URL for this artifact
-    const identifier = product.productId || product.sku || product.id;
-    navigate(`/artifact/${identifier}`);
+  const handleProductSelect = (productOrArtifact: any, specimenId?: string) => {
+    // Navigate to canonical URL for this artifact or specimen
+    const identifier = productOrArtifact.artifactId || productOrArtifact.productId || productOrArtifact.sku || productOrArtifact.id;
+    if (specimenId) {
+      navigate(`/artifact/${identifier}?specimen=${specimenId}`);
+    } else {
+      navigate(`/artifact/${identifier}`);
+    }
   };
 
   if (isLoading) {

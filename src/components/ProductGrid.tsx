@@ -1,9 +1,9 @@
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { Product, Category } from "../types";
+import { Product, Category, Artifact, Specimen } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
-import ProductCard from "./ProductCard";
-import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck } from "lucide-react";
+import ArtifactCard from "./ArtifactCard";
+import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, Box } from "lucide-react";
 import { 
   normalizeProductCategory, 
   normalizeProductCollection, 
@@ -13,12 +13,18 @@ import {
   getCachedProducts,
   CANONICAL_CATEGORIES
 } from "../lib/productService";
+import { 
+  fetchArtifacts, 
+  fetchSpecimens, 
+  getCachedArtifacts, 
+  getCachedSpecimens 
+} from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
 
 interface ProductGridProps {
   activeCategoryId: string | null;
   onCategoryChange?: (id: string | null) => void;
-  onProductClick: (product: Product) => void;
+  onProductClick: (productOrArtifact: any, specimenId?: string) => void;
   refreshKey?: number;
   onCategoriesLoaded?: (categories: Category[]) => void;
 }
@@ -30,7 +36,9 @@ export default function ProductGrid({
   refreshKey = 0, 
   onCategoriesLoaded 
 }: ProductGridProps) {
-  // Start immediately with cached or canonical seed products — eliminates blank screen and stuck skeletons
+  // Master Archival state
+  const [artifacts, setArtifacts] = useState<Artifact[]>(() => getCachedArtifacts());
+  const [specimens, setSpecimens] = useState<Specimen[]>(() => getCachedSpecimens());
   const [products, setProducts] = useState<Product[]>(() => getCachedProducts());
   const [categories, setCategories] = useState<Category[]>(CANONICAL_CATEGORIES);
   const [loading, setLoading] = useState(false);
@@ -38,6 +46,7 @@ export default function ProductGrid({
   const [selectedCollection, setSelectedCollection] = useState<"all" | "be-symbolic" | "be-palestine">("all");
   const [viewMode, setViewMode] = useState<"exhibition" | "grid" | "ledger">("exhibition");
   const [inStockOnly, setInStockOnly] = useState(false);
+  const [expandedLedgerArtifactIds, setExpandedLedgerArtifactIds] = useState<Record<string, boolean>>({});
 
   // Sync collection if activeCategoryId points to a collection from header
   useEffect(() => {
@@ -46,7 +55,6 @@ export default function ProductGrid({
     } else if (activeCategoryId === "be-symbolic") {
       setSelectedCollection("be-symbolic");
     } else {
-      // If we navigated to a specific category (e.g. wear) or all artifacts, reset the collection filter to all
       setSelectedCollection("all");
     }
   }, [activeCategoryId]);
@@ -54,9 +62,11 @@ export default function ProductGrid({
   const syncArchiveData = useCallback(async () => {
     try {
       setReverifying(true);
-      const [loadedCats, prods] = await Promise.all([
+      const [loadedCats, prods, arts, specs] = await Promise.all([
         fetchCategories(),
-        fetchProducts()
+        fetchProducts(),
+        fetchArtifacts(),
+        fetchSpecimens()
       ]);
 
       if (loadedCats && loadedCats.length > 0) {
@@ -64,8 +74,16 @@ export default function ProductGrid({
         if (onCategoriesLoaded) onCategoriesLoaded(loadedCats);
       }
 
-      if (prods) {
+      if (prods && prods.length > 0) {
         setProducts(prods);
+      }
+
+      if (arts && arts.length > 0) {
+        setArtifacts(arts);
+      }
+
+      if (specs && specs.length > 0) {
+        setSpecimens(specs);
       }
     } catch (err) {
       console.error("Archive background sync error:", err);
@@ -73,45 +91,57 @@ export default function ProductGrid({
       setLoading(false);
       setReverifying(false);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
+  }, [onCategoriesLoaded]);
 
   useEffect(() => {
     syncArchiveData();
   }, [refreshKey, syncArchiveData]);
-
-  // Only show active/available products in storefront
-  const activeProducts = products.filter(isProductLive);
 
   // Derive active medium (Wear, Carry, Headwear, Vessels)
   const activeMedium = (activeCategoryId === "be-palestine" || activeCategoryId === "palestine" || activeCategoryId === "be-symbolic")
     ? null
     : activeCategoryId;
 
-  // Filter products by Ethos Collection, Medium, and Stock availability
-  const filteredProducts = activeProducts.filter(p => {
-    // 1. Ethos Collection filter
-    if (selectedCollection === "be-palestine") {
-      if (normalizeProductCollection(p) !== "Be Palestine") return false;
-    } else if (selectedCollection === "be-symbolic") {
-      if (normalizeProductCollection(p) !== "Be Symbolic") return false;
-    }
+  // Filter Artifacts
+  const filteredArtifacts = useMemo(() => {
+    return artifacts.filter((art) => {
+      // 1. Collection filter
+      if (selectedCollection === "be-palestine") {
+        const cName = (art.collectionName || "").toLowerCase();
+        if (!cName.includes("palestine") && !cName.includes("falasteen")) return false;
+      } else if (selectedCollection === "be-symbolic") {
+        const cName = (art.collectionName || "").toLowerCase();
+        if (!cName.includes("symbolic")) return false;
+      }
 
-    // 2. Medium filter
-    if (activeMedium) {
-      if (normalizeProductCategory(p) !== activeMedium.toLowerCase()) return false;
-    }
+      // Child specimens
+      const childSpecs = specimens.filter(
+        (s) => s.parentArtifactId === art.id || art.specimenIds?.includes(s.id)
+      );
 
-    // 3. Stock availability filter
-    if (inStockOnly && p.inventory <= 0) {
-      return false;
-    }
+      // 2. Medium filter
+      if (activeMedium) {
+        const targetMed = activeMedium.toLowerCase();
+        const hasMedium = childSpecs.some((s) => {
+          const med = (s.medium || "").toLowerCase();
+          if (targetMed === "wear") return med.includes("t-shirt") || med.includes("tee") || med.includes("hoodie") || med.includes("sleeve") || med.includes("wear");
+          if (targetMed === "carry") return med.includes("tote") || med.includes("bag") || med.includes("carry");
+          if (targetMed === "headwear") return med.includes("cap") || med.includes("hat") || med.includes("head");
+          if (targetMed === "vessels") return med.includes("mug") || med.includes("cup") || med.includes("vessel") || med.includes("ceramic");
+          return med.includes(targetMed);
+        });
+        if (!hasMedium) return false;
+      }
 
-    return true;
-  });
+      // 3. In stock only
+      if (inStockOnly) {
+        const hasStock = childSpecs.some((s) => s.availability && s.status !== "sold_out");
+        if (!hasStock) return false;
+      }
 
-  // Preserve canonical studio archival sequence
-  const sortedProducts = [...filteredProducts];
+      return true;
+    });
+  }, [artifacts, specimens, selectedCollection, activeMedium, inStockOnly]);
 
   // Mediums (Categories)
   const mediums: { id: string | null; label: string }[] = [
@@ -129,21 +159,31 @@ export default function ProductGrid({
     { id: "be-palestine" as const, label: "BE PALESTINE" },
   ];
 
-  const getCatalogSubtitle = () => {
-    if (selectedCollection === "be-palestine") {
-      return "COLLECTION FALASTEEN // ARTIFACTS OF UNYIELDING SOLIDARITY & ANCESTRAL ROOTS";
-    }
-    if (selectedCollection === "be-symbolic") {
-      return "COLLECTION BE SYMBOLIC // CORE CORPOREAL INSTRUMENTS & ARCHIVAL SILHOUETTES";
-    }
-    return "PERMANENT REGISTER // ATELIER ARCHIVE";
-  };
-
-  const isCurrentCategoryEmpty = Boolean(filteredProducts.length === 0);
   const currentCategoryName = activeMedium ? activeMedium.toUpperCase() : (selectedCollection !== "all" ? selectedCollection.toUpperCase() : "");
 
-  // Only render skeleton state if there are zero products loaded
-  if (loading && products.length === 0) {
+  // Total counts
+  const totalArtifactsCount = filteredArtifacts.length;
+  const totalSpecimensCount = useMemo(() => {
+    let count = 0;
+    filteredArtifacts.forEach((art) => {
+      const childSpecs = specimens.filter(
+        (s) => s.parentArtifactId === art.id || art.specimenIds?.includes(s.id)
+      );
+      count += childSpecs.length;
+    });
+    return count;
+  }, [filteredArtifacts, specimens]);
+
+  const toggleLedgerExpand = (artId: string) => {
+    soundManager.playToggle(0.06);
+    setExpandedLedgerArtifactIds((prev) => ({
+      ...prev,
+      [artId]: !prev[artId],
+    }));
+  };
+
+  // Only render skeleton state if there are zero artifacts loaded
+  if (loading && artifacts.length === 0) {
     return (
       <div className="max-w-7xl mx-auto px-6 sm:px-10 py-24 space-y-12 bg-brand-bg">
         <div className="flex justify-between items-center border-b-2 border-brand-text pb-6">
@@ -151,7 +191,7 @@ export default function ProductGrid({
           <div className="w-32 h-8 bg-brand-surface animate-pulse" />
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {[1, 2, 3, 4, 5, 6].map(n => (
+          {[1, 2, 3, 4, 5, 6].map((n) => (
             <div key={n} className="aspect-[4/5] bg-brand-surface animate-pulse border-2 border-brand-text" />
           ))}
         </div>
@@ -175,8 +215,8 @@ export default function ProductGrid({
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono font-black uppercase tracking-tight text-brand-text leading-none">
                 THE COLLECTION
               </h2>
-              <span className="font-mono text-xs font-bold text-brand-text/50 uppercase tracking-widest">
-                [{sortedProducts.length < 10 ? `0${sortedProducts.length}` : sortedProducts.length} {sortedProducts.length === 1 ? "SPECIMEN" : "SPECIMENS"}]
+              <span className="font-mono text-xs font-bold text-brand-text/60 uppercase tracking-widest">
+                [{totalArtifactsCount < 10 ? `0${totalArtifactsCount}` : totalArtifactsCount} ARTIFACTS // {totalSpecimensCount} SPECIMENS]
               </span>
             </div>
           </div>
@@ -241,7 +281,7 @@ export default function ProductGrid({
         </div>
 
         <p className="font-mono text-xs text-brand-text/75 uppercase leading-relaxed max-w-2xl">
-          A curated registry of symbolic physical instruments. Exterior surfaces belong entirely to the individual; our mark remains strictly within.
+          Master artworks featuring their central graphic inscription, materialized across separate physical specimens.
         </p>
       </div>
 
@@ -255,13 +295,6 @@ export default function ProductGrid({
           <div className="inline-flex flex-wrap border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505] divide-x-2 divide-brand-text overflow-hidden">
             {mediums.map((item) => {
               const isSelected = activeMedium === item.id;
-              const count = activeProducts.filter(p => {
-                if (selectedCollection === "be-palestine" && normalizeProductCollection(p) !== "Be Palestine") return false;
-                if (selectedCollection === "be-symbolic" && normalizeProductCollection(p) !== "Be Symbolic") return false;
-                if (item.id === null) return true;
-                return normalizeProductCategory(p) === item.id;
-              }).length;
-
               return (
                 <button
                   key={item.id ?? "all"}
@@ -277,9 +310,6 @@ export default function ProductGrid({
                   }`}
                 >
                   <span>{item.label}</span>
-                  <span className={`text-[8.5px] font-mono font-bold ${isSelected ? "text-brand-bg/75" : "text-brand-text/50"}`}>
-                    [{count < 10 ? `0${count}` : count}]
-                  </span>
                 </button>
               );
             })}
@@ -290,7 +320,7 @@ export default function ProductGrid({
         <div className="flex flex-wrap items-center gap-3">
           {/* Collection switcher */}
           <div className="inline-flex border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505] divide-x-2 divide-brand-text overflow-hidden">
-            {ethosCollections.map(col => {
+            {ethosCollections.map((col) => {
               const isSelected = selectedCollection === col.id;
               return (
                 <button
@@ -340,21 +370,21 @@ export default function ProductGrid({
         </div>
       </div>
 
-      {/* 3. PRODUCT DISPLAY: CURATED COMPOSITION OR ARCHIVAL LEDGER */}
-      {sortedProducts.length === 0 ? (
+      {/* 3. ARTIFACTS DISPLAY: EXHIBITION, CARDS, OR ARCHIVAL LEDGER */}
+      {filteredArtifacts.length === 0 ? (
         /* Empty / In Fabrication State */
-        <div className="py-20 px-6 text-center space-y-6 border-2 border-dashed border-brand-text/40 bg-brand-surface/50 p-8 sm:p-14 shadow-[4px_4px_0px_#050505] max-w-2xl mx-auto my-8">
-          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-brand-accent text-white font-mono text-[10px] font-black uppercase tracking-widest border border-brand-text shadow-[2px_2px_0px_#050505]">
+        <div className="py-20 px-6 text-center space-y-6 border-2 border-dashed border-brand-text/40 bg-brand-surface/50 p-8 sm:p-14 shadow-[4px_4px_0px_#050505] max-w-2xl mx-auto my-8 font-mono">
+          <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-brand-accent text-white text-[10px] font-black uppercase tracking-widest border border-brand-text shadow-[2px_2px_0px_#050505]">
             <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
             <span>[ STATUS: IN FABRICATION // ATELIER PROTOCOL ACTIVE ]</span>
           </div>
           
           <div className="space-y-3">
-            <h3 className="font-mono text-3xl sm:text-4xl font-black uppercase tracking-tight text-brand-text">
+            <h3 className="text-3xl sm:text-4xl font-black uppercase tracking-tight text-brand-text">
               ALLOTMENTS IN FABRICATION
             </h3>
-            <p className="font-mono text-xs uppercase text-brand-text/80 leading-relaxed max-w-md mx-auto">
-              Artifacts for [{currentCategoryName ? ` ${currentCategoryName} ` : " THIS SELECTION "}] are currently being tailored under strict material mandates. They will be documented here upon release.
+            <p className="text-xs uppercase text-brand-text/80 leading-relaxed max-w-md mx-auto">
+              Artifacts for [{currentCategoryName ? ` ${currentCategoryName} ` : " THIS SELECTION "}] are currently being tailored under strict material mandates.
             </p>
           </div>
 
@@ -366,7 +396,7 @@ export default function ProductGrid({
                 setInStockOnly(false);
                 if (onCategoryChange) onCategoryChange(null); 
               }} 
-              className="px-6 py-3 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
+              className="px-6 py-3 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer"
             >
               EXPLORE ALL REGISTERED ARTIFACTS
             </button>
@@ -374,12 +404,12 @@ export default function ProductGrid({
               type="button"
               disabled={reverifying}
               onClick={() => syncArchiveData()} 
-              className="px-6 py-3 bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg disabled:opacity-50 font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+              className="px-6 py-3 bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg disabled:opacity-50 text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
             >
               {reverifying ? (
                 <>
                   <span className="w-2 h-2 rounded-full bg-brand-accent animate-ping" />
-                  <span>VERIFYING ARCHIVE (3 CHECKS)...</span>
+                  <span>VERIFYING ARCHIVE...</span>
                 </>
               ) : (
                 <span>RE-VERIFY COLLECTION STATUS</span>
@@ -388,83 +418,167 @@ export default function ProductGrid({
           </div>
         </div>
       ) : viewMode === "ledger" ? (
-        /* ARCHIVAL REGISTRY LEDGER VIEW (Dense, Architectural, Technical Spec) */
+        /* ARCHIVAL REGISTRY LEDGER VIEW (Organized by Artifact with separate Specimens) */
         <div className="border-2 border-brand-text bg-brand-surface shadow-[6px_6px_0px_#050505] overflow-x-auto">
           <table className="w-full text-left font-mono border-collapse">
             <thead>
               <tr className="border-b-2 border-brand-text bg-brand-text text-brand-bg text-[9.5px] uppercase tracking-widest font-black">
-                <th className="p-3.5">ID // SPECIMEN</th>
-                <th className="p-3.5">SYMBOL / INSCRIPTION</th>
-                <th className="p-3.5">MEDIUM</th>
-                <th className="p-3.5">MATERIAL & STRUCTURE</th>
-                <th className="p-3.5">ALLOTMENT</th>
-                <th className="p-3.5">EDITION RUN</th>
+                <th className="p-3.5">MASTER ARTIFACT // CENTRAL GRAPHIC</th>
+                <th className="p-3.5">INSCRIPTION</th>
+                <th className="p-3.5">COLLECTION</th>
+                <th className="p-3.5">SEPARATE SPECIMENS</th>
+                <th className="p-3.5">PRICE RANGE</th>
                 <th className="p-3.5 text-right">ACTION</th>
               </tr>
             </thead>
             <tbody className="divide-y-2 divide-brand-text text-xs">
-              {sortedProducts.map((p, idx) => {
-                const artifactNum = String(idx + 1).padStart(3, '0');
-                const cat = categories.find(c => c.id === p.categoryId);
-                const isComingSoon = Boolean(p.isComingSoon || p.comingSoon || p.status === "coming-soon");
+              {filteredArtifacts.map((art, idx) => {
+                const artifactNum = String(idx + 1).padStart(2, "0");
+                const childSpecs = specimens.filter(
+                  (s) => s.parentArtifactId === art.id || art.specimenIds?.includes(s.id)
+                );
+                const isExpanded = expandedLedgerArtifactIds[art.id] ?? true;
+                const minPrice = childSpecs.length > 0 ? Math.min(...childSpecs.map((s) => s.price)) : 0;
+                const maxPrice = childSpecs.length > 0 ? Math.max(...childSpecs.map((s) => s.price)) : 0;
+
                 return (
-                  <tr 
-                    key={p.id}
-                    onClick={() => {
-                      soundManager.playClick(0.12);
-                      onProductClick(p);
-                    }}
-                    className="hover:bg-brand-text/5 cursor-pointer transition-colors group"
-                  >
-                    <td className="p-3.5">
-                      <div className="flex items-center gap-3">
-                        <span className="font-bold text-brand-accent text-[10px]">[specimen {artifactNum}]</span>
-                        <div>
-                          <div className="font-black uppercase tracking-tight text-brand-text group-hover:text-brand-accent transition-colors flex items-center gap-2">
-                            <span>{p.name}</span>
-                            {isComingSoon && (
-                              <span className="text-[8px] font-black uppercase tracking-wider bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text">
-                                COMING SOON
-                              </span>
-                            )}
+                  <React.Fragment key={art.id}>
+                    {/* Master Artifact Primary Row */}
+                    <tr 
+                      className="bg-brand-surface hover:bg-brand-bg/80 transition-colors cursor-pointer group"
+                      onClick={() => toggleLedgerExpand(art.id)}
+                    >
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-3">
+                          <button
+                            type="button"
+                            className="text-brand-accent p-0.5 hover:bg-brand-text/10"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              toggleLedgerExpand(art.id);
+                            }}
+                          >
+                            {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
+                          </button>
+                          <div className="w-10 h-10 bg-brand-bg border border-brand-text p-1 flex items-center justify-center shrink-0">
+                            <img
+                              src={art.graphic || "/Logo_NoName.jpg"}
+                              alt={art.name}
+                              referrerPolicy="no-referrer"
+                              className="w-full h-full object-contain"
+                            />
                           </div>
-                          <div className="text-[9px] text-brand-text/60 uppercase">
-                            SKU: {p.productId || p.sku}
+                          <div>
+                            <div className="font-black uppercase tracking-tight text-brand-text group-hover:text-brand-accent transition-colors flex items-center gap-2">
+                              <span>{art.name}</span>
+                              <span className="text-[8.5px] font-bold text-brand-text/60">
+                                [{art.artifactId || `ART-${artifactNum}`}]
+                              </span>
+                            </div>
+                            <div className="text-[9px] text-brand-text/70 uppercase line-clamp-1 max-w-xs">
+                              {art.concept || art.symbolicTagline || "Canonical Artifact"}
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    </td>
-                    <td className="p-3.5">
-                      <div className="font-black text-brand-accent text-sm">
-                        {p.inscription || "CONVICTION"}
-                      </div>
-                      <div className="text-[9px] text-brand-text/70 uppercase truncate max-w-[180px]">
-                        {p.symbolicTagline || p.wearingCommunicates}
-                      </div>
-                    </td>
-                    <td className="p-3.5">
-                      <span className="px-2 py-0.5 border border-brand-text text-[9px] font-black uppercase bg-brand-bg">
-                        {cat?.label || normalizeProductCategory(p).toUpperCase()}
-                      </span>
-                    </td>
-                    <td className="p-3.5 text-[10px] text-brand-text/80 uppercase">
-                      {p.material || "ARCHIVAL COTTON"}
-                    </td>
-                    <td className="p-3.5">
-                      <span className={`text-[10px] font-bold ${isComingSoon ? "text-brand-accent" : p.inventory > 0 ? "text-brand-text/90" : "text-red-600"}`}>
-                        {isComingSoon ? "COMING SOON" : p.inventory > 0 ? "AVAILABLE" : "ALLOTTED"}
-                      </span>
-                    </td>
-                    <td className="p-3.5 font-bold uppercase text-[10px] text-brand-accent">
-                      {p.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS"}
-                    </td>
-                    <td className="p-3.5 text-right">
-                      <span className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg group-hover:bg-brand-accent group-hover:text-white border border-brand-text transition-all">
-                        <span>{isComingSoon ? "PREVIEW" : "EXPLORE"}</span>
-                        <ArrowUpRight size={10} />
-                      </span>
-                    </td>
-                  </tr>
+                      </td>
+                      <td className="p-3.5">
+                        {art.inscription ? (
+                          <span className="font-serif text-base font-black text-brand-accent" dir="rtl">
+                            {art.inscription.startsWith("#") ? art.inscription : `# ${art.inscription}`}
+                          </span>
+                        ) : (
+                          <span className="text-brand-text/40">—</span>
+                        )}
+                      </td>
+                      <td className="p-3.5">
+                        <span className="px-2 py-0.5 border border-brand-text text-[9px] font-black uppercase bg-brand-bg">
+                          {art.collectionName || "CANONICAL"}
+                        </span>
+                      </td>
+                      <td className="p-3.5">
+                        <div className="flex items-center gap-1 font-bold">
+                          <Layers size={11} className="text-brand-accent" />
+                          <span>{childSpecs.length} SPECIMENS</span>
+                        </div>
+                      </td>
+                      <td className="p-3.5 font-bold">
+                        {minPrice === maxPrice && minPrice > 0
+                          ? `PKR ${minPrice.toLocaleString()}`
+                          : minPrice > 0
+                            ? `PKR ${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()}`
+                            : "CANONICAL"}
+                      </td>
+                      <td className="p-3.5 text-right">
+                        <button
+                          type="button"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            soundManager.playClick(0.12);
+                            onProductClick(art);
+                          }}
+                          className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text transition-all shadow-[1px_1px_0px_#050505]"
+                        >
+                          <span>EXPLORE</span>
+                          <ArrowUpRight size={10} />
+                        </button>
+                      </td>
+                    </tr>
+
+                    {/* Nested Separate Specimens Records */}
+                    {isExpanded && childSpecs.map((spec) => (
+                      <tr
+                        key={spec.id}
+                        onClick={() => {
+                          soundManager.playClick(0.12);
+                          onProductClick(art, spec.id);
+                        }}
+                        className="bg-brand-text/[0.02] hover:bg-brand-accent/5 border-t border-brand-text/10 cursor-pointer transition-colors"
+                      >
+                        <td className="py-2.5 pl-12 pr-3.5" colSpan={2}>
+                          <div className="flex items-center gap-3">
+                            <div className="w-7 h-7 bg-brand-surface border border-brand-text/40 p-0.5 flex items-center justify-center shrink-0">
+                              <img
+                                src={spec.images?.[0] || spec.thumbnailImage || art.graphic || "/Logo_NoName.jpg"}
+                                alt={spec.medium}
+                                referrerPolicy="no-referrer"
+                                className="w-full h-full object-contain"
+                              />
+                            </div>
+                            <div>
+                              <div className="font-black uppercase text-[10px] text-brand-text flex items-center gap-2">
+                                <span className="text-brand-accent">↳</span>
+                                <span>{spec.medium}</span>
+                                <span className="text-[8px] font-normal text-brand-text/60">
+                                  [SKU: {spec.sku}]
+                                </span>
+                              </div>
+                              <div className="text-[8.5px] text-brand-text/70 uppercase">
+                                {spec.material} {spec.fabricGsm ? `// ${spec.fabricGsm}` : ""} {spec.fit ? `// ${spec.fit}` : ""}
+                              </div>
+                            </div>
+                          </div>
+                        </td>
+                        <td className="py-2.5 px-3.5">
+                          <span className="text-[9px] font-bold text-brand-text/70 uppercase">
+                            {spec.editionDetails || "ARCHIVAL SPECIMEN"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3.5">
+                          <span className={`text-[9px] font-black uppercase ${spec.availability && spec.status !== "sold_out" ? "text-emerald-700" : "text-red-600"}`}>
+                            {spec.availability && spec.status !== "sold_out" ? "IN STOCK" : "ALLOTTED"}
+                          </span>
+                        </td>
+                        <td className="py-2.5 px-3.5 font-black text-brand-accent text-xs">
+                          PKR {spec.price.toLocaleString()}
+                        </td>
+                        <td className="py-2.5 px-3.5 text-right">
+                          <span className="text-[8.5px] font-black uppercase text-brand-text underline hover:text-brand-accent">
+                            VIEW SPECIMEN
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </React.Fragment>
                 );
               })}
             </tbody>
@@ -473,22 +587,23 @@ export default function ProductGrid({
       ) : viewMode === "grid" ? (
         /* ARTIFACT CARDS GRID VIEW */
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
-          {sortedProducts.map((product, idx) => (
-            <ProductCard
-              key={product.id}
-              product={product}
-              categoryLabel={categories.find(c => c.id === product.categoryId)?.label || normalizeProductCategory(product).toUpperCase()}
-              onClick={() => onProductClick(product)}
+          {filteredArtifacts.map((art, idx) => (
+            <ArtifactCard
+              key={art.id}
+              artifact={art}
+              specimens={specimens}
+              onClick={(specimenId) => onProductClick(art, specimenId)}
               index={idx}
             />
           ))}
         </div>
       ) : (
-        /* 4. CURATED HORIZONTAL OVERLAPPING ARTIFACT COLLECTION */
+        /* 4. CURATED HORIZONTAL OVERLAPPING ARTIFACT EXHIBITION */
         <ArtifactOverlappingCollection 
-          products={sortedProducts} 
+          artifacts={filteredArtifacts}
+          specimens={specimens}
           categories={categories} 
-          onProductClick={onProductClick} 
+          onProductClick={(entity, specimenId) => onProductClick(entity, specimenId)} 
         />
       )}
     </section>

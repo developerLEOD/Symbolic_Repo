@@ -72,10 +72,8 @@ export default function ProductCard({
     if (enterTimerRef.current) {
       clearTimeout(enterTimerRef.current);
     }
-    // Dwell delay of 320ms before revealing satellite angle plates
-    enterTimerRef.current = setTimeout(() => {
-      setShowAngles(true);
-    }, 320);
+    // Instant, lag-free satellite preview activation
+    setShowAngles(true);
   };
 
   const handleMouseLeave = () => {
@@ -85,13 +83,13 @@ export default function ProductCard({
     }
     setIsHovered(false);
 
-    // Graceful exit buffer of 280ms
+    // Snappy, clean exit buffer
     if (leaveTimerRef.current) {
       clearTimeout(leaveTimerRef.current);
     }
     leaveTimerRef.current = setTimeout(() => {
       setShowAngles(false);
-    }, 280);
+    }, 120);
   };
 
   return (
@@ -167,10 +165,10 @@ export default function ProductCard({
                 target.src = STUDIO_FALLBACK_IMAGE;
               }
             }}
-            initial={{ opacity: 0.75, scale: 0.99 }}
-            animate={{ opacity: 1, scale: isHovered ? 1.03 : 1 }}
-            exit={{ opacity: 0.7, scale: 1.01 }}
-            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            initial={{ opacity: 0.85 }}
+            animate={{ opacity: 1, scale: isHovered ? 1.02 : 1 }}
+            exit={{ opacity: 0.85 }}
+            transition={{ duration: 0.1, ease: "easeOut" }}
             className="w-full h-full object-contain object-center p-3"
           />
         </AnimatePresence>
@@ -257,20 +255,19 @@ export default function ProductCard({
                 <motion.button
                   key={i}
                   type="button"
-                  initial={{ opacity: 0, scale: 0.5, rotate: off.rotate * 2 }}
+                  initial={{ opacity: 0, scale: 0.85, x: 6 }}
                   animate={{
                     opacity: 1,
-                    scale: isSelected ? 1.12 : 1,
+                    scale: isSelected ? 1.08 : 1,
+                    x: 0,
                     rotate: off.rotate,
                     transition: {
-                      delay: i * 0.04,
-                      type: "spring",
-                      stiffness: 400,
-                      damping: 24,
+                      duration: 0.12,
+                      ease: [0.16, 1, 0.3, 1],
                     },
                   }}
-                  exit={{ opacity: 0, scale: 0.5, transition: { duration: 0.16 } }}
-                  whileHover={{ scale: 1.2, rotate: 0, zIndex: 60 }}
+                  exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.08 } }}
+                  whileHover={{ scale: 1.15, rotate: 0, zIndex: 60, transition: { duration: 0.08 } }}
                   onMouseEnter={(e) => {
                     e.stopPropagation();
                     if (leaveTimerRef.current) {
@@ -289,6 +286,7 @@ export default function ProductCard({
                   style={{
                     top: off.top,
                     right: off.right,
+                    willChange: "transform, opacity",
                   }}
                   className={`absolute z-40 w-13 h-13 p-0.5 bg-brand-surface border-2 font-mono pointer-events-auto cursor-pointer transition-colors ${
                     isSelected

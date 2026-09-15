@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams } from "react-router-dom";
 import ProductDetail from "./ProductDetail";
 import ArtifactDetail from "./ArtifactDetail";
 import { Product, CartItem, Artifact, Specimen } from "../types";
@@ -27,15 +27,23 @@ export default function ProductRouteHandler({
   onProductDeleted
 }: ProductRouteHandlerProps) {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const querySpecimenId = searchParams.get("specimen") || searchParams.get("specimenId") || undefined;
   const navigate = useNavigate();
   const { isOwner } = useAuth();
 
   const [artifact, setArtifact] = useState<Artifact | null>(null);
   const [specimens, setSpecimens] = useState<Specimen[]>([]);
   const [product, setProduct] = useState<Product | null>(null);
-  const [initialSpecimenId, setInitialSpecimenId] = useState<string | undefined>(undefined);
+  const [initialSpecimenId, setInitialSpecimenId] = useState<string | undefined>(querySpecimenId);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    if (querySpecimenId) {
+      setInitialSpecimenId(querySpecimenId);
+    }
+  }, [querySpecimenId]);
 
   useEffect(() => {
     if (!id) return;
