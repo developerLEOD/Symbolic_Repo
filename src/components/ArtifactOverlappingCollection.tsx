@@ -519,7 +519,7 @@ export default function ArtifactOverlappingCollection({
             <div className="flex items-center justify-between text-[8.5px] text-[#ff4500] font-black uppercase tracking-widest border-b border-brand-bg/20 pb-1.5">
               <span className="flex items-center gap-1">
                 <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
-                OBJECT / 0{activeMobileIdx + 1}
+                SPECIMEN / 0{activeMobileIdx + 1}
               </span>
               <span className="text-brand-bg/70">
                 ACCESSION: TWL-{(activeMobileProduct.productId || activeMobileProduct.sku || activeMobileProduct.id).toUpperCase().slice(0, 8)}
@@ -781,7 +781,7 @@ export default function ArtifactOverlappingCollection({
                           <div className="flex items-center justify-between text-[8.5px] sm:text-[9px] text-[#ff4500] font-black uppercase tracking-widest border-b border-brand-bg/20 pb-1">
                             <span className="flex items-center gap-1">
                               <span className="w-1.5 h-1.5 bg-[#ff4500] inline-block" />
-                              OBJECT / {artifactNum}
+                              SPECIMEN / {artifactNum}
                             </span>
                             <span className="text-brand-bg/60 font-bold">
                               ACCESSION: TWL-{(product.productId || product.sku || product.id).toUpperCase().slice(0, 8)}

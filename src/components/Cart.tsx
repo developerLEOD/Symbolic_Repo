@@ -321,11 +321,11 @@ export default function Cart({
                             className="bg-red-50 border-2 border-red-600 p-3 space-y-2 text-red-950 font-mono"
                           >
                             <div className="flex items-center justify-between text-[11px] font-black uppercase">
-                              <span>CONFIRM RELEASE OF ARTIFACT?</span>
+                              <span>CONFIRM RELEASE OF SPECIMEN?</span>
                               <Trash2 size={13} className="text-red-600" />
                             </div>
                             <p className="text-[9.5px] uppercase opacity-90 leading-tight">
-                              This physical artifact will be de-registered from your possession ledger.
+                              This physical specimen will be de-registered from your possession ledger.
                             </p>
                             <div className="flex items-center gap-2 pt-1">
                               <button

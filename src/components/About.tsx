@@ -93,10 +93,8 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                     className="relative aspect-square max-w-[280px] mx-auto bg-brand-bg border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] transition-shadow p-6 flex flex-col items-center justify-center cursor-default"
                   >
                     {/* Actual official logo */}
-                    <motion.div 
-                      whileHover={{ scale: 1.05, rotate: 1 }}
-                      transition={{ type: "spring", stiffness: 400, damping: 22 }}
-                      className="w-40 h-40 relative flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505] overflow-hidden bg-brand-surface cursor-pointer"
+                    <div 
+                      className="w-40 h-40 relative flex items-center justify-center border-2 border-brand-text shadow-[4px_4px_0px_#050505] overflow-hidden bg-brand-surface"
                     >
                       <img 
                         src="/Logo_NoName.jpg" 
@@ -104,7 +102,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-contain p-2"
                       />
-                    </motion.div>
+                    </div>
                     {/* Callout tags */}
                     <div className="mt-4 flex items-center justify-between w-full font-mono text-[9px] text-brand-text/60 uppercase">
                       <span>[ ORANGE SQUARE ]</span>

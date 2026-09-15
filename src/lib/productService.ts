@@ -395,21 +395,6 @@ function sanitizeProduct(p: Product): { product: Product; changed: boolean } {
     changed = true;
   }
 
-  if (newName && /sumud/i.test(newName)) {
-    newName = newName.replace(/sumud/gi, "Be Palestine");
-    changed = true;
-  }
-
-  if (newDesc && /sumud/i.test(newDesc)) {
-    newDesc = newDesc.replace(/sumud/gi, "Be Palestine");
-    changed = true;
-  }
-
-  if (newTagline && /sumud/i.test(newTagline)) {
-    newTagline = newTagline.replace(/sumud/gi, "Be Palestine");
-    changed = true;
-  }
-
   const sanitized: Product = {
     ...p,
     name: newName,

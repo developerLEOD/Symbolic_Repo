@@ -1,0 +1,182 @@
+import React, { useState } from "react";
+import { Specimen, Artifact } from "../types";
+import { motion, AnimatePresence } from "motion/react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
+import { soundManager } from "../lib/soundEffects";
+
+interface SpecimenCardProps {
+  specimen: Specimen;
+  parentArtifact?: Artifact;
+  onClick: () => void;
+  index?: number;
+}
+
+export default function SpecimenCard({ 
+  specimen, 
+  parentArtifact, 
+  onClick,
+  index = 0 
+}: SpecimenCardProps) {
+  const [activeImageIndex, setActiveImageIndex] = useState(0);
+  const [isHovered, setIsHovered] = useState(false);
+
+  const images = specimen.images && specimen.images.length > 0 
+    ? specimen.images 
+    : (parentArtifact?.images || [specimen.thumbnailImage || ""]);
+
+  const isSoldOut = !specimen.availability || specimen.status === "sold_out" || specimen.inventory <= 0;
+  const artifactName = parentArtifact?.name || specimen.artifactName || "CANONICAL";
+
+  const handlePrevImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    soundManager.playClick(0.1);
+    setActiveImageIndex(prev => (prev === 0 ? images.length - 1 : prev - 1));
+  };
+
+  const handleNextImage = (e: React.MouseEvent) => {
+    e.stopPropagation();
+    soundManager.playClick(0.1);
+    setActiveImageIndex(prev => (prev === images.length - 1 ? 0 : prev + 1));
+  };
+
+  return (
+    <motion.div 
+      initial={{ opacity: 0, y: 12 }}
+      whileInView={{ opacity: 1, y: 0 }}
+      viewport={{ once: true }}
+      whileHover={{ y: -4, transition: { type: "spring", stiffness: 450, damping: 26 } }}
+      whileTap={{ scale: 0.99 }}
+      transition={{ duration: 0.2 }}
+      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-all duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      onClick={() => {
+        soundManager.playClick();
+        onClick();
+      }}
+      onMouseEnter={() => {
+        soundManager.playHover(0.03);
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => setIsHovered(false)}
+    >
+      {/* Corner crosshairs */}
+      <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
+      <span className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
+      <span className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
+      <span className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
+
+      {/* Identification Header */}
+      <div className="flex items-center justify-between border-b-2 border-brand-text pb-2.5 mb-3">
+        <div className="flex items-center gap-1.5">
+          <span className="font-mono text-[9px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
+            {specimen.medium}
+          </span>
+          <span className="font-mono text-[9px] font-black uppercase text-brand-text/70 bg-brand-text/10 px-1.5 py-0.5 border border-brand-text/30">
+            {specimen.sku}
+          </span>
+        </div>
+
+        <div className={`font-mono text-[9px] font-black uppercase px-2 py-0.5 border ${
+          isSoldOut 
+            ? "bg-red-50 text-red-600 border-red-300" 
+            : "bg-emerald-50 text-emerald-700 border-emerald-300"
+        }`}>
+          {isSoldOut ? "ALLOTTED" : "AVAILABLE"}
+        </div>
+      </div>
+
+      {/* Central Visual Specimen Canvas */}
+      <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
+        <AnimatePresence mode="wait">
+          <motion.img 
+            key={activeImageIndex}
+            src={images[activeImageIndex] || specimen.thumbnailImage} 
+            alt={`${artifactName} ${specimen.medium}`}
+            referrerPolicy="no-referrer"
+            initial={{ opacity: 0.8, scale: 0.99 }}
+            animate={{ opacity: 1, scale: isHovered ? 1.03 : 1 }}
+            exit={{ opacity: 0.7, scale: 1.01 }}
+            transition={{ type: "spring", stiffness: 320, damping: 28 }}
+            className="w-full h-full object-contain object-center p-3"
+          />
+        </AnimatePresence>
+
+        {/* Parent Artifact Ribbon */}
+        <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
+          <span className="text-[8.5px] font-mono tracking-widest font-black bg-brand-surface text-brand-text px-2 py-0.5 uppercase border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+            ARTIFACT: {artifactName}
+          </span>
+        </div>
+
+        {/* Navigation Chevrons */}
+        {images.length > 1 && (
+          <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-between z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
+            <button
+              type="button"
+              onClick={handlePrevImage}
+              aria-label="Previous angle"
+              className="pointer-events-auto p-1 bg-brand-surface hover:bg-brand-text hover:text-white text-brand-text border border-brand-text shadow-[1.5px_1.5px_0px_#050505]"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={handleNextImage}
+              aria-label="Next angle"
+              className="pointer-events-auto p-1 bg-brand-surface hover:bg-brand-text hover:text-white text-brand-text border border-brand-text shadow-[1.5px_1.5px_0px_#050505]"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
+        )}
+      </div>
+
+      {/* Information Strip */}
+      <div className="space-y-2.5 flex-1 flex flex-col justify-between">
+        <div>
+          <div className="flex items-baseline justify-between gap-1">
+            <h3 className="text-sm sm:text-base font-mono font-black uppercase text-brand-text tracking-tight group-hover:text-brand-accent transition-colors line-clamp-1">
+              {artifactName} — {specimen.medium}
+            </h3>
+            <span className="font-mono text-xs font-black text-brand-text whitespace-nowrap">
+              PKR {specimen.price.toLocaleString()}
+            </span>
+          </div>
+
+          <p className="text-[9.5px] font-mono font-bold uppercase text-brand-text/75 leading-relaxed line-clamp-1 mt-0.5">
+            {specimen.type || specimen.garmentType || specimen.color || "Standard Edition"}
+          </p>
+        </div>
+
+        {/* Technical Ledger Strip */}
+        <div className="grid grid-cols-2 gap-2 border-t border-brand-text/20 pt-2 font-mono text-[8px] uppercase">
+          <div>
+            <span className="text-brand-text/50 block text-[7px] font-bold">MATERIAL / CUT:</span>
+            <span className="font-black text-brand-text truncate block">{specimen.material || specimen.type || "HEAVY COTTON"}</span>
+          </div>
+          <div className="text-right">
+            <span className="text-brand-text/50 block text-[7px] font-bold">SIZES:</span>
+            <span className="font-black text-brand-text truncate block">
+              {specimen.availableSizes?.join(", ") || "S, M, L, XL"}
+            </span>
+          </div>
+        </div>
+
+        {/* Action Button */}
+        <div className="border-t-2 border-brand-text pt-2.5">
+          <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
+            <span>ACQUIRE SPECIMEN</span>
+            <motion.div
+              animate={{ 
+                x: isHovered ? [0, 3, 0] : 0,
+                y: isHovered ? [0, -3, 0] : 0
+              }}
+              transition={{ repeat: isHovered ? Infinity : 0, duration: 0.9, ease: "easeInOut" }}
+            >
+              <ArrowUpRight size={12} className="group-hover:text-brand-accent transition-colors" />
+            </motion.div>
+          </div>
+        </div>
+      </div>
+    </motion.div>
+  );
+}

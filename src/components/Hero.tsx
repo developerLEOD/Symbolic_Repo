@@ -208,22 +208,9 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         {/* Right Prominent Official Emblem Display */}
         <div className="lg:col-span-5 flex flex-col items-center justify-start pt-10 lg:pt-16">
           <div className="flex flex-col items-center justify-center text-center px-2 pb-2 sm:px-4 sm:pb-4 w-full">
-            {/* The Actual Official SYMBOLIC Logo Emblem */}
-            <motion.div
-              initial={{ opacity: 0, scale: 0.45, rotate: -8, y: 40 }}
-              animate={{ opacity: 1, scale: 1, rotate: -3, y: 0 }}
-              transition={{ type: "spring", stiffness: 320, damping: 18, delay: 0.22 }}
-              whileHover={{ 
-                rotate: 2.5, 
-                scale: 1.05,
-                transition: { type: "spring", stiffness: 400, damping: 15 } 
-              }}
-              whileTap={{ 
-                rotate: -5, 
-                scale: 0.97,
-                transition: { type: "spring", stiffness: 450, damping: 15 } 
-              }}
-              className="w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 lg:w-64 lg:h-64 border-3 sm:border-4 border-black overflow-hidden bg-brand-surface shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#ff4500] transition-shadow duration-200 cursor-pointer select-none"
+            {/* The Actual Official SYMBOLIC Logo Emblem (Clean, Flat Architectural Display) */}
+            <div
+              className="w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 lg:w-64 lg:h-64 border-3 sm:border-4 border-black overflow-hidden bg-brand-surface shadow-[6px_6px_0px_#050505] select-none"
             >
               <img 
                 src="/Logo_NoName.jpg" 
@@ -231,7 +218,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                 referrerPolicy="no-referrer"
                 className="w-full h-full object-cover select-none pointer-events-none"
               />
-            </motion.div>
+            </div>
 
             {/* Emblem Specifications Callout with Pop-up Spring Entrance */}
             <motion.div 

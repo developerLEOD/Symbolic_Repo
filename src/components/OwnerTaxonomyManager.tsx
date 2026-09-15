@@ -95,6 +95,14 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
   const [newTagDesc, setNewTagDesc] = useState("");
   const [newTagColor, setNewTagColor] = useState("#0c0c0c");
 
+  // Deletion Modal State (Iframe Safe)
+  const [confirmDeleteState, setConfirmDeleteState] = useState<{
+    type: "classification" | "type" | "tag";
+    id: string;
+    name: string;
+    extraMsg?: string;
+  } | null>(null);
+
   // Load from database on mount
   useEffect(() => {
     loadTaxonomy();
@@ -184,25 +192,20 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
     const target = catalog.classifications.find(c => c.id === classId);
     if (!target) return;
     if (catalog.classifications.length <= 1) {
-      alert("At least one artifact classification must exist.");
+      setSaveMessage({ type: "error", text: "At least one artifact classification must exist." });
       return;
     }
     const hasTypes = target.types.length > 0;
-    const confirmMsg = hasTypes 
-      ? `Delete classification "${target.name}" and its ${target.types.length} artifact types?` 
-      : `Delete classification "${target.name}"?`;
-    
-    if (window.confirm(confirmMsg)) {
-      const remaining = catalog.classifications.filter(c => c.id !== classId);
-      const nextCatalog: TaxonomyCatalog = {
-        ...catalog,
-        classifications: remaining.map((c, idx) => ({ ...c, order: idx + 1 }))
-      };
-      if (selectedClassificationId === classId) {
-        setSelectedClassificationId(remaining[0]?.id || "");
-      }
-      handleSaveAll(nextCatalog);
-    }
+    const extraMsg = hasTypes 
+      ? `This will also remove all ${target.types.length} artifact types nested under it.` 
+      : undefined;
+
+    setConfirmDeleteState({
+      type: "classification",
+      id: classId,
+      name: target.name,
+      extraMsg
+    });
   };
 
   const handleMoveClassification = (index: number, direction: "up" | "down") => {
@@ -285,22 +288,12 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
     const target = selectedClassification.types.find(t => t.id === typeId);
     if (!target) return;
 
-    if (window.confirm(`Remove artifact type "${target.name}" under ${selectedClassification.name}?`)) {
-      const remainingTypes = selectedClassification.types.filter(t => t.id !== typeId);
-      const nextCatalog: TaxonomyCatalog = {
-        ...catalog,
-        classifications: catalog.classifications.map(c => {
-          if (c.id === selectedClassification.id) {
-            return {
-              ...c,
-              types: remainingTypes.map((t, idx) => ({ ...t, order: idx + 1 }))
-            };
-          }
-          return c;
-        })
-      };
-      handleSaveAll(nextCatalog);
-    }
+    setConfirmDeleteState({
+      type: "type",
+      id: typeId,
+      name: target.name,
+      extraMsg: `Under classification: ${selectedClassification.name}`
+    });
   };
 
   const handleMoveType = (index: number, direction: "up" | "down") => {
@@ -378,13 +371,51 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
     const target = catalog.tags.find(t => t.id === tagId);
     if (!target) return;
 
-    if (window.confirm(`Delete custom tag "${target.name}"?`)) {
+    setConfirmDeleteState({
+      type: "tag",
+      id: tagId,
+      name: target.name
+    });
+  };
+
+  const executeConfirmedDelete = () => {
+    if (!confirmDeleteState) return;
+
+    if (confirmDeleteState.type === "classification") {
+      const remaining = catalog.classifications.filter(c => c.id !== confirmDeleteState.id);
       const nextCatalog: TaxonomyCatalog = {
         ...catalog,
-        tags: catalog.tags.filter(t => t.id !== tagId)
+        classifications: remaining.map((c, idx) => ({ ...c, order: idx + 1 }))
+      };
+      if (selectedClassificationId === confirmDeleteState.id) {
+        setSelectedClassificationId(remaining[0]?.id || "");
+      }
+      handleSaveAll(nextCatalog);
+    } else if (confirmDeleteState.type === "type") {
+      if (!selectedClassification) return;
+      const remainingTypes = selectedClassification.types.filter(t => t.id !== confirmDeleteState.id);
+      const nextCatalog: TaxonomyCatalog = {
+        ...catalog,
+        classifications: catalog.classifications.map(c => {
+          if (c.id === selectedClassification.id) {
+            return {
+              ...c,
+              types: remainingTypes.map((t, idx) => ({ ...t, order: idx + 1 }))
+            };
+          }
+          return c;
+        })
+      };
+      handleSaveAll(nextCatalog);
+    } else if (confirmDeleteState.type === "tag") {
+      const nextCatalog: TaxonomyCatalog = {
+        ...catalog,
+        tags: catalog.tags.filter(t => t.id !== confirmDeleteState.id)
       };
       handleSaveAll(nextCatalog);
     }
+
+    setConfirmDeleteState(null);
   };
 
   const filteredTags = catalog.tags.filter(t => {
@@ -1099,6 +1130,67 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
           })}
         </div>
       </div>
+
+      {/* Confirmation Modal */}
+      {confirmDeleteState && (
+        <div 
+          role="dialog"
+          aria-modal="true"
+          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-text/80 backdrop-blur-xs animate-in fade-in duration-150"
+          onClick={() => setConfirmDeleteState(null)}
+        >
+          <div 
+            className="w-full max-w-md bg-brand-surface border-4 border-brand-text p-6 shadow-[8px_8px_0px_#050505] space-y-4"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between border-b-2 border-brand-text/30 pb-3">
+              <div className="flex items-center gap-2 text-red-600">
+                <Trash2 size={18} />
+                <span className="text-xs font-mono font-black uppercase tracking-wider">
+                  CONFIRM DELETION
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteState(null)}
+                className="text-brand-text/60 hover:text-brand-text p-1 cursor-pointer"
+              >
+                <X size={16} />
+              </button>
+            </div>
+
+            <div className="space-y-2 text-xs font-mono">
+              <p className="text-brand-text">
+                Are you sure you want to delete {confirmDeleteState.type}{" "}
+                <span className="font-bold text-brand-text">&quot;{confirmDeleteState.name}&quot;</span>?
+              </p>
+              {confirmDeleteState.extraMsg && (
+                <p className="p-2 bg-red-500/10 border border-red-500/30 text-red-700 text-[11px]">
+                  {confirmDeleteState.extraMsg}
+                </p>
+              )}
+            </div>
+
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => setConfirmDeleteState(null)}
+                className="px-4 py-2 bg-brand-surface border-2 border-brand-text text-xs font-black uppercase hover:bg-brand-text/10 cursor-pointer shadow-[2px_2px_0px_#050505]"
+              >
+                CANCEL
+              </button>
+              <button
+                type="button"
+                onClick={executeConfirmedDelete}
+                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white border-2 border-brand-text text-xs font-black uppercase flex items-center gap-2 shadow-[2px_2px_0px_#050505] cursor-pointer"
+              >
+                <Trash2 size={13} />
+                <span>CONFIRM DELETE</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

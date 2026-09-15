@@ -1,5 +1,72 @@
 {
   "entities": {
+    "artifact": {
+      "title": "Artifact",
+      "description": "Symbolic work, design, and intellectual work independent of physical medium",
+      "type": "object",
+      "properties": {
+        "artifactId": { "type": "string" },
+        "name": { "type": "string" },
+        "shortDescription": { "type": "string" },
+        "description": { "type": "string" },
+        "concept": { "type": "string" },
+        "graphic": { "type": "string" },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "thumbnailImage": { "type": "string" },
+        "inscription": { "type": "string" },
+        "pillar1Represents": { "type": "string" },
+        "pillar2WhyChosen": { "type": "string" },
+        "pillar3Communicates": { "type": "string" },
+        "pillar4WearerCarries": { "type": "string" },
+        "symbolicTagline": { "type": "string" },
+        "collectionName": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "releaseInfo": { "type": "string" },
+        "internalNotes": { "type": "string" },
+        "status": { "type": "string", "enum": ["draft", "published", "archived"] },
+        "specimenIds": { "type": "array", "items": { "type": "string" } },
+        "setPriceOverride": { "type": "number" },
+        "setDiscountPercentage": { "type": "number" },
+        "order": { "type": "number" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["name", "description", "graphic", "status"]
+    },
+    "specimen": {
+      "title": "Specimen",
+      "description": "Physical manifestation of an Artifact in a specific medium (T-Shirt, Cap, Mug, etc.)",
+      "type": "object",
+      "properties": {
+        "parentArtifactId": { "type": "string" },
+        "medium": { "type": "string" },
+        "mediumCategory": { "type": "string" },
+        "type": { "type": "string" },
+        "sku": { "type": "string" },
+        "price": { "type": "number" },
+        "inventory": { "type": "number" },
+        "availability": { "type": "boolean" },
+        "status": { "type": "string", "enum": ["draft", "available", "sold_out", "discontinued"] },
+        "images": { "type": "array", "items": { "type": "string" } },
+        "thumbnailImage": { "type": "string" },
+        "color": { "type": "string" },
+        "colorHex": { "type": "string" },
+        "availableColors": { "type": "array" },
+        "availableSizes": { "type": "array", "items": { "type": "string" } },
+        "material": { "type": "string" },
+        "weight": { "type": "string" },
+        "fit": { "type": "string" },
+        "printMethod": { "type": "string" },
+        "edition": { "type": "string" },
+        "careInstructions": { "type": "string" },
+        "finish": { "type": "string" },
+        "dimensions": { "type": "string" },
+        "capacity": { "type": "string" },
+        "createdAt": { "type": "number" },
+        "updatedAt": { "type": "number" }
+      },
+      "required": ["parentArtifactId", "medium", "price", "inventory", "availability"]
+    },
     "category": {
       "title": "Category",
       "description": "Product categories like T-Shirts, Caps, Mugs",
@@ -144,6 +211,18 @@
     }
   },
   "firestore": {
+    "/artifacts/{artifactId}": {
+      "schema": "artifact",
+      "description": "Symbolic artifacts representing designs and intellectual concepts"
+    },
+    "/artifacts/{artifactId}/specimens/{specimenId}": {
+      "schema": "specimen",
+      "description": "Physical specimens manifested under an artifact"
+    },
+    "/specimens/{specimenId}": {
+      "schema": "specimen",
+      "description": "Global specimen index for multi-medium filtering and catalog display"
+    },
     "/categories/{categoryId}": {
       "schema": "category",
       "description": "Collection of product categories"

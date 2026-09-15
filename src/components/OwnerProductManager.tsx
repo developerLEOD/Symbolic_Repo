@@ -38,6 +38,7 @@ import { Product, ProductVariant, Category, GarmentTypeConfig, ProductColorConfi
 import OwnerReferralManager from "./OwnerReferralManager";
 import OwnerTaxonomyManager from "./OwnerTaxonomyManager";
 import ArtifactTaxonomySelector from "./ArtifactTaxonomySelector";
+import OwnerArtifactSpecimenStudio from "./OwnerArtifactSpecimenStudio";
 import VariantMatrixManager, { 
   DEFAULT_GARMENT_TYPES, 
   PRESET_COLORS, 
@@ -69,14 +70,20 @@ const PRESET_IMAGES = [
   { name: "Editorial Apparel & Cap", url: "/src/assets/images/store_hero_editorial_1788008309317.jpg", category: "t-shirts" },
 ];
 
-export default function OwnerProductManager({ onClose, onProductPublished, categories, initialEditProductId }: OwnerProductManagerProps) {
+export default function OwnerProductManager({ 
+  onClose, 
+  onProductPublished, 
+  categories, 
+  onViewProductInStore,
+  initialEditProductId 
+}: OwnerProductManagerProps) {
   const { user, isOwner, signInWithEmail, signInWithGoogle, signOutUser, formatAuthError } = useAuth();
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"upload" | "catalog" | "referrals" | "taxonomy">("upload");
+  const [activeTab, setActiveTab] = useState<"artifacts" | "upload" | "catalog" | "referrals" | "taxonomy">("artifacts");
   const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "list">("grid");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("all");
@@ -861,8 +868,20 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
         <div className="flex items-center bg-brand-surface border-2 border-brand-text p-1 shadow-[2px_2px_0px_#050505] shrink-0">
           <button
             type="button"
+            onClick={() => setActiveTab("artifacts")}
+            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === "artifacts" 
+                ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
+                : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+            }`}
+          >
+            <Layers size={12} className="shrink-0 text-brand-accent" />
+            <span>ARTIFACTS &amp; SPECIMENS</span>
+          </button>
+          <button
+            type="button"
             onClick={() => setActiveTab("upload")}
-            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 ${
+            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
               activeTab === "upload" 
                 ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
                 : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
@@ -1012,7 +1031,21 @@ export default function OwnerProductManager({ onClose, onProductPublished, categ
 
       {/* Content Area */}
       <div className="flex-grow overflow-y-auto">
-        {activeTab === "taxonomy" ? (
+        {activeTab === "artifacts" ? (
+          <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
+            <OwnerArtifactSpecimenStudio
+              onDataChanged={() => {
+                loadExistingProducts();
+                onProductPublished();
+              }}
+              onViewArtifactInStore={(artId) => {
+                if (onViewProductInStore) {
+                  onViewProductInStore(artId);
+                }
+              }}
+            />
+          </div>
+        ) : activeTab === "taxonomy" ? (
           <div className="max-w-7xl mx-auto px-4 sm:px-8 py-8">
             <OwnerTaxonomyManager />
           </div>

@@ -26,6 +26,22 @@ service cloud.firestore {
       allow write: if isOwner();
     }
     
+    // Artifacts (designs/concepts) and physical specimens
+    match /artifacts/{artifactId} {
+      allow read: if true;
+      allow write: if isOwner();
+      
+      match /specimens/{specimenId} {
+        allow read: if true;
+        allow write: if isOwner();
+      }
+    }
+    
+    match /specimens/{specimenId} {
+      allow read: if true;
+      allow write: if isOwner();
+    }
+    
     // Connection health check path
     match /test/{docId} {
       allow read: if true;
