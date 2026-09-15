@@ -711,6 +711,7 @@ export function saveArtifactsToCache(artifacts: Artifact[]) {
   if (typeof window !== "undefined" && window.localStorage) {
     try {
       localStorage.setItem(ARTIFACTS_CACHE_KEY, JSON.stringify(memoryArtifacts));
+      localStorage.removeItem("sym_products_cache_v2");
     } catch {}
   }
 }
@@ -720,6 +721,7 @@ export function saveSpecimensToCache(specimens: Specimen[]) {
   if (typeof window !== "undefined" && window.localStorage) {
     try {
       localStorage.setItem(SPECIMENS_CACHE_KEY, JSON.stringify(memorySpecimens));
+      localStorage.removeItem("sym_products_cache_v2");
     } catch {}
   }
 }
@@ -1284,5 +1286,140 @@ export async function deleteArtifactCascade(artifactId: string): Promise<void> {
  */
 export async function deleteSpecimenCascade(specimenId: string, parentArtifactId?: string): Promise<void> {
   return deleteSpecimen(specimenId);
+}
+
+/**
+ * Converts a Specimen + its parent Artifact into a canonical Product representation for storefront rendering
+ */
+export function specimenToProduct(specimen: Specimen, parentArtifact?: Artifact): Product {
+  const medConfig = getMediumConfig(specimen.medium);
+  const categoryId = specimen.mediumCategory || medConfig.category || "wear";
+  
+  const artifactName = parentArtifact?.name || specimen.artifactName || "ARCHIVAL SPECIMEN";
+  const name = `${artifactName} — ${specimen.medium}`;
+  
+  const images = (Array.isArray(specimen.images) && specimen.images.length > 0)
+    ? specimen.images
+    : [specimen.thumbnailImage || parentArtifact?.graphic || "/Logo_NoName.jpg"];
+
+  const thumbnailImage = specimen.thumbnailImage || images[0] || parentArtifact?.graphic || "/Logo_NoName.jpg";
+
+  return {
+    id: specimen.id,
+    productId: parentArtifact?.artifactId || specimen.sku || `SPEC-${specimen.id.slice(-4)}`,
+    name,
+    description: parentArtifact?.description || parentArtifact?.shortDescription || `${specimen.medium} formulated for ${artifactName}.`,
+    price: typeof specimen.price === "number" ? specimen.price : 2500,
+    categoryId,
+    sku: specimen.sku,
+    images,
+    thumbnailImage,
+    parentArtifactId: specimen.parentArtifactId || parentArtifact?.id,
+    graphic: parentArtifact?.graphic || specimen.artifactGraphic || "/Logo_NoName.jpg",
+    
+    material: specimen.material || medConfig.defaultMaterial || "ARCHIVAL COTTON",
+    weight: specimen.weight || "",
+    fit: specimen.fit || specimen.type || "STANDARD ATELIER FIT",
+    printMethod: specimen.printMethod || "DIRECT HIGH-DENSITY PRINT",
+    edition: specimen.edition || "050 SPECIMENS",
+    color: specimen.color || "Standard Finish",
+    colorHex: specimen.colorHex || "#1C1C1C",
+    availableColors: specimen.availableColors || [],
+    availableSizes: specimen.availableSizes || medConfig.defaultSizes || ["S", "M", "L", "XL"],
+    capacity: specimen.capacity,
+    dimensions: specimen.dimensions,
+    careInstructions: specimen.careInstructions,
+    finish: specimen.finish,
+    
+    inscription: parentArtifact?.inscription || specimen.artifactInscription,
+    pillar1Represents: parentArtifact?.pillar1Represents,
+    pillar2WhyChosen: parentArtifact?.pillar2WhyChosen,
+    pillar3Communicates: parentArtifact?.pillar3Communicates,
+    pillar4WearerCarries: parentArtifact?.pillar4WearerCarries,
+    
+    statement: parentArtifact?.pillar4WearerCarries,
+    representation: parentArtifact?.pillar2WhyChosen,
+    wearingCommunicates: parentArtifact?.pillar3Communicates,
+    statementMeaning: parentArtifact?.pillar1Represents,
+    
+    medium: specimen.medium,
+    artifactType: specimen.type || specimen.garmentType || "Standard",
+    artifactTags: parentArtifact?.tags || [],
+    
+    inventory: typeof specimen.inventory === "number" ? specimen.inventory : 50,
+    availability: specimen.availability !== false && specimen.status !== "sold_out" && parentArtifact?.status !== "draft",
+    isComingSoon: specimen.status === "draft" || parentArtifact?.status === "draft",
+    status: specimen.status,
+    
+    collectionName: parentArtifact?.collectionName || "Be Symbolic",
+    symbolicTagline: parentArtifact?.symbolicTagline || parentArtifact?.pillar3Communicates || parentArtifact?.shortDescription
+  };
+}
+
+/**
+ * Converts standalone Artifacts without specimens into Product representations for preview
+ */
+export function artifactToProduct(artifact: Artifact): Product {
+  const images = (Array.isArray(artifact.images) && artifact.images.length > 0)
+    ? artifact.images
+    : [artifact.graphic || "/Logo_NoName.jpg"];
+
+  return {
+    id: artifact.id,
+    productId: artifact.artifactId,
+    name: artifact.name,
+    description: artifact.description || artifact.shortDescription,
+    price: artifact.setPriceOverride || 0,
+    categoryId: "wear",
+    sku: artifact.artifactId,
+    images,
+    thumbnailImage: artifact.thumbnailImage || artifact.graphic || images[0],
+    parentArtifactId: artifact.id,
+    graphic: artifact.graphic,
+    
+    material: "COMPLETE ARCHIVE SET",
+    edition: "SERIES 01",
+    color: "Multi-Medium Archive",
+    
+    inscription: artifact.inscription,
+    pillar1Represents: artifact.pillar1Represents,
+    pillar2WhyChosen: artifact.pillar2WhyChosen,
+    pillar3Communicates: artifact.pillar3Communicates,
+    pillar4WearerCarries: artifact.pillar4WearerCarries,
+    
+    statement: artifact.pillar4WearerCarries,
+    representation: artifact.pillar2WhyChosen,
+    wearingCommunicates: artifact.pillar3Communicates,
+    statementMeaning: artifact.pillar1Represents,
+    
+    artifactTags: artifact.tags || [],
+    inventory: 10,
+    availability: artifact.status !== "draft",
+    isComingSoon: artifact.status === "draft",
+    status: artifact.status === "draft" ? "draft" : "published",
+    
+    collectionName: artifact.collectionName || "Be Symbolic",
+    symbolicTagline: artifact.symbolicTagline || artifact.pillar3Communicates || artifact.shortDescription
+  };
+}
+
+/**
+ * Convert all artifacts with their specimens to Product list
+ */
+export function convertArtifactsAndSpecimensToProducts(artifacts: Artifact[], specimens: Specimen[]): Product[] {
+  const products: Product[] = [];
+  
+  for (const artifact of artifacts) {
+    const childSpecimens = specimens.filter(s => s.parentArtifactId === artifact.id || artifact.specimenIds?.includes(s.id));
+    if (childSpecimens.length > 0) {
+      for (const spec of childSpecimens) {
+        products.push(specimenToProduct(spec, artifact));
+      }
+    } else {
+      products.push(artifactToProduct(artifact));
+    }
+  }
+  
+  return products;
 }
 

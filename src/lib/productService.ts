@@ -1,7 +1,14 @@
 import { collection, doc, getDocs, getDocsFromServer, getDoc, setDoc, deleteDoc, query, orderBy, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
-import { Product, Category, ProductVariant } from "../types";
+import { Product, Category, ProductVariant, Artifact, Specimen } from "../types";
 import { handleFirestoreError, OperationType } from "./firestoreErrors";
+import { 
+  fetchArtifacts, 
+  fetchSpecimens, 
+  convertArtifactsAndSpecimensToProducts, 
+  getCachedArtifacts, 
+  getCachedSpecimens 
+} from "./artifactService";
 
 import BlankComingSoonImg from "../assets/images/completely_blank_coming_soon_1789235306808.jpg";
 
@@ -79,7 +86,7 @@ let memoryProductsCache: Product[] | null = null;
 let memoryCategoriesCache: Category[] | null = null;
 
 export function getCachedProducts(): Product[] {
-  if (memoryProductsCache) {
+  if (memoryProductsCache && memoryProductsCache.length > 0) {
     return memoryProductsCache;
   }
   if (typeof window !== "undefined" && window.localStorage) {
@@ -87,7 +94,7 @@ export function getCachedProducts(): Product[] {
       const saved = localStorage.getItem(PRODUCTS_CACHE_KEY);
       if (saved) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           memoryProductsCache = parsed;
           return parsed;
         }
@@ -96,6 +103,18 @@ export function getCachedProducts(): Product[] {
       // Storage parse error ignored
     }
   }
+
+  // Fallback to cached artifacts & specimens converted to products
+  const cachedArtifacts = getCachedArtifacts();
+  const cachedSpecimens = getCachedSpecimens();
+  if (cachedArtifacts.length > 0) {
+    const converted = convertArtifactsAndSpecimensToProducts(cachedArtifacts, cachedSpecimens);
+    if (converted.length > 0) {
+      memoryProductsCache = converted;
+      return converted;
+    }
+  }
+
   return [];
 }
 
@@ -410,30 +429,52 @@ function sanitizeProduct(p: Product): { product: Product; changed: boolean } {
 export async function fetchProducts(): Promise<Product[]> {
   const path = "products";
   
-  // Safe timeout allows sufficient window for 3 consecutive checks (~2s total on empty result)
+  // Safe timeout allows sufficient window for verification
   const timeoutPromise = new Promise<null>((resolve) => {
     setTimeout(() => resolve(null), 8000);
   });
 
   try {
     const fetchPromise = (async () => {
-      // Check twice or thrice if the result is zero in the collection
-      const snapshot = await queryCollectionWithZeroVerification(path, collection(db, path), 3);
-      if (!snapshot || snapshot.empty || !snapshot.docs || snapshot.docs.length === 0) {
-        invalidateProductsCache([]);
-        return [];
+      // 1. Fetch live artifacts and specimens in parallel with direct products
+      const [artifactList, specimenList, rawProductSnapshot] = await Promise.all([
+        fetchArtifacts().catch(() => [] as Artifact[]),
+        fetchSpecimens().catch(() => [] as Specimen[]),
+        queryCollectionWithZeroVerification(path, collection(db, path), 2).catch(() => null)
+      ]);
+
+      // 2. Convert artifacts and specimens to canonical products
+      const artifactProducts = convertArtifactsAndSpecimensToProducts(artifactList, specimenList);
+
+      // 3. Process direct products from products collection (if any)
+      const directProducts: Product[] = [];
+      if (rawProductSnapshot && !rawProductSnapshot.empty && rawProductSnapshot.docs && rawProductSnapshot.docs.length > 0) {
+        const raw = rawProductSnapshot.docs.map((d: any) => ({ id: d.id, ...d.data() } as Product));
+        for (const p of raw) {
+          const { product, changed } = sanitizeProduct(p);
+          if (changed) {
+            const cleaned = cleanUndefined(product);
+            setDoc(doc(db, path, product.id), cleaned, { merge: true }).catch(() => {});
+          }
+          directProducts.push(product);
+        }
       }
 
-      const rawProducts = snapshot.docs.map((d: any) => ({ id: d.id, ...d.data() } as Product));
+      // 4. Combine products: unify by unique id
+      const combinedMap = new Map<string, Product>();
       
-      return rawProducts.map((p: Product) => {
-        const { product, changed } = sanitizeProduct(p);
-        if (changed) {
-          const cleaned = cleanUndefined(product);
-          setDoc(doc(db, path, product.id), cleaned, { merge: true }).catch(() => {});
-        }
-        return product;
-      });
+      // Add direct products
+      for (const p of directProducts) {
+        if (p && p.id) combinedMap.set(p.id, p);
+      }
+      
+      // Overlay/incorporate artifact products (these represent the live Studio register)
+      for (const p of artifactProducts) {
+        if (p && p.id) combinedMap.set(p.id, p);
+      }
+
+      const combined = Array.from(combinedMap.values());
+      return combined;
     })();
 
     const result = await Promise.race([fetchPromise, timeoutPromise]);

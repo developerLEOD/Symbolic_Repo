@@ -206,6 +206,7 @@ export interface Product {
   printMethod?: string; // e.g. "DIRECT SCREEN MATRIX", "TONAL EMBROIDERY"
   edition?: string;
   color?: string;
+  colorHex?: string;
   capacity?: string;
   dimensions?: string;
   careInstructions?: string;
