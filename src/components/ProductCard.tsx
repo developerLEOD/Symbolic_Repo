@@ -243,10 +243,10 @@ export default function ProductCard({
           >
             {images.map((img, i) => {
               const offsets = [
-                { top: "-18px", right: "-28px", rotate: 4.5 },
-                { top: "68px", right: "-32px", rotate: -3.8 },
-                { top: "154px", right: "-26px", rotate: 3.2 },
-                { top: "240px", right: "-30px", rotate: -4.0 },
+                { top: "-22px", right: "-42px", rotate: 4.5 },
+                { top: "72px", right: "-48px", rotate: -3.8 },
+                { top: "168px", right: "-40px", rotate: 3.2 },
+                { top: "264px", right: "-46px", rotate: -4.0 },
               ];
               const off = offsets[i % offsets.length];
               const isSelected = activeImageIndex === i;
@@ -288,17 +288,17 @@ export default function ProductCard({
                     right: off.right,
                     willChange: "transform, opacity",
                   }}
-                  className={`absolute z-40 w-13 h-13 p-0.5 bg-brand-surface border-2 font-mono pointer-events-auto cursor-pointer transition-colors ${
+                  className={`absolute z-40 w-16 h-16 sm:w-18 sm:h-18 p-1 bg-brand-surface border-2 font-mono pointer-events-auto cursor-pointer transition-colors ${
                     isSelected
-                      ? "border-[#ff4500] shadow-[3px_3px_0px_#050505] bg-brand-bg ring-1 ring-[#ff4500]"
-                      : "border-brand-text shadow-[2px_2px_0px_#050505] opacity-90 hover:opacity-100"
+                      ? "border-[#ff4500] shadow-[4px_4px_0px_#050505] bg-brand-bg ring-2 ring-[#ff4500]"
+                      : "border-brand-text shadow-[3px_3px_0px_#050505] opacity-90 hover:opacity-100 hover:border-brand-accent"
                   }`}
-                  title={`angles 0${i + 1}`}
+                  title={`Angle 0${i + 1}`}
                 >
                   <div className="relative w-full h-full overflow-hidden border border-brand-text/30 bg-brand-bg">
                     <img src={img || STUDIO_FALLBACK_IMAGE} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                    <span className={`absolute bottom-0 inset-x-0 text-[6px] font-black text-center uppercase py-px ${isSelected ? "bg-[#ff4500] text-white" : "bg-brand-text text-brand-bg"}`}>
-                      0{i + 1}
+                    <span className={`absolute bottom-0 inset-x-0 text-[7.5px] font-black text-center uppercase py-0.5 tracking-wider ${isSelected ? "bg-[#ff4500] text-white" : "bg-brand-text text-brand-bg"}`}>
+                      VIEW 0{i + 1}
                     </span>
                   </div>
                 </motion.button>

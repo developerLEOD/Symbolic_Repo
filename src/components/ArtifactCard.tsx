@@ -104,7 +104,7 @@ export default function ArtifactCard({
             animate={{ opacity: 1, scale: isHovered ? 1.02 : 1 }}
             exit={{ opacity: 0.85 }}
             transition={{ duration: 0.12, ease: "easeOut" }}
-            className="w-full h-full object-contain object-center p-3"
+            className="w-full h-full object-contain object-center p-1 sm:p-2"
           />
         </AnimatePresence>
 
@@ -160,12 +160,8 @@ export default function ArtifactCard({
             <h3 className="text-base sm:text-lg font-mono font-black uppercase text-brand-text tracking-tight group-hover:text-brand-accent transition-colors truncate">
               {artifact.name}
             </h3>
-            <span className="font-mono text-[11px] font-black text-brand-text whitespace-nowrap">
-              {activeSpecimen 
-                ? `PKR ${activeSpecimen.price.toLocaleString()}`
-                : minPrice > 0 
-                  ? `FROM PKR ${minPrice.toLocaleString()}`
-                  : "CANONICAL"}
+            <span className="font-mono text-[9px] font-black text-brand-accent uppercase tracking-wider whitespace-nowrap">
+              {activeSpecimen ? activeSpecimen.medium : `${specimenCount} SPECIMENS`}
             </span>
           </div>
           
@@ -199,14 +195,14 @@ export default function ArtifactCard({
                       ? "bg-brand-text text-brand-bg border-brand-text shadow-[1.5px_1.5px_0px_#050505]"
                       : "bg-brand-surface text-brand-text border-brand-text/40 hover:border-brand-text hover:bg-brand-bg"
                   }`}
-                  title={`${spec.medium} — PKR ${spec.price.toLocaleString()}`}
+                  title={spec.medium}
                 >
                   <div className="font-black uppercase truncate flex items-center justify-between gap-0.5">
                     <span className="truncate">{spec.medium}</span>
                     {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
                   </div>
-                  <div className={`text-[7.5px] font-bold ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                    PKR {spec.price.toLocaleString()}
+                  <div className={`text-[7.5px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                    {spec.material || "CANONICAL"}
                   </div>
                 </button>
               );

@@ -205,20 +205,46 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
           </motion.div>
         </motion.div>
 
-        {/* Right Prominent Official Emblem Display */}
+        {/* Right Prominent Official Emblem Display with Sideways Tilt Effect */}
         <div className="lg:col-span-5 flex flex-col items-center justify-start pt-10 lg:pt-16">
           <div className="flex flex-col items-center justify-center text-center px-2 pb-2 sm:px-4 sm:pb-4 w-full">
-            {/* The Actual Official SYMBOLIC Logo Emblem (Clean, Flat Architectural Display) */}
-            <div
-              className="w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 lg:w-64 lg:h-64 border-3 sm:border-4 border-black overflow-hidden bg-brand-surface shadow-[6px_6px_0px_#050505] select-none"
+            {/* The Actual Official SYMBOLIC Logo Emblem - Tilted sideways by default, tilting more on hover */}
+            <motion.div
+              initial={{ scale: 0.88, rotate: -3.5, opacity: 0 }}
+              animate={{ scale: 1, rotate: -3.5, opacity: 1 }}
+              transition={{
+                type: "spring",
+                stiffness: 420,
+                damping: 18,
+                delay: 0.15,
+              }}
+              whileHover={{
+                scale: 1.05,
+                rotate: -7.5,
+                transition: { type: "spring", stiffness: 450, damping: 14 },
+              }}
+              onMouseEnter={() => soundManager.playHover(0.04)}
+              className="relative cursor-pointer select-none"
             >
-              <img 
-                src="/Logo_NoName.jpg" 
-                alt="SYMBOLIC Official Emblem" 
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-cover select-none pointer-events-none"
-              />
-            </div>
+              <div
+                className="w-44 h-44 sm:w-52 sm:h-52 md:w-60 md:h-60 lg:w-64 lg:h-64 border-3 sm:border-4 border-black overflow-hidden bg-brand-surface select-none shadow-[6px_6px_0px_#050505] hover:shadow-[9px_9px_0px_#050505] transition-shadow duration-200 relative"
+              >
+                <img 
+                  src="/Logo_NoName.jpg" 
+                  alt="SYMBOLIC Official Emblem" 
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-cover select-none pointer-events-none"
+                />
+
+                {/* Corner Architectural Coordinate Markers */}
+                <div className="absolute top-1.5 left-1.5 font-mono text-[7px] font-black text-black/50 pointer-events-none">
+                  +01
+                </div>
+                <div className="absolute bottom-1.5 right-1.5 font-mono text-[7px] font-black text-black/50 pointer-events-none">
+                  SPEC:SYM-00
+                </div>
+              </div>
+            </motion.div>
 
             {/* Emblem Specifications Callout with Pop-up Spring Entrance */}
             <motion.div 

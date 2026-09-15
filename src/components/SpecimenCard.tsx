@@ -137,8 +137,8 @@ export default function SpecimenCard({
             <h3 className="text-sm sm:text-base font-mono font-black uppercase text-brand-text tracking-tight group-hover:text-brand-accent transition-colors line-clamp-1">
               {artifactName} — {specimen.medium}
             </h3>
-            <span className="font-mono text-xs font-black text-brand-text whitespace-nowrap">
-              PKR {specimen.price.toLocaleString()}
+            <span className="font-mono text-[9px] font-black text-brand-accent uppercase tracking-wider whitespace-nowrap">
+              SPECIMEN
             </span>
           </div>
 

@@ -42,14 +42,14 @@ const SPECIMEN_OFFSETS = [
   { y: 12, rotate: 0.8 },
 ];
 
-// Brutalist coordinate offsets for orbiting specimen plates
+// Brutalist coordinate offsets for orbiting specimen plates (Enlarged, Clear & Vertically Staggered)
 const SPECIMEN_SCATTER_OFFSETS = [
-  { x: "-86px", y: "-40px", rotate: -4 },
-  { x: "106%", y: "-34px", rotate: 3.5 },
-  { x: "-80px", y: "110px", rotate: 2.5 },
-  { x: "104%", y: "96px", rotate: -3 },
-  { x: "-74px", y: "250px", rotate: -2 },
-  { x: "105%", y: "238px", rotate: 4 },
+  { x: "-190px", y: "-20px", rotate: -3.8 },
+  { x: "103%", y: "105px", rotate: 3.5 },
+  { x: "-185px", y: "235px", rotate: 2.2 },
+  { x: "103%", y: "345px", rotate: -2.8 },
+  { x: "-180px", y: "460px", rotate: -2.0 },
+  { x: "103%", y: "570px", rotate: 3.2 },
 ];
 
 export default function ArtifactOverlappingCollection({
@@ -446,12 +446,8 @@ export default function ArtifactOverlappingCollection({
               <h3 className="text-base font-black uppercase tracking-tight text-brand-text">
                 # {activeMobileItem.name}
               </h3>
-              <span className="text-xs font-black text-brand-text">
-                {activeMobileSpecimen
-                  ? `PKR ${activeMobileSpecimen.price.toLocaleString()}`
-                  : minMobilePrice > 0
-                    ? `FROM PKR ${minMobilePrice.toLocaleString()}`
-                    : "CANONICAL"}
+              <span className="text-[9px] font-black text-brand-accent uppercase tracking-wider">
+                {activeMobileSpecimen ? activeMobileSpecimen.medium : `${mobileChildSpecs.length} SPECIMENS`}
               </span>
             </div>
 
@@ -487,8 +483,8 @@ export default function ArtifactOverlappingCollection({
                         <span className="truncate">{spec.medium}</span>
                         {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
                       </div>
-                      <div className={`text-[8px] font-bold ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                        PKR {spec.price.toLocaleString()}
+                      <div className={`text-[8px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                        {spec.material || "CANONICAL"}
                       </div>
                     </button>
                   );
@@ -652,7 +648,7 @@ export default function ArtifactOverlappingCollection({
                   }`}
                 >
                   {/* Central Graphic Canvas */}
-                  <div className="w-full h-full relative p-5 flex items-center justify-center bg-brand-bg">
+                  <div className="w-full h-full relative p-1 sm:p-2 flex items-center justify-center bg-brand-bg">
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={currentImg}
@@ -663,7 +659,7 @@ export default function ArtifactOverlappingCollection({
                         src={currentImg}
                         alt={item.name}
                         referrerPolicy="no-referrer"
-                        className="w-full h-full object-contain object-center select-none pointer-events-none p-4"
+                        className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1"
                         loading="lazy"
                       />
                     </AnimatePresence>
@@ -737,12 +733,8 @@ export default function ArtifactOverlappingCollection({
                             <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-brand-text line-clamp-1">
                               # {item.name}
                             </h3>
-                            <span className="font-mono text-xs font-black text-brand-text whitespace-nowrap">
-                              {activeSpecimen
-                                ? `PKR ${activeSpecimen.price.toLocaleString()}`
-                                : minPrice > 0
-                                  ? `FROM PKR ${minPrice.toLocaleString()}`
-                                  : "CANONICAL"}
+                            <span className="font-mono text-[9px] font-black text-brand-accent uppercase tracking-wider whitespace-nowrap">
+                              {activeSpecimen ? activeSpecimen.medium : `${childSpecimens.length} SPECIMENS`}
                             </span>
                           </div>
 
@@ -787,8 +779,8 @@ export default function ArtifactOverlappingCollection({
                                     <span className="truncate">{spec.medium}</span>
                                     {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
                                   </div>
-                                  <div className={`text-[7.5px] font-bold ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                                    PKR {spec.price.toLocaleString()}
+                                  <div className={`text-[7.5px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                                    {spec.material || "CANONICAL"}
                                   </div>
                                 </button>
                               );
@@ -868,7 +860,7 @@ export default function ArtifactOverlappingCollection({
                         <span className="text-brand-accent">{childSpecimens.length} MEDIA TYPES</span>
                       </motion.div>
 
-                      {/* Scattered Brutalist Specimen Thumbnail Plates */}
+                      {/* Scattered Brutalist Specimen Thumbnail Plates (Enlarged & Prominent) */}
                       {childSpecimens.map((spec, specIdx) => {
                         const scatter = SPECIMEN_SCATTER_OFFSETS[specIdx % SPECIMEN_SCATTER_OFFSETS.length];
                         const isSelected = selectedSpecId === spec.id;
@@ -878,18 +870,20 @@ export default function ArtifactOverlappingCollection({
                           <motion.button
                             key={`satellite-${spec.id}`}
                             type="button"
-                            initial={{ opacity: 0, scale: 0.85 }}
+                            initial={{ opacity: 0, scale: 0.85, y: 10 }}
                             animate={{
                               opacity: 1,
-                              scale: isSelected ? 1.08 : 1,
+                              scale: isSelected ? 1.05 : 1,
                               rotate: scatter.rotate,
+                              y: 0,
                               transition: {
-                                duration: 0.12,
+                                delay: specIdx * 0.08,
+                                duration: 0.16,
                                 ease: [0.16, 1, 0.3, 1],
                               },
                             }}
                             exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.08 } }}
-                            whileHover={{ scale: 1.15, rotate: 0, zIndex: 60, transition: { duration: 0.08 } }}
+                            whileHover={{ scale: 1.1, rotate: 0, zIndex: 60, transition: { duration: 0.08 } }}
                             onMouseEnter={(e) => {
                               e.stopPropagation();
                               if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
@@ -916,26 +910,44 @@ export default function ArtifactOverlappingCollection({
                               marginLeft: !scatter.x.includes("%") && scatter.x.startsWith("-") ? scatter.x : undefined,
                               willChange: "transform, opacity",
                             }}
-                            className={`w-20 h-24 z-40 bg-brand-surface border-2 transition-all p-1 flex flex-col justify-between shadow-[3px_3px_0px_#050505] cursor-pointer ${
+                            className={`w-38 sm:w-44 h-52 sm:h-56 z-40 bg-brand-surface border-2 transition-all p-2 flex flex-col justify-between shadow-[4px_4px_0px_#050505] cursor-pointer text-left ${
                               isSelected
-                                ? "border-brand-accent ring-2 ring-brand-accent bg-brand-text text-brand-bg"
-                                : "border-brand-text hover:border-brand-accent"
+                                ? "border-brand-accent ring-2 ring-brand-accent bg-brand-surface shadow-[6px_6px_0px_#ff4500]"
+                                : "border-brand-text hover:border-brand-accent hover:shadow-[6px_6px_0px_#050505]"
                             }`}
-                            title={`Click to preview ${spec.medium} (PKR ${spec.price.toLocaleString()})`}
+                            title={`Click to preview ${spec.medium}`}
                           >
-                            <div className="w-full h-14 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30">
+                            {/* Product Mockup Image Container */}
+                            <div className="w-full h-30 sm:h-34 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30 relative group">
                               <img
                                 src={specImg}
                                 alt={spec.medium}
                                 referrerPolicy="no-referrer"
-                                className="w-full h-full object-contain p-1 select-none"
+                                className="w-full h-full object-contain p-2 select-none group-hover:scale-105 transition-transform duration-200"
                               />
+                              {isSelected && (
+                                <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-brand-accent text-white text-[7.5px] font-mono font-black uppercase tracking-wider">
+                                  ACTIVE
+                                </div>
+                              )}
                             </div>
-                            <div className="font-mono text-[7px] font-black uppercase truncate text-center leading-none mt-0.5">
-                              {spec.medium}
-                            </div>
-                            <div className={`font-mono text-[7px] font-bold text-center leading-none ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                              PKR {spec.price.toLocaleString()}
+
+                            {/* Specimen Metadata Info */}
+                            <div className="space-y-0.5 pt-1.5 border-t border-brand-text/15">
+                              <div className="flex items-center justify-between gap-1">
+                                <span className="font-mono text-[9.5px] sm:text-[10px] font-black uppercase tracking-tight text-brand-text truncate">
+                                  {spec.medium}
+                                </span>
+                                <span className="font-mono text-[8px] font-black text-brand-accent uppercase tracking-wider shrink-0">
+                                  PREVIEW →
+                                </span>
+                              </div>
+                              <div className="flex items-center justify-between text-[8px] font-mono text-brand-text/65 uppercase tracking-wide">
+                                <span className="truncate">{spec.material || "CANONICAL STRUCTURE"}</span>
+                                <span className="font-bold underline text-brand-text group-hover:text-brand-accent">
+                                  SELECT
+                                </span>
+                              </div>
                             </div>
                           </motion.button>
                         );

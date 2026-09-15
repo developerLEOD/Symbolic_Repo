@@ -427,7 +427,6 @@ export default function ProductGrid({
                 <th className="p-3.5">INSCRIPTION</th>
                 <th className="p-3.5">COLLECTION</th>
                 <th className="p-3.5">SEPARATE SPECIMENS</th>
-                <th className="p-3.5">PRICE RANGE</th>
                 <th className="p-3.5 text-right">ACTION</th>
               </tr>
             </thead>
@@ -438,8 +437,6 @@ export default function ProductGrid({
                   (s) => s.parentArtifactId === art.id || art.specimenIds?.includes(s.id)
                 );
                 const isExpanded = expandedLedgerArtifactIds[art.id] ?? true;
-                const minPrice = childSpecs.length > 0 ? Math.min(...childSpecs.map((s) => s.price)) : 0;
-                const maxPrice = childSpecs.length > 0 ? Math.max(...childSpecs.map((s) => s.price)) : 0;
 
                 return (
                   <React.Fragment key={art.id}>
@@ -501,13 +498,6 @@ export default function ProductGrid({
                           <span>{childSpecs.length} SPECIMENS</span>
                         </div>
                       </td>
-                      <td className="p-3.5 font-bold">
-                        {minPrice === maxPrice && minPrice > 0
-                          ? `PKR ${minPrice.toLocaleString()}`
-                          : minPrice > 0
-                            ? `PKR ${minPrice.toLocaleString()} - ${maxPrice.toLocaleString()}`
-                            : "CANONICAL"}
-                      </td>
                       <td className="p-3.5 text-right">
                         <button
                           type="button"
@@ -567,9 +557,6 @@ export default function ProductGrid({
                           <span className={`text-[9px] font-black uppercase ${spec.availability && spec.status !== "sold_out" ? "text-emerald-700" : "text-red-600"}`}>
                             {spec.availability && spec.status !== "sold_out" ? "IN STOCK" : "ALLOTTED"}
                           </span>
-                        </td>
-                        <td className="py-2.5 px-3.5 font-black text-brand-accent text-xs">
-                          PKR {spec.price.toLocaleString()}
                         </td>
                         <td className="py-2.5 px-3.5 text-right">
                           <span className="text-[8.5px] font-black uppercase text-brand-text underline hover:text-brand-accent">

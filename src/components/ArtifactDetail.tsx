@@ -369,9 +369,9 @@ export default function ArtifactDetail({
                   </div>
 
                   <div className="mt-2.5 pt-2 border-t border-brand-text/20 flex items-baseline justify-between">
-                    <span className="text-[8px] font-mono font-bold uppercase text-brand-text/50">PRICE</span>
-                    <span className="text-xs font-mono font-black text-brand-text">
-                      PKR {spec.price.toLocaleString()}
+                    <span className="text-[8px] font-mono font-bold uppercase text-brand-text/50">MATERIAL</span>
+                    <span className="text-[9.5px] font-mono font-black text-brand-text truncate">
+                      {spec.material || "CANONICAL"}
                     </span>
                   </div>
                 </button>
@@ -480,7 +480,7 @@ export default function ArtifactDetail({
             {/* Right Column: Specimen Configurator & Dual Acquisition (5 Cols) */}
             <div className="lg:col-span-5 space-y-6">
               
-              {/* Specimen Header & Price */}
+              {/* Specimen Header & Identification */}
               <div className="border-2 border-brand-text bg-brand-surface p-5 shadow-[4px_4px_0px_#050505]">
                 <div className="flex items-baseline justify-between gap-2 border-b-2 border-brand-text pb-3 mb-3">
                   <div>
@@ -492,9 +492,9 @@ export default function ArtifactDetail({
                     </h2>
                   </div>
                   <div className="text-right">
-                    <span className="text-xs font-mono font-bold text-brand-text/60 block">PKR</span>
-                    <span className="text-2xl sm:text-3xl font-mono font-black text-brand-text">
-                      {activeSpecimen.price.toLocaleString()}
+                    <span className="text-[9px] font-mono font-bold text-brand-text/60 block">SPECIMEN ID</span>
+                    <span className="text-sm font-mono font-black text-brand-accent">
+                      {activeSpecimen.sku || "SYM-SPEC"}
                     </span>
                   </div>
                 </div>
@@ -607,7 +607,7 @@ export default function ArtifactDetail({
                         <span>SPECIMEN ALLOTTED (SOLD OUT)</span>
                       ) : (
                         <>
-                          <span>ACQUIRE {activeSpecimen.medium.toUpperCase()} • PKR {(activeSpecimen.price * quantity).toLocaleString()}</span>
+                          <span>ACQUIRE {activeSpecimen.medium.toUpperCase()} SPECIMEN</span>
                         </>
                       )}
                     </button>
