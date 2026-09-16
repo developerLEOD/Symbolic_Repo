@@ -523,6 +523,18 @@ function StorefrontApp() {
 
           {/* Dedicated Artifact Acquisition Protocol Suite */}
           <Route
+            path="/acquisitions/:id"
+            element={
+              <ProductRouteHandler
+                mode="acquire"
+                onAddToCart={handleAddToCart}
+                onOpenLedger={() => setIsCartOpen(true)}
+                onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
+                onProductDeleted={handleProductPublished}
+              />
+            }
+          />
+          <Route
             path="/artifact/:id/acquire"
             element={
               <ProductRouteHandler

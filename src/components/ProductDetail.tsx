@@ -1097,7 +1097,7 @@ export default function ProductDetail({
                 type="button"
                 onClick={() => {
                   soundManager.playClick();
-                  navigate(`/artifact/${product.productId || product.sku || product.id}/acquire`);
+                  navigate(`/acquisitions/${product.productId || product.sku || product.id}`);
                 }}
                 className="w-full py-6 sm:py-8 px-6 sm:px-10 font-mono text-base sm:text-xl font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-between gap-4 cursor-pointer group"
               >
@@ -1199,7 +1199,7 @@ export default function ProductDetail({
                       type="button"
                       onClick={() => {
                         soundManager.playClick();
-                        navigate(`/artifact/${product.productId || product.sku || product.id}/acquire`);
+                        navigate(`/acquisitions/${product.productId || product.sku || product.id}`);
                       }}
                       className="px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5"
                     >

@@ -99,7 +99,7 @@ export default function ArtifactDetail({
     } else {
       const targetSpecimenId = specimenId || activeSpecimen?.id;
       const searchParam = targetSpecimenId ? `?specimen=${targetSpecimenId}` : "";
-      navigate(`/artifact/${artifact.artifactId || artifact.id}/acquire${searchParam}`);
+      navigate(`/acquisitions/${artifact.artifactId || artifact.id}${searchParam}`);
     }
   };
 
@@ -108,7 +108,7 @@ export default function ArtifactDetail({
     if (onAcquireClick) {
       onAcquireClick();
     } else {
-      navigate(`/artifact/${artifact.artifactId || artifact.id}/acquire?mode=set`);
+      navigate(`/acquisitions/${artifact.artifactId || artifact.id}?mode=set`);
     }
   };
 

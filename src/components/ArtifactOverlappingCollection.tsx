@@ -898,21 +898,17 @@ export default function ArtifactOverlappingCollection({
 
                         {/* Primary Action Button */}
                         <div className="pt-1">
-                          <button
-                            type="button"
-                            onClick={() => {
-                              soundManager.playClick(0.14);
-                              onProductClick(item.rawEntity, selectedSpecId || undefined);
-                            }}
-                            className="w-full py-2 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-[9.5px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2"
-                          >
-                            <span>
-                              {activeSpecimen
-                                ? `EXPLORE ${activeSpecimen.medium.toUpperCase()} & ARCHIVE`
-                                : "EXPLORE ARTIFACT & SPECIMENS"}
-                            </span>
-                            <MoveRight size={12} />
-                          </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundManager.playClick(0.14);
+                                onProductClick(item.rawEntity, selectedSpecId || undefined);
+                              }}
+                              className="w-full py-2 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-[9.5px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2"
+                            >
+                              <span>Inspect And Aquire</span>
+                              <MoveRight size={12} />
+                            </button>
                         </div>
                       </motion.div>
                     )}
