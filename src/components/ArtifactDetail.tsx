@@ -55,6 +55,7 @@ export default function ArtifactDetail({
   // Available child specimens
   const childSpecimens = specimens.filter(s => 
     s.parentArtifactId === artifact.id || 
+    s.parentArtifactId === artifact.artifactId ||
     artifact.specimenIds?.includes(s.id)
   );
 
@@ -512,64 +513,29 @@ export default function ArtifactDetail({
                     </div>
                   </div>
 
-                  {/* ONLY THE ACQUIRE BUTTON IN LARGE SIZE ON THE SPECIFICATION PAGE */}
+                  {/* ONLY THE ACQUIRE! BUTTON ON THE SPECIFICATION PAGE */}
                   <div className="pt-3 border-t-2 border-brand-text space-y-3">
                     <button
                       type="button"
                       onClick={() => handleProceedToAcquire(activeSpecimen?.id)}
-                      className="w-full py-5 sm:py-6 px-6 font-mono text-base sm:text-lg md:text-xl font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-between gap-4 cursor-pointer group"
+                      className="w-full py-5 sm:py-6 px-6 font-mono text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-between gap-4 cursor-pointer group"
                     >
                       <div className="flex flex-col text-left">
                         <span className="text-[10px] sm:text-xs font-bold text-white/80 uppercase tracking-widest">
                           PHYSICAL ALLOTMENT PROTOCOL //
                         </span>
-                        <span className="text-base sm:text-lg md:text-xl font-black text-white uppercase tracking-wider">
-                          ACQUIRE {activeSpecimen ? activeSpecimen.medium.toUpperCase() : "ARTIFACT"}
+                        <span className="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-wider">
+                          ACQUIRE!
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 bg-brand-text/30 px-3.5 py-2.5 border border-white/20 shrink-0 group-hover:bg-brand-accent transition-colors">
-                        <span className="text-xs font-black uppercase tracking-wider hidden sm:inline">SELECT SPECS</span>
-                        <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform text-white" />
+                      <div className="flex items-center gap-2 bg-brand-text/30 px-4 py-3 border border-white/20 shrink-0 group-hover:bg-brand-accent transition-colors">
+                        <span className="text-xs font-black uppercase tracking-wider hidden sm:inline">PROCEED</span>
+                        <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform text-white" />
                       </div>
                     </button>
 
-                    {childSpecimens.length > 1 && (
-                      <button
-                        type="button"
-                        onClick={handleProceedToSetAcquire}
-                        className="w-full p-4 font-mono text-xs font-black uppercase tracking-wider bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all flex flex-col gap-2.5 cursor-pointer group"
-                      >
-                        <div className="flex items-center justify-between w-full">
-                          <span className="flex items-center gap-2">
-                            <Box size={16} className="text-brand-accent group-hover:text-brand-accent transition-colors" />
-                            <span className="text-xs sm:text-sm font-black">ACQUIRE COMPLETE ARTIFACT SET</span>
-                          </span>
-                          <span className="text-[9px] px-2 py-0.5 border border-brand-accent bg-brand-accent/10 text-brand-accent font-bold group-hover:bg-brand-accent group-hover:text-white transition-colors">
-                            {childSpecimens.length} SPECIMENS
-                          </span>
-                        </div>
-                        
-                        <div className="flex items-center justify-between w-full pt-2 border-t border-brand-text/20 group-hover:border-white/20">
-                          <span className="text-[9.5px] font-bold text-brand-text/70 group-hover:text-white/80">
-                            SET VALUATION //
-                          </span>
-                          <div className="flex items-center gap-2">
-                            {setCalculation.hasDiscount && (
-                              <span className="line-through text-brand-text/50 group-hover:text-white/50 text-[11px]">
-                                Rs. {setCalculation.individualTotal.toLocaleString()}
-                              </span>
-                            )}
-                            <span className="text-sm sm:text-base font-black text-brand-accent group-hover:text-white">
-                              Rs. {setCalculation.setPrice.toLocaleString()} PKR
-                            </span>
-                            <ArrowRight size={15} className="group-hover:translate-x-1 transition-transform" />
-                          </div>
-                        </div>
-                      </button>
-                    )}
-
                     <p className="text-[9.5px] font-mono font-bold uppercase text-brand-text/60 text-center tracking-wider pt-1">
-                      [ SPECIFY SIZES, EDITIONS &amp; REGISTER IN ALLOTMENT LEDGER ON ACQUISITION SUITE ]
+                      [ CHOOSE INDIVIDUAL SPECIMENS OR COMPLETE SET BUNDLE IN THE ACQUISITION SUITE ]
                     </p>
                   </div>
                 </div>

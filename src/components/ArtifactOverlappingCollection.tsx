@@ -44,12 +44,18 @@ const SPECIMEN_OFFSETS = [
 
 // Brutalist coordinate offsets for orbiting specimen plates (Enlarged, Clear & Vertically Staggered)
 const SPECIMEN_SCATTER_OFFSETS = [
-  { x: "-195px", y: "15px", rotate: -4.2 },
-  { x: "103%", y: "95px", rotate: 3.8 },
-  { x: "-190px", y: "245px", rotate: 2.5 },
-  { x: "103%", y: "365px", rotate: -3.2 },
-  { x: "-185px", y: "475px", rotate: -2.2 },
-  { x: "103%", y: "585px", rotate: 3.5 },
+  { x: "-195px", y: "10px", rotate: -4.2 },
+  { x: "103%", y: "70px", rotate: 3.8 },
+  { x: "-190px", y: "140px", rotate: 2.5 },
+  { x: "103%", y: "210px", rotate: -3.2 },
+  { x: "-185px", y: "280px", rotate: -2.2 },
+  { x: "103%", y: "350px", rotate: 3.5 },
+  { x: "-195px", y: "420px", rotate: -3.0 },
+  { x: "103%", y: "490px", rotate: 2.8 },
+  { x: "-190px", y: "560px", rotate: -2.5 },
+  { x: "103%", y: "630px", rotate: 3.2 },
+  { x: "-185px", y: "700px", rotate: -2.0 },
+  { x: "103%", y: "770px", rotate: 2.2 },
 ];
 
 export default function ArtifactOverlappingCollection({
@@ -609,7 +615,7 @@ export default function ArtifactOverlappingCollection({
       >
         <div
           ref={trackRef}
-          className="flex items-center min-w-max mx-auto w-fit pl-4 pr-16 sm:pr-32"
+          className="flex items-center min-w-max mx-auto w-fit pl-[260px] pr-[260px] sm:pl-[300px] sm:pr-[300px]"
           style={{ minHeight: "620px" }}
         >
           {displayItems.map((item, idx) => {
@@ -791,7 +797,7 @@ export default function ArtifactOverlappingCollection({
                         </div>
 
                         {/* SEPARATE SPECIMENS SELECTOR INSIDE DOSSIER */}
-                        <div className="border-t border-brand-text/20 pt-2 space-y-1 bg-brand-text/5 p-2 border border-brand-text/15">
+                        <div className="border-t border-brand-text/20 pt-2 space-y-1 bg-brand-text/5 p-2 border border-brand-text/15 lg:hidden">
                           <div className="flex items-center justify-between text-[8px] font-black uppercase text-brand-text/80">
                             <span className="flex items-center gap-1">
                               <Layers size={10} className="text-brand-accent" />

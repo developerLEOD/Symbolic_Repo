@@ -893,6 +893,7 @@ export async function fetchArtifactWithSpecimens(artifactId: string): Promise<Ar
 
   const childSpecimens = allSpecimens.filter(s => 
     s.parentArtifactId === artifact.id || 
+    s.parentArtifactId === artifact.artifactId ||
     artifact.specimenIds?.includes(s.id)
   );
 
@@ -1258,7 +1259,10 @@ export async function fetchArtifactById(artifactId: string): Promise<Artifact | 
  * Fetch specimens belonging to a parent artifact
  */
 export async function fetchSpecimensByArtifactId(artifactId: string): Promise<Specimen[]> {
-  return fetchSpecimens(artifactId);
+  const all = await fetchSpecimens();
+  return all.filter(s => 
+    s.parentArtifactId === artifactId
+  );
 }
 
 /**
@@ -1270,7 +1274,11 @@ export async function fetchArtifactsWithSpecimens(): Promise<ArtifactWithSpecime
   
   return artifacts.map(art => ({
     ...art,
-    specimens: specimens.filter(s => s.parentArtifactId === art.id || art.specimenIds?.includes(s.id))
+    specimens: specimens.filter(s => 
+      s.parentArtifactId === art.id || 
+      s.parentArtifactId === art.artifactId ||
+      art.specimenIds?.includes(s.id)
+    )
   }));
 }
 

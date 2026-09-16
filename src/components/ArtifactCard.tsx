@@ -171,7 +171,7 @@ export default function ArtifactCard({
         </div>
 
         {/* SEPARATE SPECIMENS SELECTOR INSIDE THE ARTIFACT */}
-        <div className="border-t-2 border-brand-text/30 pt-2 space-y-1.5 bg-brand-text/5 p-2 border border-brand-text/20">
+        <div className="border-t-2 border-brand-text/30 pt-2 space-y-1.5 bg-brand-text/5 p-2 border border-brand-text/20 lg:hidden">
           <div className="flex items-center justify-between text-[8px] font-mono font-black uppercase text-brand-text/80">
             <span className="flex items-center gap-1">
               <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />

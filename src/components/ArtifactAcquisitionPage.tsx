@@ -47,7 +47,11 @@ export default function ArtifactAcquisitionPage({
 
   // Child specimens for the active artifact
   const childSpecimens = artifact 
-    ? specimens.filter(s => s.parentArtifactId === artifact.id || artifact.specimenIds?.includes(s.id))
+    ? specimens.filter(s => 
+        s.parentArtifactId === artifact.id || 
+        s.parentArtifactId === artifact.artifactId ||
+        artifact.specimenIds?.includes(s.id)
+      )
     : [];
 
   // Acquisition mode: "individual" or "set"
@@ -68,12 +72,6 @@ export default function ArtifactAcquisitionPage({
       setAcquisitionMode("set");
     }
   }, [queryMode]);
-
-  useEffect(() => {
-    if (querySpecimen && childSpecimens.some(s => s.id === querySpecimen)) {
-      setSelectedSpecimenId(querySpecimen);
-    }
-  }, [querySpecimen, childSpecimens]);
 
   const activeSpecimen = childSpecimens.find(s => s.id === selectedSpecimenId) || childSpecimens[0];
 
@@ -454,14 +452,14 @@ export default function ArtifactAcquisitionPage({
                   soundManager.playClick();
                   setAcquisitionMode("set");
                 }}
-                className={`px-4 py-2.5 font-mono text-xs font-black uppercase tracking-wider border-2 transition-all cursor-pointer flex items-center gap-2 ${
+                className={`px-5 py-3 font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 transition-all cursor-pointer flex items-center gap-2.5 ${
                   acquisitionMode === "set"
-                    ? "bg-brand-accent text-white border-brand-text shadow-[3px_3px_0px_#050505]"
-                    : "bg-brand-bg text-brand-text border-brand-text/40 hover:border-brand-accent"
+                    ? "bg-brand-accent text-white border-brand-text shadow-[4px_4px_0px_#050505]"
+                    : "bg-brand-accent text-white border-brand-text hover:bg-brand-text shadow-[4px_4px_0px_#050505]"
                 }`}
               >
-                <Box size={14} />
-                <span>ACQUIRE COMPLETE ARTIFACT SET (SAVE {setCalculation.discountPercent}%)</span>
+                <Box size={16} />
+                <span>ACQUIRE FULL SET (SAVE {setCalculation.discountPercent}%)</span>
               </button>
             </div>
           )}
