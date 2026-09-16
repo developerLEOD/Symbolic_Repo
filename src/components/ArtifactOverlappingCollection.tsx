@@ -1,9 +1,10 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, MoveRight, Layers, Box, Check, Sparkles } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoveRight, Layers, Box, Check, Sparkles, Camera, Eye } from "lucide-react";
 import { Artifact, Specimen, Product, Category } from "../types";
 import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
+import { buildSpecimenAngleSequence, SpecimenAngleSequenceItem } from "../lib/specimenAngles";
 import { soundManager } from "../lib/soundEffects";
 
 interface ArtifactOverlappingCollectionProps {
@@ -154,6 +155,7 @@ export default function ArtifactOverlappingCollection({
 
   // Track active specimen preview per artifact card
   const [selectedSpecimenMap, setSelectedSpecimenMap] = useState<Record<string, string | null>>({});
+  const [desktopHoverCycleIndex, setDesktopHoverCycleIndex] = useState(0);
 
   // Desktop state
   const containerRef = useRef<HTMLDivElement>(null);
@@ -165,6 +167,32 @@ export default function ArtifactOverlappingCollection({
   const isInteractingWithSatellitesRef = useRef(false);
   const satelliteExitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
+
+  // Interval-driven clean cycling on hover through all specimen angles
+  useEffect(() => {
+    if (activeIdx === null) {
+      setDesktopHoverCycleIndex(0);
+      return;
+    }
+
+    const currentItem = displayItems[activeIdx];
+    if (!currentItem || currentItem.specimens.length === 0) {
+      setDesktopHoverCycleIndex(0);
+      return;
+    }
+
+    const angleSeq = buildSpecimenAngleSequence(currentItem.specimens, currentItem.graphic);
+    if (angleSeq.length === 0) return;
+
+    setDesktopHoverCycleIndex(0);
+    const interval = setInterval(() => {
+      setDesktopHoverCycleIndex((prev) => (prev + 1) % angleSeq.length);
+    }, 1500);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [activeIdx, displayItems]);
 
   const [isDragging, setIsDragging] = useState(false);
   const [startX, setStartX] = useState(0);
@@ -612,10 +640,25 @@ export default function ArtifactOverlappingCollection({
             const artifactNum = String(idx + 1).padStart(2, "0");
 
             const selectedSpecId = selectedSpecimenMap[item.id];
-            const activeSpecimen = item.specimens.find((s) => s.id === selectedSpecId) || null;
-            const currentImg = activeSpecimen?.images?.[0] || activeSpecimen?.thumbnailImage || item.graphic;
-
             const childSpecimens = item.specimens;
+            
+            // Build multi-angle sequence for this item
+            const itemAngleSeq = buildSpecimenAngleSequence(childSpecimens, item.graphic);
+            const isAutoCycling = isHovered && itemAngleSeq.length > 0 && !selectedSpecId;
+            const currentAngleItem = isAutoCycling
+              ? itemAngleSeq[desktopHoverCycleIndex % itemAngleSeq.length]
+              : null;
+
+            const activeSpecimen = selectedSpecId 
+              ? item.specimens.find((s) => s.id === selectedSpecId) || null 
+              : currentAngleItem
+                ? item.specimens.find((s) => s.id === currentAngleItem.specimenId) || null
+                : null;
+
+            const currentImg = currentAngleItem
+              ? currentAngleItem.image
+              : activeSpecimen?.images?.[0] || activeSpecimen?.thumbnailImage || item.graphic;
+
             const minPrice = childSpecimens.length > 0 ? Math.min(...childSpecimens.map((s) => s.price)) : 0;
             const setCalculation = calculateArtifactSetPrice(item.rawEntity as any, childSpecimens);
 
@@ -688,20 +731,14 @@ export default function ArtifactOverlappingCollection({
                 >
                   {/* Central Graphic Canvas */}
                   <div className="w-full h-full relative flex items-center justify-center bg-brand-bg">
-                    <AnimatePresence mode="wait">
-                      <motion.img
-                        key={currentImg}
-                        src={currentImg}
-                        alt={item.name}
-                        referrerPolicy="no-referrer"
-                        initial={{ opacity: 0.7, scale: 0.98 }}
-                        animate={{ opacity: 1, scale: 1 }}
-                        exit={{ opacity: 0.7 }}
-                        transition={{ duration: 0.15 }}
-                        className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1"
-                        loading="lazy"
-                      />
-                    </AnimatePresence>
+                    <img
+                      key={currentImg}
+                      src={currentImg}
+                      alt={item.name}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1 transition-opacity duration-200"
+                      loading="lazy"
+                    />
 
                     {/* Top Accession & Collection Badge */}
                     <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 font-mono">
@@ -712,21 +749,55 @@ export default function ArtifactOverlappingCollection({
                         {item.collectionName?.toUpperCase() || "CANONICAL"}
                       </span>
                       {activeSpecimen && (
-                        <span className="text-[7.5px] font-black uppercase bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text">
+                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
                           {activeSpecimen.medium}
                         </span>
                       )}
                     </div>
 
-                    {/* Top Graphic Mode Badge */}
-                    <div className="absolute top-2.5 right-2.5 z-20">
-                      <span className="font-mono text-[7.5px] font-black uppercase bg-brand-surface/95 text-brand-text/80 px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
-                        {activeSpecimen ? "SPECIMEN PREVIEW" : "CENTRAL GRAPHIC"}
-                      </span>
+                    {/* Top Right Specimen & Angle Tag */}
+                    <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 font-mono">
+                      {currentAngleItem ? (
+                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+                          <Camera size={9} className="text-brand-accent" />
+                          <span>
+                            {currentAngleItem.medium} (ANG 0{currentAngleItem.angleIndex + 1}/0{currentAngleItem.totalAnglesForSpecimen})
+                          </span>
+                        </span>
+                      ) : (
+                        <span className={`text-[7.5px] font-mono font-black uppercase px-2 py-0.5 border shadow-[1px_1px_0px_#050505] transition-colors ${
+                          activeSpecimen
+                            ? "bg-brand-accent text-white border-brand-text"
+                            : "bg-brand-surface/95 text-brand-text/80 border-brand-text"
+                        }`}>
+                          {activeSpecimen ? "SPECIMEN PINNED" : "ARTWORK"}
+                        </span>
+                      )}
                     </div>
 
+                    {/* Clean segment dots on hover */}
+                    {isAutoCycling && itemAngleSeq.length > 1 && (
+                      <div className="absolute bottom-3 inset-x-4 z-20 flex items-center justify-center gap-1">
+                        <div className="bg-brand-surface/90 border border-brand-text px-2 py-0.5 flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
+                          {itemAngleSeq.map((it, aIdx) => {
+                            const isActive = aIdx === (desktopHoverCycleIndex % itemAngleSeq.length);
+                            return (
+                              <div 
+                                key={it.id}
+                                className={`h-1.5 rounded-none transition-all duration-200 ${
+                                  isActive 
+                                    ? "w-3 bg-brand-accent" 
+                                    : "w-1.5 bg-brand-text/30"
+                                }`}
+                              />
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+
                     {/* Arabic Inscription Plaque */}
-                    {item.inscription && (
+                    {!isAutoCycling && item.inscription && (
                       <div className="absolute bottom-2.5 left-2.5 z-20">
                         <div className="bg-brand-bg/95 border-2 border-brand-text px-2.5 py-1 shadow-[2px_2px_0px_#050505] flex items-center">
                           <span className="font-serif text-base sm:text-lg font-black text-brand-accent leading-none" dir="rtl">

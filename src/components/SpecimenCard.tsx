@@ -1,6 +1,6 @@
-import React, { useState } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import { Specimen, Artifact } from "../types";
-import { ArrowUpRight, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, ShieldCheck, Camera } from "lucide-react";
 import { soundManager } from "../lib/soundEffects";
 
 interface SpecimenCardProps {
@@ -22,6 +22,21 @@ export default function SpecimenCard({
   const images = specimen.images && specimen.images.length > 0 
     ? specimen.images 
     : (parentArtifact?.images || [specimen.thumbnailImage || ""]);
+
+  // Clean interval cycling on hover through available specimen images/angles
+  useEffect(() => {
+    if (!isHovered || images.length <= 1) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setActiveImageIndex((prev) => (prev + 1) % images.length);
+    }, 1500);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isHovered, images.length]);
 
   const isSoldOut = !specimen.availability || specimen.status === "sold_out" || specimen.inventory <= 0;
   const artifactName = parentArtifact?.name || specimen.artifactName || "CANONICAL";
@@ -49,7 +64,10 @@ export default function SpecimenCard({
         soundManager.playHover(0.03);
         setIsHovered(true);
       }}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+        setActiveImageIndex(0);
+      }}
     >
       {/* Corner crosshairs */}
       <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
@@ -84,7 +102,7 @@ export default function SpecimenCard({
           src={images[activeImageIndex] || specimen.thumbnailImage} 
           alt={`${artifactName} ${specimen.medium}`}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-contain object-center p-3 select-none"
+          className="w-full h-full object-contain object-center p-3 select-none pointer-events-none transition-opacity duration-200"
         />
 
         {/* Parent Artifact Ribbon */}
@@ -94,8 +112,34 @@ export default function SpecimenCard({
           </span>
         </div>
 
-        {/* Navigation Chevrons */}
+        {/* Top Right Angle Tag */}
         {images.length > 1 && (
+          <div className="absolute top-2 right-2 z-10 font-mono">
+            <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+              <Camera size={9} className="text-brand-accent" />
+              <span>ANG 0{activeImageIndex + 1}/0{images.length}</span>
+            </span>
+          </div>
+        )}
+
+        {/* Clean segment dots on hover */}
+        {isHovered && images.length > 1 && (
+          <div className="absolute bottom-2.5 inset-x-3 z-20 flex items-center justify-center gap-1">
+            <div className="bg-brand-surface/90 border border-brand-text px-2 py-0.5 flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
+              {images.map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`h-1.5 rounded-none transition-all duration-200 ${
+                    i === activeImageIndex ? "w-3 bg-brand-accent" : "w-1.5 bg-brand-text/30"
+                  }`} 
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Navigation Chevrons */}
+        {images.length > 1 && !isHovered && (
           <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-between z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity">
             <button
               type="button"

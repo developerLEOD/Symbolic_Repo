@@ -120,7 +120,7 @@ export function getMediumConfig(mediumName: string): SpecimenMediumConfig {
   };
 }
 
-// Canonical Pre-curated Flagship Artifacts and Specimens
+/// Canonical Pre-curated Flagship Artifacts and Specimens
 export const SEED_SPECIMENS: Specimen[] = [
   // --- SUMUD SPECIMENS ---
   {
@@ -135,7 +135,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 50,
     availability: true,
     status: "available",
-    images: [heroImage],
+    images: [heroImage, bagImage],
     color: "Charcoal Black",
     colorHex: "#181818",
     availableColors: [
@@ -164,7 +164,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 35,
     availability: true,
     status: "available",
-    images: [capImage],
+    images: [capImage, heroImage],
     color: "Washed Black Twill",
     colorHex: "#222222",
     availableColors: [
@@ -219,7 +219,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 20,
     availability: true,
     status: "available",
-    images: [hoodieImage],
+    images: [hoodieImage, heroImage],
     color: "Washed Carbon",
     colorHex: "#1A1A1A",
     availableSizes: ["S", "M", "L", "XL"],
@@ -243,7 +243,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 25,
     availability: true,
     status: "available",
-    images: [heroImage],
+    images: [heroImage, bagImage],
     color: "Raw Natural Ecru",
     colorHex: "#F4F1EA",
     availableSizes: ["S", "M", "L", "XL"],
@@ -269,7 +269,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 30,
     availability: true,
     status: "available",
-    images: [heroImage],
+    images: [heroImage, bagImage],
     color: "Deep Jet Black",
     colorHex: "#0D0D0D",
     availableSizes: ["S", "M", "L", "XL", "2XL"],
@@ -293,7 +293,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 15,
     availability: true,
     status: "available",
-    images: [hoodieImage],
+    images: [hoodieImage, heroImage],
     color: "Charcoal Basalt",
     colorHex: "#1E1E1E",
     availableSizes: ["S", "M", "L", "XL"],
@@ -319,7 +319,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 28,
     availability: true,
     status: "available",
-    images: [heroImage],
+    images: [heroImage, bagImage],
     color: "Raw Washed Ecru",
     colorHex: "#F4F1EA",
     availableSizes: ["S", "M", "L", "XL"],
@@ -368,7 +368,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 32,
     availability: true,
     status: "available",
-    images: [heroImage],
+    images: [heroImage, bagImage],
     color: "Olive Sand",
     colorHex: "#4C5243",
     availableSizes: ["S", "M", "L", "XL"],
@@ -390,7 +390,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 24,
     availability: true,
     status: "available",
-    images: [capImage],
+    images: [capImage, heroImage],
     color: "Olive Sand Twill",
     colorHex: "#4C5243",
     availableSizes: ["One Size // Adjustable Brass Clasp"],
@@ -414,7 +414,7 @@ export const SEED_SPECIMENS: Specimen[] = [
     inventory: 22,
     availability: true,
     status: "available",
-    images: [heroImage],
+    images: [heroImage, bagImage],
     color: "Carbon Black",
     colorHex: "#141414",
     availableSizes: ["S", "M", "L", "XL"],

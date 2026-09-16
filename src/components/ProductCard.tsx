@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Product } from "../types";
-import { ArrowUpRight, ChevronLeft, ChevronRight, Compass } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Compass, Camera } from "lucide-react";
 import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 
@@ -38,6 +38,21 @@ export default function ProductCard({
   const collectionName = normalizeProductCollection(product);
   const collectionTag = collectionName.toUpperCase();
   const images = resolveProductImages(product);
+
+  // Interval-driven clean cycling on hover through available specimen photos/angles
+  useEffect(() => {
+    if (!isHovered || images.length <= 1) {
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setActiveImageIndex((prev) => (prev + 1) % images.length);
+    }, 1500);
+
+    return () => {
+      clearInterval(interval);
+    };
+  }, [isHovered, images.length]);
 
   const isComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
   const isSoldOut = !isComingSoon && product.inventory !== undefined && product.inventory <= 0;
@@ -81,6 +96,7 @@ export default function ProductCard({
       enterTimerRef.current = null;
     }
     setIsHovered(false);
+    setActiveImageIndex(0);
 
     // Snappy, clean exit buffer
     if (leaveTimerRef.current) {
@@ -149,7 +165,7 @@ export default function ProductCard({
               target.src = STUDIO_FALLBACK_IMAGE;
             }
           }}
-          className="w-full h-full object-contain object-center p-3 select-none"
+          className="w-full h-full object-contain object-center p-3 select-none pointer-events-none transition-opacity duration-200"
         />
 
         {/* Collection Badge & Coming Soon Pill */}
@@ -164,8 +180,34 @@ export default function ProductCard({
           )}
         </div>
 
-        {/* Arabic Inscription Plaque (if present) */}
-        {product.inscription && (
+        {/* Top Right Angle Tag */}
+        {images.length > 1 && (
+          <div className="absolute top-2 right-2 z-10 font-mono">
+            <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+              <Camera size={9} className="text-brand-accent" />
+              <span>ANG 0{activeImageIndex + 1}/0{images.length}</span>
+            </span>
+          </div>
+        )}
+
+        {/* Clean subtle dot indicators when cycling */}
+        {isHovered && images.length > 1 && (
+          <div className="absolute bottom-2.5 inset-x-3 z-20 flex items-center justify-center gap-1">
+            <div className="bg-brand-surface/90 border border-brand-text px-2 py-0.5 flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
+              {images.map((_, i) => (
+                <div 
+                  key={i} 
+                  className={`h-1.5 rounded-none transition-all duration-200 ${
+                    i === activeImageIndex ? "w-3 bg-brand-accent" : "w-1.5 bg-brand-text/30"
+                  }`} 
+                />
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Arabic Inscription Plaque (if present and not cycling) */}
+        {product.inscription && !isHovered && (
           <div className="absolute bottom-2 left-2 z-10">
             <div className="bg-brand-bg/95 border-2 border-brand-text px-2 py-0.5 shadow-[1.5px_1.5px_0px_#050505] flex items-center">
               <span className="font-serif text-base sm:text-lg font-black text-brand-accent leading-none" dir="rtl">
@@ -176,7 +218,7 @@ export default function ProductCard({
         )}
 
         {/* Multi-angle Navigation Chevrons */}
-        {images.length > 1 && (
+        {images.length > 1 && !isHovered && (
           <>
             <div className="absolute bottom-2 right-2 z-10">
               <span className="text-[8px] font-mono font-black uppercase tracking-wider bg-brand-bg/95 text-brand-text px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
@@ -184,7 +226,7 @@ export default function ProductCard({
               </span>
             </div>
 
-            <div className={`absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-between z-20 pointer-events-none transition-opacity duration-150 ${isHovered ? 'opacity-100' : 'opacity-0'}`}>
+            <div className="absolute inset-x-2 top-1/2 -translate-y-1/2 flex items-center justify-between z-20 pointer-events-none opacity-0 group-hover:opacity-100 transition-opacity duration-150">
               <button
                 type="button"
                 onClick={handlePrevImage}

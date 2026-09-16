@@ -1,9 +1,10 @@
-import React, { useState } from "react";
+import React, { useState, useMemo, useRef, useEffect } from "react";
 import { Artifact, Specimen } from "../types";
-import { ArrowUpRight, Layers, Box, Check, Sparkles } from "lucide-react";
+import { ArrowUpRight, Layers, Box, Check, Sparkles, Camera, Eye } from "lucide-react";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
+import { buildSpecimenAngleSequence, SpecimenAngleSequenceItem } from "../lib/specimenAngles";
 import { soundManager } from "../lib/soundEffects";
-import { motion, AnimatePresence } from "motion/react";
+import { motion } from "motion/react";
 
 interface ArtifactCardProps {
   key?: React.Key;
@@ -20,6 +21,7 @@ export default function ArtifactCard({
   index = 0 
 }: ArtifactCardProps) {
   const [isHovered, setIsHovered] = useState(false);
+  const [hoverCycleIndex, setHoverCycleIndex] = useState(0);
   const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -28,7 +30,7 @@ export default function ArtifactCard({
     return false;
   });
 
-  React.useEffect(() => {
+  useEffect(() => {
     const handleResize = () => {
       setIsMobile(window.innerWidth < 768);
     };
@@ -37,28 +39,62 @@ export default function ArtifactCard({
   }, []);
 
   const artifactNum = String(index + 1).padStart(2, '0');
-  const childSpecimens = specimens.filter(s => 
-    s.parentArtifactId === artifact.id || 
-    artifact.specimenIds?.includes(s.id)
-  );
+  const childSpecimens = useMemo(() => {
+    return specimens.filter(s => 
+      s.parentArtifactId === artifact.id || 
+      artifact.specimenIds?.includes(s.id)
+    );
+  }, [specimens, artifact.id, artifact.specimenIds]);
 
-  const activeSpecimen = childSpecimens.find(s => s.id === selectedSpecimenId) || null;
+  // Build full multi-angle sequential list across all specimens attached to artifact
+  const angleSequence = useMemo(() => {
+    return buildSpecimenAngleSequence(childSpecimens, artifact.graphic);
+  }, [childSpecimens, artifact.graphic]);
+
+  // Interval-driven clean cycling on hover through all specimen angles
+  useEffect(() => {
+    if (!isHovered || angleSequence.length === 0 || selectedSpecimenId !== null) {
+      setHoverCycleIndex(0);
+      return;
+    }
+
+    setHoverCycleIndex(0);
+
+    // Continuous relaxed interval cycle through all specimen angles
+    const interval = setInterval(() => {
+      setHoverCycleIndex(prev => (prev + 1) % angleSequence.length);
+    }, 1500);
+
+    return () => clearInterval(interval);
+  }, [isHovered, angleSequence.length, selectedSpecimenId]);
+
+  // Determine active display item
+  const isAutoCycling = isHovered && angleSequence.length > 0 && selectedSpecimenId === null;
+  const currentAngleItem: SpecimenAngleSequenceItem | null = isAutoCycling
+    ? angleSequence[hoverCycleIndex % angleSequence.length]
+    : null;
+
+  const activeSpecimen = selectedSpecimenId
+    ? childSpecimens.find(s => s.id === selectedSpecimenId) || null
+    : currentAngleItem
+      ? childSpecimens.find(s => s.id === currentAngleItem.specimenId) || null
+      : null;
 
   const specimenCount = childSpecimens.length;
   const availableCount = childSpecimens.filter(s => s.availability && s.status !== "sold_out").length;
 
-  const minPrice = childSpecimens.length > 0 
-    ? Math.min(...childSpecimens.map(s => s.price))
-    : 0;
-
   const setCalculation = calculateArtifactSetPrice(artifact, childSpecimens);
 
-  // Active image to display: either the selected specimen's image or the central graphic
-  const displayImage = activeSpecimen?.images?.[0] || activeSpecimen?.thumbnailImage || artifact.graphic || "/Logo_NoName.jpg";
+  // Active image to display: either cycling angle, manually pinned specimen, or central graphic
+  const displayImage = currentAngleItem
+    ? currentAngleItem.image
+    : activeSpecimen
+      ? activeSpecimen.images?.[0] || activeSpecimen.thumbnailImage || artifact.graphic || "/Logo_NoName.jpg"
+      : artifact.graphic || "/Logo_NoName.jpg";
 
   const handleCardClick = () => {
     soundManager.playClick();
-    onClick(selectedSpecimenId || undefined);
+    onClick(selectedSpecimenId || activeSpecimen?.id || undefined);
   };
 
   const handleSpecimenClick = (e: React.MouseEvent, specId: string) => {
@@ -79,7 +115,9 @@ export default function ArtifactCard({
         soundManager.playHover(0.04);
         setIsHovered(true);
       }}
-      onMouseLeave={() => setIsHovered(false)}
+      onMouseLeave={() => {
+        setIsHovered(false);
+      }}
     >
       {/* Corner Crosshairs */}
       <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors">+</span>
@@ -106,41 +144,69 @@ export default function ArtifactCard({
 
       {/* Central Visual Graphic / Artwork */}
       <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3">
-        <AnimatePresence mode="wait">
-          <motion.img 
-            key={displayImage}
-            src={displayImage} 
-            alt={activeSpecimen ? `${artifact.name} — ${activeSpecimen.medium}` : artifact.name}
-            referrerPolicy="no-referrer"
-            initial={{ opacity: 0.7, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0.7 }}
-            transition={{ duration: 0.15 }}
-            className="w-full h-full object-contain object-center p-1 sm:p-2 select-none"
-          />
-        </AnimatePresence>
+        <img 
+          key={displayImage}
+          src={displayImage} 
+          alt={activeSpecimen ? `${artifact.name} — ${activeSpecimen.medium}` : artifact.name}
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-contain object-center p-1 sm:p-2 select-none pointer-events-none transition-opacity duration-200"
+        />
 
-        {/* Top Artifact ID Ribbon */}
+        {/* Top Artifact ID Ribbon & Specimen Tag */}
         <div className="absolute top-2 left-2 z-10 flex items-center gap-1">
           <span className="text-[8px] font-mono tracking-widest font-black bg-brand-surface/95 text-brand-text px-1.5 py-0.5 uppercase border border-brand-text shadow-[1px_1px_0px_#050505]">
             {artifact.artifactId || `ART-${artifactNum}`}
           </span>
           {activeSpecimen && (
-            <span className="text-[7.5px] font-mono font-black uppercase bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text animate-fadeIn">
+            <span className="text-[7.5px] font-mono font-black uppercase bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
               {activeSpecimen.medium}
             </span>
           )}
         </div>
 
-        {/* Central Graphic / Specimen Tag Pill */}
-        <div className="absolute top-2 right-2 z-10">
-          <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/90 text-brand-text/80 px-1.5 py-0.5 border border-brand-text/60">
-            {activeSpecimen ? "SPECIMEN MOCKUP" : "CENTRAL GRAPHIC"}
-          </span>
+        {/* Top Right Specimen & Angle Tag */}
+        <div className="absolute top-2 right-2 z-10 flex items-center gap-1">
+          {currentAngleItem ? (
+            <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+              <Camera size={9} className="text-brand-accent" />
+              <span>
+                {currentAngleItem.medium} (ANG 0{currentAngleItem.angleIndex + 1}/0{currentAngleItem.totalAnglesForSpecimen})
+              </span>
+            </span>
+          ) : (
+            <span className={`text-[7.5px] font-mono font-black uppercase px-1.5 py-0.5 border shadow-[1px_1px_0px_#050505] ${
+              activeSpecimen 
+                ? "bg-brand-accent text-white border-brand-text" 
+                : "bg-brand-surface/90 text-brand-text/80 border-brand-text/60"
+            }`}>
+              {activeSpecimen ? "SPECIMEN PINNED" : "ARTWORK"}
+            </span>
+          )}
         </div>
 
-        {/* Arabic Inscription Plaque */}
-        {artifact.inscription && (
+        {/* Clean segment dots on hover */}
+        {isAutoCycling && angleSequence.length > 1 && (
+          <div className="absolute bottom-2.5 inset-x-3 z-10 flex items-center justify-center gap-1">
+            <div className="bg-brand-surface/90 border border-brand-text px-2 py-0.5 flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
+              {angleSequence.map((item, aIdx) => {
+                const isActive = aIdx === (hoverCycleIndex % angleSequence.length);
+                return (
+                  <div 
+                    key={item.id}
+                    className={`h-1.5 rounded-none transition-all duration-200 ${
+                      isActive 
+                        ? "w-3 bg-brand-accent" 
+                        : "w-1.5 bg-brand-text/30"
+                    }`}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Arabic Inscription Plaque (when not cycling or on left corner) */}
+        {!isAutoCycling && artifact.inscription && (
           <div className="absolute bottom-2 left-2 z-10">
             <div className="bg-brand-bg/95 border-2 border-brand-text px-2 py-0.5 shadow-[1.5px_1.5px_0px_#050505] flex items-center">
               <span className="font-serif text-base sm:text-lg font-black text-brand-accent leading-none" dir="rtl">
@@ -150,17 +216,17 @@ export default function ArtifactCard({
           </div>
         )}
 
-        {/* Central Graphic Reset Button if a specimen is currently previewed */}
-        {activeSpecimen && (
+        {/* Central Graphic Reset Button if a specimen is currently pinned manually */}
+        {selectedSpecimenId && (
           <button
             type="button"
             onClick={(e) => {
               e.stopPropagation();
               setSelectedSpecimenId(null);
             }}
-            className="absolute bottom-2 right-2 z-10 text-[7.5px] font-mono font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] hover:bg-brand-accent hover:text-white transition-colors"
+            className="absolute bottom-2 right-2 z-10 text-[7.5px] font-mono font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] hover:bg-brand-accent hover:text-white transition-colors cursor-pointer"
           >
-            VIEW GRAPHIC
+            VIEW ARTWORK
           </button>
         )}
       </div>
