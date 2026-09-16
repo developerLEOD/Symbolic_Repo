@@ -44,12 +44,12 @@ const SPECIMEN_OFFSETS = [
 
 // Brutalist coordinate offsets for orbiting specimen plates (Enlarged, Clear & Vertically Staggered)
 const SPECIMEN_SCATTER_OFFSETS = [
-  { x: "-190px", y: "-20px", rotate: -3.8 },
-  { x: "103%", y: "105px", rotate: 3.5 },
-  { x: "-185px", y: "235px", rotate: 2.2 },
-  { x: "103%", y: "345px", rotate: -2.8 },
-  { x: "-180px", y: "460px", rotate: -2.0 },
-  { x: "103%", y: "570px", rotate: 3.2 },
+  { x: "-195px", y: "15px", rotate: -4.2 },
+  { x: "103%", y: "95px", rotate: 3.8 },
+  { x: "-190px", y: "245px", rotate: 2.5 },
+  { x: "103%", y: "365px", rotate: -3.2 },
+  { x: "-185px", y: "475px", rotate: -2.2 },
+  { x: "103%", y: "585px", rotate: 3.5 },
 ];
 
 export default function ArtifactOverlappingCollection({
@@ -465,28 +465,75 @@ export default function ArtifactOverlappingCollection({
                 <span className="text-brand-accent">TAP TO PREVIEW</span>
               </div>
 
-              <div className="grid grid-cols-2 gap-1.5">
-                {mobileChildSpecs.map((spec) => {
+              {/* Scattered Brutalist Specimen Preview Plates */}
+              <div className={`grid gap-2.5 sm:gap-3.5 py-2 px-1 ${
+                mobileChildSpecs.length === 1
+                  ? "grid-cols-1 max-w-[180px] mx-auto"
+                  : mobileChildSpecs.length === 2
+                    ? "grid-cols-2"
+                    : "grid-cols-2 sm:grid-cols-3"
+              }`}>
+                {mobileChildSpecs.map((spec, specIdx) => {
                   const isSelected = mobileSelectedSpecId === spec.id;
+                  const specImg = spec.images?.[0] || spec.thumbnailImage || activeMobileItem.graphic;
+                  const scatterAngles = [-2.4, 2.6, -1.8, 2.2, -2.8, 1.9];
+                  const rot = scatterAngles[specIdx % scatterAngles.length];
+
                   return (
-                    <button
+                    <motion.button
                       key={spec.id}
                       type="button"
                       onClick={(e) => handleSelectSpecimen(activeMobileItem.id, spec.id, e)}
-                      className={`p-1.5 text-left border font-mono transition-all flex flex-col justify-between ${
+                      onMouseEnter={() => soundManager.playHover(0.02)}
+                      initial={false}
+                      animate={{
+                        rotate: isSelected ? 0 : rot,
+                        scale: isSelected ? 1.02 : 1,
+                      }}
+                      whileHover={{
+                        rotate: 0,
+                        scale: 1.05,
+                        transition: { duration: 0.12 },
+                      }}
+                      whileTap={{ scale: 0.97 }}
+                      className={`relative p-1.5 text-left border-2 font-mono transition-all cursor-pointer flex flex-col justify-between ${
                         isSelected
-                          ? "bg-brand-text text-brand-bg border-brand-text shadow-[2px_2px_0px_#050505]"
-                          : "bg-brand-bg text-brand-text border-brand-text/40 hover:border-brand-text"
+                          ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[4px_4px_0px_#ff4500] z-10"
+                          : "bg-brand-surface border-brand-text shadow-[3px_3px_0px_#050505] hover:border-brand-accent hover:shadow-[4px_4px_0px_#050505]"
                       }`}
+                      title={`Preview ${spec.medium}`}
                     >
-                      <div className="text-[8.5px] font-black uppercase truncate flex items-center justify-between">
-                        <span className="truncate">{spec.medium}</span>
-                        {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
+                      {/* Specimen Visual Thumbnail */}
+                      <div className="w-full h-20 sm:h-24 bg-brand-bg border border-brand-text/30 overflow-hidden flex items-center justify-center relative">
+                        <img
+                          src={specImg}
+                          alt={spec.medium}
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-contain p-1 select-none pointer-events-none transition-transform duration-200"
+                          loading="lazy"
+                        />
+                        {isSelected ? (
+                          <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-brand-accent text-white text-[7px] font-black uppercase tracking-wider leading-none shadow-[1px_1px_0px_#050505]">
+                            ACTIVE
+                          </div>
+                        ) : (
+                          <div className="absolute top-1 right-1 px-1 py-0.5 bg-brand-surface/90 text-brand-text text-[6.5px] font-black uppercase tracking-wider leading-none border border-brand-text/40">
+                            0{specIdx + 1}
+                          </div>
+                        )}
                       </div>
-                      <div className={`text-[8px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                        {spec.material || "CANONICAL"}
+
+                      {/* Specimen Metadata Info */}
+                      <div className="pt-1.5 space-y-0.5">
+                        <div className="text-[9px] sm:text-[9.5px] font-black uppercase truncate flex items-center justify-between text-brand-text">
+                          <span className="truncate">{spec.medium}</span>
+                          {isSelected && <Check size={10} className="text-brand-accent shrink-0 ml-1" />}
+                        </div>
+                        <div className={`text-[7.5px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                          {spec.material || "CANONICAL"}
+                        </div>
                       </div>
-                    </button>
+                    </motion.button>
                   );
                 })}
               </div>
@@ -641,14 +688,14 @@ export default function ArtifactOverlappingCollection({
               >
                 {/* PHYSICAL 3:4 ARTIFACT FRAME */}
                 <div
-                  className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-surface border-3 sm:border-4 border-brand-text transition-all duration-300 ${
+                  className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text transition-all duration-300 ${
                     isHovered
-                      ? "shadow-[14px_14px_0px_#050505,0_0_0_2px_#ff4500]"
-                      : "shadow-[6px_6px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
+                      ? "shadow-[10px_10px_0px_#050505,0_0_0_1.5px_#ff4500]"
+                      : "shadow-[5px_5px_0px_#050505] hover:shadow-[8px_8px_0px_#050505]"
                   }`}
                 >
                   {/* Central Graphic Canvas */}
-                  <div className="w-full h-full relative p-1 sm:p-2 flex items-center justify-center bg-brand-bg">
+                  <div className="w-full h-full relative flex items-center justify-center bg-brand-bg">
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={currentImg}
@@ -761,43 +808,84 @@ export default function ArtifactOverlappingCollection({
                             )}
                           </div>
 
-                          <div className="grid grid-cols-3 gap-1">
-                            {childSpecimens.map((spec) => {
+                          <div className={`grid gap-2 py-1.5 px-0.5 ${
+                            childSpecimens.length <= 2 ? "grid-cols-2" : "grid-cols-3"
+                          }`}>
+                            {childSpecimens.map((spec, specIdx) => {
                               const isSelected = selectedSpecId === spec.id;
+                              const specImg = spec.images?.[0] || spec.thumbnailImage || item.graphic;
+                              const scatterAngles = [-2.2, 2.4, -1.8, 2.0, -2.6, 1.8];
+                              const rot = scatterAngles[specIdx % scatterAngles.length];
+
                               return (
-                                <button
+                                <motion.button
                                   key={spec.id}
                                   type="button"
                                   onClick={(e) => handleSelectSpecimen(item.id, spec.id, e)}
-                                  className={`px-1.5 py-1 text-left border font-mono transition-all flex flex-col justify-between ${
+                                  onMouseEnter={() => soundManager.playHover(0.02)}
+                                  initial={false}
+                                  animate={{
+                                    rotate: isSelected ? 0 : rot,
+                                    scale: isSelected ? 1.02 : 1,
+                                  }}
+                                  whileHover={{
+                                    rotate: 0,
+                                    scale: 1.05,
+                                    transition: { duration: 0.12 },
+                                  }}
+                                  whileTap={{ scale: 0.98 }}
+                                  className={`relative p-1.5 text-left border-2 font-mono transition-all cursor-pointer flex flex-col justify-between ${
                                     isSelected
-                                      ? "bg-brand-text text-brand-bg border-brand-text shadow-[1.5px_1.5px_0px_#050505]"
-                                      : "bg-brand-surface text-brand-text border-brand-text/40 hover:border-brand-text hover:bg-brand-bg"
+                                      ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[3px_3px_0px_#ff4500] z-10"
+                                      : "bg-brand-surface border-brand-text shadow-[2px_2px_0px_#050505] hover:border-brand-accent hover:shadow-[3px_3px_0px_#050505]"
                                   }`}
+                                  title={`Preview ${spec.medium}`}
                                 >
-                                  <div className="text-[8px] font-black uppercase truncate flex items-center justify-between">
-                                    <span className="truncate">{spec.medium}</span>
-                                    {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
+                                  {/* Small Specimen Thumbnail */}
+                                  <div className="w-full h-14 bg-brand-bg border border-brand-text/30 overflow-hidden flex items-center justify-center relative">
+                                    <img
+                                      src={specImg}
+                                      alt={spec.medium}
+                                      referrerPolicy="no-referrer"
+                                      className="w-full h-full object-contain p-0.5 select-none pointer-events-none"
+                                      loading="lazy"
+                                    />
+                                    {isSelected ? (
+                                      <div className="absolute top-0.5 right-0.5 px-1 py-0.2 bg-brand-accent text-white text-[6.5px] font-black uppercase tracking-wider leading-none shadow-[1px_1px_0px_#050505]">
+                                        ACTIVE
+                                      </div>
+                                    ) : (
+                                      <div className="absolute top-0.5 right-0.5 px-0.5 py-0.2 bg-brand-surface/90 text-brand-text text-[6px] font-black leading-none">
+                                        0{specIdx + 1}
+                                      </div>
+                                    )}
                                   </div>
-                                  <div className={`text-[7.5px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                                    {spec.material || "CANONICAL"}
+
+                                  {/* Specimen Info */}
+                                  <div className="pt-1 space-y-0.5">
+                                    <div className="text-[8.5px] font-black uppercase truncate flex items-center justify-between text-brand-text">
+                                      <span className="truncate">{spec.medium}</span>
+                                      {isSelected && <Check size={8} className="text-brand-accent shrink-0 ml-0.5" />}
+                                    </div>
+                                    <div className={`text-[7px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                                      {spec.material || "CANONICAL"}
+                                    </div>
                                   </div>
-                                </button>
+                                </motion.button>
                               );
                             })}
                           </div>
                         </div>
 
-                        {/* Complete Set Acquisition Bar */}
+                        {/* Complete Set Acquisition Bar (No price in previews) */}
                         {setCalculation.hasDiscount && setCalculation.setPrice > 0 && (
                           <div className="bg-brand-accent/10 border border-brand-accent/40 p-1.5 flex items-center justify-between font-mono text-[8px]">
                             <div className="flex items-center gap-1 font-black text-brand-text uppercase">
                               <Box size={10} className="text-brand-accent" />
-                              <span>FULL SET ({setCalculation.specimenCount}):</span>
+                              <span>FULL SET ({setCalculation.specimenCount} SPECIMENS):</span>
                             </div>
                             <div className="flex items-center gap-1">
-                              <span className="line-through text-brand-text/50">PKR {setCalculation.individualTotal.toLocaleString()}</span>
-                              <span className="font-black text-brand-accent">PKR {setCalculation.setPrice.toLocaleString()}</span>
+                              <span className="font-black text-brand-accent uppercase tracking-wider">BUNDLE AVAILABLE</span>
                             </div>
                           </div>
                         )}
@@ -877,8 +965,8 @@ export default function ArtifactOverlappingCollection({
                               rotate: scatter.rotate,
                               y: 0,
                               transition: {
-                                delay: specIdx * 0.08,
-                                duration: 0.16,
+                                delay: specIdx * 0.12,
+                                duration: 0.18,
                                 ease: [0.16, 1, 0.3, 1],
                               },
                             }}

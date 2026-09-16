@@ -208,19 +208,19 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         {/* Right Prominent Official Emblem Display with Sideways Tilt Effect */}
         <div className="lg:col-span-5 flex flex-col items-center justify-start pt-10 lg:pt-16">
           <div className="flex flex-col items-center justify-center text-center px-2 pb-2 sm:px-4 sm:pb-4 w-full">
-            {/* The Actual Official SYMBOLIC Logo Emblem - Tilted sideways by default, tilting more on hover */}
+            {/* The Actual Official SYMBOLIC Logo Emblem - Tilted sideways by default like Be Symbol, tilting more on hover */}
             <motion.div
-              initial={{ scale: 0.88, rotate: -3.5, opacity: 0 }}
-              animate={{ scale: 1, rotate: -3.5, opacity: 1 }}
+              initial={{ scale: 0.88, rotate: -4, opacity: 0 }}
+              animate={{ scale: 1, rotate: -4, opacity: 1 }}
               transition={{
                 type: "spring",
                 stiffness: 420,
                 damping: 18,
-                delay: 0.15,
+                delay: 0.12,
               }}
               whileHover={{
-                scale: 1.05,
-                rotate: -7.5,
+                scale: 1.04,
+                rotate: -8.5,
                 transition: { type: "spring", stiffness: 450, damping: 14 },
               }}
               onMouseEnter={() => soundManager.playHover(0.04)}

@@ -251,6 +251,7 @@ export interface CartItem {
   specimenId?: string;
   artifactId?: string;
   isCompleteArtifactSet?: boolean;
+  isSetBundle?: boolean;
   includedSpecimens?: Array<{
     specimenId: string;
     medium: string;

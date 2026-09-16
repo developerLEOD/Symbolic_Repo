@@ -15,12 +15,14 @@ import {
   Maximize2, 
   Ruler, 
   ArrowUpRight,
+  ArrowRight,
   Info,
   Bell,
   Clock,
   Share2
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
+import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Product, ProductVariant, CartItem } from "../types";
@@ -89,6 +91,7 @@ export default function ProductDetail({
   onEditProduct,
   onDeleteProduct
 }: ProductDetailProps) {
+  const navigate = useNavigate();
   const [variants, setVariants] = useState<ProductVariant[]>([]);
   const [selectedOptions, setSelectedOptions] = useState<{ [key: string]: string }>({});
   const [quantity, setQuantity] = useState(1);
@@ -1057,21 +1060,20 @@ export default function ProductDetail({
             </p>
           </div>
 
-          {/* ACQUISITION INTERFACE (Unambiguous, High-Contrast, Direct) */}
+          {/* ACQUISITION INTERFACE - DEDICATED LARGE ACQUIRE BUTTON (NO PRICE ON SPECIFICATION PAGE) */}
           <div className="border-[2.5px] border-brand-text bg-brand-surface p-6 sm:p-10 lg:p-12 shadow-[8px_8px_0px_#050505] space-y-8">
             
-            {/* Price & Allotment Row */}
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b-2 border-brand-text pb-8">
+            {/* Specimen Status Row (NO PRICE) */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-6 border-b-2 border-brand-text pb-6">
               <div>
                 <span className="font-mono text-[9px] font-bold uppercase text-brand-text/60 tracking-wider block">
-                  VALUATION / ACQUISITION SETTLEMENT
+                  PHYSICAL ARCHIVE PROTOCOL
                 </span>
-                <div className="text-3xl sm:text-5xl font-mono font-black text-brand-text tracking-tight mt-1">
-                  Rs. {(selectedVariant?.price || product.price).toLocaleString()}{" "}
-                  <span className="text-xs sm:text-sm font-bold text-brand-text/60 font-mono">PKR</span>
+                <div className="text-xl sm:text-3xl font-mono font-black text-brand-text uppercase tracking-tight mt-1">
+                  {product.name}
                 </div>
                 <div className="font-mono text-[10px] text-brand-text/70 uppercase mt-1">
-                  [INCLUSIVE OF ALL TAXES • DIRECT ATELIER DISTRIBUTION]
+                  EDITION: {editionLabel} • DIRECT ATELIER CUSTODY
                 </div>
               </div>
 
@@ -1089,229 +1091,34 @@ export default function ProductDetail({
               </div>
             </div>
 
-            {/* Variant / Size Selection */}
-            {optionNames.length > 0 ? (
-              <div className="space-y-6">
-                {optionNames.map((name: string) => (
-                  <div key={name} className="space-y-2.5">
-                    <div className="flex justify-between items-center">
-                      <span className="font-mono text-xs font-black uppercase tracking-wider text-brand-text">
-                        SPECIFICATION // {name}:
-                      </span>
-                      <span className="font-mono text-xs font-black uppercase text-brand-accent bg-brand-text/5 px-2 py-0.5 border border-brand-text/20">
-                        SELECTED: {selectedOptions[name] || "PLEASE SELECT"}
-                      </span>
-                    </div>
-
-                    <div className="flex flex-wrap gap-3">
-                      {getOptionValues(name).map((val: string) => {
-                        const isSelected = selectedOptions[name] === val;
-                        const isColorOption = name.toLowerCase().includes("color");
-                        const colorConfig = isColorOption 
-                          ? product.availableColors?.find(c => c.name.toLowerCase() === val.toLowerCase())
-                          : null;
-                        const matchedVariant = variants.find(v => 
-                          (v.option1Name === name && v.option1Value === val) ||
-                          (v.option2Name === name && v.option2Value === val) ||
-                          (v.option3Name === name && v.option3Value === val)
-                        );
-                        const colorHex = colorConfig?.hex || matchedVariant?.colorHex;
-
-                        return (
-                          <button
-                            key={val}
-                            type="button"
-                            onClick={() => handleOptionSelect(name, val)}
-                            className={`min-w-[56px] px-5 py-3 font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text transition-all cursor-pointer flex items-center gap-2.5 ${
-                              isSelected
-                                ? "bg-brand-text text-brand-bg shadow-[4px_4px_0px_#050505] -translate-y-0.5"
-                                : "bg-brand-bg text-brand-text hover:bg-brand-text/10 shadow-[2px_2px_0px_#050505]"
-                            }`}
-                          >
-                            {isColorOption && colorHex && (
-                              <span 
-                                className="w-3.5 h-3.5 border border-brand-text shrink-0" 
-                                style={{ backgroundColor: colorHex }} 
-                              />
-                            )}
-                            <span>{val}</span>
-                          </button>
-                        );
-                      })}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            ) : mediumType === "WEAR" ? (
-              /* Fallback standard sizing for wear if no variants in DB */
-              <div className="space-y-2.5">
-                <div className="flex justify-between items-center">
-                  <span className="font-mono text-xs font-black uppercase tracking-wider text-brand-text">
-                    SPECIFICATION // SIZE:
+            {/* ONLY THE ACQUIRE BUTTON IN LARGE SIZE */}
+            <div className="pt-2 space-y-4">
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick();
+                  navigate(`/artifact/${product.productId || product.sku || product.id}/acquire`);
+                }}
+                className="w-full py-6 sm:py-8 px-6 sm:px-10 font-mono text-base sm:text-xl font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-between gap-4 cursor-pointer group"
+              >
+                <div className="flex flex-col text-left">
+                  <span className="text-[10px] sm:text-xs font-bold text-white/80 uppercase tracking-widest">
+                    ARCHIVAL PROTOCOL //
                   </span>
-                  <span className="font-mono text-xs font-black uppercase text-brand-accent bg-brand-text/5 px-2 py-0.5 border border-brand-text/20">
-                    SELECTED: {selectedOptions["Size"] || "M"}
+                  <span className="text-base sm:text-2xl font-black text-white uppercase tracking-wider">
+                    ACQUIRE SPECIMEN
                   </span>
                 </div>
-                <div className="flex flex-wrap gap-3">
-                  {["S", "M", "L", "XL", "2XL"].map((sz) => {
-                    const isSelected = (selectedOptions["Size"] || "M") === sz;
-                    return (
-                      <button
-                        key={sz}
-                        type="button"
-                        onClick={() => handleOptionSelect("Size", sz)}
-                        className={`min-w-[56px] px-5 py-3 font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text transition-all cursor-pointer ${
-                          isSelected
-                            ? "bg-brand-text text-brand-bg shadow-[4px_4px_0px_#050505] -translate-y-0.5"
-                            : "bg-brand-bg text-brand-text hover:bg-brand-text/10 shadow-[2px_2px_0px_#050505]"
-                        }`}
-                      >
-                        {sz}
-                      </button>
-                    );
-                  })}
+                <div className="flex items-center gap-2.5 bg-brand-text/30 px-4 py-3 border border-white/20 shrink-0 group-hover:bg-brand-accent transition-colors">
+                  <span className="text-xs font-black uppercase tracking-wider hidden sm:inline">PROCEED TO SELECTION</span>
+                  <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform text-white" />
                 </div>
-              </div>
-            ) : null}
+              </button>
 
-            {isSoldOut ? (
-              <div className="space-y-6 pt-2">
-                <div className="border-2 border-brand-text p-6 bg-brand-bg space-y-3">
-                  <div className="flex items-center gap-2 text-brand-accent font-mono text-xs font-black uppercase tracking-wider">
-                    <Clock size={16} />
-                    <span>ARCHIVAL NOTICE // PHYSICAL ALLOTMENT ACCORDED</span>
-                  </div>
-                  <h3 className="font-mono text-xl sm:text-2xl font-black uppercase tracking-tight text-brand-text">
-                    ARTIFACT / {artifactNumber} IS SOLD OUT
-                  </h3>
-                  <p className="font-mono text-xs text-brand-text/80 uppercase leading-relaxed max-w-2xl">
-                    Every physical artifact from this edition is currently in custody. In accordance with studio philosophy, this artifact remains part of the collection as an artifact that has existed. All visual documentation, symbolic thesis, and technical specifications remain accessible in this permanent dossier.
-                  </p>
-                </div>
-
-                {/* NOTIFY ME Protocol */}
-                <div className="border-2 border-brand-text bg-brand-surface p-6 sm:p-8 space-y-4 shadow-[4px_4px_0px_#050505]">
-                  <div className="flex items-center gap-2">
-                    <Bell size={18} className="text-brand-accent" />
-                    <span className="font-mono text-xs sm:text-sm font-black uppercase tracking-widest text-brand-text">
-                      NOTIFY ME OF FUTURE ALLOTMENTS
-                    </span>
-                  </div>
-                  <p className="font-mono text-[11px] text-brand-text/70 uppercase">
-                    Provide your email coordinates to receive an immediate dispatch advisory if archival vault artifacts or a future edition is authorized.
-                  </p>
-                  {notifySubmitted ? (
-                    <div className="p-4 bg-brand-text text-brand-bg font-mono text-xs font-black uppercase tracking-wider flex items-center gap-2.5 border-2 border-brand-text">
-                      <Check size={16} className="text-brand-accent shrink-0" />
-                      <span>DISPATCH LOGGED. YOU WILL BE TRANSMITTED NOTICE IF ARTIFACT / {artifactNumber} RE-ENTERS THE ATELIER.</span>
-                    </div>
-                  ) : (
-                    <form onSubmit={handleNotifySubmit} className="flex flex-col sm:flex-row gap-3">
-                      <input
-                        type="email"
-                        required
-                        value={notifyEmail}
-                        onChange={(e) => setNotifyEmail(e.target.value)}
-                        placeholder="ENTER YOUR EMAIL FOR RE-RELEASE NOTICE"
-                        className="flex-1 px-4 py-3.5 bg-brand-bg border-2 border-brand-text font-mono text-xs uppercase tracking-wider text-brand-text placeholder:text-brand-text/40 focus:outline-none focus:border-brand-accent"
-                      />
-                      <button
-                        type="submit"
-                        className="px-8 py-3.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer whitespace-nowrap"
-                      >
-                        NOTIFY ME
-                      </button>
-                    </form>
-                  )}
-                </div>
-              </div>
-            ) : (
-              <>
-                {/* Quantity Controller */}
-                <div className="flex flex-wrap items-center gap-6 pt-2">
-                  <span className="font-mono text-xs font-black uppercase tracking-wider text-brand-text">
-                    ALLOTMENT QUANTITY:
-                  </span>
-                  <div className="inline-flex items-center border-2 border-brand-text bg-brand-bg shadow-[3px_3px_0px_#050505]">
-                    <button 
-                      type="button"
-                      onClick={() => {
-                        soundManager.playToggle(0.06);
-                        setQuantity(Math.max(1, quantity - 1));
-                      }}
-                      className="p-3 hover:bg-brand-text hover:text-white transition-colors cursor-pointer"
-                      title="Decrease Allotment"
-                    >
-                      <Minus size={16} />
-                    </button>
-                    <span className="w-12 text-center font-mono text-sm font-black select-none">
-                      {quantity}
-                    </span>
-                    <motion.button 
-                      type="button"
-                      whileTap={{ scale: 0.85 }}
-                      onClick={() => {
-                        soundManager.playToggle(0.06);
-                        setQuantity(quantity + 1);
-                      }}
-                      className="p-3 hover:bg-brand-text hover:text-white transition-colors cursor-pointer"
-                      title="Increase Allotment"
-                    >
-                      <Plus size={16} />
-                    </motion.button>
-                  </div>
-                </div>
-
-                {/* Primary Acquisition Buttons with Juicy Springs */}
-                <div className="grid grid-cols-1 sm:grid-cols-12 gap-4 pt-4">
-                  <div className="sm:col-span-7">
-                    <motion.button 
-                      type="button"
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.96 }}
-                      transition={{ type: "spring", stiffness: 450, damping: 18 }}
-                      onClick={handlePossess}
-                      className="w-full py-5 px-6 font-mono text-sm font-black uppercase tracking-widest bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border-2 border-brand-text shadow-[5px_5px_0px_#050505] active:shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer flex items-center justify-center gap-2 select-none"
-                    >
-                      {added ? (
-                        <motion.div 
-                          initial={{ scale: 0.7, opacity: 0 }}
-                          animate={{ scale: 1, opacity: 1 }}
-                          transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                          className="flex items-center gap-2 text-white"
-                        >
-                          <Check size={18} className="text-white animate-bounce" />
-                          <span>RECORDED IN POSSESSION LEDGER</span>
-                        </motion.div>
-                      ) : (
-                        <>
-                          <span>ACQUIRE SPECIMEN</span>
-                          <ArrowUpRight size={18} />
-                        </>
-                      )}
-                    </motion.button>
-                  </div>
-
-                  <div className="sm:col-span-5">
-                    <motion.button 
-                      type="button"
-                      whileHover={{ y: -2 }}
-                      whileTap={{ scale: 0.96 }}
-                      transition={{ type: "spring", stiffness: 450, damping: 18 }}
-                      onClick={() => {
-                        handlePossess();
-                        onClose();
-                        if (onOpenLedger) onOpenLedger();
-                      }}
-                      className="w-full py-5 px-6 font-mono text-sm font-black uppercase tracking-widest bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[5px_5px_0px_#050505] active:shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer flex items-center justify-center gap-2 select-none"
-                    >
-                      <span>ACQUIRE &amp; PROCEED TO LEDGER →</span>
-                    </motion.button>
-                  </div>
-                </div>
-              </>
-            )}
+              <p className="text-[10px] font-mono font-bold uppercase text-brand-text/60 text-center tracking-wider">
+                [ CONFIGURE SIZES, SPECIMEN ATTRIBUTES &amp; VIEW ACQUISITION VALUATION ON ACQUISITION SUITE ]
+              </p>
+            </div>
 
             {/* Shipping & Custody Logistics */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 pt-6 border-t-2 border-brand-text font-mono text-xs">
@@ -1390,27 +1197,14 @@ export default function ProductDetail({
                   <>
                     <button
                       type="button"
-                      onClick={() => scrollToSection("dossier-possession")}
-                      className="px-4 py-2 font-mono text-[10.5px] font-black uppercase border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-brand-bg transition-colors cursor-pointer hidden md:block"
+                      onClick={() => {
+                        soundManager.playClick();
+                        navigate(`/artifact/${product.productId || product.sku || product.id}/acquire`);
+                      }}
+                      className="px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5"
                     >
-                      CONFIGURE SPECS
-                    </button>
-                    <button
-                      type="button"
-                      onClick={handlePossess}
-                      className="px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                      {added ? (
-                        <>
-                          <Check size={14} className="text-brand-accent" />
-                          <span>RECORDED</span>
-                        </>
-                      ) : (
-                        <>
-                          <span>ACQUIRE ARTIFACT</span>
-                          <ArrowUpRight size={14} />
-                        </>
-                      )}
+                      <span>ACQUIRE SPECIMEN</span>
+                      <ArrowRight size={14} />
                     </button>
                   </>
                 )}

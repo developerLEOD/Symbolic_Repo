@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from "react";
-import { useParams, useNavigate, useSearchParams } from "react-router-dom";
+import { useParams, useNavigate, useSearchParams, useLocation } from "react-router-dom";
 import ProductDetail from "./ProductDetail";
 import ArtifactDetail from "./ArtifactDetail";
+import ArtifactAcquisitionPage from "./ArtifactAcquisitionPage";
 import { Product, CartItem, Artifact, Specimen } from "../types";
 import { fetchProductBySlugOrId, deleteProductAndVariants } from "../lib/productService";
 import { 
@@ -14,6 +15,7 @@ import { useAuth } from "../lib/AuthContext";
 import { AnimatePresence } from "motion/react";
 
 interface ProductRouteHandlerProps {
+  mode?: "spec" | "acquire";
   onAddToCart: (item: CartItem) => void;
   onOpenLedger: () => void;
   onEditProduct?: (id: string) => void;
@@ -21,6 +23,7 @@ interface ProductRouteHandlerProps {
 }
 
 export default function ProductRouteHandler({
+  mode,
   onAddToCart,
   onOpenLedger,
   onEditProduct,
@@ -28,6 +31,8 @@ export default function ProductRouteHandler({
 }: ProductRouteHandlerProps) {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
+  const location = useLocation();
+  const isAcquisitionPage = mode === "acquire" || location.pathname.endsWith("/acquire");
   const querySpecimenId = searchParams.get("specimen") || searchParams.get("specimenId") || undefined;
   const navigate = useNavigate();
   const { isOwner } = useAuth();
@@ -219,7 +224,25 @@ export default function ProductRouteHandler({
     );
   }
 
-  // If we resolved an Artifact and its Specimens, display ArtifactDetail
+  // If user navigated to acquisition page (/artifact/:id/acquire)
+  if (isAcquisitionPage) {
+    const specTargetRoute = `/artifact/${artifact ? (artifact.artifactId || artifact.id) : (product?.productId || product?.id)}`;
+    return (
+      <AnimatePresence>
+        <ArtifactAcquisitionPage
+          artifact={artifact}
+          specimens={specimens}
+          product={product}
+          initialSpecimenId={initialSpecimenId}
+          onBackToSpec={() => navigate(specTargetRoute)}
+          onAddToCart={onAddToCart}
+          onOpenLedger={onOpenLedger}
+        />
+      </AnimatePresence>
+    );
+  }
+
+  // If we resolved an Artifact and its Specimens, display ArtifactDetail (Specification Page)
   if (artifact) {
     return (
       <AnimatePresence>
@@ -232,6 +255,10 @@ export default function ProductRouteHandler({
           onOpenLedger={onOpenLedger}
           onEditArtifact={isOwner && onEditProduct ? () => onEditProduct(artifact.id) : undefined}
           onDeleteArtifact={isOwner ? handleDeleteArtifact : undefined}
+          onAcquireClick={(specimenId) => {
+            const query = specimenId ? `?specimen=${specimenId}` : "";
+            navigate(`/artifact/${artifact.artifactId || artifact.id}/acquire${query}`);
+          }}
         />
       </AnimatePresence>
     );

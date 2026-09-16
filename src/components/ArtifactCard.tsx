@@ -182,44 +182,84 @@ export default function ArtifactCard({
             </span>
           </div>
 
-          <div className="grid grid-cols-2 sm:grid-cols-3 gap-1">
-            {childSpecimens.map((spec) => {
+          <div className={`grid gap-2 py-1.5 px-0.5 ${
+            childSpecimens.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
+          }`}>
+            {childSpecimens.map((spec, specIdx) => {
               const isSelected = selectedSpecimenId === spec.id;
+              const specImg = spec.images?.[0] || spec.thumbnailImage || artifact.graphic || artifact.images?.[0];
+              const scatterAngles = [-2.2, 2.4, -1.8, 2.1, -2.6, 1.8];
+              const rot = scatterAngles[specIdx % scatterAngles.length];
+
               return (
-                <button
+                <motion.button
                   key={spec.id}
                   type="button"
                   onClick={(e) => handleSpecimenClick(e, spec.id)}
-                  className={`px-1.5 py-1 text-left font-mono text-[8px] border transition-all cursor-pointer flex flex-col justify-between ${
+                  onMouseEnter={() => soundManager.playHover(0.02)}
+                  initial={false}
+                  animate={{
+                    rotate: isSelected ? 0 : rot,
+                    scale: isSelected ? 1.02 : 1,
+                  }}
+                  whileHover={{
+                    rotate: 0,
+                    scale: 1.05,
+                    transition: { duration: 0.12 },
+                  }}
+                  whileTap={{ scale: 0.98 }}
+                  className={`relative p-1.5 text-left font-mono border-2 transition-all cursor-pointer flex flex-col justify-between ${
                     isSelected
-                      ? "bg-brand-text text-brand-bg border-brand-text shadow-[1.5px_1.5px_0px_#050505]"
-                      : "bg-brand-surface text-brand-text border-brand-text/40 hover:border-brand-text hover:bg-brand-bg"
+                      ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[3px_3px_0px_#ff4500] z-10"
+                      : "bg-brand-surface border-brand-text shadow-[2px_2px_0px_#050505] hover:border-brand-accent hover:shadow-[3px_3px_0px_#050505]"
                   }`}
                   title={spec.medium}
                 >
-                  <div className="font-black uppercase truncate flex items-center justify-between gap-0.5">
-                    <span className="truncate">{spec.medium}</span>
-                    {isSelected && <Check size={8} className="text-brand-accent shrink-0" />}
+                  {/* Specimen Thumbnail Container */}
+                  <div className="w-full h-14 bg-brand-bg border border-brand-text/30 overflow-hidden flex items-center justify-center relative">
+                    <img
+                      src={specImg}
+                      alt={spec.medium}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain p-0.5 select-none pointer-events-none"
+                      loading="lazy"
+                    />
+                    {isSelected ? (
+                      <div className="absolute top-0.5 right-0.5 px-1 py-0.2 bg-brand-accent text-white text-[6.5px] font-black uppercase tracking-wider leading-none shadow-[1px_1px_0px_#050505]">
+                        ACTIVE
+                      </div>
+                    ) : (
+                      <div className="absolute top-0.5 right-0.5 px-0.5 py-0.2 bg-brand-surface/90 text-brand-text text-[6px] font-black leading-none">
+                        0{specIdx + 1}
+                      </div>
+                    )}
                   </div>
-                  <div className={`text-[7.5px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                    {spec.material || "CANONICAL"}
+
+                  {/* Specimen Metadata Info */}
+                  <div className="pt-1 space-y-0.5">
+                    <div className="text-[8.5px] font-black uppercase truncate flex items-center justify-between text-brand-text">
+                      <span className="truncate">{spec.medium}</span>
+                      {isSelected && <Check size={8} className="text-brand-accent shrink-0 ml-0.5" />}
+                    </div>
+                    <div className={`text-[7px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                      {spec.material || "CANONICAL"}
+                    </div>
                   </div>
-                </button>
+                </motion.button>
               );
             })}
           </div>
         </div>
 
-        {/* Complete Set Acquisition Teaser */}
+        {/* Complete Set Acquisition Teaser (No price in previews) */}
         {setCalculation.hasDiscount && setCalculation.setPrice > 0 && (
           <div className="bg-brand-accent/5 border border-brand-accent/30 p-1.5 flex items-center justify-between font-mono text-[8px]">
             <div className="flex items-center gap-1 font-black text-brand-text uppercase">
               <Box size={10} className="text-brand-accent" />
-              <span>COMPLETE SET ({setCalculation.specimenCount}):</span>
+              <span>COMPLETE SET ({setCalculation.specimenCount} SPECIMENS):</span>
             </div>
             <div className="flex items-center gap-1">
-              <span className="line-through text-brand-text/50">PKR {setCalculation.individualTotal.toLocaleString()}</span>
-              <span className="font-black text-brand-accent">PKR {setCalculation.setPrice.toLocaleString()}</span>
+              <span className="font-black text-brand-accent uppercase tracking-wider">BUNDLE AVAILABLE</span>
             </div>
           </div>
         )}

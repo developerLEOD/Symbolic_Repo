@@ -512,6 +512,21 @@ function StorefrontApp() {
             path="/artifact/:id"
             element={
               <ProductRouteHandler
+                mode="spec"
+                onAddToCart={handleAddToCart}
+                onOpenLedger={() => setIsCartOpen(true)}
+                onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
+                onProductDeleted={handleProductPublished}
+              />
+            }
+          />
+
+          {/* Dedicated Artifact Acquisition Protocol Suite */}
+          <Route
+            path="/artifact/:id/acquire"
+            element={
+              <ProductRouteHandler
+                mode="acquire"
                 onAddToCart={handleAddToCart}
                 onOpenLedger={() => setIsCartOpen(true)}
                 onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
@@ -581,7 +596,8 @@ function StorefrontApp() {
                   <Route path="/artifacts" element={<ArtifactsDirectoryView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
                   <Route path="/artifacts/:categoryId" element={<ArtifactsDirectoryView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
                   <Route path="/collection/:collectionId" element={<CollectionDirectoryView onProductClick={handleProductSelect} refreshKey={refreshKey} onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }} flagshipProduct={flagshipProduct} onAddToCart={handleAddToCart} onNavigateManifesto={() => navigate("/manifesto")} onNavigateAbout={() => navigate("/about")} />} />
-                  <Route path="/artifact/:id" element={<ProductRouteHandler onAddToCart={handleAddToCart} onOpenLedger={() => setIsCartOpen(true)} onEditProduct={isOwner ? handleEditProductFromDetail : undefined} onProductDeleted={handleProductPublished} />} />
+                  <Route path="/artifact/:id" element={<ProductRouteHandler mode="spec" onAddToCart={handleAddToCart} onOpenLedger={() => setIsCartOpen(true)} onEditProduct={isOwner ? handleEditProductFromDetail : undefined} onProductDeleted={handleProductPublished} />} />
+                  <Route path="/artifact/:id/acquire" element={<ProductRouteHandler mode="acquire" onAddToCart={handleAddToCart} onOpenLedger={() => setIsCartOpen(true)} onEditProduct={isOwner ? handleEditProductFromDetail : undefined} onProductDeleted={handleProductPublished} />} />
                   <Route path="/about" element={<About onBack={() => navigate("/")} onWhyWeWear={() => navigate("/manifesto")} />} />
                   <Route path="/manifesto" element={<Manifesto onBack={() => navigate("/")} onAbout={() => navigate("/about")} />} />
                   <Route path="/why-merchandise" element={<Manifesto onBack={() => navigate("/")} onAbout={() => navigate("/about")} />} />

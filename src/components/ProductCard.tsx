@@ -262,7 +262,8 @@ export default function ProductCard({
                     x: 0,
                     rotate: off.rotate,
                     transition: {
-                      duration: 0.12,
+                      delay: i * 0.07,
+                      duration: 0.16,
                       ease: [0.16, 1, 0.3, 1],
                     },
                   }}
