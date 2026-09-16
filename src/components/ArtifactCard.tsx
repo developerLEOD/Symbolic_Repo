@@ -4,7 +4,7 @@ import { ArrowUpRight, Layers, Box, Check, Sparkles, Camera, Eye } from "lucide-
 import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { buildSpecimenAngleSequence, SpecimenAngleSequenceItem } from "../lib/specimenAngles";
 import { soundManager } from "../lib/soundEffects";
-import { motion } from "motion/react";
+import { motion, AnimatePresence } from "motion/react";
 
 interface ArtifactCardProps {
   key?: React.Key;
@@ -105,11 +105,24 @@ export default function ArtifactCard({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 16 }}
+      initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
-      transition={{ duration: 0.25, delay: Math.min(index * 0.04, 0.3) }}
-      whileHover={{ y: -3, transition: { duration: 0.15 } }}
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      transition={{ 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 24, 
+        delay: Math.min(index * 0.04, 0.25) 
+      }}
+      whileHover={{ 
+        y: -6, 
+        scale: 1.012, 
+        transition: { type: "spring", stiffness: 420, damping: 18 } 
+      }}
+      whileTap={{ 
+        scale: 0.985,
+        transition: { type: "spring", stiffness: 500, damping: 20 }
+      }}
+      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
       onClick={handleCardClick}
       onMouseEnter={() => {
         soundManager.playHover(0.04);
@@ -142,14 +155,34 @@ export default function ArtifactCard({
         </div>
       </div>
 
-      {/* Central Visual Graphic / Artwork */}
+      {/* Central Visual Graphic / Artwork — Bouncy Spring Canvas */}
       <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3">
-        <img 
+        <motion.img 
           key={displayImage}
           src={displayImage} 
           alt={activeSpecimen ? `${artifact.name} — ${activeSpecimen.medium}` : artifact.name}
           referrerPolicy="no-referrer"
-          className="w-full h-full object-contain object-center p-1 sm:p-2 select-none pointer-events-none transition-opacity duration-200"
+          initial={{ scale: 0.92, y: 5 }}
+          animate={{ 
+            scale: 1, 
+            y: 0,
+            transition: {
+              type: "spring",
+              stiffness: 650,
+              damping: 26,
+              mass: 0.4
+            }
+          }}
+          whileHover={{
+            scale: 1.05,
+            y: -3,
+            transition: {
+              type: "spring",
+              stiffness: 450,
+              damping: 16
+            }
+          }}
+          className="w-full h-full object-contain object-center p-1 sm:p-2 select-none pointer-events-none"
         />
 
         {/* Top Artifact ID Ribbon & Specimen Tag */}

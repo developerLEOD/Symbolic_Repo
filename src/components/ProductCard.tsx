@@ -3,6 +3,7 @@ import { Product } from "../types";
 import { ArrowUpRight, ChevronLeft, ChevronRight, Compass, Camera } from "lucide-react";
 import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
+import { motion, AnimatePresence } from "motion/react";
 
 interface ProductCardProps {
   product: Product;
@@ -108,8 +109,25 @@ export default function ProductCard({
   };
 
   return (
-    <div 
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+    <motion.div 
+      initial={{ opacity: 0, y: 14 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ 
+        type: "spring", 
+        stiffness: 300, 
+        damping: 24, 
+        delay: typeof index === 'number' ? Math.min(index * 0.04, 0.25) : 0 
+      }}
+      whileHover={{ 
+        y: -6, 
+        scale: 1.012, 
+        transition: { type: "spring", stiffness: 420, damping: 18 } 
+      }}
+      whileTap={{ 
+        scale: 0.985,
+        transition: { type: "spring", stiffness: 500, damping: 20 }
+      }}
+      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
       onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -154,7 +172,7 @@ export default function ProductCard({
 
       {/* ─── 2. CENTRAL VISUAL ARTIFACT CANVAS (Clean 4:5 Aspect Ratio) ─── */}
       <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
-        <img 
+        <motion.img 
           key={activeImageIndex}
           src={images[activeImageIndex] || product.thumbnailImage || images[0] || STUDIO_FALLBACK_IMAGE} 
           alt={product.name}
@@ -165,7 +183,27 @@ export default function ProductCard({
               target.src = STUDIO_FALLBACK_IMAGE;
             }
           }}
-          className="w-full h-full object-contain object-center p-3 select-none pointer-events-none transition-opacity duration-200"
+          initial={{ scale: 0.92, y: 5 }}
+          animate={{ 
+            scale: 1, 
+            y: 0,
+            transition: {
+              type: "spring",
+              stiffness: 650,
+              damping: 26,
+              mass: 0.4
+            }
+          }}
+          whileHover={{
+            scale: 1.05,
+            y: -3,
+            transition: {
+              type: "spring",
+              stiffness: 450,
+              damping: 16
+            }
+          }}
+          className="w-full h-full object-contain object-center p-3 select-none pointer-events-none"
         />
 
         {/* Collection Badge & Coming Soon Pill */}
@@ -348,6 +386,6 @@ export default function ProductCard({
           </div>
         </div>
       </div>
-    </div>
+    </motion.div>
   );
 }

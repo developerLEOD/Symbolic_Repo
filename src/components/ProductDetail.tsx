@@ -29,6 +29,7 @@ import LiquidCarveButton from "./LiquidCarveButton";
 import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+import { motion, AnimatePresence } from "motion/react";
 
 interface ProductDetailProps {
   product: Product;
@@ -570,7 +571,7 @@ export default function ProductDetail({
               {/* Primary Image Viewport (Strict 3:4 Archival Specification) */}
               <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center">
                 <div className="w-full max-w-[480px] aspect-[3/4] max-h-[620px] relative bg-brand-bg border-2 border-brand-text overflow-hidden group shadow-[4px_4px_0px_#050505]">
-                  <img 
+                  <motion.img 
                     key={activeImageIndex}
                     src={images[activeImageIndex] || STUDIO_FALLBACK_IMAGE} 
                     alt={`${artifactTitle} - Perspective 0${activeImageIndex + 1}`}
@@ -579,6 +580,17 @@ export default function ProductDetail({
                       const target = e.currentTarget as HTMLImageElement;
                       if (target.src !== STUDIO_FALLBACK_IMAGE) {
                         target.src = STUDIO_FALLBACK_IMAGE;
+                      }
+                    }}
+                    initial={{ scale: 0.94, y: 5 }}
+                    animate={{ 
+                      scale: 1, 
+                      y: 0,
+                      transition: {
+                        type: "spring",
+                        stiffness: 650,
+                        damping: 26,
+                        mass: 0.4
                       }
                     }}
                     className="absolute inset-0 w-full h-full object-cover"

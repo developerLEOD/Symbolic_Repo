@@ -22,6 +22,7 @@ import { Artifact, Specimen, CartItem } from "../types";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
 import { useAuth } from "../lib/AuthContext";
+import { motion, AnimatePresence } from "motion/react";
 
 interface ArtifactDetailProps {
   artifact: Artifact;
@@ -339,11 +340,22 @@ export default function ArtifactDetail({
             {/* Left Column: Visual Gallery Canvas (7 Cols) */}
             <div className="lg:col-span-7 space-y-4">
               <div className="relative aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[6px_6px_0px_#050505] flex items-center justify-center overflow-hidden">
-                <img 
+                <motion.img 
                   key={`${activeSpecimen.id}_${activeImageIndex}`}
                   src={displayImages[activeImageIndex] || activeSpecimen.thumbnailImage} 
                   alt={`${artifact.name} ${activeSpecimen.medium}`}
                   referrerPolicy="no-referrer"
+                  initial={{ scale: 0.94, y: 5 }}
+                  animate={{ 
+                    scale: 1, 
+                    y: 0,
+                    transition: {
+                      type: "spring",
+                      stiffness: 650,
+                      damping: 26,
+                      mass: 0.4
+                    }
+                  }}
                   className="w-full h-full object-contain p-4"
                 />
 

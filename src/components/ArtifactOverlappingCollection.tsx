@@ -731,12 +731,32 @@ export default function ArtifactOverlappingCollection({
                 >
                   {/* Central Graphic Canvas */}
                   <div className="w-full h-full relative flex items-center justify-center bg-brand-bg">
-                    <img
+                    <motion.img
                       key={currentImg}
                       src={currentImg}
                       alt={item.name}
                       referrerPolicy="no-referrer"
-                      className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1 transition-opacity duration-200"
+                      initial={{ scale: 0.92, y: 5 }}
+                      animate={{ 
+                        scale: 1, 
+                        y: 0,
+                        transition: {
+                          type: "spring",
+                          stiffness: 650,
+                          damping: 26,
+                          mass: 0.4
+                        }
+                      }}
+                      whileHover={{
+                        scale: 1.05,
+                        y: -3,
+                        transition: {
+                          type: "spring",
+                          stiffness: 450,
+                          damping: 16
+                        }
+                      }}
+                      className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1"
                       loading="lazy"
                     />
 
