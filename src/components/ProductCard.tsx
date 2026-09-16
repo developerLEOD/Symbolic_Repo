@@ -255,20 +255,21 @@ export default function ProductCard({
                 <motion.button
                   key={i}
                   type="button"
-                  initial={{ opacity: 0, scale: 0.85, x: 6 }}
+                  initial={{ opacity: 0, scale: 0.4, x: 4 }}
                   animate={{
                     opacity: 1,
-                    scale: isSelected ? 1.08 : 1,
+                    scale: isSelected ? 1.05 : 1,
                     x: 0,
                     rotate: off.rotate,
                     transition: {
-                      delay: i * 0.07,
+                      type: "tween",
                       duration: 0.16,
-                      ease: [0.16, 1, 0.3, 1],
+                      ease: [0.1, 0.9, 0.2, 1],
+                      delay: i * 0.08 + 0.08,
                     },
                   }}
-                  exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.08 } }}
-                  whileHover={{ scale: 1.15, rotate: 0, zIndex: 60, transition: { duration: 0.08 } }}
+                  exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.06 } }}
+                  whileHover={{ scale: 1.05, rotate: 0, zIndex: 60, transition: { duration: 0.05 } }}
                   onMouseEnter={(e) => {
                     e.stopPropagation();
                     if (leaveTimerRef.current) {

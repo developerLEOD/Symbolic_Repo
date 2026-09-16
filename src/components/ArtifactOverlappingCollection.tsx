@@ -762,10 +762,10 @@ export default function ArtifactOverlappingCollection({
                   <AnimatePresence>
                     {isHovered && (
                       <motion.div
-                        initial={{ opacity: 0, y: 14 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 10 }}
-                        transition={{ duration: 0.14, ease: [0.16, 1, 0.3, 1] }}
+                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: 5 }}
+                        transition={{ type: "spring", stiffness: 500, damping: 25 }}
                         style={{ willChange: "transform, opacity" }}
                         className="absolute inset-x-0 bottom-0 z-30 p-3.5 bg-brand-surface text-brand-text border-t-3 border-brand-text shadow-[0_-6px_20px_rgba(0,0,0,0.25)] flex flex-col justify-between gap-2.5 font-mono"
                         onClick={(e) => e.stopPropagation()}
@@ -964,20 +964,21 @@ export default function ArtifactOverlappingCollection({
                           <motion.button
                             key={`satellite-${spec.id}`}
                             type="button"
-                            initial={{ opacity: 0, scale: 0.85, y: 10 }}
+                            initial={{ opacity: 0, scale: 0.4, y: 5 }}
                             animate={{
                               opacity: 1,
                               scale: isSelected ? 1.05 : 1,
                               rotate: scatter.rotate,
                               y: 0,
                               transition: {
-                                delay: specIdx * 0.12,
-                                duration: 0.18,
-                                ease: [0.16, 1, 0.3, 1],
+                                type: "tween",
+                                duration: 0.16,
+                                ease: [0.1, 0.9, 0.2, 1],
+                                delay: specIdx * 0.08 + 0.08,
                               },
                             }}
-                            exit={{ opacity: 0, scale: 0.85, transition: { duration: 0.08 } }}
-                            whileHover={{ scale: 1.1, rotate: 0, zIndex: 60, transition: { duration: 0.08 } }}
+                            exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.06 } }}
+                            whileHover={{ scale: 1.05, rotate: 0, zIndex: 60, transition: { duration: 0.05 } }}
                             onMouseEnter={(e) => {
                               e.stopPropagation();
                               if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
