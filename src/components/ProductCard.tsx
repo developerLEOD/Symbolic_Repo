@@ -1,7 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Product } from "../types";
-import { motion, AnimatePresence } from "motion/react";
-import { ArrowUpRight, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowUpRight, ChevronLeft, ChevronRight, Compass } from "lucide-react";
 import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 
@@ -93,47 +92,33 @@ export default function ProductCard({
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      whileHover={{ y: -4, transition: { type: "spring", stiffness: 450, damping: 26 } }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.2 }}
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-all duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+    <div 
+      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
       onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
     >
-      {/* Architectural Corner Registration Crosshairs with Juicy Spin & Color Shift */}
-      <motion.span 
-        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.35 : 1 }}
-        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+      {/* Architectural Corner Registration Crosshairs */}
+      <span 
         className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
       >
         +
-      </motion.span>
-      <motion.span 
-        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.35 : 1 }}
-        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+      </span>
+      <span 
         className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
       >
         +
-      </motion.span>
-      <motion.span 
-        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.35 : 1 }}
-        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+      </span>
+      <span 
         className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
       >
         +
-      </motion.span>
-      <motion.span 
-        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.35 : 1 }}
-        transition={{ type: "spring", stiffness: 420, damping: 18 }}
+      </span>
+      <span 
         className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text/60 select-none pointer-events-none group-hover:text-brand-accent transition-colors"
       >
         +
-      </motion.span>
+      </span>
 
       {/* ─── 1. TOP ARTIFACT IDENTIFICATION HEADER ─── */}
       <div className="flex items-center justify-between border-b-2 border-brand-text pb-2.5 mb-3">
@@ -153,25 +138,19 @@ export default function ProductCard({
 
       {/* ─── 2. CENTRAL VISUAL ARTIFACT CANVAS (Clean 4:5 Aspect Ratio) ─── */}
       <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
-        <AnimatePresence mode="wait">
-          <motion.img 
-            key={activeImageIndex}
-            src={images[activeImageIndex] || product.thumbnailImage || images[0] || STUDIO_FALLBACK_IMAGE} 
-            alt={product.name}
-            referrerPolicy="no-referrer"
-            onError={(e) => {
-              const target = e.currentTarget;
-              if (target.src !== STUDIO_FALLBACK_IMAGE) {
-                target.src = STUDIO_FALLBACK_IMAGE;
-              }
-            }}
-            initial={{ opacity: 0.85 }}
-            animate={{ opacity: 1, scale: isHovered ? 1.02 : 1 }}
-            exit={{ opacity: 0.85 }}
-            transition={{ duration: 0.1, ease: "easeOut" }}
-            className="w-full h-full object-contain object-center p-3"
-          />
-        </AnimatePresence>
+        <img 
+          key={activeImageIndex}
+          src={images[activeImageIndex] || product.thumbnailImage || images[0] || STUDIO_FALLBACK_IMAGE} 
+          alt={product.name}
+          referrerPolicy="no-referrer"
+          onError={(e) => {
+            const target = e.currentTarget;
+            if (target.src !== STUDIO_FALLBACK_IMAGE) {
+              target.src = STUDIO_FALLBACK_IMAGE;
+            }
+          }}
+          className="w-full h-full object-contain object-center p-3 select-none"
+        />
 
         {/* Collection Badge & Coming Soon Pill */}
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
@@ -228,87 +207,69 @@ export default function ProductCard({
       </div>
 
       {/* PC BRUTALIST SCATTERED angles SATELLITES (Rendered outside the central image canvas on hover with dwell & exit grace) */}
-      <AnimatePresence>
-        {showAngles && images.length > 1 && (
-          <div 
-            className="hidden sm:block pointer-events-none"
-            onMouseEnter={() => {
-              if (leaveTimerRef.current) {
-                clearTimeout(leaveTimerRef.current);
-                leaveTimerRef.current = null;
-              }
-              setShowAngles(true);
-            }}
-            onMouseLeave={handleMouseLeave}
-          >
-            {images.map((img, i) => {
-              const offsets = [
-                { top: "-22px", right: "-42px", rotate: 4.5 },
-                { top: "72px", right: "-48px", rotate: -3.8 },
-                { top: "168px", right: "-40px", rotate: 3.2 },
-                { top: "264px", right: "-46px", rotate: -4.0 },
-              ];
-              const off = offsets[i % offsets.length];
-              const isSelected = activeImageIndex === i;
+      {showAngles && images.length > 1 && (
+        <div 
+          className="hidden sm:block pointer-events-none"
+          onMouseEnter={() => {
+            if (leaveTimerRef.current) {
+              clearTimeout(leaveTimerRef.current);
+              leaveTimerRef.current = null;
+            }
+            setShowAngles(true);
+          }}
+          onMouseLeave={handleMouseLeave}
+        >
+          {images.map((img, i) => {
+            const offsets = [
+              { top: "-22px", right: "-42px", rotate: 4.5 },
+              { top: "72px", right: "-48px", rotate: -3.8 },
+              { top: "168px", right: "-40px", rotate: 3.2 },
+              { top: "264px", right: "-46px", rotate: -4.0 },
+            ];
+            const off = offsets[i % offsets.length];
+            const isSelected = activeImageIndex === i;
 
-              return (
-                <motion.button
-                  key={i}
-                  type="button"
-                  initial={{ opacity: 0, scale: 0.4, x: 4 }}
-                  animate={{
-                    opacity: 1,
-                    scale: isSelected ? 1.05 : 1,
-                    x: 0,
-                    rotate: off.rotate,
-                    transition: {
-                      type: "tween",
-                      duration: 0.16,
-                      ease: [0.1, 0.9, 0.2, 1],
-                      delay: i * 0.08 + 0.08,
-                    },
-                  }}
-                  exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.06 } }}
-                  whileHover={{ scale: 1.05, rotate: 0, zIndex: 60, transition: { duration: 0.05 } }}
-                  onMouseEnter={(e) => {
-                    e.stopPropagation();
-                    if (leaveTimerRef.current) {
-                      clearTimeout(leaveTimerRef.current);
-                      leaveTimerRef.current = null;
-                    }
-                    setShowAngles(true);
-                    soundManager.playHover(0.02);
-                    setActiveImageIndex(i);
-                  }}
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    soundManager.playClick(0.08);
-                    setActiveImageIndex(i);
-                  }}
-                  style={{
-                    top: off.top,
-                    right: off.right,
-                    willChange: "transform, opacity",
-                  }}
-                  className={`absolute z-40 w-16 h-16 sm:w-18 sm:h-18 p-1 bg-brand-surface border-2 font-mono pointer-events-auto cursor-pointer transition-colors ${
-                    isSelected
-                      ? "border-[#ff4500] shadow-[4px_4px_0px_#050505] bg-brand-bg ring-2 ring-[#ff4500]"
-                      : "border-brand-text shadow-[3px_3px_0px_#050505] opacity-90 hover:opacity-100 hover:border-brand-accent"
-                  }`}
-                  title={`Angle 0${i + 1}`}
-                >
-                  <div className="relative w-full h-full overflow-hidden border border-brand-text/30 bg-brand-bg">
-                    <img src={img || STUDIO_FALLBACK_IMAGE} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
-                    <span className={`absolute bottom-0 inset-x-0 text-[7.5px] font-black text-center uppercase py-0.5 tracking-wider ${isSelected ? "bg-[#ff4500] text-white" : "bg-brand-text text-brand-bg"}`}>
-                      VIEW 0{i + 1}
-                    </span>
-                  </div>
-                </motion.button>
-              );
-            })}
-          </div>
-        )}
-      </AnimatePresence>
+            return (
+              <button
+                key={i}
+                type="button"
+                onMouseEnter={(e) => {
+                  e.stopPropagation();
+                  if (leaveTimerRef.current) {
+                    clearTimeout(leaveTimerRef.current);
+                    leaveTimerRef.current = null;
+                  }
+                  setShowAngles(true);
+                  soundManager.playHover(0.02);
+                  setActiveImageIndex(i);
+                }}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  soundManager.playClick(0.08);
+                  setActiveImageIndex(i);
+                }}
+                style={{
+                  top: off.top,
+                  right: off.right,
+                }}
+                className={`absolute z-40 w-16 h-16 sm:w-18 sm:h-18 p-1 bg-brand-surface border-2 font-mono pointer-events-auto cursor-pointer transition-colors ${
+                  isSelected
+                    ? "border-[#ff4500] shadow-[4px_4px_0px_#050505] bg-brand-bg ring-2 ring-[#ff4500]"
+                    : "border-brand-text shadow-[3px_3px_0px_#050505] opacity-90 hover:opacity-100 hover:border-brand-accent"
+                }`}
+                title={`Angle 0${i + 1}`}
+              >
+                <div className="relative w-full h-full overflow-hidden border border-brand-text/30 bg-brand-bg">
+                  <img src={img || STUDIO_FALLBACK_IMAGE} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                  <span className={`absolute bottom-0 inset-x-0 text-[7.5px] font-black text-center uppercase py-0.5 tracking-wider ${isSelected ? "bg-[#ff4500] text-white" : "bg-brand-text text-brand-bg"}`}>
+                    VIEW 0{i + 1}
+                  </span>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
       {/* ─── 3. ARTIFACT INFORMATION & CONVICTION ─── */}
       <div className="space-y-2.5 flex-1 flex flex-col justify-between">
@@ -339,18 +300,12 @@ export default function ProductCard({
         <div className="border-t-2 border-brand-text pt-2.5">
           <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
             <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE SPECIMEN"}</span>
-            <motion.div
-              animate={{ 
-                x: isHovered ? [0, 3, 0] : 0,
-                y: isHovered ? [0, -3, 0] : 0
-              }}
-              transition={{ repeat: isHovered ? Infinity : 0, duration: 0.9, ease: "easeInOut" }}
-            >
+            <div>
               <ArrowUpRight size={12} className="group-hover:text-brand-accent transition-colors" />
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

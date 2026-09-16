@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { ShoppingBag, Check, FileText, ChevronLeft, ChevronRight } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { Product, CartItem } from "../types";
 import LiquidCarveButton from "./LiquidCarveButton";
 import { normalizeProductCategory, normalizeProductCollection, isProductDraftOrHidden, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
@@ -53,11 +52,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
   };
 
   return (
-    <motion.section 
-      initial={{ opacity: 0, y: 20 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      transition={{ type: "spring", stiffness: 300, damping: 26 }}
+    <section 
       className="py-20 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text"
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 mb-10 gap-4">
@@ -82,10 +77,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             <span className="absolute -bottom-2 -left-2 font-mono text-[12px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
             <span className="absolute -bottom-2 -right-2 font-mono text-[12px] font-black text-brand-text select-none pointer-events-none z-20 leading-none group-hover:text-brand-accent transition-colors">+</span>
 
-            <motion.div 
-              whileHover={{ y: -4 }}
-              whileTap={{ scale: 0.985 }}
-              transition={{ type: "spring", stiffness: 450, damping: 24 }}
+            <div 
               onClick={() => {
                 soundManager.playClick(0.14);
                 onViewProduct(product);
@@ -93,25 +85,19 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               onMouseEnter={() => soundManager.playHover(0.065)}
               className="group cursor-pointer aspect-[4/5] bg-brand-surface border-[2.5px] border-brand-text relative overflow-hidden shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#050505] active:translate-x-1 active:translate-y-1 active:shadow-[3px_3px_0px_#050505] transition-all duration-150"
             >
-              <AnimatePresence mode="wait">
-                <motion.img 
-                  key={activeImageIndex}
-                  src={images[activeImageIndex] || images[0] || STUDIO_FALLBACK_IMAGE} 
-                  alt={product.name}
-                  referrerPolicy="no-referrer"
-                  onError={(e) => {
-                    const target = e.currentTarget;
-                    if (target.src !== STUDIO_FALLBACK_IMAGE) {
-                      target.src = STUDIO_FALLBACK_IMAGE;
-                    }
-                  }}
-                  initial={{ opacity: 0.7, scale: 0.98 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0.6, scale: 1.01 }}
-                  transition={{ type: "spring", stiffness: 320, damping: 26 }}
-                  className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
-                />
-              </AnimatePresence>
+              <img 
+                key={activeImageIndex}
+                src={images[activeImageIndex] || images[0] || STUDIO_FALLBACK_IMAGE} 
+                alt={product.name}
+                referrerPolicy="no-referrer"
+                onError={(e) => {
+                  const target = e.currentTarget;
+                  if (target.src !== STUDIO_FALLBACK_IMAGE) {
+                    target.src = STUDIO_FALLBACK_IMAGE;
+                  }
+                }}
+                className="w-full h-full object-cover"
+              />
 
               {/* Blueprint Reticle Marker */}
               <div className="absolute top-2.5 right-2.5 z-10 pointer-events-none select-none">
@@ -131,28 +117,22 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
 
               {product.images.length > 1 && (
                 <>
-                  <motion.button
+                  <button
                     type="button"
-                    whileHover={{ scale: 1.15 }}
-                    whileTap={{ scale: 0.85 }}
-                    transition={{ type: "spring", stiffness: 450, damping: 22 }}
                     onClick={handlePrevImage}
                     aria-label="Previous view"
                     className="absolute left-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
                   >
                     <ChevronLeft size={18} />
-                  </motion.button>
-                  <motion.button
+                  </button>
+                  <button
                     type="button"
-                    whileHover={{ scale: 1.15 }}
-                    whileTap={{ scale: 0.85 }}
-                    transition={{ type: "spring", stiffness: 450, damping: 22 }}
                     onClick={handleNextImage}
                     aria-label="Next view"
                     className="absolute right-3 top-1/2 -translate-y-1/2 z-20 p-2 bg-brand-surface/95 hover:bg-brand-text hover:text-white text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-colors cursor-pointer"
                   >
                     <ChevronRight size={18} />
-                  </motion.button>
+                  </button>
                 </>
               )}
 
@@ -160,24 +140,21 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                 <FileText size={12} />
                 <span>INSPECT ARTIFACT DETAILS →</span>
               </div>
-            </motion.div>
+            </div>
           </div>
 
           {/* Perspective Selector Mini Thumbnails */}
           {product.images.length > 1 && (
             <div className="flex gap-2">
               {product.images.map((img, idx) => (
-                <motion.button
+                <button
                   key={idx}
-                  whileHover={{ scale: 1.08, y: -2 }}
-                  whileTap={{ scale: 0.94 }}
-                  transition={{ type: "spring", stiffness: 400, damping: 22 }}
                   onMouseEnter={() => soundManager.playHover(0.04)}
                   onClick={() => {
                     soundManager.playToggle(0.09);
                     setActiveImageIndex(idx);
                   }}
-                  className={`w-14 h-16 border-2 relative cursor-pointer overflow-hidden ${
+                  className={`w-14 h-16 border-2 relative cursor-pointer overflow-hidden transition-colors ${
                     activeImageIndex === idx 
                       ? 'border-brand-accent shadow-[3px_3px_0px_#050505]' 
                       : 'border-brand-text opacity-70 hover:opacity-100 shadow-[1px_1px_0px_#050505]'
@@ -200,7 +177,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                   }`}>
                     0{idx + 1}
                   </span>
-                </motion.button>
+                </button>
               ))}
             </div>
           )}
@@ -292,6 +269,6 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
           </div>
         </div>
       </div>
-    </motion.section>
+    </section>
   );
 }

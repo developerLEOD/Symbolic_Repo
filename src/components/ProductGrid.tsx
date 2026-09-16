@@ -1,9 +1,9 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
-import { motion, AnimatePresence } from "motion/react";
 import { Product, Category, Artifact, Specimen } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
 import ArtifactCard from "./ArtifactCard";
 import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, Box } from "lucide-react";
+import { motion, AnimatePresence } from "motion/react";
 import { 
   normalizeProductCategory, 
   normalizeProductCollection, 
@@ -417,10 +417,19 @@ export default function ProductGrid({
             </button>
           </div>
         </div>
-      ) : viewMode === "ledger" ? (
-        /* ARCHIVAL REGISTRY LEDGER VIEW (Organized by Artifact with separate Specimens) */
-        <div className="border-2 border-brand-text bg-brand-surface shadow-[6px_6px_0px_#050505] overflow-x-auto">
-          <table className="w-full text-left font-mono border-collapse">
+      ) : (
+        <AnimatePresence mode="wait">
+          {viewMode === "ledger" ? (
+            /* ARCHIVAL REGISTRY LEDGER VIEW (Organized by Artifact with separate Specimens) */
+            <motion.div
+              key="ledger-view"
+              initial={{ opacity: 0, y: 12 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -12 }}
+              transition={{ duration: 0.2 }}
+              className="border-2 border-brand-text bg-brand-surface shadow-[6px_6px_0px_#050505] overflow-x-auto"
+            >
+              <table className="w-full text-left font-mono border-collapse">
             <thead>
               <tr className="border-b-2 border-brand-text bg-brand-text text-brand-bg text-[9.5px] uppercase tracking-widest font-black">
                 <th className="p-3.5">MASTER ARTIFACT // CENTRAL GRAPHIC</th>
@@ -570,10 +579,17 @@ export default function ProductGrid({
               })}
             </tbody>
           </table>
-        </div>
+        </motion.div>
       ) : viewMode === "grid" ? (
         /* ARTIFACT CARDS GRID VIEW */
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8">
+        <motion.div
+          key="grid-view"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+          className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8"
+        >
           {filteredArtifacts.map((art, idx) => (
             <ArtifactCard
               key={art.id}
@@ -583,16 +599,26 @@ export default function ProductGrid({
               index={idx}
             />
           ))}
-        </div>
+        </motion.div>
       ) : (
         /* 4. CURATED HORIZONTAL OVERLAPPING ARTIFACT EXHIBITION */
-        <ArtifactOverlappingCollection 
-          artifacts={filteredArtifacts}
-          specimens={specimens}
-          categories={categories} 
-          onProductClick={(entity, specimenId) => onProductClick(entity, specimenId)} 
-        />
+        <motion.div
+          key="exhibition-view"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          transition={{ duration: 0.2 }}
+        >
+          <ArtifactOverlappingCollection 
+            artifacts={filteredArtifacts}
+            specimens={specimens}
+            categories={categories} 
+            onProductClick={(entity, specimenId) => onProductClick(entity, specimenId)} 
+          />
+        </motion.div>
       )}
-    </section>
+    </AnimatePresence>
+  )}
+</section>
   );
 }

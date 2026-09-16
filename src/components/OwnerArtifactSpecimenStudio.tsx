@@ -36,6 +36,7 @@ import {
 import { motion, AnimatePresence } from "motion/react";
 import { soundManager } from "../lib/soundEffects";
 import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+import { processFileToCompressedDataUrl, compressDataUrl } from "../lib/imageOptimization";
 
 interface OwnerArtifactSpecimenStudioProps {
   onDataChanged?: () => void;
@@ -98,67 +99,15 @@ export default function OwnerArtifactSpecimenStudio({
   const artGraphicFileRef = useRef<HTMLInputElement | null>(null);
   const specImagesFileRef = useRef<HTMLInputElement | null>(null);
 
-  // Client-side image compression to ensure fast loading and fit within storage limits
-  const compressImage = (dataUrl: string, maxWidth = 1000, quality = 0.82): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = dataUrl;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let { width, height } = img;
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.fillStyle = "#FFFFFF";
-          ctx.fillRect(0, 0, width, height);
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", quality));
-        } else {
-          resolve(dataUrl);
-        }
-      };
-      img.onerror = () => resolve(dataUrl);
-    });
-  };
-
-  const processFileToDataUrl = (file: File): Promise<string> => {
-    return new Promise((resolve, reject) => {
-      if (!file.type.startsWith("image/")) {
-        reject(new Error("File is not an image"));
-        return;
-      }
-      const reader = new FileReader();
-      reader.onload = async () => {
-        if (typeof reader.result === "string") {
-          try {
-            const compressed = await compressImage(reader.result, 1000, 0.82);
-            resolve(compressed);
-          } catch {
-            resolve(reader.result);
-          }
-        } else {
-          reject(new Error("Failed to read image"));
-        }
-      };
-      reader.onerror = () => reject(new Error("Error reading file"));
-      reader.readAsDataURL(file);
-    });
-  };
-
   // Artifact graphic file upload handler
   const handleGraphicFiles = async (files: FileList | File[]) => {
     const fileList = Array.from(files).filter(f => f.type.startsWith("image/"));
     if (fileList.length === 0) return;
     setIsUploadingGraphic(true);
     try {
-      const dataUrl = await processFileToDataUrl(fileList[0]);
+      const dataUrl = await processFileToCompressedDataUrl(fileList[0], 720, 0.72);
       setArtGraphic(dataUrl);
-      showNotification("success", "Central artwork image loaded from device.");
+      showNotification("success", "Central artwork image loaded and optimized.");
     } catch (err) {
       console.error(err);
       showNotification("error", "Failed to load image file.");
@@ -176,11 +125,11 @@ export default function OwnerArtifactSpecimenStudio({
     try {
       const urls: string[] = [];
       for (const file of fileList) {
-        const dataUrl = await processFileToDataUrl(file);
+        const dataUrl = await processFileToCompressedDataUrl(file, 720, 0.72);
         urls.push(dataUrl);
       }
       setSpecImages(prev => [...prev, ...urls]);
-      showNotification("success", `Added ${urls.length} photo(s) from device.`);
+      showNotification("success", `Added and optimized ${urls.length} photo(s).`);
     } catch (err) {
       console.error(err);
       showNotification("error", "Failed to load one or more photos.");

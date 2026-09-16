@@ -30,6 +30,7 @@ import {
   ArtifactStatus,
   SpecimenStatus
 } from "../types";
+import { sanitizeArtifactForFirestore, sanitizeSpecimenForFirestore } from "./imageOptimization";
 import { PRESET_SYMBOL_KNOWLEDGE } from "./symbolKnowledge";
 import capImage from "../assets/images/structured_twill_cap_1789233572064.jpg";
 import vesselImage from "../assets/images/ceramic_stoneware_vessel_1789233585625.jpg";
@@ -908,21 +909,23 @@ export async function fetchArtifactWithSpecimens(artifactId: string): Promise<Ar
  */
 export async function saveArtifact(artifact: Artifact): Promise<Artifact> {
   const normalized = normalizeArtifact({ ...artifact, updatedAt: Date.now() });
-  const cleaned = cleanUndefined(normalized);
-
-  try {
-    await setDoc(doc(db, "artifacts", normalized.id), cleaned, { merge: true });
-  } catch (err) {
-    console.error("Error saving artifact to Firestore:", err);
-  }
-
-  // Update in-memory and local storage
+  
+  // Update in-memory and local storage immediately for responsive UI
   const current = getCachedArtifacts();
   const index = current.findIndex(a => a.id === normalized.id);
   const updated = index >= 0 
     ? [...current.slice(0, index), normalized, ...current.slice(index + 1)]
     : [...current, normalized];
   saveArtifactsToCache(updated);
+
+  try {
+    // Sanitize and compress any large Base64 images to prevent Firestore 1MB document limit overflow
+    const sanitized = await sanitizeArtifactForFirestore(normalized);
+    const cleaned = cleanUndefined(sanitized);
+    await setDoc(doc(db, "artifacts", normalized.id), cleaned, { merge: true });
+  } catch (err) {
+    console.error("Error saving artifact to Firestore:", err);
+  }
 
   return normalized;
 }
@@ -967,9 +970,19 @@ export async function deleteArtifact(artifactId: string, cascadeDeleteSpecimens 
  */
 export async function saveSpecimen(specimen: Specimen): Promise<Specimen> {
   const normalized = normalizeSpecimen({ ...specimen, updatedAt: Date.now() });
-  const cleaned = cleanUndefined(normalized);
+
+  // Update specimen cache immediately for responsive UI
+  const currentSpecimens = getCachedSpecimens();
+  const specIndex = currentSpecimens.findIndex(s => s.id === normalized.id);
+  const updatedSpecimens = specIndex >= 0
+    ? [...currentSpecimens.slice(0, specIndex), normalized, ...currentSpecimens.slice(specIndex + 1)]
+    : [...currentSpecimens, normalized];
+  saveSpecimensToCache(updatedSpecimens);
 
   try {
+    const sanitized = await sanitizeSpecimenForFirestore(normalized);
+    const cleaned = cleanUndefined(sanitized);
+
     await setDoc(doc(db, "specimens", normalized.id), cleaned, { merge: true });
     
     // Also save under nested subcollection /artifacts/{artifactId}/specimens/{specimenId}
@@ -983,14 +996,6 @@ export async function saveSpecimen(specimen: Specimen): Promise<Specimen> {
   } catch (err) {
     console.error("Error saving specimen to Firestore:", err);
   }
-
-  // Update specimen cache
-  const currentSpecimens = getCachedSpecimens();
-  const specIndex = currentSpecimens.findIndex(s => s.id === normalized.id);
-  const updatedSpecimens = specIndex >= 0
-    ? [...currentSpecimens.slice(0, specIndex), normalized, ...currentSpecimens.slice(specIndex + 1)]
-    : [...currentSpecimens, normalized];
-  saveSpecimensToCache(updatedSpecimens);
 
   // Update parent Artifact's specimenIds list if not present
   if (normalized.parentArtifactId) {

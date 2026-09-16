@@ -45,6 +45,7 @@ import VariantMatrixManager, {
   PRESET_SIZES 
 } from "./VariantMatrixManager";
 import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { 
   fetchCategories, 
   fetchProducts, 
@@ -258,51 +259,20 @@ export default function OwnerProductManager({
     }
   };
 
-  // Image Upload handler via FileReader with compression
-  const compressImage = (dataUrl: string, maxWidth = 800, quality = 0.7): Promise<string> => {
-    return new Promise((resolve) => {
-      const img = new Image();
-      img.src = dataUrl;
-      img.onload = () => {
-        const canvas = document.createElement("canvas");
-        let width = img.width;
-        let height = img.height;
-        if (width > maxWidth) {
-          height = Math.round((height * maxWidth) / width);
-          width = maxWidth;
-        }
-        canvas.width = width;
-        canvas.height = height;
-        const ctx = canvas.getContext("2d");
-        if (ctx) {
-          ctx.drawImage(img, 0, 0, width, height);
-          resolve(canvas.toDataURL("image/jpeg", quality));
-        } else {
-          resolve(dataUrl);
-        }
-      };
-      img.onerror = () => resolve(dataUrl);
-    });
-  };
-
-  const handleFileUpload = (e: ChangeEvent<HTMLInputElement>) => {
+  // Image Upload handler via FileReader with optimized compression
+  const handleFileUpload = async (e: ChangeEvent<HTMLInputElement>) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
-      const reader = new FileReader();
-      reader.onload = async () => {
-        if (typeof reader.result === "string") {
-          try {
-            const compressed = await compressImage(reader.result, 800, 0.75);
-            setImages(prev => [...prev, compressed]);
-          } catch {
-            setImages(prev => [...prev, reader.result as string]);
-          }
-        }
-      };
-      reader.readAsDataURL(file);
-    });
+    const fileList: File[] = (Array.from(files) as File[]).filter(f => f.type.startsWith("image/"));
+    for (const file of fileList) {
+      try {
+        const compressed = await processFileToCompressedDataUrl(file, 720, 0.72);
+        setImages(prev => [...prev, compressed]);
+      } catch (err) {
+        console.error("Error compressing product image:", err);
+      }
+    }
 
     if (fileInputRef.current) {
       fileInputRef.current.value = "";

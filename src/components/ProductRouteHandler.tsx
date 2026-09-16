@@ -12,7 +12,6 @@ import {
   deleteArtifactCascade
 } from "../lib/artifactService";
 import { useAuth } from "../lib/AuthContext";
-import { AnimatePresence } from "motion/react";
 
 interface ProductRouteHandlerProps {
   mode?: "spec" | "acquire";
@@ -224,58 +223,52 @@ export default function ProductRouteHandler({
     );
   }
 
-  // If user navigated to acquisition page (/artifact/:id/acquire)
+  // If user navigated to acquisition page (/acquisitions/:id or /artifact/:id/acquire)
   if (isAcquisitionPage) {
     const specTargetRoute = `/artifact/${artifact ? (artifact.artifactId || artifact.id) : (product?.productId || product?.id)}`;
     return (
-      <AnimatePresence>
-        <ArtifactAcquisitionPage
-          artifact={artifact}
-          specimens={specimens}
-          product={product}
-          initialSpecimenId={initialSpecimenId}
-          onBackToSpec={() => navigate(specTargetRoute)}
-          onAddToCart={onAddToCart}
-          onOpenLedger={onOpenLedger}
-        />
-      </AnimatePresence>
+      <ArtifactAcquisitionPage
+        artifact={artifact}
+        specimens={specimens}
+        product={product}
+        initialSpecimenId={initialSpecimenId}
+        onBackToSpec={() => navigate(specTargetRoute)}
+        onAddToCart={onAddToCart}
+        onOpenLedger={onOpenLedger}
+      />
     );
   }
 
   // If we resolved an Artifact and its Specimens, display ArtifactDetail (Specification Page)
   if (artifact) {
     return (
-      <AnimatePresence>
-        <ArtifactDetail
-          artifact={artifact}
-          specimens={specimens}
-          initialSpecimenId={initialSpecimenId}
-          onClose={handleClose}
-          onAddToCart={onAddToCart}
-          onOpenLedger={onOpenLedger}
-          onEditArtifact={isOwner && onEditProduct ? () => onEditProduct(artifact.id) : undefined}
-          onDeleteArtifact={isOwner ? handleDeleteArtifact : undefined}
-          onAcquireClick={(specimenId) => {
-            const query = specimenId ? `?specimen=${specimenId}` : "";
-            navigate(`/artifact/${artifact.artifactId || artifact.id}/acquire${query}`);
-          }}
-        />
-      </AnimatePresence>
+      <ArtifactDetail
+        artifact={artifact}
+        specimens={specimens}
+        initialSpecimenId={initialSpecimenId}
+        onClose={handleClose}
+        onAddToCart={onAddToCart}
+        onOpenLedger={onOpenLedger}
+        onEditArtifact={isOwner && onEditProduct ? () => onEditProduct(artifact.id) : undefined}
+        onDeleteArtifact={isOwner ? handleDeleteArtifact : undefined}
+        onAcquireClick={(specimenId) => {
+          const query = specimenId ? `?specimen=${specimenId}` : "";
+          navigate(`/acquisitions/${artifact.artifactId || artifact.id}${query}`);
+        }}
+      />
     );
   }
 
   // Otherwise, fallback to legacy ProductDetail
   return (
-    <AnimatePresence>
-      <ProductDetail
-        product={product!}
-        categoryLabel={product!.category ? product!.category.toUpperCase() : "ARTIFACT"}
-        onClose={handleClose}
-        onAddToCart={onAddToCart}
-        onOpenLedger={onOpenLedger}
-        onEditProduct={isOwner && onEditProduct ? () => onEditProduct(product!.id) : undefined}
-        onDeleteProduct={isOwner ? handleDeleteLegacyProduct : undefined}
-      />
-    </AnimatePresence>
+    <ProductDetail
+      product={product!}
+      categoryLabel={product!.category ? product!.category.toUpperCase() : "ARTIFACT"}
+      onClose={handleClose}
+      onAddToCart={onAddToCart}
+      onOpenLedger={onOpenLedger}
+      onEditProduct={isOwner && onEditProduct ? () => onEditProduct(product!.id) : undefined}
+      onDeleteProduct={isOwner ? handleDeleteLegacyProduct : undefined}
+    />
   );
 }

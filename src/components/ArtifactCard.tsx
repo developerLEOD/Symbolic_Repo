@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { Artifact, Specimen } from "../types";
-import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, Layers, Box, Check, Sparkles } from "lucide-react";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
+import { motion, AnimatePresence } from "motion/react";
 
 interface ArtifactCardProps {
   key?: React.Key;
@@ -21,6 +21,20 @@ export default function ArtifactCard({
 }: ArtifactCardProps) {
   const [isHovered, setIsHovered] = useState(false);
   const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null);
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  React.useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const artifactNum = String(index + 1).padStart(2, '0');
   const childSpecimens = specimens.filter(s => 
@@ -55,13 +69,11 @@ export default function ArtifactCard({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 14 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      whileHover={{ y: -4, transition: { type: "spring", stiffness: 450, damping: 26 } }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.2 }}
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-all duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      initial={{ opacity: 0, y: 16 }}
+      animate={{ opacity: 1, y: 0 }}
+      transition={{ duration: 0.25, delay: Math.min(index * 0.04, 0.3) }}
+      whileHover={{ y: -3, transition: { duration: 0.15 } }}
+      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
       onClick={handleCardClick}
       onMouseEnter={() => {
         soundManager.playHover(0.04);
@@ -100,11 +112,11 @@ export default function ArtifactCard({
             src={displayImage} 
             alt={activeSpecimen ? `${artifact.name} — ${activeSpecimen.medium}` : artifact.name}
             referrerPolicy="no-referrer"
-            initial={{ opacity: 0.85 }}
-            animate={{ opacity: 1, scale: isHovered ? 1.02 : 1 }}
-            exit={{ opacity: 0.85 }}
-            transition={{ duration: 0.12, ease: "easeOut" }}
-            className="w-full h-full object-contain object-center p-1 sm:p-2"
+            initial={{ opacity: 0.7, scale: 0.98 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0.7 }}
+            transition={{ duration: 0.15 }}
+            className="w-full h-full object-contain object-center p-1 sm:p-2 select-none"
           />
         </AnimatePresence>
 
@@ -170,86 +182,75 @@ export default function ArtifactCard({
           </p>
         </div>
 
-        {/* SEPARATE SPECIMENS SELECTOR INSIDE THE ARTIFACT */}
-        <div className="border-t-2 border-brand-text/30 pt-2 space-y-1.5 bg-brand-text/5 p-2 border border-brand-text/20 lg:hidden">
-          <div className="flex items-center justify-between text-[8px] font-mono font-black uppercase text-brand-text/80">
-            <span className="flex items-center gap-1">
-              <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
-              <span>SEPARATE SPECIMENS ({specimenCount}):</span>
-            </span>
-            <span className={availableCount > 0 ? "text-emerald-700" : "text-red-600"}>
-              {availableCount > 0 ? `${availableCount} IN STOCK` : "ALLOTTED"}
-            </span>
-          </div>
+        {/* Inside Specimen Selector: Shown IFF side-specimens-preview is null AND screen resolution is mobile phone size */}
+        {isMobile && childSpecimens.length > 0 && (
+          <div className="border-t-2 border-brand-text/30 pt-2 space-y-1.5 bg-brand-text/5 p-2 border border-brand-text/20">
+            <div className="flex items-center justify-between text-[8px] font-mono font-black uppercase text-brand-text/80">
+              <span className="flex items-center gap-1">
+                <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
+                <span>SEPARATE SPECIMENS ({specimenCount}):</span>
+              </span>
+              <span className={availableCount > 0 ? "text-emerald-700" : "text-red-600"}>
+                {availableCount > 0 ? `${availableCount} IN STOCK` : "ALLOTTED"}
+              </span>
+            </div>
 
-          <div className={`grid gap-2 py-1.5 px-0.5 ${
-            childSpecimens.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
-          }`}>
-            {childSpecimens.map((spec, specIdx) => {
-              const isSelected = selectedSpecimenId === spec.id;
-              const specImg = spec.images?.[0] || spec.thumbnailImage || artifact.graphic || artifact.images?.[0];
-              const scatterAngles = [-2.2, 2.4, -1.8, 2.1, -2.6, 1.8];
-              const rot = scatterAngles[specIdx % scatterAngles.length];
+            <div className={`grid gap-2 py-1.5 px-0.5 ${
+              childSpecimens.length <= 2 ? "grid-cols-2" : "grid-cols-2 sm:grid-cols-3"
+            }`}>
+              {childSpecimens.map((spec, specIdx) => {
+                const isSelected = selectedSpecimenId === spec.id;
+                const specImg = spec.images?.[0] || spec.thumbnailImage || artifact.graphic || artifact.images?.[0];
 
-              return (
-                <motion.button
-                  key={spec.id}
-                  type="button"
-                  onClick={(e) => handleSpecimenClick(e, spec.id)}
-                  onMouseEnter={() => soundManager.playHover(0.02)}
-                  initial={false}
-                  animate={{
-                    rotate: isSelected ? 0 : rot,
-                    scale: isSelected ? 1.02 : 1,
-                  }}
-                  whileHover={{
-                    rotate: 0,
-                    scale: 1.05,
-                    transition: { duration: 0.12 },
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`relative p-1.5 text-left font-mono border-2 transition-all cursor-pointer flex flex-col justify-between ${
-                    isSelected
-                      ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[3px_3px_0px_#ff4500] z-10"
-                      : "bg-brand-surface border-brand-text shadow-[2px_2px_0px_#050505] hover:border-brand-accent hover:shadow-[3px_3px_0px_#050505]"
-                  }`}
-                  title={spec.medium}
-                >
-                  {/* Specimen Thumbnail Container */}
-                  <div className="w-full h-14 bg-brand-bg border border-brand-text/30 overflow-hidden flex items-center justify-center relative">
-                    <img
-                      src={specImg}
-                      alt={spec.medium}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-contain p-0.5 select-none pointer-events-none"
-                      loading="lazy"
-                    />
-                    {isSelected ? (
-                      <div className="absolute top-0.5 right-0.5 px-1 py-0.2 bg-brand-accent text-white text-[6.5px] font-black uppercase tracking-wider leading-none shadow-[1px_1px_0px_#050505]">
-                        ACTIVE
-                      </div>
-                    ) : (
-                      <div className="absolute top-0.5 right-0.5 px-0.5 py-0.2 bg-brand-surface/90 text-brand-text text-[6px] font-black leading-none">
-                        0{specIdx + 1}
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Specimen Metadata Info */}
-                  <div className="pt-1 space-y-0.5">
-                    <div className="text-[8.5px] font-black uppercase truncate flex items-center justify-between text-brand-text">
-                      <span className="truncate">{spec.medium}</span>
-                      {isSelected && <Check size={8} className="text-brand-accent shrink-0 ml-0.5" />}
+                return (
+                  <button
+                    key={spec.id}
+                    type="button"
+                    onClick={(e) => handleSpecimenClick(e, spec.id)}
+                    onMouseEnter={() => soundManager.playHover(0.02)}
+                    className={`relative p-1.5 text-left font-mono border-2 transition-colors cursor-pointer flex flex-col justify-between ${
+                      isSelected
+                        ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[3px_3px_0px_#ff4500] z-10"
+                        : "bg-brand-surface border-brand-text shadow-[2px_2px_0px_#050505] hover:border-brand-accent hover:shadow-[3px_3px_0px_#050505]"
+                    }`}
+                    title={spec.medium}
+                  >
+                    {/* Specimen Thumbnail Container */}
+                    <div className="w-full h-14 bg-brand-bg border border-brand-text/30 overflow-hidden flex items-center justify-center relative">
+                      <img
+                        src={specImg}
+                        alt={spec.medium}
+                        referrerPolicy="no-referrer"
+                        className="w-full h-full object-contain p-0.5 select-none pointer-events-none"
+                        loading="lazy"
+                      />
+                      {isSelected ? (
+                        <div className="absolute top-0.5 right-0.5 px-1 py-0.2 bg-brand-accent text-white text-[6.5px] font-black uppercase tracking-wider leading-none shadow-[1px_1px_0px_#050505]">
+                          ACTIVE
+                        </div>
+                      ) : (
+                        <div className="absolute top-0.5 right-0.5 px-0.5 py-0.2 bg-brand-surface/90 text-brand-text text-[6px] font-black leading-none">
+                          0{specIdx + 1}
+                        </div>
+                      )}
                     </div>
-                    <div className={`text-[7px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                      {spec.material || "CANONICAL"}
+
+                    {/* Specimen Metadata Info */}
+                    <div className="pt-1 space-y-0.5">
+                      <div className="text-[8.5px] font-black uppercase truncate flex items-center justify-between text-brand-text">
+                        <span className="truncate">{spec.medium}</span>
+                        {isSelected && <Check size={8} className="text-brand-accent shrink-0 ml-0.5" />}
+                      </div>
+                      <div className={`text-[7px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
+                        {spec.material || "CANONICAL"}
+                      </div>
                     </div>
-                  </div>
-                </motion.button>
-              );
-            })}
+                  </button>
+                );
+              })}
+            </div>
           </div>
-        </div>
+        )}
 
         {/* Complete Set Acquisition Teaser (No price in previews) */}
         {setCalculation.hasDiscount && setCalculation.setPrice > 0 && (
@@ -270,15 +271,9 @@ export default function ArtifactCard({
             <span>
               {activeSpecimen ? `EXPLORE ${activeSpecimen.medium.toUpperCase()} & ARCHIVE` : "EXPLORE ARTIFACT & SPECIMENS"}
             </span>
-            <motion.div
-              animate={{ 
-                x: isHovered ? [0, 3, 0] : 0,
-                y: isHovered ? [0, -3, 0] : 0
-              }}
-              transition={{ repeat: isHovered ? Infinity : 0, duration: 0.9, ease: "easeInOut" }}
-            >
+            <div>
               <ArrowUpRight size={12} className="group-hover:text-brand-accent transition-colors" />
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>

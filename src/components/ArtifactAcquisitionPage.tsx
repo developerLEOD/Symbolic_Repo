@@ -17,7 +17,6 @@ import {
   Sparkles,
   ChevronRight
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { Artifact, Specimen, CartItem, Product, ProductVariant } from "../types";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
@@ -977,75 +976,70 @@ export default function ArtifactAcquisitionPage({
       </div>
 
       {/* Sizing Specifications Modal */}
-      <AnimatePresence>
-        {showSizeGuide && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
-            onClick={() => setShowSizeGuide(false)}
+      {showSizeGuide && (
+        <div
+          className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+          onClick={() => setShowSizeGuide(false)}
+        >
+          <div 
+            className="bg-brand-surface border-2 border-brand-text p-6 max-w-lg w-full shadow-[8px_8px_0px_#050505]"
+            onClick={e => e.stopPropagation()}
           >
-            <div 
-              className="bg-brand-surface border-2 border-brand-text p-6 max-w-lg w-full shadow-[8px_8px_0px_#050505]"
-              onClick={e => e.stopPropagation()}
-            >
-              <div className="flex items-center justify-between border-b-2 border-brand-text pb-3 mb-4">
-                <h3 className="text-base font-mono font-black uppercase text-brand-text">
-                  HEAVYWEIGHT ARCHIVAL SIZING MATRIX
-                </h3>
-                <button 
-                  type="button" 
-                  onClick={() => setShowSizeGuide(false)}
-                  className="p-1 hover:bg-brand-text hover:text-white"
-                >
-                  <X size={16} />
-                </button>
-              </div>
-              
-              <table className="w-full text-left font-mono text-xs uppercase border-collapse mb-4">
-                <thead>
-                  <tr className="border-b-2 border-brand-text bg-brand-bg">
-                    <th className="p-2">SIZE</th>
-                    <th className="p-2">CHEST (IN)</th>
-                    <th className="p-2">LENGTH (IN)</th>
-                    <th className="p-2">SHOULDER (IN)</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  <tr className="border-b border-brand-text/30">
-                    <td className="p-2 font-black">S</td>
-                    <td className="p-2">21.5"</td>
-                    <td className="p-2">28.0"</td>
-                    <td className="p-2">20.5"</td>
-                  </tr>
-                  <tr className="border-b border-brand-text/30">
-                    <td className="p-2 font-black">M</td>
-                    <td className="p-2">22.5"</td>
-                    <td className="p-2">29.0"</td>
-                    <td className="p-2">21.5"</td>
-                  </tr>
-                  <tr className="border-b border-brand-text/30">
-                    <td className="p-2 font-black">L</td>
-                    <td className="p-2">23.5"</td>
-                    <td className="p-2">30.0"</td>
-                    <td className="p-2">22.5"</td>
-                  </tr>
-                  <tr className="border-b border-brand-text/30">
-                    <td className="p-2 font-black">XL</td>
-                    <td className="p-2">24.5"</td>
-                    <td className="p-2">31.0"</td>
-                    <td className="p-2">23.5"</td>
-                  </tr>
-                </tbody>
-              </table>
-              <p className="text-[10px] font-mono uppercase text-brand-text/60">
-                Engineered with an authentic boxy drop-shoulder cut. If you prefer a tailored profile, size down one step.
-              </p>
+            <div className="flex items-center justify-between border-b-2 border-brand-text pb-3 mb-4">
+              <h3 className="text-base font-mono font-black uppercase text-brand-text">
+                HEAVYWEIGHT ARCHIVAL SIZING MATRIX
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setShowSizeGuide(false)}
+                className="p-1 hover:bg-brand-text hover:text-white"
+              >
+                <X size={16} />
+              </button>
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+            
+            <table className="w-full text-left font-mono text-xs uppercase border-collapse mb-4">
+              <thead>
+                <tr className="border-b-2 border-brand-text bg-brand-bg">
+                  <th className="p-2">SIZE</th>
+                  <th className="p-2">CHEST (IN)</th>
+                  <th className="p-2">LENGTH (IN)</th>
+                  <th className="p-2">SHOULDER (IN)</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr className="border-b border-brand-text/30">
+                  <td className="p-2 font-black">S</td>
+                  <td className="p-2">21.5"</td>
+                  <td className="p-2">28.0"</td>
+                  <td className="p-2">20.5"</td>
+                </tr>
+                <tr className="border-b border-brand-text/30">
+                  <td className="p-2 font-black">M</td>
+                  <td className="p-2">22.5"</td>
+                  <td className="p-2">29.0"</td>
+                  <td className="p-2">21.5"</td>
+                </tr>
+                <tr className="border-b border-brand-text/30">
+                  <td className="p-2 font-black">L</td>
+                  <td className="p-2">23.5"</td>
+                  <td className="p-2">30.0"</td>
+                  <td className="p-2">22.5"</td>
+                </tr>
+                <tr className="border-b border-brand-text/30">
+                  <td className="p-2 font-black">XL</td>
+                  <td className="p-2">24.5"</td>
+                  <td className="p-2">31.0"</td>
+                  <td className="p-2">23.5"</td>
+                </tr>
+              </tbody>
+            </table>
+            <p className="text-[10px] font-mono uppercase text-brand-text/60">
+              Engineered with an authentic boxy drop-shoulder cut. If you prefer a tailored profile, size down one step.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

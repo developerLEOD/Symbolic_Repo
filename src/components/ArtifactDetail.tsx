@@ -4,20 +4,19 @@ import {
   Edit3, 
   Plus, 
   ArrowLeft, 
-  ArrowRight,
+  ArrowRight, 
   Check, 
   ChevronLeft, 
   ChevronRight, 
   ShieldCheck, 
-  Layers,
-  Box,
-  Share2,
-  Maximize2,
-  Ruler,
-  Clock,
-  Sparkles
+  Layers, 
+  Box, 
+  Share2, 
+  Maximize2, 
+  Ruler, 
+  Clock, 
+  Sparkles 
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { Artifact, Specimen, CartItem } from "../types";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
@@ -259,11 +258,9 @@ export default function ArtifactDetail({
               const isSelected = spec.id === activeSpecimenId;
               const isSold = !spec.availability || spec.status === "sold_out" || spec.inventory <= 0;
               const specImg = spec.images?.[0] || spec.thumbnailImage || artifact.graphic || artifact.images?.[0];
-              const scatterAngles = [-2.4, 2.2, -1.8, 2.5, -2.1, 1.7];
-              const rot = scatterAngles[idx % scatterAngles.length];
 
               return (
-                <motion.button
+                <button
                   key={spec.id}
                   type="button"
                   onClick={() => {
@@ -271,20 +268,7 @@ export default function ArtifactDetail({
                     setActiveSpecimenId(spec.id);
                   }}
                   onMouseEnter={() => soundManager.playHover(0.02)}
-                  initial={false}
-                  animate={{
-                    rotate: isSelected ? 0 : rot,
-                    scale: isSelected ? 1.03 : 1,
-                    y: isSelected ? -3 : 0,
-                  }}
-                  whileHover={{
-                    rotate: 0,
-                    scale: 1.05,
-                    y: -4,
-                    transition: { duration: 0.12 },
-                  }}
-                  whileTap={{ scale: 0.98 }}
-                  className={`p-2.5 text-left border-2 font-mono transition-all flex flex-col justify-between relative cursor-pointer group ${
+                  className={`p-2.5 text-left border-2 font-mono transition-colors flex flex-col justify-between relative cursor-pointer group ${
                     isSelected 
                       ? "border-brand-accent bg-brand-surface ring-2 ring-brand-accent shadow-[5px_5px_0px_#ff4500] z-10" 
                       : "border-brand-text bg-brand-surface hover:border-brand-accent shadow-[3px_3px_0px_#050505] hover:shadow-[5px_5px_0px_#050505]"
@@ -342,7 +326,7 @@ export default function ArtifactDetail({
                       {spec.material || "CANONICAL"}
                     </span>
                   </div>
-                </motion.button>
+                </button>
               );
             })}
           </div>
@@ -355,19 +339,13 @@ export default function ArtifactDetail({
             {/* Left Column: Visual Gallery Canvas (7 Cols) */}
             <div className="lg:col-span-7 space-y-4">
               <div className="relative aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[6px_6px_0px_#050505] flex items-center justify-center overflow-hidden">
-                <AnimatePresence mode="wait">
-                  <motion.img 
-                    key={`${activeSpecimen.id}_${activeImageIndex}`}
-                    src={displayImages[activeImageIndex] || activeSpecimen.thumbnailImage} 
-                    alt={`${artifact.name} ${activeSpecimen.medium}`}
-                    referrerPolicy="no-referrer"
-                    initial={{ opacity: 0.7, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    exit={{ opacity: 0.6, scale: 1.01 }}
-                    transition={{ duration: 0.2 }}
-                    className="w-full h-full object-contain p-4"
-                  />
-                </AnimatePresence>
+                <img 
+                  key={`${activeSpecimen.id}_${activeImageIndex}`}
+                  src={displayImages[activeImageIndex] || activeSpecimen.thumbnailImage} 
+                  alt={`${artifact.name} ${activeSpecimen.medium}`}
+                  referrerPolicy="no-referrer"
+                  className="w-full h-full object-contain p-4"
+                />
 
                 {/* Specimen Tag Overlay */}
                 <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start">
@@ -617,103 +595,93 @@ export default function ArtifactDetail({
         </div>
 
         {/* Fullscreen Image Lightbox Modal */}
-        <AnimatePresence>
-          {showFullscreenImage && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4"
+        {showFullscreenImage && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/95 flex flex-col items-center justify-center p-4"
+            onClick={() => setShowFullscreenImage(false)}
+          >
+            <button
+              type="button"
               onClick={() => setShowFullscreenImage(false)}
+              className="absolute top-4 right-4 p-2 text-white hover:text-brand-accent transition-colors"
+              aria-label="Close fullscreen"
             >
-              <button
-                type="button"
-                onClick={() => setShowFullscreenImage(false)}
-                className="absolute top-4 right-4 p-2 text-white hover:text-brand-accent transition-colors"
-                aria-label="Close fullscreen"
-              >
-                <X size={24} />
-              </button>
-              <img 
-                src={displayImages[activeImageIndex] || artifact.graphic} 
-                alt={artifact.name}
-                referrerPolicy="no-referrer"
-                className="max-h-[85vh] max-w-[90vw] object-contain"
-              />
-            </motion.div>
-          )}
-        </AnimatePresence>
+              <X size={24} />
+            </button>
+            <img 
+              src={displayImages[activeImageIndex] || artifact.graphic} 
+              alt={artifact.name}
+              referrerPolicy="no-referrer"
+              className="max-h-[85vh] max-w-[90vw] object-contain"
+            />
+          </div>
+        )}
 
         {/* Size Guide Modal */}
-        <AnimatePresence>
-          {showSizeGuide && (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
-              onClick={() => setShowSizeGuide(false)}
+        {showSizeGuide && (
+          <div
+            className="fixed inset-0 z-[100] bg-black/80 flex items-center justify-center p-4"
+            onClick={() => setShowSizeGuide(false)}
+          >
+            <div 
+              className="bg-brand-surface border-2 border-brand-text p-6 max-w-lg w-full shadow-[8px_8px_0px_#050505]"
+              onClick={e => e.stopPropagation()}
             >
-              <div 
-                className="bg-brand-surface border-2 border-brand-text p-6 max-w-lg w-full shadow-[8px_8px_0px_#050505]"
-                onClick={e => e.stopPropagation()}
-              >
-                <div className="flex items-center justify-between border-b-2 border-brand-text pb-3 mb-4">
-                  <h3 className="text-base font-mono font-black uppercase text-brand-text">
-                    HEAVYWEIGHT BOXY CUT // SIZING SPECIFICATION
-                  </h3>
-                  <button 
-                    type="button" 
-                    onClick={() => setShowSizeGuide(false)}
-                    className="p-1 hover:bg-brand-text hover:text-white"
-                  >
-                    <X size={16} />
-                  </button>
-                </div>
-                
-                <table className="w-full text-left font-mono text-xs uppercase border-collapse mb-4">
-                  <thead>
-                    <tr className="border-b-2 border-brand-text bg-brand-bg">
-                      <th className="p-2">SIZE</th>
-                      <th className="p-2">CHEST (IN)</th>
-                      <th className="p-2">LENGTH (IN)</th>
-                      <th className="p-2">SHOULDER (IN)</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    <tr className="border-b border-brand-text/30">
-                      <td className="p-2 font-black">S</td>
-                      <td className="p-2">21.5"</td>
-                      <td className="p-2">28.0"</td>
-                      <td className="p-2">20.5"</td>
-                    </tr>
-                    <tr className="border-b border-brand-text/30">
-                      <td className="p-2 font-black">M</td>
-                      <td className="p-2">22.5"</td>
-                      <td className="p-2">29.0"</td>
-                      <td className="p-2">21.5"</td>
-                    </tr>
-                    <tr className="border-b border-brand-text/30">
-                      <td className="p-2 font-black">L</td>
-                      <td className="p-2">23.5"</td>
-                      <td className="p-2">30.0"</td>
-                      <td className="p-2">22.5"</td>
-                    </tr>
-                    <tr className="border-b border-brand-text/30">
-                      <td className="p-2 font-black">XL</td>
-                      <td className="p-2">24.5"</td>
-                      <td className="p-2">31.0"</td>
-                      <td className="p-2">23.5"</td>
-                    </tr>
-                  </tbody>
-                </table>
-                <p className="text-[10px] font-mono uppercase text-brand-text/60">
-                  Engineered with an authentic boxy drop-shoulder cut. If you prefer a tailored profile, size down one step.
-                </p>
+              <div className="flex items-center justify-between border-b-2 border-brand-text pb-3 mb-4">
+                <h3 className="text-base font-mono font-black uppercase text-brand-text">
+                  HEAVYWEIGHT BOXY CUT // SIZING SPECIFICATION
+                </h3>
+                <button 
+                  type="button" 
+                  onClick={() => setShowSizeGuide(false)}
+                  className="p-1 hover:bg-brand-text hover:text-white"
+                >
+                  <X size={16} />
+                </button>
               </div>
-            </motion.div>
-          )}
-        </AnimatePresence>
+              
+              <table className="w-full text-left font-mono text-xs uppercase border-collapse mb-4">
+                <thead>
+                  <tr className="border-b-2 border-brand-text bg-brand-bg">
+                    <th className="p-2">SIZE</th>
+                    <th className="p-2">CHEST (IN)</th>
+                    <th className="p-2">LENGTH (IN)</th>
+                    <th className="p-2">SHOULDER (IN)</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className="border-b border-brand-text/30">
+                    <td className="p-2 font-black">S</td>
+                    <td className="p-2">21.5"</td>
+                    <td className="p-2">28.0"</td>
+                    <td className="p-2">20.5"</td>
+                  </tr>
+                  <tr className="border-b border-brand-text/30">
+                    <td className="p-2 font-black">M</td>
+                    <td className="p-2">22.5"</td>
+                    <td className="p-2">29.0"</td>
+                    <td className="p-2">21.5"</td>
+                  </tr>
+                  <tr className="border-b border-brand-text/30">
+                    <td className="p-2 font-black">L</td>
+                    <td className="p-2">23.5"</td>
+                    <td className="p-2">30.0"</td>
+                    <td className="p-2">22.5"</td>
+                  </tr>
+                  <tr className="border-b border-brand-text/30">
+                    <td className="p-2 font-black">XL</td>
+                    <td className="p-2">24.5"</td>
+                    <td className="p-2">31.0"</td>
+                    <td className="p-2">23.5"</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p className="text-[10px] font-mono uppercase text-brand-text/60">
+                Engineered with an authentic boxy drop-shoulder cut. If you prefer a tailored profile, size down one step.
+              </p>
+            </div>
+          </div>
+        )}
 
       </div>
     </div>

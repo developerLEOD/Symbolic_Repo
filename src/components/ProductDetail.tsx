@@ -21,7 +21,6 @@ import {
   Clock,
   Share2
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -571,25 +570,19 @@ export default function ProductDetail({
               {/* Primary Image Viewport (Strict 3:4 Archival Specification) */}
               <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center">
                 <div className="w-full max-w-[480px] aspect-[3/4] max-h-[620px] relative bg-brand-bg border-2 border-brand-text overflow-hidden group shadow-[4px_4px_0px_#050505]">
-                  <AnimatePresence>
-                    <motion.img 
-                      key={activeImageIndex}
-                      src={images[activeImageIndex] || STUDIO_FALLBACK_IMAGE} 
-                      alt={`${artifactTitle} - Perspective 0${activeImageIndex + 1}`}
-                      referrerPolicy="no-referrer"
-                      onError={(e) => {
-                        const target = e.currentTarget as HTMLImageElement;
-                        if (target.src !== STUDIO_FALLBACK_IMAGE) {
-                          target.src = STUDIO_FALLBACK_IMAGE;
-                        }
-                      }}
-                      initial={{ clipPath: "inset(100% 0% 0% 0%)", filter: "contrast(120%) grayscale(100%)" }}
-                      animate={{ clipPath: "inset(0% 0% 0% 0%)", filter: "contrast(100%) grayscale(0%)" }}
-                      exit={{ clipPath: "inset(0% 0% 100% 0%)", filter: "contrast(120%) grayscale(100%)" }}
-                      transition={{ duration: 0.4, ease: [0.85, 0, 0.15, 1] }}
-                      className="absolute inset-0 w-full h-full object-cover"
-                    />
-                  </AnimatePresence>
+                  <img 
+                    key={activeImageIndex}
+                    src={images[activeImageIndex] || STUDIO_FALLBACK_IMAGE} 
+                    alt={`${artifactTitle} - Perspective 0${activeImageIndex + 1}`}
+                    referrerPolicy="no-referrer"
+                    onError={(e) => {
+                      const target = e.currentTarget as HTMLImageElement;
+                      if (target.src !== STUDIO_FALLBACK_IMAGE) {
+                        target.src = STUDIO_FALLBACK_IMAGE;
+                      }
+                    }}
+                    className="absolute inset-0 w-full h-full object-cover"
+                  />
 
                   {/* Perspective Badge */}
                   <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start">
@@ -1159,60 +1152,54 @@ export default function ProductDetail({
       </main>
 
       {/* STICKY BOTTOM QUICK-ACQUIRE DOCK (Appears when scrolling deep into the dossier) */}
-      <AnimatePresence>
-        {showStickyAcquire && (
-          <motion.div
-            initial={{ y: 80, opacity: 0 }}
-            animate={{ y: 0, opacity: 1 }}
-            exit={{ y: 80, opacity: 0 }}
-            transition={{ duration: 0.2 }}
-            className="fixed bottom-0 inset-x-0 z-50 bg-brand-bg/95 backdrop-blur-md border-t-2 border-brand-text p-3 sm:p-4 shadow-[0px_-4px_12px_rgba(0,0,0,0.15)]"
-          >
-            <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
-              <div className="flex items-center gap-3">
-                <span className="font-mono text-xs font-black uppercase text-brand-accent hidden sm:inline">
-                  ARTIFACT / {artifactNumber}
-                </span>
-                <div>
-                  <div className="font-mono text-xs sm:text-sm font-black uppercase truncate max-w-[200px] sm:max-w-xs text-brand-text">
-                    {artifactTitle}
-                  </div>
-                  <div className="font-mono text-[10px] font-bold text-brand-accent uppercase">
-                    {isSoldOut ? "ARCHIVAL ALLOTMENT FILLED" : "POSSESSION PROTOCOL READY"}
-                  </div>
+      {showStickyAcquire && (
+        <div
+          className="fixed bottom-0 inset-x-0 z-50 bg-brand-bg/95 backdrop-blur-md border-t-2 border-brand-text p-3 sm:p-4 shadow-[0px_-4px_12px_rgba(0,0,0,0.15)]"
+        >
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <span className="font-mono text-xs font-black uppercase text-brand-accent hidden sm:inline">
+                ARTIFACT / {artifactNumber}
+              </span>
+              <div>
+                <div className="font-mono text-xs sm:text-sm font-black uppercase truncate max-w-[200px] sm:max-w-xs text-brand-text">
+                  {artifactTitle}
+                </div>
+                <div className="font-mono text-[10px] font-bold text-brand-accent uppercase">
+                  {isSoldOut ? "ARCHIVAL ALLOTMENT FILLED" : "POSSESSION PROTOCOL READY"}
                 </div>
               </div>
+            </div>
 
-              <div className="flex items-center gap-3">
-                {isSoldOut ? (
+            <div className="flex items-center gap-3">
+              {isSoldOut ? (
+                <button
+                  type="button"
+                  onClick={() => scrollToSection("dossier-possession")}
+                  className="px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider bg-brand-surface text-brand-text hover:bg-brand-accent hover:text-white border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                >
+                  <Bell size={14} className="text-brand-accent" />
+                  <span>NOTIFY ME // SOLD OUT</span>
+                </button>
+              ) : (
+                <>
                   <button
                     type="button"
-                    onClick={() => scrollToSection("dossier-possession")}
-                    className="px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider bg-brand-surface text-brand-text hover:bg-brand-accent hover:text-white border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                    onClick={() => {
+                      soundManager.playClick();
+                      navigate(`/acquisitions/${product.productId || product.sku || product.id}`);
+                    }}
+                    className="px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5"
                   >
-                    <Bell size={14} className="text-brand-accent" />
-                    <span>NOTIFY ME // SOLD OUT</span>
+                    <span>ACQUIRE SPECIMEN</span>
+                    <ArrowRight size={14} />
                   </button>
-                ) : (
-                  <>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        soundManager.playClick();
-                        navigate(`/acquisitions/${product.productId || product.sku || product.id}`);
-                      }}
-                      className="px-5 py-2.5 font-mono text-xs font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-1.5"
-                    >
-                      <span>ACQUIRE SPECIMEN</span>
-                      <ArrowRight size={14} />
-                    </button>
-                  </>
-                )}
-              </div>
+                </>
+              )}
             </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+          </div>
+        </div>
+      )}
 
       {/* FULLSCREEN ARTIFACT LIGHTBOX */}
       {showFullscreenImage && (

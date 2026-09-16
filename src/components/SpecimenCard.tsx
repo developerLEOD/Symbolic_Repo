@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { Specimen, Artifact } from "../types";
-import { motion, AnimatePresence } from "motion/react";
 import { ArrowUpRight, ChevronLeft, ChevronRight, ShieldCheck } from "lucide-react";
 import { soundManager } from "../lib/soundEffects";
 
@@ -40,14 +39,8 @@ export default function SpecimenCard({
   };
 
   return (
-    <motion.div 
-      initial={{ opacity: 0, y: 12 }}
-      whileInView={{ opacity: 1, y: 0 }}
-      viewport={{ once: true }}
-      whileHover={{ y: -4, transition: { type: "spring", stiffness: 450, damping: 26 } }}
-      whileTap={{ scale: 0.99 }}
-      transition={{ duration: 0.2 }}
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-all duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+    <div 
+      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
       onClick={() => {
         soundManager.playClick();
         onClick();
@@ -86,19 +79,13 @@ export default function SpecimenCard({
 
       {/* Central Visual Specimen Canvas */}
       <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
-        <AnimatePresence mode="wait">
-          <motion.img 
-            key={activeImageIndex}
-            src={images[activeImageIndex] || specimen.thumbnailImage} 
-            alt={`${artifactName} ${specimen.medium}`}
-            referrerPolicy="no-referrer"
-            initial={{ opacity: 0.8, scale: 0.99 }}
-            animate={{ opacity: 1, scale: isHovered ? 1.03 : 1 }}
-            exit={{ opacity: 0.7, scale: 1.01 }}
-            transition={{ type: "spring", stiffness: 320, damping: 28 }}
-            className="w-full h-full object-contain object-center p-3"
-          />
-        </AnimatePresence>
+        <img 
+          key={activeImageIndex}
+          src={images[activeImageIndex] || specimen.thumbnailImage} 
+          alt={`${artifactName} ${specimen.medium}`}
+          referrerPolicy="no-referrer"
+          className="w-full h-full object-contain object-center p-3 select-none"
+        />
 
         {/* Parent Artifact Ribbon */}
         <div className="absolute top-2 left-2 z-10 flex flex-col gap-1 items-start">
@@ -165,18 +152,12 @@ export default function SpecimenCard({
         <div className="border-t-2 border-brand-text pt-2.5">
           <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
             <span>ACQUIRE SPECIMEN</span>
-            <motion.div
-              animate={{ 
-                x: isHovered ? [0, 3, 0] : 0,
-                y: isHovered ? [0, -3, 0] : 0
-              }}
-              transition={{ repeat: isHovered ? Infinity : 0, duration: 0.9, ease: "easeInOut" }}
-            >
+            <div>
               <ArrowUpRight size={12} className="group-hover:text-brand-accent transition-colors" />
-            </motion.div>
+            </div>
           </div>
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }

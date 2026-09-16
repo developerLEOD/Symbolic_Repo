@@ -482,27 +482,14 @@ export default function ArtifactOverlappingCollection({
                 {mobileChildSpecs.map((spec, specIdx) => {
                   const isSelected = mobileSelectedSpecId === spec.id;
                   const specImg = spec.images?.[0] || spec.thumbnailImage || activeMobileItem.graphic;
-                  const scatterAngles = [-2.4, 2.6, -1.8, 2.2, -2.8, 1.9];
-                  const rot = scatterAngles[specIdx % scatterAngles.length];
 
                   return (
-                    <motion.button
+                    <button
                       key={spec.id}
                       type="button"
                       onClick={(e) => handleSelectSpecimen(activeMobileItem.id, spec.id, e)}
                       onMouseEnter={() => soundManager.playHover(0.02)}
-                      initial={false}
-                      animate={{
-                        rotate: isSelected ? 0 : rot,
-                        scale: isSelected ? 1.02 : 1,
-                      }}
-                      whileHover={{
-                        rotate: 0,
-                        scale: 1.05,
-                        transition: { duration: 0.12 },
-                      }}
-                      whileTap={{ scale: 0.97 }}
-                      className={`relative p-1.5 text-left border-2 font-mono transition-all cursor-pointer flex flex-col justify-between ${
+                      className={`relative p-1.5 text-left border-2 font-mono transition-colors cursor-pointer flex flex-col justify-between ${
                         isSelected
                           ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[4px_4px_0px_#ff4500] z-10"
                           : "bg-brand-surface border-brand-text shadow-[3px_3px_0px_#050505] hover:border-brand-accent hover:shadow-[4px_4px_0px_#050505]"
@@ -515,7 +502,7 @@ export default function ArtifactOverlappingCollection({
                           src={specImg}
                           alt={spec.medium}
                           referrerPolicy="no-referrer"
-                          className="w-full h-full object-contain p-1 select-none pointer-events-none transition-transform duration-200"
+                          className="w-full h-full object-contain p-1 select-none pointer-events-none"
                           loading="lazy"
                         />
                         {isSelected ? (
@@ -523,7 +510,7 @@ export default function ArtifactOverlappingCollection({
                             ACTIVE
                           </div>
                         ) : (
-                          <div className="absolute top-1 right-1 px-1 py-0.5 bg-brand-surface/90 text-brand-text text-[6.5px] font-black uppercase tracking-wider leading-none border border-brand-text/40">
+                          <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-brand-surface/90 text-brand-text text-[6.5px] font-black uppercase tracking-wider leading-none border border-brand-text/40">
                             0{specIdx + 1}
                           </div>
                         )}
@@ -539,7 +526,7 @@ export default function ArtifactOverlappingCollection({
                           {spec.material || "CANONICAL"}
                         </div>
                       </div>
-                    </motion.button>
+                    </button>
                   );
                 })}
               </div>
@@ -673,22 +660,21 @@ export default function ArtifactOverlappingCollection({
                 animate={{
                   x: displacementX,
                   y: targetY,
-                  scale: targetScale,
                   rotate: targetRotate,
-                  opacity: 1,
+                  scale: targetScale,
                   zIndex: targetZ,
                 }}
                 transition={{
                   type: "spring",
-                  stiffness: 340,
-                  damping: 26,
-                  mass: 0.8,
+                  stiffness: 350,
+                  damping: 28,
+                  mass: 0.5,
                 }}
                 style={{
                   marginLeft: idx === 0 ? "0px" : "-140px",
                   zIndex: targetZ,
                 }}
-                className={`relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] group cursor-pointer transition-shadow ${
+                className={`relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] group cursor-pointer ${
                   idx !== 0 ? "sm:-ml-[170px] md:-ml-[200px] lg:-ml-[230px]" : ""
                 }`}
               >
@@ -705,13 +691,13 @@ export default function ArtifactOverlappingCollection({
                     <AnimatePresence mode="wait">
                       <motion.img
                         key={currentImg}
-                        initial={{ opacity: 0.85 }}
-                        animate={{ opacity: 1, scale: isHovered ? 1.02 : 1 }}
-                        exit={{ opacity: 0.85 }}
-                        transition={{ duration: 0.12, ease: "easeOut" }}
                         src={currentImg}
                         alt={item.name}
                         referrerPolicy="no-referrer"
+                        initial={{ opacity: 0.7, scale: 0.98 }}
+                        animate={{ opacity: 1, scale: 1 }}
+                        exit={{ opacity: 0.7 }}
+                        transition={{ duration: 0.15 }}
                         className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1"
                         loading="lazy"
                       />
@@ -758,46 +744,46 @@ export default function ArtifactOverlappingCollection({
                     )}
                   </div>
 
-                  {/* CURATORIAL ARTIFACT DOSSIER (Revealed smoothly on hover/focus) */}
+                  {/* CURATORIAL ARTIFACT DOSSIER (Revealed on hover/focus) */}
                   <AnimatePresence>
                     {isHovered && (
                       <motion.div
-                        initial={{ opacity: 0, scale: 0.95, y: 10 }}
-                        animate={{ opacity: 1, scale: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95, y: 5 }}
-                        transition={{ type: "spring", stiffness: 500, damping: 25 }}
-                        style={{ willChange: "transform, opacity" }}
+                        initial={{ y: 24, opacity: 0 }}
+                        animate={{ y: 0, opacity: 1 }}
+                        exit={{ y: 24, opacity: 0 }}
+                        transition={{ duration: 0.16, ease: "easeOut" }}
                         className="absolute inset-x-0 bottom-0 z-30 p-3.5 bg-brand-surface text-brand-text border-t-3 border-brand-text shadow-[0_-6px_20px_rgba(0,0,0,0.25)] flex flex-col justify-between gap-2.5 font-mono"
                         onClick={(e) => e.stopPropagation()}
                       >
-                        {/* Upper Identification Section */}
-                        <div className="space-y-1">
-                          <div className="flex items-center justify-between text-[8.5px] text-brand-accent font-black uppercase tracking-widest border-b border-brand-text/20 pb-1">
-                            <span className="flex items-center gap-1">
-                              <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
-                              ARTIFACT / {artifactNum}
-                            </span>
-                            <span className="text-brand-text/60 font-bold">
-                              {item.artifactId}
-                            </span>
-                          </div>
-
-                          <div className="flex items-baseline justify-between gap-2">
-                            <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-brand-text line-clamp-1">
-                              # {item.name}
-                            </h3>
-                            <span className="font-mono text-[9px] font-black text-brand-accent uppercase tracking-wider whitespace-nowrap">
-                              {activeSpecimen ? activeSpecimen.medium : `${childSpecimens.length} SPECIMENS`}
-                            </span>
-                          </div>
-
-                          <p className="text-[9.5px] font-bold text-brand-text/80 uppercase tracking-wide line-clamp-2 leading-tight border-l-2 border-brand-accent pl-2">
-                            {item.concept || item.symbolicTagline || "Steadfast conviction materialized across multiple physical media."}
-                          </p>
+                      {/* Upper Identification Section */}
+                      <div className="space-y-1">
+                        <div className="flex items-center justify-between text-[8.5px] text-brand-accent font-black uppercase tracking-widest border-b border-brand-text/20 pb-1">
+                          <span className="flex items-center gap-1">
+                            <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
+                            ARTIFACT / {artifactNum}
+                          </span>
+                          <span className="text-brand-text/60 font-bold">
+                            {item.artifactId}
+                          </span>
                         </div>
 
-                        {/* SEPARATE SPECIMENS SELECTOR INSIDE DOSSIER */}
-                        <div className="border-t border-brand-text/20 pt-2 space-y-1 bg-brand-text/5 p-2 border border-brand-text/15 lg:hidden">
+                        <div className="flex items-baseline justify-between gap-2">
+                          <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-brand-text line-clamp-1">
+                            # {item.name}
+                          </h3>
+                          <span className="font-mono text-[9px] font-black text-brand-accent uppercase tracking-wider whitespace-nowrap">
+                            {activeSpecimen ? activeSpecimen.medium : `${childSpecimens.length} SPECIMENS`}
+                          </span>
+                        </div>
+
+                        <p className="text-[9.5px] font-bold text-brand-text/80 uppercase tracking-wide line-clamp-2 leading-tight border-l-2 border-brand-accent pl-2">
+                          {item.concept || item.symbolicTagline || "Steadfast conviction materialized across multiple physical media."}
+                        </p>
+                      </div>
+
+                      {/* Inside Specimen Selector: Only shown if side-specimens-preview is null AND screen resolution is mobile phone size */}
+                      {isMobile && childSpecimens.length > 0 && (
+                        <div className="border-t border-brand-text/20 pt-2 space-y-1 bg-brand-text/5 p-2 border border-brand-text/15">
                           <div className="flex items-center justify-between text-[8px] font-black uppercase text-brand-text/80">
                             <span className="flex items-center gap-1">
                               <Layers size={10} className="text-brand-accent" />
@@ -820,27 +806,14 @@ export default function ArtifactOverlappingCollection({
                             {childSpecimens.map((spec, specIdx) => {
                               const isSelected = selectedSpecId === spec.id;
                               const specImg = spec.images?.[0] || spec.thumbnailImage || item.graphic;
-                              const scatterAngles = [-2.2, 2.4, -1.8, 2.0, -2.6, 1.8];
-                              const rot = scatterAngles[specIdx % scatterAngles.length];
 
                               return (
-                                <motion.button
+                                <button
                                   key={spec.id}
                                   type="button"
                                   onClick={(e) => handleSelectSpecimen(item.id, spec.id, e)}
                                   onMouseEnter={() => soundManager.playHover(0.02)}
-                                  initial={false}
-                                  animate={{
-                                    rotate: isSelected ? 0 : rot,
-                                    scale: isSelected ? 1.02 : 1,
-                                  }}
-                                  whileHover={{
-                                    rotate: 0,
-                                    scale: 1.05,
-                                    transition: { duration: 0.12 },
-                                  }}
-                                  whileTap={{ scale: 0.98 }}
-                                  className={`relative p-1.5 text-left border-2 font-mono transition-all cursor-pointer flex flex-col justify-between ${
+                                  className={`relative p-1.5 text-left border-2 font-mono transition-colors cursor-pointer flex flex-col justify-between ${
                                     isSelected
                                       ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[3px_3px_0px_#ff4500] z-10"
                                       : "bg-brand-surface border-brand-text shadow-[2px_2px_0px_#050505] hover:border-brand-accent hover:shadow-[3px_3px_0px_#050505]"
@@ -877,42 +850,43 @@ export default function ArtifactOverlappingCollection({
                                       {spec.material || "CANONICAL"}
                                     </div>
                                   </div>
-                                </motion.button>
+                                </button>
                               );
                             })}
                           </div>
                         </div>
+                      )}
 
-                        {/* Complete Set Acquisition Bar (No price in previews) */}
-                        {setCalculation.hasDiscount && setCalculation.setPrice > 0 && (
-                          <div className="bg-brand-accent/10 border border-brand-accent/40 p-1.5 flex items-center justify-between font-mono text-[8px]">
-                            <div className="flex items-center gap-1 font-black text-brand-text uppercase">
-                              <Box size={10} className="text-brand-accent" />
-                              <span>FULL SET ({setCalculation.specimenCount} SPECIMENS):</span>
-                            </div>
-                            <div className="flex items-center gap-1">
-                              <span className="font-black text-brand-accent uppercase tracking-wider">BUNDLE AVAILABLE</span>
-                            </div>
+                      {/* Complete Set Acquisition Bar (No price in previews) */}
+                      {setCalculation.hasDiscount && setCalculation.setPrice > 0 && (
+                        <div className="bg-brand-accent/10 border border-brand-accent/40 p-1.5 flex items-center justify-between font-mono text-[8px]">
+                          <div className="flex items-center gap-1 font-black text-brand-text uppercase">
+                            <Box size={10} className="text-brand-accent" />
+                            <span>FULL SET ({setCalculation.specimenCount} SPECIMENS):</span>
                           </div>
-                        )}
-
-                        {/* Primary Action Button */}
-                        <div className="pt-1">
-                            <button
-                              type="button"
-                              onClick={() => {
-                                soundManager.playClick(0.14);
-                                onProductClick(item.rawEntity, selectedSpecId || undefined);
-                              }}
-                              className="w-full py-2 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-[9.5px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2"
-                            >
-                              <span>Inspect And Aquire</span>
-                              <MoveRight size={12} />
-                            </button>
+                          <div className="flex items-center gap-1">
+                            <span className="font-black text-brand-accent uppercase tracking-wider">BUNDLE AVAILABLE</span>
+                          </div>
                         </div>
-                      </motion.div>
-                    )}
-                  </AnimatePresence>
+                      )}
+
+                      {/* Primary Action Button */}
+                      <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundManager.playClick(0.14);
+                              onProductClick(item.rawEntity, selectedSpecId || undefined);
+                            }}
+                            className="w-full py-2 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-[9.5px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2"
+                          >
+                            <span>Inspect And Aquire</span>
+                            <MoveRight size={12} />
+                          </button>
+                      </div>
+                    </motion.div>
+                  )}
+                </AnimatePresence>
                 </div>
 
                 {/* ORBITING SPECIMEN SATELLITES AROUND ARTIFACT CARD */}
@@ -921,11 +895,10 @@ export default function ArtifactOverlappingCollection({
                     <>
                       {/* Architectural Header floating above card */}
                       <motion.div
-                        initial={{ opacity: 0, y: 4 }}
+                        initial={{ opacity: 0, y: -6 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, y: 2 }}
-                        transition={{ duration: 0.1, ease: "easeOut" }}
-                        style={{ willChange: "transform, opacity" }}
+                        exit={{ opacity: 0, y: -6 }}
+                        transition={{ duration: 0.15 }}
                         onMouseEnter={() => {
                           if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
                           if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
@@ -944,7 +917,7 @@ export default function ArtifactOverlappingCollection({
                         onClick={(e) => e.stopPropagation()}
                       >
                         <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-brand-accent inline-block animate-ping" />
+                          <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
                           <span>SEPARATE PHYSICAL SPECIMENS</span>
                         </div>
                         <span className="text-brand-accent">{childSpecimens.length} MEDIA TYPES</span>
@@ -960,21 +933,12 @@ export default function ArtifactOverlappingCollection({
                           <motion.button
                             key={`satellite-${spec.id}`}
                             type="button"
-                            initial={{ opacity: 0, scale: 0.4, y: 5 }}
-                            animate={{
-                              opacity: 1,
-                              scale: isSelected ? 1.05 : 1,
-                              rotate: scatter.rotate,
-                              y: 0,
-                              transition: {
-                                type: "tween",
-                                duration: 0.16,
-                                ease: [0.1, 0.9, 0.2, 1],
-                                delay: specIdx * 0.08 + 0.08,
-                              },
-                            }}
-                            exit={{ opacity: 0, scale: 0.4, transition: { duration: 0.06 } }}
-                            whileHover={{ scale: 1.05, rotate: 0, zIndex: 60, transition: { duration: 0.05 } }}
+                            initial={{ opacity: 0, scale: 0.88 }}
+                            animate={{ opacity: 1, scale: 1, rotate: scatter.rotate }}
+                            exit={{ opacity: 0, scale: 0.88 }}
+                            transition={{ duration: 0.18, delay: specIdx * 0.02 }}
+                            whileHover={{ scale: 1.04, transition: { duration: 0.12 } }}
+                            whileTap={{ scale: 0.98 }}
                             onMouseEnter={(e) => {
                               e.stopPropagation();
                               if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
@@ -999,9 +963,8 @@ export default function ArtifactOverlappingCollection({
                               right: !scatter.x.includes("%") && !scatter.x.startsWith("-") ? scatter.x : undefined,
                               top: scatter.y,
                               marginLeft: !scatter.x.includes("%") && scatter.x.startsWith("-") ? scatter.x : undefined,
-                              willChange: "transform, opacity",
                             }}
-                            className={`w-38 sm:w-44 h-52 sm:h-56 z-40 bg-brand-surface border-2 transition-all p-2 flex flex-col justify-between shadow-[4px_4px_0px_#050505] cursor-pointer text-left ${
+                            className={`w-38 sm:w-44 h-52 sm:h-56 z-40 bg-brand-surface border-2 transition-colors p-2 flex flex-col justify-between shadow-[4px_4px_0px_#050505] cursor-pointer text-left ${
                               isSelected
                                 ? "border-brand-accent ring-2 ring-brand-accent bg-brand-surface shadow-[6px_6px_0px_#ff4500]"
                                 : "border-brand-text hover:border-brand-accent hover:shadow-[6px_6px_0px_#050505]"
@@ -1009,12 +972,12 @@ export default function ArtifactOverlappingCollection({
                             title={`Click to preview ${spec.medium}`}
                           >
                             {/* Product Mockup Image Container */}
-                            <div className="w-full h-30 sm:h-34 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30 relative group">
+                            <div className="w-full h-30 sm:h-34 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30 relative">
                               <img
                                 src={specImg}
                                 alt={spec.medium}
                                 referrerPolicy="no-referrer"
-                                className="w-full h-full object-contain p-2 select-none group-hover:scale-105 transition-transform duration-200"
+                                className="w-full h-full object-contain p-2 select-none"
                               />
                               {isSelected && (
                                 <div className="absolute top-1 right-1 px-1.5 py-0.5 bg-brand-accent text-white text-[7.5px] font-mono font-black uppercase tracking-wider">
@@ -1035,7 +998,7 @@ export default function ArtifactOverlappingCollection({
                               </div>
                               <div className="flex items-center justify-between text-[8px] font-mono text-brand-text/65 uppercase tracking-wide">
                                 <span className="truncate">{spec.material || "CANONICAL STRUCTURE"}</span>
-                                <span className="font-bold underline text-brand-text group-hover:text-brand-accent">
+                                <span className="font-bold underline text-brand-text hover:text-brand-accent">
                                   SELECT
                                 </span>
                               </div>

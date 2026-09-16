@@ -2,6 +2,7 @@ import { collection, doc, getDocs, getDocsFromServer, getDoc, setDoc, deleteDoc,
 import { db } from "./firebase";
 import { Product, Category, ProductVariant, Artifact, Specimen } from "../types";
 import { handleFirestoreError, OperationType } from "./firestoreErrors";
+import { sanitizeProductForFirestore } from "./imageOptimization";
 import { 
   fetchArtifacts, 
   fetchSpecimens, 
@@ -511,7 +512,8 @@ export async function saveProductWithVariants(
 ): Promise<void> {
   const productPath = `products/${product.id}`;
   try {
-    const cleanedProduct = cleanUndefined(product);
+    const sanitizedProduct = await sanitizeProductForFirestore(product);
+    const cleanedProduct = cleanUndefined(sanitizedProduct);
     // 1. Save main product document
     const productRef = doc(db, "products", product.id);
     await setDoc(productRef, cleanedProduct, { merge: true });
