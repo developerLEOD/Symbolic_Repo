@@ -94,8 +94,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
     { step: "01", name: "DISCOVER", detail: "Curated collection of symbolic artifacts" },
     { step: "02", name: "EXAMINE", detail: "Multi-perspective structural documentation" },
     { step: "03", name: "DECIPHER", detail: "The symbol, inscription & ethos" },
-    { step: "04", name: "SUBSTANCE", detail: "Dense organic cotton & artisan stoneware" },
-    { step: "05", name: "EMBODY", detail: "Carry the conviction into the world" }
+    { step: "04", name: "EMBODY", detail: "Carry the conviction into the world" }
   ];
 
   return (
@@ -263,7 +262,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         </div>
       </div>
 
-      {/* The 5-Step Core Journey Protocol (Full-Width) */}
+      {/* The 4-Step Core Journey Protocol (Full-Width) */}
       <motion.div
         variants={itemSlideUp}
         initial="hidden"
@@ -273,9 +272,9 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
       >
         <div className="flex items-center gap-2 text-[10px] sm:text-[11px] font-mono font-black uppercase tracking-widest text-brand-text/75">
           <span className="w-2 h-2 bg-brand-accent inline-block border border-brand-text" />
-          <span>THE ARTIFACT ENCOUNTER // 5-STAGE PROTOCOL</span>
+          <span>THE ARTIFACT ENCOUNTER // 4-STAGE PROTOCOL</span>
         </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 font-mono">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 font-mono">
           {coreJourneySteps.map((s, idx) => {
             const isSelected = activeStep === s.step;
             return (
