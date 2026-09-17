@@ -193,7 +193,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               className="px-8 py-4 text-xs font-mono font-black group"
             >
               <span className="flex items-center gap-2">
-                STUDIO PHILOSOPHY
+                MANIFESTO
                 <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
               </span>
             </LiquidCarveButton>
