@@ -421,7 +421,7 @@ export function TileOverlay({
 }
 
 export function formatRouteName(pathname: string): string {
-  if (pathname === "/") return "INDEX";
+  if (pathname === "/") return "HOME";
   if (pathname === "/artifacts") return "ALL ARTIFACTS";
   if (pathname.startsWith("/artifacts/")) {
     const cat = pathname.replace("/artifacts/", "").replace(/-/g, " ").toUpperCase();
