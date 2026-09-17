@@ -434,6 +434,6 @@ export function formatRouteName(pathname: string): string {
     return col || "COLLECTION";
   }
   if (pathname === "/about") return "ABOUT SYMBOLIC";
-  if (pathname === "/manifesto" || pathname === "/why-merchandise") return "MANIFESTO";
+  if (pathname === "/manifesto" || pathname === "/why-merchandise") return "THE PHILOSOPHY";
   return pathname.replace("/", "").replace(/-/g, " ").toUpperCase() || "SYMBOLIC";
 }
