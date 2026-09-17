@@ -167,11 +167,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             />
             <div>
               <p className="text-sm sm:text-base font-mono uppercase tracking-wide text-brand-text font-bold leading-relaxed">
-                <span className="inline-flex flex-col items-end leading-none mr-1.5 align-baseline">
-                  <span className="font-black text-sm sm:text-base leading-none">SYMBOLIC</span>
-                  <span className="text-[9px] sm:text-[10px] font-bold italic text-brand-accent leading-none mt-0.5">MUSLIMS</span>
-                </span>
-                creates clothing and everyday objects designed to give Muslim identity a visible, intentional form.
+                What you carry says something. Make it worth saying.
               </p>
             </div>
           </motion.div>
