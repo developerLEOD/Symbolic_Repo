@@ -17,15 +17,53 @@ const STATUS_MESSAGES = [
   {
     primary: "THE ARCHIVE OF CONSCIOUS MUSLIMS",
     secondary: "LAUNCHING POSSESSION & IDENTITY STUDIO"
+  },
+  {
+    primary: "ASSEMBLING SYMBOLIC OBJECTS & SPECIMENS",
+    secondary: "GARMENTS • HEADWEAR • VESSELS • OBJECTS"
+  },
+  {
+    primary: "DEVELOPING FORMS OF REPRESENTATION",
+    secondary: "DESIGN • MATERIAL • FUNCTION • MEANING"
+  },
+  {
+    primary: "INSCRIBING MEANING INTO MATERIAL",
+    secondary: "MADE WITH INTENT • KEPT WITH PURPOSE"
+  },
+  {
+    primary: "ENTERING THE SYMBOLIC MUSLIM",
+    secondary: "POSSESSION STUDIO // PHYSICAL OBJECTS & ARTIFACTS"
+  },
+  {
+    primary: "OBJECTS UNDER CONSTRUCTION",
+    secondary: "WEAR • CARRY • KEEP"
+  },
+  {
+    primary: "MEANING TAKES FORM",
+    secondary: "MATERIAL • SYMBOL • FUNCTION"
+  },
+  {
+    primary: "IDENTITY, MADE PHYSICAL",
+    secondary: "DESIGNED WITH INTENT • BUILT TO REMAIN"
+  },
+  {
+    primary: "SYMBOLIC MUSLIMS",
+    secondary: "POSSESSION STUDIO // BE SYMBOLIC"
   }
 ];
 
 export default function LoadingScreen() {
-  const [index, setIndex] = useState(0);
+  const [index, setIndex] = useState(() => Math.floor(Math.random() * STATUS_MESSAGES.length));
 
   useEffect(() => {
     const timer = setInterval(() => {
-      setIndex((prev) => (prev + 1) % STATUS_MESSAGES.length);
+      setIndex((prev) => {
+        let nextIndex = Math.floor(Math.random() * STATUS_MESSAGES.length);
+        if (nextIndex === prev) {
+          nextIndex = (prev + 1) % STATUS_MESSAGES.length;
+        }
+        return nextIndex;
+      });
     }, 1800);
     return () => clearInterval(timer);
   }, []);
