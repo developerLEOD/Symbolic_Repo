@@ -433,7 +433,7 @@ export function formatRouteName(pathname: string): string {
     const col = pathname.replace("/collection/", "").replace(/-/g, " ").toUpperCase();
     return col || "COLLECTION";
   }
-  if (pathname === "/about") return "STUDIO DOSSIER";
-  if (pathname === "/manifesto" || pathname === "/why-merchandise") return "FOUNDATIONAL DOCTRINE";
+  if (pathname === "/about") return "ABOUT SYMBOLIC";
+  if (pathname === "/manifesto" || pathname === "/why-merchandise") return "MANIFESTO";
   return pathname.replace("/", "").replace(/-/g, " ").toUpperCase() || "SYMBOLIC";
 }
