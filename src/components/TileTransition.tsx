@@ -170,10 +170,12 @@ function generateRandomTiles(
 export function TileOverlay({ 
   isActive, 
   onCover,
+  onComplete,
   destinationName
 }: { 
   isActive: boolean;
-  onCover: () => void;
+  onCover?: () => void;
+  onComplete?: () => void;
   destinationName: string;
 }) {
   const [grid, setGrid] = useState(getGridSetup);
@@ -181,8 +183,10 @@ export function TileOverlay({
   const [tiles, setTiles] = useState<TileRect[]>([]);
 
   const onCoverRef = useRef(onCover);
+  const onCompleteRef = useRef(onComplete);
   useEffect(() => {
     onCoverRef.current = onCover;
+    onCompleteRef.current = onComplete;
   });
 
   const timersRef = useRef<NodeJS.Timeout[]>([]);
@@ -252,6 +256,9 @@ export function TileOverlay({
           // Stage 3: All tiles complete exiting -> return to idle
           const t3 = setTimeout(() => {
             setPhase("idle");
+            if (onCompleteRef.current) {
+              onCompleteRef.current();
+            }
           }, outDurationMs);
           timersRef.current.push(t3);
         }, holdDurationMs);
@@ -415,12 +422,18 @@ export function TileOverlay({
 
 export function formatRouteName(pathname: string): string {
   if (pathname === "/") return "INDEX";
+  if (pathname === "/artifacts") return "ALL ARTIFACTS";
   if (pathname.startsWith("/artifacts/")) {
-    return pathname.replace("/artifacts/", "").replace(/-/g, " ").toUpperCase();
+    const cat = pathname.replace("/artifacts/", "").replace(/-/g, " ").toUpperCase();
+    return cat || "ARTIFACTS";
   }
   if (pathname.startsWith("/artifact/")) return "SPECIFICATION";
+  if (pathname.startsWith("/acquisitions/") || pathname.endsWith("/acquire")) return "ACQUISITION PROTOCOL";
   if (pathname.startsWith("/collection/")) {
-    return pathname.replace("/collection/", "").replace(/-/g, " ").toUpperCase();
+    const col = pathname.replace("/collection/", "").replace(/-/g, " ").toUpperCase();
+    return col || "COLLECTION";
   }
-  return pathname.replace("/", "").replace(/-/g, " ").toUpperCase();
+  if (pathname === "/about") return "STUDIO DOSSIER";
+  if (pathname === "/manifesto" || pathname === "/why-merchandise") return "FOUNDATIONAL DOCTRINE";
+  return pathname.replace("/", "").replace(/-/g, " ").toUpperCase() || "SYMBOLIC";
 }

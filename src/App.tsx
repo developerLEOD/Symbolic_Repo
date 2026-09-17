@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
 import { Product, CartItem, Category } from "./types";
@@ -27,6 +27,7 @@ import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import ScrollToTop from "./components/ScrollToTop";
 import Breadcrumbs from "./components/Breadcrumbs";
+import { TileOverlay, formatRouteName } from "./components/TileTransition";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts, getCachedProducts } from "./lib/productService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
@@ -203,6 +204,22 @@ function StorefrontApp() {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [isTransitioning, setIsTransitioning] = useState(false);
+  const [destinationName, setDestinationName] = useState("");
+  const prevLocationRef = useRef<string | null>(null);
+
+  useEffect(() => {
+    const currentLocation = location.pathname + location.search;
+    if (prevLocationRef.current === null) {
+      prevLocationRef.current = currentLocation;
+      return;
+    }
+    if (prevLocationRef.current !== currentLocation) {
+      prevLocationRef.current = currentLocation;
+      setDestinationName(formatRouteName(location.pathname));
+      setIsTransitioning(true);
+    }
+  }, [location.pathname, location.search]);
   const [isOwnerOpen, setIsOwnerOpen] = useState(false);
   const [ownerEditProductId, setOwnerEditProductId] = useState<string | null>(null);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
@@ -366,6 +383,17 @@ function StorefrontApp() {
   return (
     <div className="min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white">
       <ScrollToTop />
+
+      <TileOverlay 
+        isActive={isTransitioning}
+        destinationName={destinationName}
+        onCover={() => {
+          window.scrollTo({ top: 0, left: 0, behavior: "instant" });
+        }}
+        onComplete={() => {
+          setIsTransitioning(false);
+        }}
+      />
 
       {referralWelcomeBanner && (
         <div className="bg-brand-surface text-brand-text px-4 py-2 font-mono text-[11px] flex flex-wrap items-center justify-between gap-3 border-b-2 border-brand-text shadow-[0_2px_0px_#050505] sticky top-0 z-[60]">
