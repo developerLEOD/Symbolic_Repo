@@ -27,6 +27,8 @@ import UserProfileModal from "./components/UserProfileModal";
 import LoadingScreen from "./components/LoadingScreen";
 import ScrollToTop from "./components/ScrollToTop";
 import Breadcrumbs from "./components/Breadcrumbs";
+import StudioBackground from "./components/StudioBackground";
+import CustomCursor from "./components/CustomCursor";
 import { TileOverlay, formatRouteName } from "./components/TileTransition";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts, getCachedProducts } from "./lib/productService";
@@ -381,7 +383,9 @@ function StorefrontApp() {
   }
 
   return (
-    <div className="min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white">
+    <div className="relative min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white overflow-x-hidden">
+      <StudioBackground />
+      <CustomCursor />
       <ScrollToTop />
 
       <TileOverlay 

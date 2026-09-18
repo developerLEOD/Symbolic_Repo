@@ -24,6 +24,20 @@
   }
 }
 
+/* Custom Cursor Hide Native Cursor on Fine Pointer Devices */
+@media (hover: hover) and (pointer: fine) {
+  body.custom-cursor-active,
+  body.custom-cursor-active a,
+  body.custom-cursor-active button,
+  body.custom-cursor-active input,
+  body.custom-cursor-active select,
+  body.custom-cursor-active textarea,
+  body.custom-cursor-active [role="button"],
+  body.custom-cursor-active .cursor-pointer {
+    cursor: none !important;
+  }
+}
+
 /* Industrial brutalist scrollbar */
 .hide-scrollbar::-webkit-scrollbar {
   display: none;
