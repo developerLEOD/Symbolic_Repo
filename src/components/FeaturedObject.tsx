@@ -83,7 +83,9 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                 onViewProduct(product);
               }}
               onMouseEnter={() => soundManager.playHover(0.065)}
-              className="group cursor-pointer aspect-[4/5] bg-brand-surface border-[2.5px] border-brand-text relative overflow-hidden shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#050505] active:translate-x-1 active:translate-y-1 active:shadow-[3px_3px_0px_#050505] transition-all duration-150"
+              data-product-card="true"
+              data-preview-element="true"
+              className="group product-card cursor-pointer aspect-[4/5] bg-brand-surface border-[2.5px] border-brand-text relative overflow-hidden shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#050505] active:translate-x-1 active:translate-y-1 active:shadow-[3px_3px_0px_#050505] transition-all duration-150"
             >
               <img 
                 key={activeImageIndex}

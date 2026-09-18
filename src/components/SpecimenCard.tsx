@@ -73,7 +73,8 @@ export default function SpecimenCard({
         scale: 0.985,
         transition: { type: "spring", stiffness: 500, damping: 20 }
       }}
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      className="group specimen-card cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      data-product-card="true"
       onClick={() => {
         soundManager.playClick();
         onClick();

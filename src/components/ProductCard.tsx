@@ -127,7 +127,9 @@ export default function ProductCard({
         scale: 0.985,
         transition: { type: "spring", stiffness: 500, damping: 20 }
       }}
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      className="group product-card cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      data-product-card="true"
+      data-preview-element="true"
       onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
@@ -171,7 +173,7 @@ export default function ProductCard({
       </div>
 
       {/* ─── 2. CENTRAL VISUAL ARTIFACT CANVAS (Clean 4:5 Aspect Ratio) ─── */}
-      <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
+      <div data-preview-canvas="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
         <motion.img 
           key={activeImageIndex}
           src={images[activeImageIndex] || product.thumbnailImage || images[0] || STUDIO_FALLBACK_IMAGE} 
@@ -378,7 +380,11 @@ export default function ProductCard({
 
         {/* ─── 4. ACTION BAR ─── */}
         <div className="border-t-2 border-brand-text pt-2.5">
-          <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
+          <div 
+            role="button"
+            data-action="true"
+            className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505] cursor-pointer"
+          >
             <span>{isComingSoon ? "PREVIEW DOSSIER" : "EXPLORE SPECIMEN"}</span>
             <div>
               <ArrowUpRight size={12} className="group-hover:text-brand-accent transition-colors" />

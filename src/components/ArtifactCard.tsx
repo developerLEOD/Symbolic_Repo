@@ -122,7 +122,9 @@ export default function ArtifactCard({
         scale: 0.985,
         transition: { type: "spring", stiffness: 500, damping: 20 }
       }}
-      className="group cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      className="group artifact-card cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      data-product-card="true"
+      data-preview-element="true"
       onClick={handleCardClick}
       onMouseEnter={() => {
         soundManager.playHover(0.04);
@@ -156,7 +158,7 @@ export default function ArtifactCard({
       </div>
 
       {/* Central Visual Graphic / Artwork — Bouncy Spring Canvas */}
-      <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3">
+      <div data-preview-canvas="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3">
         <motion.img 
           key={displayImage}
           src={displayImage} 
@@ -366,7 +368,11 @@ export default function ArtifactCard({
 
         {/* Action Button */}
         <div className="border-t-2 border-brand-text pt-2">
-          <div className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505]">
+          <div 
+            role="button"
+            data-action="true"
+            className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505] cursor-pointer"
+          >
             <span>
               {activeSpecimen ? `EXPLORE ${activeSpecimen.medium.toUpperCase()} & ARCHIVE` : "EXPLORE ARTIFACT & SPECIMENS"}
             </span>

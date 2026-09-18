@@ -412,7 +412,9 @@ export default function ArtifactOverlappingCollection({
                   mobileCardRefs.current[idx] = el;
                 }}
                 onClick={() => handleMobileSelectIdx(idx)}
-                className={`shrink-0 w-[78vw] max-w-[320px] snap-center aspect-[4/5] bg-brand-surface border-3 border-brand-text transition-all duration-300 relative cursor-pointer ${
+                data-product-card="true"
+                data-preview-element="true"
+                className={`product-card shrink-0 w-[78vw] max-w-[320px] snap-center aspect-[4/5] bg-brand-surface border-3 border-brand-text transition-all duration-300 relative cursor-pointer ${
                   isCurrent
                     ? "shadow-[8px_8px_0px_#050505] scale-100 ring-2 ring-brand-accent"
                     : "shadow-[3px_3px_0px_#050505] opacity-80 scale-95"
@@ -717,12 +719,15 @@ export default function ArtifactOverlappingCollection({
                   marginLeft: idx === 0 ? "0px" : "-140px",
                   zIndex: targetZ,
                 }}
-                className={`relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] group cursor-pointer ${
+                data-product-card="true"
+                data-preview-element="true"
+                className={`product-card artifact-card relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] group cursor-pointer ${
                   idx !== 0 ? "sm:-ml-[170px] md:-ml-[200px] lg:-ml-[230px]" : ""
                 }`}
               >
                 {/* PHYSICAL 3:4 ARTIFACT FRAME */}
                 <div
+                  data-preview-canvas="true"
                   className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text transition-all duration-300 ${
                     isHovered
                       ? "shadow-[10px_10px_0px_#050505,0_0_0_1.5px_#ff4500]"
@@ -1055,7 +1060,8 @@ export default function ArtifactOverlappingCollection({
                               top: scatter.y,
                               marginLeft: !scatter.x.includes("%") && scatter.x.startsWith("-") ? scatter.x : undefined,
                             }}
-                            className={`w-38 sm:w-44 h-52 sm:h-56 z-40 bg-brand-surface border-2 transition-colors p-2 flex flex-col justify-between shadow-[4px_4px_0px_#050505] cursor-pointer text-left ${
+                            data-product-card="true"
+                            className={`product-card specimen-card w-38 sm:w-44 h-52 sm:h-56 z-40 bg-brand-surface border-2 transition-colors p-2 flex flex-col justify-between shadow-[4px_4px_0px_#050505] cursor-pointer text-left ${
                               isSelected
                                 ? "border-brand-accent ring-2 ring-brand-accent bg-brand-surface shadow-[6px_6px_0px_#ff4500]"
                                 : "border-brand-text hover:border-brand-accent hover:shadow-[6px_6px_0px_#050505]"

@@ -53,6 +53,17 @@ export default function CustomCursor() {
       return false;
     };
 
+    const isProductPreviewElement = (el: HTMLElement | null): boolean => {
+      if (!el) return false;
+      return Boolean(
+        el.matches(
+          "[data-preview-element], [data-preview-canvas], [data-product-card], .product-card, .artifact-card, .featured-product, [data-card]"
+        ) ||
+        ((el.classList.contains("aspect-[4/5]") || el.classList.contains("aspect-[3/4]")) &&
+          Boolean(el.closest("[data-preview-element], [data-product-card], .product-card, .artifact-card, #catalog-section")))
+      );
+    };
+
     const resetIdleTimer = () => {
       setIsIdle(false);
       if (idleTimerRef.current) {
@@ -73,29 +84,57 @@ export default function CustomCursor() {
       const overOrange = checkOrangeBackground(target);
       setIsOverOrange(overOrange);
 
-      const interactiveEl = target.closest(
-        "a, button, input, select, textarea, [role='button'], .cursor-pointer, [data-cursor]"
+      // 1. Direct action/control elements: buttons, links, inputs, selects, textareas, role="button", data-action, data-cursor.
+      // These represent "other-than-preview elements of products" (e.g. acquire buttons, angle selectors,
+      // specimen switchers, tabs, filters, links, and dossiers controls).
+      const directAction = target.closest(
+        "button, a, input, select, textarea, [role='button'], [data-action], [data-cursor], [data-collection-filter], [data-view-mode]"
       ) as HTMLElement | null;
 
-      if (interactiveEl) {
-        const rect = interactiveEl.getBoundingClientRect();
-        const padding = 6;
-        
-        // Clamp bounds to prevent overly massive framing if wrapper div is hovered
-        const boundedWidth = Math.min(rect.width + padding * 2, 450);
-        const boundedHeight = Math.min(rect.height + padding * 2, 280);
-
-        setHoverBounds({
-          x: rect.left + rect.width / 2,
-          y: rect.top + rect.height / 2,
-          width: boundedWidth,
-          height: boundedHeight,
-        });
-        setIsHovered(true);
-      } else {
-        setHoverBounds(null);
-        setIsHovered(false);
+      if (directAction) {
+        // If this element itself is not a whole product preview card, snap to its bounding limits!
+        if (!isProductPreviewElement(directAction)) {
+          const rect = directAction.getBoundingClientRect();
+          const padding = 6;
+          setHoverBounds({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+            width: rect.width + padding * 2,
+            height: rect.height + padding * 2,
+          });
+          setIsHovered(true);
+          return;
+        }
       }
+
+      // 2. Check general clickable containers (.cursor-pointer)
+      const clickableContainer = target.closest(".cursor-pointer") as HTMLElement | null;
+      if (clickableContainer) {
+        // If the container or target is a product preview element (e.g. card container or artwork canvas), DO NOT SNAP!
+        if (isProductPreviewElement(clickableContainer) || isProductPreviewElement(target)) {
+          setHoverBounds(null);
+          setIsHovered(false);
+          return;
+        }
+
+        // For other compact interactive elements, snap to them
+        const rect = clickableContainer.getBoundingClientRect();
+        if (rect.width <= 320 && rect.height <= 180) {
+          const padding = 6;
+          setHoverBounds({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+            width: rect.width + padding * 2,
+            height: rect.height + padding * 2,
+          });
+          setIsHovered(true);
+          return;
+        }
+      }
+
+      // 3. Default: not hovering over any snapping element
+      setHoverBounds(null);
+      setIsHovered(false);
     };
 
     const onMouseDown = (e: MouseEvent) => {
