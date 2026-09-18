@@ -3,9 +3,11 @@ import { X, Minus, Plus, ArrowRight, Trash2, ArrowLeft, ShieldCheck, Truck, Chec
 import { motion, AnimatePresence } from "motion/react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
-import { CartItem, ProductVariant } from "../types";
+import { CartItem, ProductVariant, ReferralSettings } from "../types";
 import { soundManager } from "../lib/soundEffects";
 import { STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+import { calculateFinancialValuation } from "../lib/financialValuation";
+import { subscribeReferralSettings, validateReferralCode } from "../lib/referralService";
 
 interface CartProps {
   isOpen: boolean;
@@ -32,13 +34,58 @@ export default function Cart({
   // Cache of product variants fetched from Firestore
   const [productVariantsMap, setProductVariantsMap] = useState<Record<string, ProductVariant[]>>({});
   const [itemToRemove, setItemToRemove] = useState<string | null>(null);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const [appliedReferral, setAppliedReferral] = useState<{
+    code: string;
+    discountAmount: number;
+    discountPercentage: number;
+    message?: string;
+  } | null>(null);
   const cartContainerRef = useRef<HTMLDivElement>(null);
 
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const isComplimentaryShipping = subtotal >= 15000;
-  const shipping = subtotal > 0 ? (isComplimentaryShipping ? 0 : 500) : 0;
-  const total = subtotal + shipping;
+  // Synced single-source-of-truth financial valuation
+  const valuation = calculateFinancialValuation({
+    items,
+    appliedReferral,
+    referralSettings
+  });
+
+  const subtotal = valuation.subtotal;
+  const isComplimentaryShipping = valuation.isComplimentaryShipping;
+  const shipping = valuation.shippingFee;
+  const total = valuation.total;
   const totalQuantity = items.reduce((sum, item) => sum + item.quantity, 0);
+
+  // Subscribe to referral settings and check for saved referral code
+  useEffect(() => {
+    if (!isOpen) return;
+
+    const unsubscribe = subscribeReferralSettings((settings) => {
+      setReferralSettings(settings);
+      if (!settings.isEnabled) {
+        setAppliedReferral(null);
+        return;
+      }
+
+      const savedCode = localStorage.getItem("sym_applied_referral_code");
+      if (savedCode && valuation.subtotal > 0) {
+        validateReferralCode(savedCode, valuation.subtotal, undefined, undefined, settings)
+          .then((res) => {
+            if (res.valid) {
+              setAppliedReferral({
+                code: res.referrerCode,
+                discountAmount: res.discountAmount,
+                discountPercentage: res.discountPercentage,
+                message: res.message
+              });
+            }
+          })
+          .catch(console.warn);
+      }
+    });
+
+    return () => unsubscribe();
+  }, [isOpen, valuation.subtotal]);
 
   // Fetch Firestore variants for products in cart if available
   useEffect(() => {
@@ -493,12 +540,37 @@ export default function Cart({
             {items.length > 0 && (
               <footer className="p-5 sm:p-6 border-t-2 border-brand-text bg-brand-surface shrink-0 space-y-4 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
                 
+                {/* Complimentary Shipping Progress Threshold */}
+                {!valuation.isComplimentaryShipping && valuation.subtotal > 0 && (
+                  <div className="p-2.5 bg-brand-bg border border-brand-accent/30 text-[10px] font-mono space-y-1.5">
+                    <div className="flex justify-between items-center font-bold">
+                      <span className="text-brand-text/80">COMPLIMENTARY DISPATCH THRESHOLD</span>
+                      <span className="text-brand-accent">
+                        Rs. {valuation.amountNeededForComplimentaryShipping.toLocaleString()} PKR REMAINING
+                      </span>
+                    </div>
+                    <div className="w-full h-1.5 bg-brand-surface border border-brand-text/20 overflow-hidden">
+                      <div 
+                        className="h-full bg-brand-accent transition-all duration-300"
+                        style={{ width: `${Math.min(100, Math.round((valuation.subtotal / 15000) * 100))}%` }}
+                      />
+                    </div>
+                  </div>
+                )}
+
                 {/* Financial Ledger Calculation Matrix */}
                 <div className="space-y-2 font-mono text-xs uppercase border-b-2 border-brand-text/20 pb-4">
                   <div className="flex justify-between items-center text-brand-text/75">
                     <span>SPECIMENS VALUATION ({totalQuantity} {totalQuantity === 1 ? "SPECIMEN" : "SPECIMENS"})</span>
-                    <span className="font-bold text-brand-text">Rs. {subtotal.toLocaleString()} PKR</span>
+                    <span className="font-bold text-brand-text">Rs. {valuation.subtotal.toLocaleString()} PKR</span>
                   </div>
+
+                  {valuation.discountAmount > 0 && (
+                    <div className="flex justify-between items-center text-brand-accent font-bold">
+                      <span>REFERRAL PRIVILEGE ({valuation.referralDiscountPercentage}% OFF)</span>
+                      <span className="font-black">-Rs. {valuation.discountAmount.toLocaleString()} PKR</span>
+                    </div>
+                  )}
 
                   <div className="flex justify-between items-center text-brand-text/75">
                     <span className="flex items-center gap-1.5">
@@ -506,13 +578,20 @@ export default function Cart({
                       <span>SECURE ARCHIVAL TRANSIT</span>
                     </span>
                     <span className="font-bold text-brand-text">
-                      {isComplimentaryShipping ? (
-                        <span className="text-brand-accent font-black">COMPLIMENTARY</span>
+                      {valuation.isComplimentaryShipping ? (
+                        <span className="text-emerald-700 font-black">COMPLIMENTARY</span>
                       ) : (
-                        `Rs. ${shipping.toLocaleString()} PKR`
+                        `Rs. ${valuation.shippingFee.toLocaleString()} PKR`
                       )}
                     </span>
                   </div>
+
+                  {valuation.totalSavings > 0 && (
+                    <div className="flex justify-between items-center text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 border border-emerald-200">
+                      <span>TOTAL PRIVILEGE SAVINGS</span>
+                      <span className="font-black">Rs. {valuation.totalSavings.toLocaleString()} PKR</span>
+                    </div>
+                  )}
 
                   {/* Settlement Total (Prominent & Non-Negotiable Clarity) */}
                   <div className="flex justify-between items-baseline pt-2 border-t-2 border-brand-text font-black text-brand-text">
@@ -521,7 +600,7 @@ export default function Cart({
                     </span>
                     <div className="text-right">
                       <div className="text-xl sm:text-2xl text-brand-accent tracking-tight">
-                        Rs. {total.toLocaleString()}{" "}
+                        Rs. {valuation.total.toLocaleString()}{" "}
                         <span className="text-xs font-bold text-brand-text/60">PKR</span>
                       </div>
                     </div>

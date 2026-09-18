@@ -10,7 +10,7 @@ import {
   updateProfile,
   onAuthStateChanged
 } from "firebase/auth";
-import { doc, getDoc, setDoc, updateDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
 import { auth, db } from "./firebase";
 import { UserProfile } from "../types";
 import { generateUserReferralCode } from "./referralService";
@@ -87,12 +87,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: userRole,
           referralCode: generatedCode,
           referralsCount: 0,
+          referralVisitsCount: 0,
           createdAt: Date.now(),
           lastLoginAt: Date.now(),
           ...additionalData
         };
         await setDoc(userDocRef, newProfile);
         setUserProfile(newProfile);
+        if (typeof window !== "undefined") {
+          localStorage.setItem("sym_user_referral_code", generatedCode);
+        }
       } else {
         const existingData = userDoc.data() as UserProfile;
         const userReferralCode = existingData.referralCode || generateUserReferralCode({
@@ -106,6 +110,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           role: userRole,
           referralCode: userReferralCode,
           referralsCount: typeof existingData.referralsCount === "number" ? existingData.referralsCount : 0,
+          referralVisitsCount: typeof existingData.referralVisitsCount === "number" ? existingData.referralVisitsCount : 0,
           lastLoginAt: Date.now(),
           ...(additionalData || {})
         };
@@ -116,6 +121,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           ...(additionalData || {})
         });
         setUserProfile(updatedData);
+        if (typeof window !== "undefined" && userReferralCode) {
+          localStorage.setItem("sym_user_referral_code", userReferralCode);
+        }
       }
     } catch (err) {
       console.error("Error syncing user profile with Firestore:", err);
@@ -132,23 +140,57 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         photoURL: firebaseUser.photoURL || "",
         role: isOwnerEmail(firebaseUser.email) ? "admin" : "customer",
         referralCode: fallbackCode,
-        referralsCount: 0
+        referralsCount: 0,
+        referralVisitsCount: 0
       });
+      if (typeof window !== "undefined") {
+        localStorage.setItem("sym_user_referral_code", fallbackCode);
+      }
     }
   };
 
   useEffect(() => {
+    let profileUnsub: (() => void) | null = null;
+
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       setUser(currentUser);
+      if (profileUnsub) {
+        profileUnsub();
+        profileUnsub = null;
+      }
+
       if (currentUser) {
         await syncUserProfile(currentUser);
+
+        // Real-time listener for live updates to referral counts & profile state
+        const userDocRef = doc(db, "users", currentUser.uid);
+        profileUnsub = onSnapshot(userDocRef, (snap) => {
+          if (snap.exists()) {
+            const data = snap.data() as UserProfile;
+            setUserProfile((prev) => ({
+              ...(prev || {}),
+              ...data,
+              uid: currentUser.uid,
+              referralsCount: typeof data.referralsCount === "number" ? data.referralsCount : 0,
+              referralVisitsCount: typeof data.referralVisitsCount === "number" ? data.referralVisitsCount : 0
+            }));
+            if (data.referralCode && typeof window !== "undefined") {
+              localStorage.setItem("sym_user_referral_code", data.referralCode);
+            }
+          }
+        }, (err) => {
+          console.warn("User profile snapshot warning:", err);
+        });
       } else {
         setUserProfile(null);
       }
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribe();
+      if (profileUnsub) profileUnsub();
+    };
   }, []);
 
   const signInWithEmail = async (email: string, pass: string) => {

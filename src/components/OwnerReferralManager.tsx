@@ -141,7 +141,9 @@ export default function OwnerReferralManager({ onNotify }: OwnerReferralManagerP
     : simRawDiscount;
   const isSimEligible = settings.isEnabled && (settings.minimumOrderAmount === 0 || simCartSubtotal >= settings.minimumOrderAmount);
   const simFinalDiscount = isSimEligible ? simCappedDiscount : 0;
-  const simFinalTotal = Math.max(0, simCartSubtotal - simFinalDiscount + 500); // 500 shipping
+  const isComplimentarySimShipping = simCartSubtotal >= 15000;
+  const simShipping = simCartSubtotal > 0 ? (isComplimentarySimShipping ? 0 : 500) : 0;
+  const simFinalTotal = Math.max(0, simCartSubtotal - simFinalDiscount + simShipping);
 
   // Aggregate stats
   const totalDiscountGranted = records.reduce((acc, r) => acc + (r.discountApplied || 0), 0);
@@ -653,8 +655,8 @@ export default function OwnerReferralManager({ onNotify }: OwnerReferralManagerP
                 )}
 
                 <div className="flex justify-between opacity-70">
-                  <span>Standard Shipping</span>
-                  <span>Rs. 500</span>
+                  <span>Archival Courier Dispatch</span>
+                  <span>{isComplimentarySimShipping ? "COMPLIMENTARY (Rs. 0)" : "Rs. 500"}</span>
                 </div>
 
                 <div className="flex justify-between pt-2 border-t-2 border-brand-text text-sm font-black uppercase text-brand-text">

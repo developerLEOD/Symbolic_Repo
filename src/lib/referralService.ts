@@ -461,25 +461,20 @@ export async function validateReferralCode(
     };
   }
 
-  if (settings.minimumOrderAmount > 0 && subtotal < settings.minimumOrderAmount) {
-    return {
-      valid: false,
-      message: `Referral discounts require a minimum subtotal of Rs. ${settings.minimumOrderAmount.toLocaleString()}. Current subtotal: Rs. ${subtotal.toLocaleString()}.`,
-      discountAmount: 0,
-      discountPercentage: 0,
-      referrerCode: code
-    };
-  }
-
-  // Check if this is the user's own referrer reward code (e.g. SYM-REWARD-*)
+  // Check if this is a VIP or special reward code prefix
   if (code.includes("REWARD") || code.startsWith("SYM-VIP")) {
-    const rewardDiscount = Math.round((subtotal * settings.referrerRewardPercentage) / 100);
-    const cappedDiscount = settings.maxDiscountCap > 0 ? Math.min(rewardDiscount, settings.maxDiscountCap) : rewardDiscount;
+    const rewardDiscountPercent = settings.referrerRewardPercentage || 20;
+    const meetsMin = settings.minimumOrderAmount <= 0 || subtotal >= settings.minimumOrderAmount;
+    const rawDiscount = meetsMin ? Math.round((subtotal * rewardDiscountPercent) / 100) : 0;
+    const cappedDiscount = settings.maxDiscountCap > 0 ? Math.min(rawDiscount, settings.maxDiscountCap) : rawDiscount;
+
     return {
       valid: true,
-      message: `Referrer Reward Unlocked: ${settings.referrerRewardPercentage}% discount applied!`,
+      message: meetsMin 
+        ? `Referrer Reward Unlocked: ${rewardDiscountPercent}% discount applied!`
+        : `Reward Code Linked (${rewardDiscountPercent}% OFF). Requires minimum order of Rs. ${settings.minimumOrderAmount.toLocaleString()} PKR (Current: Rs. ${subtotal.toLocaleString()} PKR).`,
       discountAmount: cappedDiscount,
-      discountPercentage: settings.referrerRewardPercentage,
+      discountPercentage: rewardDiscountPercent,
       referrerCode: code,
       isReferrerReward: true
     };
@@ -494,11 +489,14 @@ export async function validateReferralCode(
     if (!querySnapshot.empty) {
       const referrerDoc = querySnapshot.docs[0];
       const referrerData = referrerDoc.data() as UserProfile;
+      const actualReferrerUid = referrerData.uid || referrerDoc.id;
 
-      // Check if this code belongs to the current user (attempting to claim their referral reward)
+      // Check if this code belongs to the current user (attempting to claim their referral reward or self-refer)
+      const localUserCode = typeof window !== "undefined" ? localStorage.getItem("sym_user_referral_code") : null;
       const isOwnerOfCode = Boolean(
-        (currentUserId && referrerData.uid === currentUserId) ||
-        (currentUserEmail && referrerData.email && currentUserEmail.toLowerCase() === referrerData.email.toLowerCase())
+        (currentUserId && (actualReferrerUid === currentUserId || referrerDoc.id === currentUserId)) ||
+        (currentUserEmail && referrerData.email && currentUserEmail.toLowerCase() === referrerData.email.toLowerCase()) ||
+        (localUserCode && localUserCode.toUpperCase() === code)
       );
 
       if (isOwnerOfCode) {
@@ -507,14 +505,19 @@ export async function validateReferralCode(
         const check = isReferrerRewardUnlocked(referralsCount, referralVisitsCount, settings);
 
         if (check.unlocked) {
-          const rewardDiscount = Math.round((subtotal * settings.referrerRewardPercentage) / 100);
-          const cappedDiscount = settings.maxDiscountCap > 0 ? Math.min(rewardDiscount, settings.maxDiscountCap) : rewardDiscount;
+          const rewardPercent = settings.referrerRewardPercentage || 20;
+          const meetsMin = settings.minimumOrderAmount <= 0 || subtotal >= settings.minimumOrderAmount;
+          const rawDiscount = meetsMin ? Math.round((subtotal * rewardPercent) / 100) : 0;
+          const cappedDiscount = settings.maxDiscountCap > 0 ? Math.min(rawDiscount, settings.maxDiscountCap) : rawDiscount;
+
           return {
             valid: true,
-            message: `🎉 Referrer Reward Unlocked (${check.reason === "orders" ? `${referralsCount}/${settings.minimumReferrals} friend orders` : `${referralVisitsCount}/${settings.minimumVisits} site visits`}): ${settings.referrerRewardPercentage}% discount applied to your order!`,
+            message: meetsMin
+              ? `🎉 Referrer Reward Unlocked (${check.reason === "orders" ? `${referralsCount}/${settings.minimumReferrals} friend orders` : `${referralVisitsCount}/${settings.minimumVisits} site visits`}): ${rewardPercent}% discount applied to your order!`
+              : `🎉 Referrer Reward Linked (${rewardPercent}% OFF). Requires minimum order of Rs. ${settings.minimumOrderAmount.toLocaleString()} PKR (Current: Rs. ${subtotal.toLocaleString()} PKR).`,
             discountAmount: cappedDiscount,
-            discountPercentage: settings.referrerRewardPercentage,
-            referrerUid: referrerData.uid,
+            discountPercentage: rewardPercent,
+            referrerUid: actualReferrerUid,
             referrerEmail: referrerData.email,
             referrerCode: code,
             isReferrerReward: true
@@ -522,7 +525,7 @@ export async function validateReferralCode(
         } else {
           return {
             valid: false,
-            message: `Referral Reward Incomplete: You have ${referralsCount}/${settings.minimumReferrals} friend orders and ${referralVisitsCount}/${settings.minimumVisits} site visits. ${check.progressText} to unlock your ${settings.referrerRewardPercentage}% discount!`,
+            message: `Referral Reward Locked: You have ${referralsCount}/${settings.minimumReferrals} friend orders and ${referralVisitsCount}/${settings.minimumVisits} site visits. ${check.progressText} to unlock your ${settings.referrerRewardPercentage}% discount!`,
             discountAmount: 0,
             discountPercentage: 0,
             referrerCode: code
@@ -530,35 +533,53 @@ export async function validateReferralCode(
         }
       }
 
-      // Friend checkout: friend receives half of the referrer reward percentage!
+      // Friend checkout: friend receives the friend discount percentage (e.g. 10% OFF)!
       const friendDiscountPercentage = getFriendDiscountPercentage(settings);
-      const rawDiscount = Math.round((subtotal * friendDiscountPercentage) / 100);
+      const meetsMin = settings.minimumOrderAmount <= 0 || subtotal >= settings.minimumOrderAmount;
+      const rawDiscount = meetsMin ? Math.round((subtotal * friendDiscountPercentage) / 100) : 0;
       const cappedDiscount = settings.maxDiscountCap > 0 ? Math.min(rawDiscount, settings.maxDiscountCap) : rawDiscount;
 
       return {
         valid: true,
-        message: `🎉 Friend Privilege Applied (${referrerData.displayName || "Member"}): ${friendDiscountPercentage}% discount applied! This order will also credit their reward milestone.`,
+        message: meetsMin
+          ? `🎉 Friend Privilege Applied (${referrerData.displayName || "Member"}): ${friendDiscountPercentage}% discount applied! This order will also credit their reward milestone.`
+          : `🎉 Friend Privilege Linked (${referrerData.displayName || "Member"}: ${friendDiscountPercentage}% OFF). Requires minimum order of Rs. ${settings.minimumOrderAmount.toLocaleString()} PKR (Current: Rs. ${subtotal.toLocaleString()} PKR).`,
         discountAmount: cappedDiscount,
         discountPercentage: friendDiscountPercentage,
-        referrerUid: referrerData.uid,
+        referrerUid: actualReferrerUid,
         referrerEmail: referrerData.email,
         referrerCode: code,
         isReferrerReward: false
       };
     }
 
-    // Format validation: if user shared a valid code created recently before indexing or mock/special partner code
+    // Format validation fallback (e.g. partner code or before Firestore propagation)
     const prefix = settings.referralCodePrefix || "SYM";
     const isValidFormat = code.startsWith(prefix) || code.includes("-") || code.length >= 6;
 
     if (isValidFormat) {
+      // Prevent self-referral if localStorage has this code
+      const localUserCode = typeof window !== "undefined" ? localStorage.getItem("sym_user_referral_code") : null;
+      if (localUserCode && localUserCode.toUpperCase() === code) {
+        return {
+          valid: false,
+          message: "This is your personal referral code. Share it with colleagues and friends to unlock your reward!",
+          discountAmount: 0,
+          discountPercentage: 0,
+          referrerCode: code
+        };
+      }
+
       const friendDiscountPercentage = getFriendDiscountPercentage(settings);
-      const rawDiscount = Math.round((subtotal * friendDiscountPercentage) / 100);
+      const meetsMin = settings.minimumOrderAmount <= 0 || subtotal >= settings.minimumOrderAmount;
+      const rawDiscount = meetsMin ? Math.round((subtotal * friendDiscountPercentage) / 100) : 0;
       const cappedDiscount = settings.maxDiscountCap > 0 ? Math.min(rawDiscount, settings.maxDiscountCap) : rawDiscount;
 
       return {
         valid: true,
-        message: `Valid Referral Code: ${friendDiscountPercentage}% discount applied!`,
+        message: meetsMin
+          ? `Valid Referral Code: ${friendDiscountPercentage}% discount applied!`
+          : `Referral Code Linked (${friendDiscountPercentage}% OFF). Requires minimum order of Rs. ${settings.minimumOrderAmount.toLocaleString()} PKR (Current: Rs. ${subtotal.toLocaleString()} PKR).`,
         discountAmount: cappedDiscount,
         discountPercentage: friendDiscountPercentage,
         referrerCode: code
@@ -574,13 +595,16 @@ export async function validateReferralCode(
     };
   } catch (error) {
     console.warn("Firestore lookup failed, falling back to format check:", error);
-    const friendDiscountPercentage = settings.discountPercentage || 0;
-    const rawDiscount = Math.round((subtotal * friendDiscountPercentage) / 100);
+    const friendDiscountPercentage = getFriendDiscountPercentage(settings);
+    const meetsMin = settings.minimumOrderAmount <= 0 || subtotal >= settings.minimumOrderAmount;
+    const rawDiscount = meetsMin ? Math.round((subtotal * friendDiscountPercentage) / 100) : 0;
     const cappedDiscount = settings.maxDiscountCap > 0 ? Math.min(rawDiscount, settings.maxDiscountCap) : rawDiscount;
 
     return {
       valid: true,
-      message: `Referral Code Linked: This order will credit your friend's account!`,
+      message: meetsMin
+        ? `Referral Code Linked: ${friendDiscountPercentage}% discount applied!`
+        : `Referral Code Linked (${friendDiscountPercentage}% OFF). Requires minimum order of Rs. ${settings.minimumOrderAmount.toLocaleString()} PKR.`,
       discountAmount: cappedDiscount,
       discountPercentage: friendDiscountPercentage,
       referrerCode: code
@@ -598,6 +622,7 @@ export async function recordReferralUsage(params: {
   orderId: string;
   orderTotal: number;
   discountApplied: number;
+  isReferrerReward?: boolean;
 }): Promise<void> {
   try {
     const record: Omit<ReferralRecord, "id"> = {
@@ -612,14 +637,30 @@ export async function recordReferralUsage(params: {
 
     await addDoc(collection(db, "referrals"), record);
 
-    // If referrerUid is known, increment referrer's count in users doc
-    if (params.referrerUid) {
-      const userRef = doc(db, "users", params.referrerUid);
-      await updateDoc(userRef, {
-        referralsCount: increment(1)
-      }).catch(err => {
-        console.warn("Could not increment referrer profile count directly:", err);
-      });
+    // Only increment referrer's count when a FRIEND places an order (not when referrer claims their own reward)
+    if (!params.isReferrerReward) {
+      if (params.referrerUid) {
+        const userRef = doc(db, "users", params.referrerUid);
+        await updateDoc(userRef, {
+          referralsCount: increment(1)
+        }).catch(err => {
+          console.warn("Could not increment referrer profile count directly:", err);
+        });
+      } else if (params.referrerCode) {
+        // Fallback: look up by referralCode
+        try {
+          const usersRef = collection(db, "users");
+          const q = query(usersRef, where("referralCode", "==", params.referrerCode), limit(1));
+          const snap = await getDocs(q);
+          if (!snap.empty) {
+            await updateDoc(snap.docs[0].ref, {
+              referralsCount: increment(1)
+            });
+          }
+        } catch (err) {
+          console.warn("Could not lookup and increment referrer by code:", err);
+        }
+      }
     }
   } catch (error) {
     console.error("Error recording referral redemption:", error);

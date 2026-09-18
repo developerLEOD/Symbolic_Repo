@@ -33,6 +33,7 @@ import {
   getFriendDiscountPercentage,
   isReferrerRewardUnlocked
 } from "../lib/referralService";
+import { calculateFinancialValuation } from "../lib/financialValuation";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -103,13 +104,34 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     referrerUid?: string;
     referrerEmail?: string;
     isReferrerReward?: boolean;
-  } | null>(null);
+  } | null>(() => {
+    if (typeof window !== "undefined") {
+      const saved = localStorage.getItem("sym_applied_referral_code");
+      if (saved) {
+        return {
+          code: saved,
+          discountAmount: 0,
+          discountPercentage: 10,
+          message: `Referral code linked (${saved})`
+        };
+      }
+    }
+    return null;
+  });
   const [referralMessage, setReferralMessage] = useState<{ type: "success" | "error"; text: string } | null>(null);
 
-  const subtotal = items.reduce((sum, item) => sum + (item.price * item.quantity), 0);
-  const discount = (referralSettings?.isEnabled && appliedReferral) ? appliedReferral.discountAmount : 0;
-  const shipping = subtotal > 0 ? 500 : 0;
-  const total = Math.max(0, subtotal - discount + shipping);
+  // Dynamic, single-source-of-truth financial valuation
+  const valuation = calculateFinancialValuation({
+    items,
+    appliedReferral,
+    referralSettings
+  });
+
+  const subtotal = valuation.subtotal;
+  const discount = valuation.discountAmount;
+  const shipping = valuation.shippingFee;
+  const total = valuation.total;
+  const isComplimentaryShipping = valuation.isComplimentaryShipping;
 
   useEffect(() => {
     if (!isOpen) return;
@@ -123,10 +145,10 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       }
 
       const savedCode = localStorage.getItem("sym_applied_referral_code");
-      if (savedCode && !referralCodeInput && !appliedReferral) {
+      if (savedCode) {
         setReferralCodeInput(savedCode);
-        if (subtotal > 0) {
-          validateReferralCode(savedCode, subtotal, user?.uid, user?.email, settings).then(res => {
+        if (valuation.subtotal > 0) {
+          validateReferralCode(savedCode, valuation.subtotal, user?.uid, user?.email, settings).then(res => {
             if (res.valid) {
               setAppliedReferral({
                 code: res.referrerCode,
@@ -144,7 +166,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     });
 
     return () => unsubscribe();
-  }, [isOpen, subtotal, user?.uid, user?.email]);
+  }, [isOpen, user?.uid, user?.email]);
 
   const handleApplyReferral = async (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -156,7 +178,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     try {
       const result = await validateReferralCode(
         referralCodeInput,
-        subtotal,
+        valuation.subtotal,
         user?.uid,
         user?.email,
         referralSettings || undefined
@@ -172,6 +194,9 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
           referrerEmail: result.referrerEmail,
           isReferrerReward: result.isReferrerReward
         });
+        if (typeof window !== "undefined") {
+          localStorage.setItem("sym_applied_referral_code", result.referrerCode);
+        }
         setReferralMessage({ type: "success", text: result.message });
       } else {
         setAppliedReferral(null);
@@ -189,6 +214,9 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     setAppliedReferral(null);
     setReferralCodeInput("");
     setReferralMessage(null);
+    if (typeof window !== "undefined") {
+      localStorage.removeItem("sym_applied_referral_code");
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
@@ -202,9 +230,11 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       return `${idx + 1}. *${item.name}*${opts ? ` (${opts})` : ''}\n   Qty: ${item.quantity} | Valuation: Rs. ${(item.price * item.quantity).toLocaleString()}`;
     }).join('\n');
     
-    const discountText = discount > 0 
-      ? `• Referral Privilege (${appliedReferral?.code}): -Rs. ${discount.toLocaleString()} (${appliedReferral?.discountPercentage}% OFF)\n` 
-      : '';
+    const discountText = valuation.discountAmount > 0 
+      ? `• Referral Privilege (${appliedReferral?.code}): -Rs. ${valuation.discountAmount.toLocaleString()} (${valuation.referralDiscountPercentage}% OFF)\n` 
+      : (appliedReferral?.code && !valuation.isReferralEligible
+          ? `• Referral Privilege (${appliedReferral.code}): Inactive (${valuation.referralIneligibleReason})\n`
+          : '');
       
     const message = `*SYMBOLIC // ARTIFACT ACQUISITION DIRECTIVE*\n` +
       `----------------------------------------\n` +
@@ -220,10 +250,11 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       `*RESERVED ARTIFACTS:*\n` +
       `${itemsList}\n\n` +
       `*FINANCIAL VALUATION MATRIX:*\n` +
-      `• Subtotal: Rs. ${subtotal.toLocaleString()}\n` +
+      `• Artifact Subtotal: Rs. ${valuation.subtotal.toLocaleString()} PKR\n` +
       `${discountText}` +
-      `• Archival Dispatch: ${shipping === 0 ? 'Complimentary' : `Rs. ${shipping.toLocaleString()}`}\n` +
-      `*• TOTAL SETTLEMENT: Rs. ${total.toLocaleString()} PKR*\n\n` +
+      `• Archival Dispatch: ${valuation.isComplimentaryShipping ? 'Complimentary (0 PKR - Met Rs. 15,000 threshold)' : `Rs. ${valuation.shippingFee.toLocaleString()} PKR (Courier)`}\n` +
+      `*• TOTAL SETTLEMENT: Rs. ${valuation.total.toLocaleString()} PKR*\n` +
+      (valuation.totalSavings > 0 ? `• Total Privilege Savings: Rs. ${valuation.totalSavings.toLocaleString()} PKR\n\n` : `\n`) +
       `*SETTLEMENT PROTOCOL:*\n` +
       `Direct WhatsApp Interaction (Bank payments on standby / Direct IBFT or Raast clearance requested).\n\n` +
       `_Please confirm physical reservation and dispatch schedule for this artifact acquisition._`;
@@ -266,12 +297,15 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
         orderNumber: randomOrderNo,
         userId: user ? user.uid : null,
         items,
-        subtotal,
-        shipping,
-        discount,
-        total,
+        subtotal: valuation.subtotal,
+        shipping: valuation.shippingFee,
+        discount: valuation.discountAmount,
+        total: valuation.total,
+        totalSavings: valuation.totalSavings,
+        isComplimentaryShipping: valuation.isComplimentaryShipping,
         referralCode: appliedReferral ? appliedReferral.code : null,
         referrerUid: appliedReferral?.referrerUid || null,
+        isReferrerReward: Boolean(appliedReferral?.isReferrerReward),
         status: "pending_wa_verification",
         paymentMethod: "whatsapp_interaction",
         createdAt: Date.now(),
@@ -296,8 +330,9 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
           referrerCode: appliedReferral.code,
           refereeEmail: formData.email,
           orderId: orderRef.id,
-          orderTotal: total,
-          discountApplied: discount
+          orderTotal: valuation.total,
+          discountApplied: valuation.discountAmount,
+          isReferrerReward: appliedReferral.isReferrerReward
         });
       }
 
@@ -715,17 +750,39 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
 
                 {step === "shipping" && (
                   <div className="space-y-6">
-                    <h3 className="font-mono font-black uppercase text-base tracking-tight">Shipping Method</h3>
+                    <div className="flex items-center justify-between">
+                      <h3 className="font-mono font-black uppercase text-base tracking-tight">Shipping Method</h3>
+                      {valuation.isComplimentaryShipping && (
+                        <span className="text-[9px] font-mono font-black text-emerald-700 bg-emerald-50 px-2.5 py-1 border border-emerald-300 uppercase tracking-widest">
+                          COMPLIMENTARY THRESHOLD UNLOCKED
+                        </span>
+                      )}
+                    </div>
                     <div className="space-y-4">
-                      <label className="flex items-center justify-between p-4 border border-brand-accent bg-brand-surface cursor-pointer">
+                      <label className="flex items-center justify-between p-4 border-2 border-brand-accent bg-brand-surface cursor-pointer shadow-[2px_2px_0px_#050505]">
                         <div className="flex items-center gap-4">
-                          <Truck size={20} className="text-brand-accent" />
+                          <Truck size={20} className="text-brand-accent shrink-0" />
                           <div>
                             <p className="text-xs font-bold uppercase tracking-tight">Curated Express Courier</p>
-                            <p className="text-[10px] text-brand-text/60">Delivered within 3-5 business days with carbon-neutral packaging.</p>
+                            <p className="text-[10px] text-brand-text/70">
+                              {valuation.isComplimentaryShipping 
+                                ? "Complimentary archival dispatch unlocked (subtotal exceeds Rs. 15,000 PKR)."
+                                : "Delivered within 2–4 business days with tamper-evident seal and carbon-neutral transit."}
+                            </p>
+                            {!valuation.isComplimentaryShipping && valuation.amountNeededForComplimentaryShipping > 0 && (
+                              <p className="text-[9px] font-mono text-brand-accent font-bold mt-1">
+                                Add Rs. {valuation.amountNeededForComplimentaryShipping.toLocaleString()} PKR more to unlock complimentary dispatch!
+                              </p>
+                            )}
                           </div>
                         </div>
-                        <span className="text-xs font-bold">Rs. 500</span>
+                        <span className="text-xs font-mono font-black ml-4 shrink-0">
+                          {valuation.isComplimentaryShipping ? (
+                            <span className="text-emerald-700 font-black">COMPLIMENTARY</span>
+                          ) : (
+                            "Rs. 500 PKR"
+                          )}
+                        </span>
                       </label>
                     </div>
 
@@ -878,7 +935,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                                 onClick={() => {
                                   const code = userProfile?.referralCode || "SYM-REWARD";
                                   setReferralCodeInput(code);
-                                  validateReferralCode(code, subtotal, user.uid, user.email, referralSettings).then(res => {
+                                  validateReferralCode(code, valuation.subtotal, user.uid, user.email, referralSettings).then(res => {
                                     if (res.valid) {
                                       setAppliedReferral({
                                         code: res.referrerCode,
@@ -889,6 +946,9 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                                         referrerEmail: res.referrerEmail,
                                         isReferrerReward: true
                                       });
+                                      if (typeof window !== "undefined") {
+                                        localStorage.setItem("sym_applied_referral_code", res.referrerCode);
+                                      }
                                       setReferralMessage({ type: "success", text: res.message });
                                     }
                                   });
@@ -903,24 +963,26 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
 
                         {appliedReferral ? (
                           <div className={`p-3 border flex items-center justify-between ${
-                            appliedReferral.discountAmount > 0 
+                            valuation.discountAmount > 0 
                               ? "bg-emerald-50 border-emerald-300" 
                               : "bg-amber-50 border-amber-300"
                           }`}>
                             <div className="flex items-center gap-2.5">
-                              <CheckCircle2 size={16} className={appliedReferral.discountAmount > 0 ? "text-emerald-600 shrink-0" : "text-amber-600 shrink-0"} />
+                              <CheckCircle2 size={16} className={valuation.discountAmount > 0 ? "text-emerald-600 shrink-0" : "text-amber-600 shrink-0"} />
                               <div>
                                 <div className={`text-xs font-mono font-black uppercase tracking-wider ${
-                                  appliedReferral.discountAmount > 0 ? "text-emerald-900" : "text-amber-900"
-                                }}`}>
+                                  valuation.discountAmount > 0 ? "text-emerald-900" : "text-amber-900"
+                                }`}>
                                   {appliedReferral.isReferrerReward
                                     ? `REWARD APPLIED: ${appliedReferral.code} (${appliedReferral.discountPercentage}% OFF)` 
                                     : `FRIEND PRIVILEGE APPLIED: ${appliedReferral.code} (${appliedReferral.discountPercentage}% OFF)`}
                                 </div>
                                 <div className={`text-[10px] font-sans ${
-                                  appliedReferral.discountAmount > 0 ? "text-emerald-700" : "text-amber-800"
-                                }}`}>
-                                  {appliedReferral.message}
+                                  valuation.discountAmount > 0 ? "text-emerald-700" : "text-amber-800"
+                                }`}>
+                                  {valuation.isReferralEligible
+                                    ? (appliedReferral.message || `Privilege activated. -Rs. ${valuation.discountAmount.toLocaleString()} PKR discounted.`)
+                                    : (valuation.referralIneligibleReason || appliedReferral.message)}
                                 </div>
                               </div>
                             </div>
@@ -978,23 +1040,36 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                     <div className="bg-brand-surface p-4 border border-brand-text/10 space-y-2.5">
                       <div className="flex justify-between text-xs text-brand-text/70">
                         <span className="font-mono uppercase font-bold text-[10px]">Artifact Subtotal</span>
-                        <span className="font-mono font-bold">Rs. {subtotal.toLocaleString()}</span>
+                        <span className="font-mono font-bold">Rs. {valuation.subtotal.toLocaleString()} PKR</span>
                       </div>
 
-                      {discount > 0 && (
+                      {valuation.discountAmount > 0 && (
                         <div className="flex justify-between text-xs text-brand-accent font-bold">
                           <span className="flex items-center gap-1 font-mono uppercase text-[10px]">
                             <Tag size={12} />
-                            <span>{appliedReferral?.isReferrerReward ? "Affiliation Reward" : "Accreditation Privilege"} ({appliedReferral?.discountPercentage}%)</span>
+                            <span>{appliedReferral?.isReferrerReward ? "Affiliation Reward" : "Accreditation Privilege"} ({valuation.referralDiscountPercentage}%)</span>
                           </span>
-                          <span className="font-mono font-black">-Rs. {discount.toLocaleString()}</span>
+                          <span className="font-mono font-black">-Rs. {valuation.discountAmount.toLocaleString()} PKR</span>
                         </div>
                       )}
 
                       <div className="flex justify-between text-xs text-brand-text/70">
                         <span className="font-mono uppercase font-bold text-[10px]">Atelier Dispatch &amp; Logistics</span>
-                        <span className="font-mono font-bold">{shipping === 0 ? "COMPLIMENTARY" : `Rs. ${shipping.toLocaleString()}`}</span>
+                        <span className="font-mono font-bold">
+                          {valuation.isComplimentaryShipping ? (
+                            <span className="text-emerald-700 font-black">COMPLIMENTARY</span>
+                          ) : (
+                            `Rs. ${valuation.shippingFee.toLocaleString()} PKR`
+                          )}
+                        </span>
                       </div>
+
+                      {valuation.totalSavings > 0 && (
+                        <div className="flex justify-between text-xs text-emerald-800 bg-emerald-50/70 p-2 border border-emerald-200">
+                          <span className="font-mono uppercase font-bold text-[10px]">Total Privileges Saved</span>
+                          <span className="font-mono font-black">Rs. {valuation.totalSavings.toLocaleString()} PKR</span>
+                        </div>
+                      )}
 
                       <div className="pt-2.5 border-t border-brand-text/10 flex items-center justify-between">
                         <div className="space-y-0.5">
@@ -1002,7 +1077,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                           <p className="text-[9px] font-mono text-brand-text/60 uppercase">Inclusive of direct packaging and custody deed</p>
                         </div>
                         <span className="text-lg font-mono font-black uppercase text-brand-text">
-                          Rs. {total.toLocaleString()} PKR
+                          Rs. {valuation.total.toLocaleString()} PKR
                         </span>
                       </div>
                     </div>
