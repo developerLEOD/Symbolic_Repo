@@ -15,11 +15,13 @@ import {
   Share2, 
   ShoppingBag,
   Sparkles,
-  ChevronRight
+  ChevronRight,
+  MessageCircle
 } from "lucide-react";
 import { Artifact, Specimen, CartItem, Product, ProductVariant } from "../types";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
+import { buildWhatsAppProductInquiry, getWhatsAppUrl, STUDIO_WHATSAPP_LOCAL_DISPLAY } from "../lib/whatsappService";
 
 interface ArtifactAcquisitionPageProps {
   artifact?: Artifact | null;
@@ -825,6 +827,24 @@ export default function ArtifactAcquisitionPage({
                             </>
                           )}
                         </button>
+
+                        <a
+                          href={getWhatsAppUrl(buildWhatsAppProductInquiry({
+                            name: artifact.name,
+                            sku: activeSpecimen.sku,
+                            productId: artifact.artifactId,
+                            price: activeTotal,
+                            medium: activeSpecimen.medium,
+                            selectedSize: selectedSize || undefined,
+                            selectedColor: selectedColor || undefined
+                          }))}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="w-full mt-2 py-3 px-4 font-mono text-xs font-black uppercase tracking-wider bg-[#25D366]/10 text-brand-text hover:bg-[#25D366] hover:text-white border-2 border-[#25D366] shadow-[2px_2px_0px_#050505] transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+                        >
+                          <MessageCircle size={15} className="text-[#128C7E]" />
+                          <span>INQUIRE VIA WHATSAPP CONCIERGE ({STUDIO_WHATSAPP_LOCAL_DISPLAY})</span>
+                        </a>
                       </div>
 
                       {/* Studio Guarantee Badges */}
@@ -969,6 +989,22 @@ export default function ArtifactAcquisitionPage({
                   </>
                 )}
               </button>
+
+              <a
+                href={getWhatsAppUrl(buildWhatsAppProductInquiry({
+                  name: `Complete ${artifact.name} Set`,
+                  sku: `${(artifact.artifactId || "ART").toUpperCase()}-SET`,
+                  productId: artifact.artifactId,
+                  price: setCalculation.setPrice,
+                  medium: `Complete Set (${setCalculation.specimenCount} Specimens)`
+                }))}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full mt-3 py-3.5 px-4 font-mono text-xs font-black uppercase tracking-wider bg-[#25D366]/10 text-brand-text hover:bg-[#25D366] hover:text-white border-2 border-[#25D366] shadow-[3px_3px_0px_#050505] transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+              >
+                <MessageCircle size={15} className="text-[#128C7E]" />
+                <span>INQUIRE ABOUT THIS COMPLETE SET ON WHATSAPP ({STUDIO_WHATSAPP_LOCAL_DISPLAY})</span>
+              </a>
             </div>
           </div>
         )}

@@ -34,6 +34,14 @@ import {
   isReferrerRewardUnlocked
 } from "../lib/referralService";
 import { calculateFinancialValuation } from "../lib/financialValuation";
+import { 
+  buildWhatsAppOrderDirective, 
+  getWhatsAppUrl, 
+  openWhatsAppChat,
+  OrderSnapshotData,
+  STUDIO_WHATSAPP_DISPLAY,
+  STUDIO_WHATSAPP_LOCAL_DISPLAY
+} from "../lib/whatsappService";
 
 interface CheckoutModalProps {
   isOpen: boolean;
@@ -49,6 +57,8 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [orderNumber, setOrderNumber] = useState("");
   const [isCopied, setIsCopied] = useState(false);
+  const [completedOrderSnapshot, setCompletedOrderSnapshot] = useState<OrderSnapshotData | null>(null);
+  const [showDirectivePreview, setShowDirectivePreview] = useState(false);
 
   const handleGoogleSignInDirect = async () => {
     try {
@@ -223,54 +233,56 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     setFormData({ ...formData, [e.target.name]: e.target.value });
   };
 
-  const generateWhatsAppMessage = (orderNo?: string) => {
-    const currentOrderNo = orderNo || orderNumber || "SYM-ACQUISITION";
-    const itemsList = items.map((item, idx) => {
-      const opts = item.options ? Object.entries(item.options as Record<string, string>).map(([k, v]) => `${k}: ${v}`).join(', ') : '';
-      return `${idx + 1}. *${item.name}*${opts ? ` (${opts})` : ''}\n   Qty: ${item.quantity} | Valuation: Rs. ${(item.price * item.quantity).toLocaleString()}`;
-    }).join('\n');
-    
-    const discountText = valuation.discountAmount > 0 
-      ? `• Referral Privilege (${appliedReferral?.code}): -Rs. ${valuation.discountAmount.toLocaleString()} (${valuation.referralDiscountPercentage}% OFF)\n` 
-      : (appliedReferral?.code && !valuation.isReferralEligible
-          ? `• Referral Privilege (${appliedReferral.code}): Inactive (${valuation.referralIneligibleReason})\n`
-          : '');
-      
-    const message = `*SYMBOLIC // ARTIFACT ACQUISITION DIRECTIVE*\n` +
-      `----------------------------------------\n` +
-      `*ORDER REGISTRY:* #${currentOrderNo}\n` +
-      `*STATUS:* Pending WhatsApp Settlement Confirmation\n` +
-      `----------------------------------------\n\n` +
-      `*POSSESSOR CREDENTIALS:*\n` +
-      `• Name: ${formData.firstName} ${formData.lastName}\n` +
-      `• Contact / WhatsApp: ${formData.phone}\n` +
-      `• Email: ${formData.email}\n` +
-      `• Dispatch Coordinates: House #${formData.houseNo}, ${formData.street}, ${formData.suburb}, ${formData.city} ${formData.zip ? `(Postcode: ${formData.zip})` : ''}\n` +
-      `• Country: ${formData.country}\n\n` +
-      `*RESERVED ARTIFACTS:*\n` +
-      `${itemsList}\n\n` +
-      `*FINANCIAL VALUATION MATRIX:*\n` +
-      `• Artifact Subtotal: Rs. ${valuation.subtotal.toLocaleString()} PKR\n` +
-      `${discountText}` +
-      `• Archival Dispatch: ${valuation.isComplimentaryShipping ? 'Complimentary (0 PKR - Met Rs. 15,000 threshold)' : `Rs. ${valuation.shippingFee.toLocaleString()} PKR (Courier)`}\n` +
-      `*• TOTAL SETTLEMENT: Rs. ${valuation.total.toLocaleString()} PKR*\n` +
-      (valuation.totalSavings > 0 ? `• Total Privilege Savings: Rs. ${valuation.totalSavings.toLocaleString()} PKR\n\n` : `\n`) +
-      `*SETTLEMENT PROTOCOL:*\n` +
-      `Direct WhatsApp Interaction (Bank payments on standby / Direct IBFT or Raast clearance requested).\n\n` +
-      `_Please confirm physical reservation and dispatch schedule for this artifact acquisition._`;
+  const getActiveOrderSnapshot = (overrideOrderNo?: string, explicitSnapshot?: OrderSnapshotData): OrderSnapshotData => {
+    if (explicitSnapshot) {
+      return explicitSnapshot;
+    }
 
-    return message;
+    if (completedOrderSnapshot) {
+      return {
+        ...completedOrderSnapshot,
+        orderNumber: overrideOrderNo || completedOrderSnapshot.orderNumber || orderNumber
+      };
+    }
+
+    return {
+      orderNumber: overrideOrderNo || orderNumber || "SYM-ACQUISITION",
+      items: items.length > 0 ? items : [],
+      subtotal: valuation.subtotal,
+      shipping: valuation.shippingFee,
+      discount: valuation.discountAmount,
+      total: valuation.total,
+      totalSavings: valuation.totalSavings,
+      isComplimentaryShipping: valuation.isComplimentaryShipping,
+      referralCode: appliedReferral?.code || null,
+      referralDiscountPercentage: valuation.referralDiscountPercentage,
+      customerInfo: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        houseNo: formData.houseNo,
+        street: formData.street,
+        suburb: formData.suburb,
+        city: formData.city,
+        zip: formData.zip,
+        country: formData.country,
+      }
+    };
   };
 
-  const handleSendWhatsAppOrder = (overrideOrderNo?: string) => {
-    const message = generateWhatsAppMessage(overrideOrderNo);
-    const encodedMessage = encodeURIComponent(message);
-    const whatsappUrl = `https://wa.me/923342764183?text=${encodedMessage}`;
-    window.open(whatsappUrl, '_blank');
+  const generateWhatsAppMessage = (overrideOrderNo?: string, explicitSnapshot?: OrderSnapshotData) => {
+    const snapshot = getActiveOrderSnapshot(overrideOrderNo, explicitSnapshot);
+    return buildWhatsAppOrderDirective(snapshot);
   };
 
-  const handleCopyDirective = (overrideOrderNo?: string) => {
-    const message = generateWhatsAppMessage(overrideOrderNo);
+  const handleSendWhatsAppOrder = (overrideOrderNo?: string, explicitSnapshot?: OrderSnapshotData) => {
+    const message = generateWhatsAppMessage(overrideOrderNo, explicitSnapshot);
+    openWhatsAppChat(message);
+  };
+
+  const handleCopyDirective = (overrideOrderNo?: string, explicitSnapshot?: OrderSnapshotData) => {
+    const message = generateWhatsAppMessage(overrideOrderNo, explicitSnapshot);
     navigator.clipboard.writeText(message);
     setIsCopied(true);
     setTimeout(() => setIsCopied(false), 3000);
@@ -289,14 +301,44 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
 
     setIsSubmitting(true);
 
+    const randomOrderNo = "SYM-" + Math.floor(100000 + Math.random() * 900000);
+    
+    // Capture full, immutable snapshot before anything is altered or cleared
+    const orderSnapshot: OrderSnapshotData = {
+      orderNumber: randomOrderNo,
+      items: [...items],
+      subtotal: valuation.subtotal,
+      shipping: valuation.shippingFee,
+      discount: valuation.discountAmount,
+      total: valuation.total,
+      totalSavings: valuation.totalSavings,
+      isComplimentaryShipping: valuation.isComplimentaryShipping,
+      referralCode: appliedReferral?.code || null,
+      referralDiscountPercentage: valuation.referralDiscountPercentage,
+      customerInfo: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        houseNo: formData.houseNo,
+        street: formData.street,
+        suburb: formData.suburb,
+        city: formData.city,
+        zip: formData.zip,
+        country: formData.country
+      }
+    };
+
+    // Retain completed order snapshot in state immediately
+    setCompletedOrderSnapshot(orderSnapshot);
+    setOrderNumber(randomOrderNo);
+
     try {
-      const randomOrderNo = "SYM-" + Math.floor(100000 + Math.random() * 900000);
-      
       // Save order to Firestore
       const orderData = {
         orderNumber: randomOrderNo,
         userId: user ? user.uid : null,
-        items,
+        items: [...items],
         subtotal: valuation.subtotal,
         shipping: valuation.shippingFee,
         discount: valuation.discountAmount,
@@ -314,7 +356,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
           lastName: formData.lastName,
           email: formData.email,
           phone: formData.phone,
-          address: `House #${formData.houseNo}, ${formData.street}, ${formData.suburb}`,
+          address: `${formData.houseNo ? `${formData.houseNo}, ` : ''}${formData.street}, ${formData.suburb}`,
           city: formData.city,
           zip: formData.zip,
           country: formData.country
@@ -336,20 +378,19 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
         });
       }
 
-      setOrderNumber(randomOrderNo);
       setStep("success");
-      onClearCart();
 
-      // Enforce mandatory transmission of order details to WhatsApp
-      handleSendWhatsAppOrder(randomOrderNo);
+      // Transmit complete order directive to WhatsApp with the captured snapshot
+      handleSendWhatsAppOrder(randomOrderNo, orderSnapshot);
+
+      // Clear the cart now that snapshot is safely secured
+      onClearCart();
     } catch (err) {
       console.error("Error creating order record in Firestore:", err);
-      // Fallback display success with local generated order number
-      const randomOrderNo = "SYM-" + Math.floor(100000 + Math.random() * 900000);
-      setOrderNumber(randomOrderNo);
+      // Even if Firestore encounters an issue, proceed smoothly so customer is not blocked
       setStep("success");
+      handleSendWhatsAppOrder(randomOrderNo, orderSnapshot);
       onClearCart();
-      handleSendWhatsAppOrder(randomOrderNo);
     } finally {
       setIsSubmitting(false);
     }
@@ -418,71 +459,99 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                   </div>
 
                   {/* Possessor & Coordinates */}
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono border-b border-brand-text/20 pb-4">
-                    <div className="space-y-1">
-                      <span className="text-[9px] uppercase font-bold text-brand-text/60 block">REGISTERED POSSESSOR:</span>
-                      <p className="font-black uppercase text-brand-text">
-                        {formData.firstName} {formData.lastName}
-                      </p>
-                      <p className="text-[10px] text-brand-text/75">{formData.email}</p>
-                      <p className="text-[10px] text-brand-text/75">LINE: {formData.phone}</p>
-                    </div>
+                  {(() => {
+                    const displayCustomer = completedOrderSnapshot?.customerInfo || formData;
+                    const displayTotal = completedOrderSnapshot ? completedOrderSnapshot.total : total;
+                    const currentWhatsAppMessage = generateWhatsAppMessage(orderNumber, completedOrderSnapshot || undefined);
+                    const currentWhatsAppUrl = getWhatsAppUrl(currentWhatsAppMessage);
 
-                    <div className="space-y-1">
-                      <span className="text-[9px] uppercase font-bold text-brand-text/60 block">DISPATCH COORDINATES:</span>
-                      <p className="text-[10px] font-bold uppercase leading-relaxed text-brand-text">
-                        House #{formData.houseNo}, {formData.street}<br />
-                        {formData.suburb && `${formData.suburb}, `}{formData.city}<br />
-                        {formData.country} {formData.zip ? `[POST: ${formData.zip}]` : ""}
-                      </p>
-                    </div>
-                  </div>
+                    return (
+                      <>
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs font-mono border-b border-brand-text/20 pb-4">
+                          <div className="space-y-1">
+                            <span className="text-[9px] uppercase font-bold text-brand-text/60 block">REGISTERED POSSESSOR:</span>
+                            <p className="font-black uppercase text-brand-text">
+                              {displayCustomer.firstName} {displayCustomer.lastName}
+                            </p>
+                            <p className="text-[10px] text-brand-text/75">{displayCustomer.email}</p>
+                            <p className="text-[10px] text-brand-text/75">LINE: {displayCustomer.phone}</p>
+                          </div>
 
-                  {/* Settlement Total & Protocol Status */}
-                  <div className="flex items-center justify-between font-mono text-xs border-b border-brand-text/20 pb-4">
-                    <div>
-                      <span className="text-[8.5px] uppercase font-bold text-brand-text/60 block">SETTLEMENT METHOD</span>
-                      <span className="font-black uppercase text-[#128C7E]">WHATSAPP CONCIERGE INTERACTION</span>
-                    </div>
-                    <div className="text-right">
-                      <span className="text-[8.5px] uppercase font-bold text-brand-text/60 block">CUSTODY VALUATION</span>
-                      <span className="font-black text-base text-brand-accent">Rs. {total.toLocaleString()} PKR</span>
-                    </div>
-                  </div>
+                          <div className="space-y-1">
+                            <span className="text-[9px] uppercase font-bold text-brand-text/60 block">DISPATCH COORDINATES:</span>
+                            <p className="text-[10px] font-bold uppercase leading-relaxed text-brand-text">
+                              {displayCustomer.houseNo ? `${displayCustomer.houseNo}, ` : ''}{displayCustomer.street}<br />
+                              {displayCustomer.suburb && `${displayCustomer.suburb}, `}{displayCustomer.city}<br />
+                              {displayCustomer.country} {displayCustomer.zip ? `[POST: ${displayCustomer.zip}]` : ""}
+                            </p>
+                          </div>
+                        </div>
 
-                  {/* Status Banner */}
-                  <div className="bg-[#25D366]/10 border-2 border-[#25D366] p-4 text-center space-y-1.5">
-                    <div className="flex items-center justify-center gap-2 font-mono text-xs font-black uppercase text-[#128C7E]">
-                      <MessageCircle size={15} className="shrink-0" />
-                      <span>DIRECTIVE TRANSMITTED TO WHATSAPP (+92 334 2764183)</span>
-                    </div>
-                    <p className="font-mono text-[9.5px] sm:text-[10.5px] uppercase text-brand-text/85 font-bold leading-relaxed">
-                      Bank payments are currently on standby. Your order directive is dispatched directly to our WhatsApp concierge for customized payment instructions (Direct IBFT / Raast / Nayapay) and physical reservation clearance.
-                    </p>
-                  </div>
+                        {/* Settlement Total & Protocol Status */}
+                        <div className="flex items-center justify-between font-mono text-xs border-b border-brand-text/20 pb-4">
+                          <div>
+                            <span className="text-[8.5px] uppercase font-bold text-brand-text/60 block">SETTLEMENT METHOD</span>
+                            <span className="font-black uppercase text-[#128C7E]">WHATSAPP CONCIERGE INTERACTION</span>
+                          </div>
+                          <div className="text-right">
+                            <span className="text-[8.5px] uppercase font-bold text-brand-text/60 block">CUSTODY VALUATION</span>
+                            <span className="font-black text-base text-brand-accent">Rs. {displayTotal.toLocaleString()} PKR</span>
+                          </div>
+                        </div>
 
-                  {/* Archival Authenticity Statement */}
-                  <div className="space-y-2 pt-1">
-                    <p className="text-[10px] font-mono uppercase text-brand-text/80 leading-relaxed">
-                      "You have acquired an authentic artifact of conviction and steadfast identity. Our master artisans are now preparing your pieces under strict studio standards for physical custody transfer."
-                    </p>
-                    <div className="font-mono text-[8px] tracking-widest text-brand-text/40 uppercase font-bold pt-1">
-                      ||||| | ||||| || |||||| | [SYMBOLIC CORPUS — VERIFIED ARCHIVAL ENTRY]
-                    </div>
-                  </div>
+                        {/* Status Banner */}
+                        <div className="bg-[#25D366]/10 border-2 border-[#25D366] p-4 text-center space-y-1.5">
+                          <div className="flex items-center justify-center gap-2 font-mono text-xs font-black uppercase text-[#128C7E]">
+                            <MessageCircle size={15} className="shrink-0" />
+                            <span>DIRECTIVE TRANSMITTED TO WHATSAPP ({STUDIO_WHATSAPP_DISPLAY})</span>
+                          </div>
+                          <p className="font-mono text-[9.5px] sm:text-[10.5px] uppercase text-brand-text/85 font-bold leading-relaxed">
+                            Bank payments are currently on standby. Your order directive is dispatched directly to our WhatsApp concierge for customized payment instructions (Direct IBFT / Raast / Nayapay) and physical reservation clearance.
+                          </p>
+                        </div>
+
+                        {/* Archival Authenticity Statement */}
+                        <div className="space-y-2 pt-1">
+                          <p className="text-[10px] font-mono uppercase text-brand-text/80 leading-relaxed">
+                            "You have acquired an authentic artifact of conviction and steadfast identity. Our master artisans are now preparing your pieces under strict studio standards for physical custody transfer."
+                          </p>
+                          <div className="font-mono text-[8px] tracking-widest text-brand-text/40 uppercase font-bold pt-1">
+                            ||||| | ||||| || |||||| | [SYMBOLIC CORPUS — VERIFIED ARCHIVAL ENTRY]
+                          </div>
+                        </div>
+
+                        {/* Collapsible Directive Inspection */}
+                        <div className="pt-2 border-t border-brand-text/10">
+                          <button
+                            type="button"
+                            onClick={() => setShowDirectivePreview(!showDirectivePreview)}
+                            className="text-[9px] font-mono font-bold uppercase tracking-widest text-brand-text/60 hover:text-brand-text flex items-center gap-1.5 transition-colors mx-auto"
+                          >
+                            <span>{showDirectivePreview ? "[-] HIDE TRANSMITTED INQUIRY DIRECTIVE" : "[+] PREVIEW TRANSMITTED INQUIRY DIRECTIVE"}</span>
+                          </button>
+                          {showDirectivePreview && (
+                            <div className="mt-3 p-4 bg-brand-surface border-2 border-brand-text/30 font-mono text-[9.5px] leading-relaxed text-brand-text whitespace-pre-wrap select-all max-h-60 overflow-y-auto">
+                              {currentWhatsAppMessage}
+                            </div>
+                          )}
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
                 <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <button
-                    type="button"
-                    onClick={() => handleSendWhatsAppOrder(orderNumber)}
-                    className="w-full sm:w-auto bg-[#25D366] text-white px-6 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
+                  <a
+                    href={getWhatsAppUrl(generateWhatsAppMessage(orderNumber, completedOrderSnapshot || undefined))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full sm:w-auto bg-[#25D366] text-white px-6 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:opacity-95 transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer text-center"
                   >
-                    <MessageCircle size={15} /> OPEN WHATSAPP (03342764183)
-                  </button>
+                    <MessageCircle size={15} /> OPEN WHATSAPP ({STUDIO_WHATSAPP_LOCAL_DISPLAY})
+                  </a>
                   <button
                     type="button"
-                    onClick={() => handleCopyDirective(orderNumber)}
+                    onClick={() => handleCopyDirective(orderNumber, completedOrderSnapshot || undefined)}
                     className="w-full sm:w-auto bg-brand-surface text-brand-text px-6 py-4 text-[10px] font-mono font-black uppercase tracking-[0.2em] hover:bg-brand-text hover:text-white transition-all flex items-center justify-center gap-2 border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer"
                   >
                     <Copy size={14} /> {isCopied ? "COPIED DIRECTIVE!" : "COPY DIRECTIVE"}

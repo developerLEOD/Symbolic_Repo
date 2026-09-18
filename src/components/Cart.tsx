@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { X, Minus, Plus, ArrowRight, Trash2, ArrowLeft, ShieldCheck, Truck, Check } from "lucide-react";
+import { X, Minus, Plus, ArrowRight, Trash2, ArrowLeft, ShieldCheck, Truck, Check, MessageCircle } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
@@ -8,6 +8,7 @@ import { soundManager } from "../lib/soundEffects";
 import { STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { calculateFinancialValuation } from "../lib/financialValuation";
 import { subscribeReferralSettings, validateReferralCode } from "../lib/referralService";
+import { buildWhatsAppCartInquiry, getWhatsAppUrl, STUDIO_WHATSAPP_LOCAL_DISPLAY } from "../lib/whatsappService";
 
 interface CartProps {
   isOpen: boolean;
@@ -630,13 +631,23 @@ export default function Cart({
                     <ArrowRight size={16} className="group-hover:translate-x-1.5 transition-transform" />
                   </motion.button>
 
+                  <a
+                    href={getWhatsAppUrl(buildWhatsAppCartInquiry(items, valuation))}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="w-full py-2.5 px-4 font-mono text-[10px] sm:text-xs font-black uppercase tracking-wider bg-[#25D366]/10 text-brand-text hover:bg-[#25D366] hover:text-white border border-[#25D366] transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+                  >
+                    <MessageCircle size={14} className="text-[#128C7E]" />
+                    <span>INQUIRE ABOUT THIS LEDGER ON WHATSAPP</span>
+                  </a>
+
                   <button 
                     type="button"
                     onClick={() => {
                       soundManager.playToggle(0.06);
                       onClose();
                     }}
-                    className="w-full py-2 font-mono text-[10px] font-bold uppercase tracking-wider text-brand-text/70 hover:text-brand-text cursor-pointer transition-colors text-center"
+                    className="w-full py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-brand-text/70 hover:text-brand-text cursor-pointer transition-colors text-center"
                   >
                     [ RETURN TO COLLECTION ]
                   </button>

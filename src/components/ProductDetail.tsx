@@ -19,7 +19,8 @@ import {
   Info,
   Bell,
   Clock,
-  Share2
+  Share2,
+  MessageCircle
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { collection, getDocs } from "firebase/firestore";
@@ -29,6 +30,7 @@ import LiquidCarveButton from "./LiquidCarveButton";
 import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+import { buildWhatsAppProductInquiry, getWhatsAppUrl, STUDIO_WHATSAPP_LOCAL_DISPLAY } from "../lib/whatsappService";
 import { motion, AnimatePresence } from "motion/react";
 
 interface ProductDetailProps {
@@ -1119,6 +1121,23 @@ export default function ProductDetail({
                   <ArrowRight size={22} className="group-hover:translate-x-1 transition-transform text-white" />
                 </div>
               </button>
+
+              {/* Direct WhatsApp Concierge Inquiry Action */}
+              <a
+                href={getWhatsAppUrl(buildWhatsAppProductInquiry({
+                  name: artifactTitle,
+                  sku: product.sku,
+                  productId: product.productId,
+                  price: product.price,
+                  medium: mediumType
+                }))}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="w-full py-3.5 px-6 font-mono text-xs font-black uppercase tracking-wider bg-[#25D366]/10 text-brand-text hover:bg-[#25D366] hover:text-white border-2 border-[#25D366] shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all flex items-center justify-center gap-2.5 cursor-pointer text-center"
+              >
+                <MessageCircle size={16} className="text-[#128C7E]" />
+                <span>INQUIRE VIA WHATSAPP CONCIERGE ({STUDIO_WHATSAPP_LOCAL_DISPLAY})</span>
+              </a>
 
               <p className="text-[10px] font-mono font-bold uppercase text-brand-text/60 text-center tracking-wider">
                 [ CONFIGURE SIZES, SPECIMEN ATTRIBUTES &amp; VIEW ACQUISITION VALUATION ON ACQUISITION SUITE ]
