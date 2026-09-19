@@ -280,7 +280,7 @@ export default function ProductGrid({
           </div>
         </div>
 
-        <p className="font-mono text-xs text-brand-text/75 uppercase leading-relaxed max-w-2xl">
+        <p className="font-space-grotesk text-sm text-brand-text/80 normal-case leading-relaxed max-w-2xl font-normal">
           Master artworks featuring their central graphic inscription, materialized across separate physical specimens.
         </p>
       </div>

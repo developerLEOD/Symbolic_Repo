@@ -83,7 +83,7 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
                 <h3 className="text-base font-mono font-black uppercase tracking-tight text-brand-text">
                   {item.title}
                 </h3>
-                <p className="font-mono text-xs uppercase text-brand-text/80 leading-relaxed">
+                <p className="font-space-grotesk text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed font-normal">
                   {item.description}
                 </p>
               </div>

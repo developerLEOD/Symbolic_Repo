@@ -306,7 +306,7 @@ export default function ProductDetail({
   return (
     <div 
       ref={dossierContainerRef}
-      className="w-full min-h-screen bg-brand-bg text-brand-text"
+      className="w-full min-h-screen bg-transparent text-brand-text"
     >
       {/* 1. TOP ARCHIVAL DOSSIER NAVIGATION BAR */}
       <header className="sticky top-14 sm:top-16 z-30 bg-brand-bg/95 backdrop-blur-md border-b-2 border-brand-text shadow-sm">

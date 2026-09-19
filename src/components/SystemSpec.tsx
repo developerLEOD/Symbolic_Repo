@@ -69,7 +69,7 @@ export default function SystemSpec() {
               <h3 className="font-mono text-base font-black uppercase tracking-tight text-brand-text">
                 {item.standard}
               </h3>
-              <p className="font-mono text-xs uppercase text-brand-text/80 leading-relaxed">
+              <p className="font-space-grotesk text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed font-normal">
                 {item.detail}
               </p>
             </div>

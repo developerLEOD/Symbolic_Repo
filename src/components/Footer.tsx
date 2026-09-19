@@ -62,7 +62,7 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
                 </span>
               </div>
             </div>
-            <p className="font-mono text-xs text-brand-text/80 max-w-md leading-relaxed uppercase">
+            <p className="font-space-grotesk text-xs sm:text-[13px] text-brand-text/80 max-w-md leading-relaxed normal-case font-normal">
               A design house dedicated to manufacturing heavyweight physical instruments for those who carry unwavering faith and upright posture.
             </p>
           </div>

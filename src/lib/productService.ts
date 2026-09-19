@@ -1,4 +1,4 @@
-import { collection, doc, getDocs, getDocsFromServer, getDoc, setDoc, deleteDoc, query, orderBy, writeBatch } from "firebase/firestore";
+import { collection, doc, getDocs, getDoc, setDoc, deleteDoc, query, orderBy, writeBatch } from "firebase/firestore";
 import { db } from "./firebase";
 import { Product, Category, ProductVariant, Artifact, Specimen } from "../types";
 import { handleFirestoreError, OperationType } from "./firestoreErrors";
@@ -153,18 +153,7 @@ export async function queryCollectionWithZeroVerification(
   while (attempt < maxChecks) {
     attempt++;
     try {
-      if (attempt === 1) {
-        // Check 1: Primary query (may use cache or live webchannel)
-        lastSnapshot = await getDocs(queryRefOrBuilder);
-      } else {
-        // Check 2 (twice) & Check 3 (thrice):
-        // Query directly from server to bypass unpopulated/transient local cache
-        try {
-          lastSnapshot = await getDocsFromServer(queryRefOrBuilder);
-        } catch {
-          lastSnapshot = await getDocs(queryRefOrBuilder);
-        }
-      }
+      lastSnapshot = await getDocs(queryRefOrBuilder);
 
       if (lastSnapshot && !lastSnapshot.empty && lastSnapshot.docs && lastSnapshot.docs.length > 0) {
         if (attempt > 1) {

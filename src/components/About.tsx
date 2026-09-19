@@ -19,7 +19,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
       initial={{ opacity: 0 }}
       animate={{ opacity: 1 }}
       exit={{ opacity: 0 }}
-      className="min-h-screen bg-brand-bg pt-10 sm:pt-14 pb-24 border-b-2 border-brand-text"
+      className="min-h-screen bg-transparent pt-10 sm:pt-14 pb-24 border-b-2 border-brand-text"
     >
       <div className="max-w-7xl mx-auto px-4 sm:px-8 md:px-10">
         {/* Navigation Return Button */}

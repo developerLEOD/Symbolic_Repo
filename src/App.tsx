@@ -384,7 +384,7 @@ function StorefrontApp() {
 
   return (
     <div className="relative min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white overflow-x-hidden">
-      <StudioBackground />
+      <StudioBackground currentView={location.pathname} />
       <CustomCursor />
       <ScrollToTop />
 
@@ -444,10 +444,10 @@ function StorefrontApp() {
         }}
       />
 
-      <div className="pt-16 sm:pt-20">
+      <div className="pt-16 sm:pt-20 relative z-10">
         <Breadcrumbs categories={categories} />
         
-        <main className="min-h-screen">
+        <main className="min-h-screen bg-transparent relative">
           <Routes location={location}>
             {/* Home Route */}
             <Route

@@ -354,7 +354,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               <span className="text-[#ff4500] font-black block text-[11px] mb-1.5 group-hover:underline">
                 {item.num} // {item.title}
               </span>
-              <p className="text-[11.5px] text-brand-text/80 uppercase font-bold leading-relaxed">
+              <p className="font-space-grotesk text-[12.5px] text-brand-text/85 normal-case font-normal leading-relaxed">
                 {item.desc}
               </p>
             </motion.div>
