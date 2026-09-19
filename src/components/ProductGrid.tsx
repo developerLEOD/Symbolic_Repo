@@ -185,7 +185,7 @@ export default function ProductGrid({
   // Only render skeleton state if there are zero artifacts loaded
   if (loading && artifacts.length === 0) {
     return (
-      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-24 space-y-12 bg-brand-bg">
+      <div className="max-w-7xl mx-auto px-6 sm:px-10 py-24 space-y-12 bg-transparent">
         <div className="flex justify-between items-center border-b-2 border-brand-text pb-6">
           <div className="w-64 h-10 bg-brand-surface animate-pulse" />
           <div className="w-32 h-8 bg-brand-surface animate-pulse" />
@@ -200,7 +200,7 @@ export default function ProductGrid({
   }
 
   return (
-    <section id="catalog-section" aria-label="The Collection" className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-12 space-y-8 bg-brand-bg">
+    <section id="catalog-section" aria-label="The Collection" className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-12 space-y-8 bg-transparent">
       {/* 1. CLEAN ARCHITECTURAL HEADER */}
       <div className="border-b-2 border-brand-text pb-6 space-y-3">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
