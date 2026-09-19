@@ -52,6 +52,23 @@ export default function StudioBackground({
   const theme: PageBackgroundTheme = useMemo(() => {
     const path = (currentView || location.pathname).toLowerCase();
     
+    if (path.includes('/acquire') || path.includes('/acquisitions/')) {
+      return {
+        cornerTopLeft: '+ ACQUISITION // PROTOCOL.DIRECT',
+        cornerTopRight: 'SECURE ALLOCATION +',
+        cornerBottomLeft: '+ SPECIMEN PROVENANCE',
+        cornerBottomRight: 'TRANSMISSION VERIFIED +',
+        tagline: 'SPECIMEN ACQUISITION & CUSTODY SUITE',
+        systemTag: 'ACQUISITION SUITE',
+        primaryWord: 'acquire',
+        secondaryWord: 'ACQUISITION',
+        highlightWord: 'acquire',
+        specimenDescriptor: 'REGISTERED SPECIMEN ACQUISITIONS',
+        statementLine1: 'CONFIGURE SPECIMEN PHYSICAL PARAMETERS',
+        statementLine2: 'DIRECT ATELIER CUSTODY TRANSFER',
+      };
+    }
+
     if (path.includes('/artifact/') || path.includes('/artifacts')) {
       return {
         cornerTopLeft: '+ ARTIFACTS // CURATED.GALLERY',

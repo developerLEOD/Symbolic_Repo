@@ -243,7 +243,7 @@ export default function ArtifactAcquisitionPage({
     return (
       <div className="min-h-screen bg-transparent text-brand-text font-mono selection:bg-brand-text selection:text-white pb-24">
         {/* Top Header Navigation */}
-        <div className="sticky top-0 z-40 bg-brand-surface border-b-2 border-brand-text px-4 py-3 flex items-center justify-between shadow-[0_2px_0px_#050505]">
+        <div className="sticky top-14 sm:top-16 z-40 bg-brand-surface/95 backdrop-blur-md border-b-2 border-brand-text px-4 py-3 flex items-center justify-between shadow-[0_2px_0px_#050505]">
           <button
             type="button"
             onClick={onBackToSpec}
@@ -338,7 +338,7 @@ export default function ArtifactAcquisitionPage({
       <div className="fixed inset-0 opacity-[0.03] pointer-events-none bg-[radial-gradient(#050505_1px,transparent_1px)] [background-size:24px_24px]" />
 
       {/* Top Header Navigation Bar */}
-      <div className="sticky top-0 z-40 bg-brand-surface border-b-2 border-brand-text px-4 py-3 flex items-center justify-between shadow-[0_2px_0px_#050505]">
+      <div className="sticky top-14 sm:top-16 z-40 bg-brand-surface/95 backdrop-blur-md border-b-2 border-brand-text px-4 py-3 flex items-center justify-between shadow-[0_2px_0px_#050505]">
         <div className="flex items-center gap-3">
           <button
             type="button"
