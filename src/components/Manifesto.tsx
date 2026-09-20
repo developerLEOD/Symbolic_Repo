@@ -80,7 +80,7 @@ export default function Manifesto({ onBack, onAbout }: ManifestoProps) {
               WEAR WHAT YOU STAND FOR.
             </h1>
 
-            <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent pl-5">
+            <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent border-y border-r border-brand-text/30 bg-brand-surface/80 backdrop-blur-md p-5 shadow-[4px_4px_0px_#050505]">
               <p className="font-mono text-sm sm:text-base normal-case text-brand-text font-medium leading-relaxed">
                 <span className="inline-flex flex-col items-end align-middle mr-1.5 uppercase">
                   <span className="font-black text-sm sm:text-base leading-none">SYMBOLIC</span>
@@ -88,7 +88,7 @@ export default function Manifesto({ onBack, onAbout }: ManifestoProps) {
                 </span>
                 exists for those who refuse to be walking billboards. We create heavyweight garments, headwear, and vessels where the symbol represents the wearer's identity—not a brand's corporate status.
               </p>
-              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/70 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed">
                 What we choose to possess and wear should communicate what we stand for.
               </p>
             </div>

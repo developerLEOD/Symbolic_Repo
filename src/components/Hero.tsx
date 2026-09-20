@@ -146,18 +146,26 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             </motion.div>
 
             {/* Clear Sub-headline: What BE SYMBOLIC means in human terms */}
-            <div className="overflow-hidden pt-1">
-              <motion.h2
-                variants={lineMaskVariant}
-                className="text-2xl sm:text-4xl lg:text-5xl font-mono font-black uppercase tracking-tight text-brand-text leading-[1.08]"
-              >
-                Objects that carry what you believe, value, and choose to represent.
-              </motion.h2>
-            </div>
+            <motion.div 
+              variants={itemSlideUp} 
+              className="bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text p-4 sm:p-5 shadow-[4px_4px_0px_#050505] relative"
+            >
+              <div className="overflow-hidden">
+                <motion.h2
+                  variants={lineMaskVariant}
+                  className="text-xl sm:text-3xl lg:text-4xl font-mono font-black uppercase tracking-tight text-brand-text leading-[1.12]"
+                >
+                  Objects that carry what you believe, value, and choose to represent.
+                </motion.h2>
+              </div>
+            </motion.div>
           </div>
 
           {/* Clear Product Statement: What SYMBOLIC Muslims creates */}
-          <motion.div variants={itemSlideUp} className="relative max-w-2xl pl-5 py-2">
+          <motion.div 
+            variants={itemSlideUp} 
+            className="relative max-w-2xl bg-brand-surface/75 backdrop-blur-md border border-brand-text/30 pl-5 pr-4 py-3 shadow-[3px_3px_0px_rgba(5,5,5,0.1)]"
+          >
             <motion.div
               initial={{ scaleY: 0 }}
               animate={{ scaleY: 1 }}
@@ -252,7 +260,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                 <span className="w-2 h-2 bg-[#ff4500] inline-block animate-pulse"></span>
                 MONOLITHIC IDENTITY EMBLEM
               </div>
-              <div className="font-mono text-xs sm:text-[12.5px] text-brand-text/85 uppercase tracking-wider font-bold flex items-center justify-center gap-2 pt-0.5">
+              <div className="font-mono text-xs sm:text-[12.5px] text-brand-text/85 uppercase tracking-wider font-bold flex items-center justify-center gap-2 pt-0.5 bg-brand-surface/80 backdrop-blur-sm border border-brand-text/25 py-1.5 px-3.5 shadow-[2px_2px_0px_rgba(5,5,5,0.06)]">
                 <span>ORANGE: CONFORMITY</span>
                 <span className="text-[#ff4500]">•</span>
                 <span className="text-[#ff4500] font-black">WHITE DISC: STAND APART</span>
@@ -288,8 +296,8 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                   soundManager.playClick(0.12);
                   setActiveStep(isSelected ? null : s.step);
                 }}
-                className={`border-2 border-brand-text p-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-colors flex flex-col justify-between min-h-[120px] cursor-pointer select-none ${
-                  isSelected ? "bg-brand-text text-brand-bg shadow-[6px_6px_0px_#ff4500]" : "bg-brand-surface text-brand-text"
+                className={`border-2 border-brand-text p-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-colors flex flex-col justify-between min-h-[120px] cursor-pointer select-none backdrop-blur-md ${
+                  isSelected ? "bg-brand-text text-brand-bg shadow-[6px_6px_0px_#ff4500]" : "bg-brand-surface/80 text-brand-text"
                 }`}
               >
                 <div className={`flex items-center justify-between text-xs font-black pb-2 border-b-2 ${isSelected ? "border-brand-bg/20 text-brand-accent" : "border-brand-text/15 text-brand-accent"}`}>
@@ -321,7 +329,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 mt-16 pt-8 border-t-2 border-brand-text bg-brand-surface border-2 border-brand-text p-6 sm:p-8 shadow-[6px_6px_0px_#050505]"
+        className="relative z-10 mt-16 pt-8 border-t-2 border-brand-text bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text p-6 sm:p-8 shadow-[6px_6px_0px_#050505]"
       >
         <div className="flex flex-wrap items-center justify-between border-b-2 border-brand-text pb-4 mb-6 gap-3">
           <div className="flex items-center gap-3">
@@ -349,7 +357,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               key={item.num}
               whileHover={{ y: -3 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              className="p-4 bg-brand-bg border-2 border-brand-text/40 hover:border-brand-text hover:shadow-[4px_4px_0px_#ff4500] transition-all cursor-default group"
+              className="p-4 bg-brand-surface/75 backdrop-blur-sm border-2 border-brand-text/40 hover:border-brand-text hover:shadow-[4px_4px_0px_#ff4500] transition-all cursor-default group"
             >
               <span className="text-[#ff4500] font-black block text-[11px] mb-1.5 group-hover:underline">
                 {item.num} // {item.title}

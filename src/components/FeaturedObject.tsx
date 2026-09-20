@@ -210,9 +210,11 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             </div>
           </div>
 
-          <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/80 leading-relaxed border-l-2 border-brand-text pl-4">
-            {product.description}
-          </p>
+          <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 border-l-4 border-l-brand-accent p-3.5 sm:p-4 shadow-[3px_3px_0px_#050505]">
+            <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/90 leading-relaxed">
+              {product.description}
+            </p>
+          </div>
 
           {/* Statement & Specification Grid */}
           <div className="bg-brand-surface border-2 border-brand-text p-5 shadow-[4px_4px_0px_#050505] font-mono text-xs space-y-2.5">

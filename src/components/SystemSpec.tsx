@@ -55,7 +55,7 @@ export default function SystemSpec() {
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.08 }}
             whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-            className="bg-brand-surface border-2 border-brand-text p-6 flex flex-col justify-between shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 space-y-6 cursor-default"
+            className="bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text p-6 flex flex-col justify-between shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 space-y-6 cursor-default"
           >
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">

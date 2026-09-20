@@ -97,7 +97,7 @@ export default function AuthModal({ isOpen, onClose, defaultTab = "signin", noti
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.95, y: 15 }}
           transition={{ duration: 0.2 }}
-          className="relative w-full max-w-md bg-brand-bg border-2 border-brand-text shadow-[8px_8px_0px_#050505] p-6 sm:p-8"
+          className="relative w-full max-w-md bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text shadow-[8px_8px_0px_#050505] p-6 sm:p-8"
         >
           {/* Header Bar */}
           <div className="flex items-center justify-between border-b-2 border-brand-text pb-4 mb-6">

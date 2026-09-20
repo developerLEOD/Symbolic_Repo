@@ -29,7 +29,7 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
   ];
 
   return (
-    <section className="py-20 bg-brand-surface border-b-2 border-brand-text px-6 sm:px-10">
+    <section className="py-20 bg-brand-surface/50 backdrop-blur-sm border-b-2 border-brand-text px-6 sm:px-10">
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 gap-4">
           <div>
@@ -69,7 +69,7 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
               viewport={{ once: true }}
               transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.09 }}
               whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-              className="p-6 bg-brand-bg border-2 border-brand-text space-y-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 flex flex-col justify-between cursor-default"
+              className="p-6 bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text space-y-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 flex flex-col justify-between cursor-default"
             >
               <div className="space-y-3">
                 <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">

@@ -127,7 +127,7 @@ export default function Header({
   };
 
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 ${scrolled ? 'bg-brand-bg/95 backdrop-blur-sm border-b-2 border-brand-text shadow-[0_4px_0px_#050505]' : 'bg-brand-bg border-b-2 border-brand-text'}`}>
+    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-brand-bg/85 backdrop-blur-md border-b-2 border-brand-text ${scrolled ? 'shadow-[0_4px_0px_#050505]' : ''}`}>
       <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 transition-all duration-300 ${scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
         {/* Left: Prominent Brand Identity & Large Logo */}
         <div className="flex items-center shrink-0">
@@ -193,7 +193,7 @@ export default function Header({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 bg-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
+                    className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
                   >
                     <div className="px-3 py-1.5 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
                       <span>// MEDIUMS</span>
@@ -247,7 +247,7 @@ export default function Header({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 bg-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
+                    className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
                   >
                     <div className="px-3 py-1.5 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
                       <span>// ETHOS LINES</span>
@@ -385,7 +385,7 @@ export default function Header({
             initial={{ opacity: 0, height: 0 }}
             animate={{ opacity: 1, height: "auto" }}
             exit={{ opacity: 0, height: 0 }}
-            className="bg-brand-bg border-b-2 border-brand-text lg:hidden overflow-hidden shadow-2xl"
+            className="bg-brand-bg/95 backdrop-blur-md border-b-2 border-brand-text lg:hidden overflow-hidden shadow-2xl"
           >
             <div className="px-6 py-8 flex flex-col gap-3 font-mono">
               {/* User Bar in Mobile Menu */}

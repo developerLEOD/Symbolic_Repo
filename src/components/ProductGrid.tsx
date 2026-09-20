@@ -280,9 +280,11 @@ export default function ProductGrid({
           </div>
         </div>
 
-        <p className="font-space-grotesk text-sm text-brand-text/80 normal-case leading-relaxed max-w-2xl font-normal">
-          Master artworks featuring their central graphic inscription, materialized across separate physical specimens.
-        </p>
+        <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 border-l-4 border-l-brand-accent p-3.5 sm:p-4 shadow-[3px_3px_0px_rgba(5,5,5,0.08)] max-w-2xl">
+          <p className="font-space-grotesk text-xs sm:text-sm text-brand-text/90 normal-case leading-relaxed font-normal">
+            Master artworks featuring their central graphic inscription, materialized across separate physical specimens.
+          </p>
+        </div>
       </div>
 
       {/* 2. MEDIUMS & COLLECTION FILTERS */}

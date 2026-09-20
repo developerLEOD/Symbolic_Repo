@@ -509,9 +509,11 @@ export default function ProductDetail({
 
             {/* Conceptual Statement */}
             <div className="max-w-3xl pt-2">
-              <p className="font-mono text-base sm:text-xl lg:text-2xl font-black uppercase tracking-wide text-brand-text/90 leading-relaxed border-l-4 border-brand-accent pl-4">
-                {conceptualStatement}
-              </p>
+              <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 border-l-4 border-l-brand-accent p-4 sm:p-5 shadow-[3px_3px_0px_#050505]">
+                <p className="font-mono text-base sm:text-lg lg:text-xl font-black uppercase tracking-wide text-brand-text leading-relaxed">
+                  {conceptualStatement}
+                </p>
+              </div>
             </div>
           </div>
 

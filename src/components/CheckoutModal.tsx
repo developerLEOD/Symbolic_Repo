@@ -412,10 +412,10 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
           initial={{ scale: 0.95, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.95, opacity: 0, y: 20 }}
-          className="relative w-full max-w-3xl bg-brand-bg border border-brand-text/10 shadow-2xl z-[100] overflow-hidden my-8"
+          className="relative w-full max-w-3xl bg-brand-bg/95 backdrop-blur-md border border-brand-text/10 shadow-2xl z-[100] overflow-hidden my-8"
         >
           {/* Header */}
-          <div className="px-8 py-6 border-b-2 border-brand-text flex items-center justify-between bg-brand-surface">
+          <div className="px-8 py-6 border-b-2 border-brand-text flex items-center justify-between bg-brand-surface/90 backdrop-blur-md">
             <div className="flex items-center gap-3">
               <ShieldCheck size={20} className="text-brand-accent" />
               <div>

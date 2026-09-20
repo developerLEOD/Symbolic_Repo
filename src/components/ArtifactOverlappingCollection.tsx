@@ -465,7 +465,7 @@ export default function ArtifactOverlappingCollection({
 
         {/* Mobile Curatorial Dossier & Specimen Selector */}
         {activeMobileItem && (
-          <div className="mx-4 p-4 bg-brand-surface border-2 border-brand-text shadow-[6px_6px_0px_#050505] space-y-3 font-mono">
+          <div className="mx-4 p-4 bg-brand-surface/90 backdrop-blur-md border-2 border-brand-text shadow-[6px_6px_0px_#050505] space-y-3 font-mono">
             {/* Header: Accession & Identity */}
             <div className="flex items-center justify-between text-[8.5px] text-brand-accent font-black uppercase tracking-widest border-b-2 border-brand-text pb-1.5">
               <span className="flex items-center gap-1">
@@ -848,7 +848,7 @@ export default function ArtifactOverlappingCollection({
                         animate={{ y: 0, opacity: 1 }}
                         exit={{ y: 24, opacity: 0 }}
                         transition={{ duration: 0.16, ease: "easeOut" }}
-                        className="absolute inset-x-0 bottom-0 z-30 p-3.5 bg-brand-surface text-brand-text border-t-3 border-brand-text shadow-[0_-6px_20px_rgba(0,0,0,0.25)] flex flex-col justify-between gap-2.5 font-mono"
+                        className="absolute inset-x-0 bottom-0 z-30 p-3.5 bg-brand-surface/90 backdrop-blur-md text-brand-text border-t-3 border-brand-text shadow-[0_-6px_20px_rgba(0,0,0,0.25)] flex flex-col justify-between gap-2.5 font-mono"
                         onClick={(e) => e.stopPropagation()}
                       >
                       {/* Upper Identification Section */}

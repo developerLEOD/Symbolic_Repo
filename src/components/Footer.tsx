@@ -35,7 +35,7 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
   };
 
   return (
-    <footer className="bg-brand-surface border-t-2 border-brand-text pt-16 pb-12">
+    <footer className="bg-brand-surface/75 backdrop-blur-md border-t-2 border-brand-text pt-16 pb-12">
       <div className="max-w-7xl mx-auto px-6 sm:px-10">
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12 pb-12 border-b-2 border-brand-text">
           <div className="md:col-span-6 space-y-6">

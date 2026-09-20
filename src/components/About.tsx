@@ -49,11 +49,11 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
               THE MARK OF THE DISTINCT.
             </h1>
 
-            <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent pl-5">
+            <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent border-y border-r border-brand-text/30 bg-brand-surface/80 backdrop-blur-md p-5 shadow-[4px_4px_0px_#050505]">
               <p className="font-mono text-sm sm:text-base normal-case text-brand-text font-medium leading-relaxed">
                 SYMBOLIC is a manifestation of conviction, deliberate possession, and unapologetic identity. Rooted in the mission to establish our Deen through daily presence.
               </p>
-              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/70 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed">
                 Atelier Archive // Under the Let’s Establish Our Deen (LEOD) Mission.
               </p>
             </div>

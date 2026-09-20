@@ -212,31 +212,31 @@ export default function Cart({
             animate={{ x: 0 }}
             exit={{ x: "100%" }}
             transition={{ type: "spring", damping: 30, stiffness: 280 }}
-            className="fixed right-0 top-0 h-full w-full max-w-xl bg-brand-bg z-[80] shadow-[0_0_50px_rgba(0,0,0,0.4)] flex flex-col border-l-2 border-brand-text text-brand-text font-mono selection:bg-brand-text selection:text-white"
+            className="fixed inset-y-0 right-0 h-screen max-h-[100dvh] w-full max-w-xl bg-brand-bg/95 backdrop-blur-md z-[80] shadow-[0_0_50px_rgba(0,0,0,0.4)] flex flex-col border-l-2 border-brand-text text-brand-text font-mono selection:bg-brand-text selection:text-white overflow-hidden"
           >
             
             {/* 1. HEADER: YOUR POSSESSIONS DOSSIER */}
-            <header className="p-5 sm:p-6 border-b-2 border-brand-text bg-brand-surface shrink-0">
+            <header className="p-4 sm:p-5 border-b-2 border-brand-text bg-brand-surface/90 backdrop-blur-md shrink-0">
               <div className="flex items-start justify-between gap-4">
-                <div className="space-y-1.5">
+                <div className="space-y-1">
                   <div className="flex items-center gap-2">
-                    <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                    <span className="font-mono text-[8.5px] font-black uppercase tracking-widest bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
                       CUSTODY TRANSFER
                     </span>
-                    <span className="text-[10px] font-mono font-bold text-brand-text/60 uppercase">
+                    <span className="text-[9.5px] font-mono font-bold text-brand-text/60 uppercase">
                       ATELIER ARCHIVE
                     </span>
                   </div>
 
                   {/* Main Header Title */}
-                  <h1 className="text-2xl sm:text-3xl font-mono font-black tracking-tight uppercase text-brand-text leading-none flex items-center gap-3">
+                  <h1 className="text-xl sm:text-2xl font-mono font-black tracking-tight uppercase text-brand-text leading-none flex items-center gap-2">
                     <span># YOUR POSSESSIONS</span>
                   </h1>
 
-                  <div className="flex items-center gap-2 text-[10px] text-brand-text/75 uppercase font-black">
+                  <div className="flex items-center gap-2 text-[9.5px] text-brand-text/75 uppercase font-black">
                     <span className="text-brand-accent">SELECTED SPECIMENS</span>
                     <span className="opacity-30">/</span>
-                    <span className="bg-brand-text text-brand-bg px-2 py-0.5 border border-brand-text">
+                    <span className="bg-brand-text text-brand-bg px-1.5 py-0.5 border border-brand-text">
                       [ {totalQuantity < 10 ? `0${totalQuantity}` : totalQuantity} {totalQuantity === 1 ? "SPECIMEN" : "SPECIMENS"} ]
                     </span>
                   </div>
@@ -249,27 +249,27 @@ export default function Cart({
                     soundManager.playToggle(0.05);
                     onClose();
                   }} 
-                  className="p-2 border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
+                  className="p-1.5 sm:p-2 border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] cursor-pointer"
                   title="Dismiss Ledger"
                 >
-                  <X size={18} />
+                  <X size={16} />
                 </button>
               </div>
             </header>
 
-            {/* 2. SELECTED SPECIMENS LIST (NO DISTRACTIONS, NO UPSELLS) */}
-            <div className="flex-grow overflow-y-auto p-5 sm:p-6 space-y-6">
+            {/* 2. SELECTED SPECIMENS LIST (FLEX-1 MIN-H-0 OVERFLOW-Y-AUTO) */}
+            <div className="flex-1 min-h-0 overflow-y-auto p-4 sm:p-5 space-y-4">
               {items.length === 0 ? (
                 /* Empty Possessions State */
-                <div className="h-full flex flex-col items-center justify-center text-center space-y-6 border-2 border-dashed border-brand-text/30 p-8 sm:p-12 bg-brand-surface/30 my-auto">
-                  <div className="space-y-3 max-w-sm">
+                <div className="h-full flex flex-col items-center justify-center text-center space-y-5 border-2 border-dashed border-brand-text/30 p-6 sm:p-10 bg-brand-surface/30 my-auto">
+                  <div className="space-y-2.5 max-w-sm">
                     <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 border border-brand-accent/30 inline-block">
                       [ CUSTODY LEDGER: ZERO SPECIMENS ]
                     </span>
-                    <h2 className="text-xl font-mono font-black uppercase tracking-tight text-brand-text">
+                    <h2 className="text-lg sm:text-xl font-mono font-black uppercase tracking-tight text-brand-text">
                       NO SPECIMENS CURRENTLY SELECTED
                     </h2>
-                    <p className="text-brand-text/75 font-mono text-xs uppercase leading-relaxed">
+                    <p className="text-brand-text/75 font-mono text-xs leading-relaxed normal-case">
                       You have not yet registered physical instruments for custody transfer. Explore the collection to inspect artifacts carrying enduring conviction.
                     </p>
                   </div>
@@ -284,7 +284,7 @@ export default function Cart({
                         catalog.scrollIntoView({ behavior: "smooth" });
                       }
                     }}
-                    className="px-6 py-3.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[4px_4px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
+                    className="px-5 py-3 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs font-black uppercase tracking-widest border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center gap-2"
                   >
                     <span>EXAMINE THE COLLECTION</span>
                     <ArrowRight size={14} />
@@ -316,16 +316,16 @@ export default function Cart({
                   return (
                     <article 
                       key={item.id} 
-                      className="border-[2.5px] border-brand-text bg-brand-surface shadow-[5px_5px_0px_#050505] p-4 sm:p-5 space-y-4 relative group"
+                      className="border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] p-3.5 sm:p-4 space-y-3 relative group"
                     >
                       {/* Corner Registration Crosshairs */}
-                      <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-                      <span className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
+                      <span className="absolute -top-1.5 -left-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
+                      <span className="absolute -top-1.5 -right-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
 
                       {/* Header Line: Artifact Number & Category & Symbol */}
-                      <div className="flex items-center justify-between gap-2 border-b-2 border-brand-text/20 pb-2 text-[10px]">
+                      <div className="flex items-center justify-between gap-2 border-b border-brand-text/20 pb-2 text-[9.5px]">
                         <div className="flex items-center gap-2">
-                          <span className="font-black bg-brand-text text-brand-bg px-2 py-0.5 border border-brand-text uppercase">
+                          <span className="font-black bg-brand-text text-brand-bg px-1.5 py-0.5 border border-brand-text uppercase text-[8.5px]">
                             {artifactCode}
                           </span>
                           {symbolInscription && (
@@ -336,7 +336,7 @@ export default function Cart({
                         </div>
 
                         <div className="flex items-center gap-2">
-                          <span className="text-[9px] uppercase font-bold text-brand-text/60">
+                          <span className="text-[8.5px] uppercase font-bold text-brand-text/60">
                             {item.categoryLabel}
                           </span>
 
@@ -347,7 +347,7 @@ export default function Cart({
                               soundManager.playToggle(0.06);
                               setItemToRemove(isConfirmingRemove ? null : item.id);
                             }}
-                            className={`px-2 py-0.5 text-[9px] font-black uppercase border transition-colors cursor-pointer ${
+                            className={`px-1.5 py-0.5 text-[8.5px] font-black uppercase border transition-colors cursor-pointer ${
                               isConfirmingRemove
                                 ? "bg-red-600 text-white border-red-800"
                                 : "bg-brand-bg text-brand-text/60 hover:text-red-600 hover:border-red-600 border-brand-text/40"
@@ -366,13 +366,13 @@ export default function Cart({
                             initial={{ opacity: 0, height: 0 }}
                             animate={{ opacity: 1, height: "auto" }}
                             exit={{ opacity: 0, height: 0 }}
-                            className="bg-red-50 border-2 border-red-600 p-3 space-y-2 text-red-950 font-mono"
+                            className="bg-red-50 border-2 border-red-600 p-2.5 space-y-1.5 text-red-950 font-mono"
                           >
-                            <div className="flex items-center justify-between text-[11px] font-black uppercase">
+                            <div className="flex items-center justify-between text-[10.5px] font-black uppercase">
                               <span>CONFIRM RELEASE OF SPECIMEN?</span>
-                              <Trash2 size={13} className="text-red-600" />
+                              <Trash2 size={12} className="text-red-600" />
                             </div>
-                            <p className="text-[9.5px] uppercase opacity-90 leading-tight">
+                            <p className="text-[9px] uppercase opacity-90 leading-tight">
                               This physical specimen will be de-registered from your possession ledger.
                             </p>
                             <div className="flex items-center gap-2 pt-1">
@@ -383,14 +383,14 @@ export default function Cart({
                                   onRemove(item.id);
                                   setItemToRemove(null);
                                 }}
-                                className="flex-1 py-1.5 bg-red-600 hover:bg-red-700 text-white font-black text-[10px] uppercase border border-red-800 shadow-[1px_1px_0px_#050505] cursor-pointer"
+                                className="flex-1 py-1 bg-red-600 hover:bg-red-700 text-white font-black text-[9.5px] uppercase border border-red-800 shadow-[1px_1px_0px_#050505] cursor-pointer"
                               >
                                 [ CONFIRM RELEASE ]
                               </button>
                               <button
                                 type="button"
                                 onClick={() => setItemToRemove(null)}
-                                className="px-3 py-1.5 bg-white text-neutral-800 font-bold text-[10px] uppercase border border-neutral-400 cursor-pointer"
+                                className="px-2.5 py-1 bg-white text-neutral-800 font-bold text-[9.5px] uppercase border border-neutral-400 cursor-pointer"
                               >
                                 CANCEL
                               </button>
@@ -400,10 +400,10 @@ export default function Cart({
                       </AnimatePresence>
 
                       {/* Main Dossier Split: Image Plate + Specifications */}
-                      <div className="grid grid-cols-12 gap-4 items-start">
+                      <div className="grid grid-cols-12 gap-3 items-start">
                         
                         {/* Archival Documentation Image Plate */}
-                        <div className="col-span-4 sm:col-span-3 aspect-[3/4] bg-brand-bg border-2 border-brand-text relative overflow-hidden group/img">
+                        <div className="col-span-4 sm:col-span-3 aspect-[3/4] bg-brand-bg border-2 border-brand-text relative overflow-hidden group/img shrink-0">
                           <img 
                             src={item.image || STUDIO_FALLBACK_IMAGE} 
                             alt={item.name} 
@@ -416,27 +416,27 @@ export default function Cart({
                             }}
                             className="w-full h-full object-cover" 
                           />
-                          <span className="absolute bottom-1 right-1 text-[7.5px] font-black uppercase bg-brand-text text-brand-bg px-1 py-0.5 border border-brand-text pointer-events-none">
+                          <span className="absolute bottom-1 right-1 text-[7px] font-black uppercase bg-brand-text text-brand-bg px-1 py-0.5 border border-brand-text pointer-events-none">
                             PLATE
                           </span>
                         </div>
 
                         {/* Object Specifications & Interactive Controls */}
-                        <div className="col-span-8 sm:col-span-9 space-y-3">
+                        <div className="col-span-8 sm:col-span-9 space-y-2.5">
                           
                           {/* Artifact Title */}
                           <div>
-                            <h3 className="text-sm sm:text-base font-mono font-black uppercase tracking-tight text-brand-text leading-tight">
+                            <h3 className="text-xs sm:text-sm font-mono font-black uppercase tracking-tight text-brand-text leading-tight">
                               {item.name}
                             </h3>
-                            <div className="font-mono text-[9.5px] text-brand-text/60 uppercase font-bold mt-0.5">
+                            <div className="font-mono text-[9px] text-brand-text/60 uppercase font-bold mt-0.5">
                               VALUATION: Rs. {item.price.toLocaleString()} PKR / UNIT
                             </div>
                           </div>
 
                           {/* Selected Configuration & Variant Switcher */}
-                          <div className="space-y-1.5 pt-1 border-t border-brand-text/15">
-                            <div className="flex items-center justify-between text-[9.5px] font-bold">
+                          <div className="space-y-1 pt-1 border-t border-brand-text/15">
+                            <div className="flex items-center justify-between text-[9px] font-bold">
                               <span className="text-brand-text/60 uppercase">CONFIGURATION:</span>
                               <span className="text-brand-text font-black uppercase">
                                 {Object.entries(item.options || {}).map(([k, v]) => `${k}: ${v}`).join(" // ") || "STANDARD SPECIFICATION"}
@@ -445,11 +445,11 @@ export default function Cart({
 
                             {/* Interactive Size / Variant Switcher (if wearable or variants exist) */}
                             {sizeOptions.length > 0 && (
-                              <div className="pt-1">
-                                <div className="text-[8.5px] uppercase font-bold text-brand-text/50 mb-1">
+                              <div className="pt-0.5">
+                                <div className="text-[8px] uppercase font-bold text-brand-text/50 mb-1">
                                   SWITCH SIZE / FIT:
                                 </div>
-                                <div className="flex flex-wrap gap-1.5">
+                                <div className="flex flex-wrap gap-1">
                                   {sizeOptions.map((size) => {
                                     const isSelected = currentSize.toUpperCase() === size.toUpperCase();
                                     return (
@@ -457,9 +457,9 @@ export default function Cart({
                                         key={size}
                                         type="button"
                                         onClick={() => handleSelectOption(item, "Size", size)}
-                                        className={`px-2 py-1 text-[9.5px] font-mono font-black uppercase border transition-all cursor-pointer ${
+                                        className={`px-1.5 py-0.5 text-[9px] font-mono font-black uppercase border transition-all cursor-pointer ${
                                           isSelected
-                                            ? "bg-brand-text text-brand-bg border-brand-text shadow-[2px_2px_0px_#050505]"
+                                            ? "bg-brand-text text-brand-bg border-brand-text shadow-[1px_1px_0px_#050505]"
                                             : "bg-brand-bg text-brand-text/80 border-brand-text/40 hover:border-brand-text hover:bg-brand-surface"
                                         }`}
                                       >
@@ -473,9 +473,9 @@ export default function Cart({
                           </div>
 
                           {/* Quantity Controls & Line Settlement */}
-                          <div className="flex items-center justify-between gap-3 pt-2 border-t-2 border-brand-text/20">
+                          <div className="flex items-center justify-between gap-2 pt-2 border-t border-brand-text/20">
                             {/* Tactile Quantity Stepper with Spring Buttons */}
-                            <div className="flex items-center border-2 border-brand-text bg-brand-bg shadow-[2px_2px_0px_#050505]">
+                            <div className="flex items-center border-2 border-brand-text bg-brand-bg shadow-[1px_1px_0px_#050505]">
                               <motion.button 
                                 type="button"
                                 whileTap={{ scale: 0.8 }}
@@ -487,10 +487,10 @@ export default function Cart({
                                     onUpdateQuantity(item.id, -1);
                                   }
                                 }}
-                                className="p-1.5 sm:p-2 hover:bg-brand-text hover:text-white transition-colors cursor-pointer select-none"
+                                className="p-1 sm:p-1.5 hover:bg-brand-text hover:text-white transition-colors cursor-pointer select-none"
                                 title="Reduce Allotment"
                               >
-                                <Minus size={11} />
+                                <Minus size={10} />
                               </motion.button>
                               
                               <motion.span 
@@ -498,7 +498,7 @@ export default function Cart({
                                 initial={{ scale: 1.3, color: "#ff4500" }}
                                 animate={{ scale: 1, color: "inherit" }}
                                 transition={{ type: "spring", stiffness: 500, damping: 15 }}
-                                className="w-8 text-center font-mono text-xs font-black select-none"
+                                className="w-6 text-center font-mono text-[11px] font-black select-none"
                               >
                                 {item.quantity}
                               </motion.span>
@@ -510,19 +510,19 @@ export default function Cart({
                                   soundManager.playToggle(0.06);
                                   onUpdateQuantity(item.id, 1);
                                 }}
-                                className="p-1.5 sm:p-2 hover:bg-brand-text hover:text-white transition-colors cursor-pointer select-none"
+                                className="p-1 sm:p-1.5 hover:bg-brand-text hover:text-white transition-colors cursor-pointer select-none"
                                 title="Increase Allotment"
                               >
-                                <Plus size={11} />
+                                <Plus size={10} />
                               </motion.button>
                             </div>
 
                             {/* Extended Line Total */}
                             <div className="text-right">
-                              <span className="text-[8px] uppercase font-bold text-brand-text/50 block">
+                              <span className="text-[7.5px] uppercase font-bold text-brand-text/50 block">
                                 LINE VALUATION
                               </span>
-                              <span className="text-sm sm:text-base font-mono font-black tracking-tight text-brand-text">
+                              <span className="text-xs sm:text-sm font-mono font-black tracking-tight text-brand-text">
                                 Rs. {(item.price * item.quantity).toLocaleString()}
                               </span>
                             </div>
@@ -539,18 +539,18 @@ export default function Cart({
 
             {/* 3. FINANCIAL SUMMARY & PROCEED TO POSSESSION */}
             {items.length > 0 && (
-              <footer className="p-5 sm:p-6 border-t-2 border-brand-text bg-brand-surface shrink-0 space-y-4 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
+              <footer className="p-3.5 sm:p-4 border-t-2 border-brand-text bg-brand-surface/90 backdrop-blur-md shrink-0 space-y-2.5 shadow-[0_-4px_10px_rgba(0,0,0,0.04)]">
                 
                 {/* Complimentary Shipping Progress Threshold */}
                 {!valuation.isComplimentaryShipping && valuation.subtotal > 0 && (
-                  <div className="p-2.5 bg-brand-bg border border-brand-accent/30 text-[10px] font-mono space-y-1.5">
+                  <div className="p-2 bg-brand-bg border border-brand-accent/30 text-[9px] font-mono space-y-1">
                     <div className="flex justify-between items-center font-bold">
                       <span className="text-brand-text/80">COMPLIMENTARY DISPATCH THRESHOLD</span>
-                      <span className="text-brand-accent">
+                      <span className="text-brand-accent font-black">
                         Rs. {valuation.amountNeededForComplimentaryShipping.toLocaleString()} PKR REMAINING
                       </span>
                     </div>
-                    <div className="w-full h-1.5 bg-brand-surface border border-brand-text/20 overflow-hidden">
+                    <div className="w-full h-1 bg-brand-surface border border-brand-text/20 overflow-hidden">
                       <div 
                         className="h-full bg-brand-accent transition-all duration-300"
                         style={{ width: `${Math.min(100, Math.round((valuation.subtotal / 15000) * 100))}%` }}
@@ -560,7 +560,7 @@ export default function Cart({
                 )}
 
                 {/* Financial Ledger Calculation Matrix */}
-                <div className="space-y-2 font-mono text-xs uppercase border-b-2 border-brand-text/20 pb-4">
+                <div className="space-y-1.5 font-mono text-[10.5px] sm:text-[11.5px] uppercase border-b border-brand-text/20 pb-2">
                   <div className="flex justify-between items-center text-brand-text/75">
                     <span>SPECIMENS VALUATION ({totalQuantity} {totalQuantity === 1 ? "SPECIMEN" : "SPECIMENS"})</span>
                     <span className="font-bold text-brand-text">Rs. {valuation.subtotal.toLocaleString()} PKR</span>
@@ -575,7 +575,7 @@ export default function Cart({
 
                   <div className="flex justify-between items-center text-brand-text/75">
                     <span className="flex items-center gap-1.5">
-                      <Truck size={12} className="text-brand-accent" />
+                      <Truck size={11} className="text-brand-accent" />
                       <span>SECURE ARCHIVAL TRANSIT</span>
                     </span>
                     <span className="font-bold text-brand-text">
@@ -588,56 +588,56 @@ export default function Cart({
                   </div>
 
                   {valuation.totalSavings > 0 && (
-                    <div className="flex justify-between items-center text-[10px] text-emerald-800 bg-emerald-50 px-2 py-1 border border-emerald-200">
+                    <div className="flex justify-between items-center text-[9px] text-emerald-800 bg-emerald-50 px-2 py-0.5 border border-emerald-200">
                       <span>TOTAL PRIVILEGE SAVINGS</span>
                       <span className="font-black">Rs. {valuation.totalSavings.toLocaleString()} PKR</span>
                     </div>
                   )}
 
                   {/* Settlement Total (Prominent & Non-Negotiable Clarity) */}
-                  <div className="flex justify-between items-baseline pt-2 border-t-2 border-brand-text font-black text-brand-text">
-                    <span className="text-xs sm:text-sm uppercase tracking-wider">
+                  <div className="flex justify-between items-baseline pt-1.5 border-t border-brand-text/30 font-black text-brand-text">
+                    <span className="text-xs uppercase tracking-wider">
                       TOTAL SETTLEMENT
                     </span>
                     <div className="text-right">
-                      <div className="text-xl sm:text-2xl text-brand-accent tracking-tight">
+                      <div className="text-lg sm:text-xl text-brand-accent tracking-tight">
                         Rs. {valuation.total.toLocaleString()}{" "}
-                        <span className="text-xs font-bold text-brand-text/60">PKR</span>
+                        <span className="text-[10px] font-bold text-brand-text/60">PKR</span>
                       </div>
                     </div>
                   </div>
                 </div>
 
                 {/* Direct Assurance Notes */}
-                <div className="text-[9px] text-brand-text/70 uppercase leading-tight font-bold flex items-center gap-1.5">
-                  <ShieldCheck size={12} className="text-brand-accent shrink-0" />
-                  <span>INCLUSIVE OF TAXES • DISPATCHED VIA TRACKED ARCHIVAL COURIER (2–4 DAYS)</span>
+                <div className="text-[8px] sm:text-[8.5px] text-brand-text/70 uppercase leading-tight font-bold flex items-center gap-1.5">
+                  <ShieldCheck size={11} className="text-brand-accent shrink-0" />
+                  <span>INCLUSIVE OF TAXES • TRACKED ARCHIVAL COURIER (2–4 DAYS)</span>
                 </div>
 
-                {/* Primary CTA: PROCEED TO POSSESSION */}
-                <div className="space-y-2 pt-1">
+                {/* Primary Actions */}
+                <div className="space-y-1.5 pt-0.5">
                   <motion.button 
                     type="button"
-                    whileHover={{ y: -2 }}
-                    whileTap={{ scale: 0.97 }}
+                    whileHover={{ y: -1 }}
+                    whileTap={{ scale: 0.98 }}
                     transition={{ type: "spring", stiffness: 450, damping: 18 }}
                     onClick={() => {
                       soundManager.playClick(0.18);
                       onCheckout();
                     }}
-                    className="w-full py-4 px-6 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs sm:text-sm font-black uppercase tracking-widest border-2 border-brand-text shadow-[4px_4px_0px_#050505] active:shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer flex items-center justify-center gap-3 select-none group"
+                    className="w-full py-3 px-4 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-xs sm:text-sm font-black uppercase tracking-widest border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:shadow-[1px_1px_0px_#050505] transition-colors cursor-pointer flex items-center justify-center gap-2 select-none group"
                   >
                     <span>PROCEED TO POSSESSION</span>
-                    <ArrowRight size={16} className="group-hover:translate-x-1.5 transition-transform" />
+                    <ArrowRight size={14} className="group-hover:translate-x-1.5 transition-transform" />
                   </motion.button>
 
                   <a
                     href={getWhatsAppUrl(buildWhatsAppCartInquiry(items, valuation))}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className="w-full py-2.5 px-4 font-mono text-[10px] sm:text-xs font-black uppercase tracking-wider bg-[#25D366]/10 text-brand-text hover:bg-[#25D366] hover:text-white border border-[#25D366] transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+                    className="w-full py-1.5 px-3 font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider bg-[#25D366]/10 text-brand-text hover:bg-[#25D366] hover:text-white border border-[#25D366] transition-all flex items-center justify-center gap-1.5 cursor-pointer text-center"
                   >
-                    <MessageCircle size={14} className="text-[#128C7E]" />
+                    <MessageCircle size={12} className="text-[#128C7E]" />
                     <span>INQUIRE ABOUT THIS LEDGER ON WHATSAPP</span>
                   </a>
 
@@ -647,7 +647,7 @@ export default function Cart({
                       soundManager.playToggle(0.06);
                       onClose();
                     }}
-                    className="w-full py-1.5 font-mono text-[10px] font-bold uppercase tracking-wider text-brand-text/70 hover:text-brand-text cursor-pointer transition-colors text-center"
+                    className="w-full py-0.5 font-mono text-[9px] font-bold uppercase tracking-wider text-brand-text/60 hover:text-brand-text cursor-pointer transition-colors text-center"
                   >
                     [ RETURN TO COLLECTION ]
                   </button>
