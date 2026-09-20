@@ -81,14 +81,14 @@ export default function Manifesto({ onBack, onAbout }: ManifestoProps) {
             </h1>
 
             <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent pl-5">
-              <p className="font-mono text-sm sm:text-base uppercase text-brand-text font-bold leading-relaxed">
-                <span className="inline-flex flex-col items-end align-middle mr-1.5">
+              <p className="font-mono text-sm sm:text-base normal-case text-brand-text font-medium leading-relaxed">
+                <span className="inline-flex flex-col items-end align-middle mr-1.5 uppercase">
                   <span className="font-black text-sm sm:text-base leading-none">SYMBOLIC</span>
                   <span className="text-[10px] sm:text-[11px] font-bold italic text-brand-accent leading-none mt-0.5">MUSLIMS</span>
                 </span>
                 exists for those who refuse to be walking billboards. We create heavyweight garments, headwear, and vessels where the symbol represents the wearer's identity—not a brand's corporate status.
               </p>
-              <p className="font-mono text-xs uppercase text-brand-text/70 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/70 leading-relaxed">
                 What we choose to possess and wear should communicate what we stand for.
               </p>
             </div>
@@ -105,12 +105,12 @@ export default function Manifesto({ onBack, onAbout }: ManifestoProps) {
                 <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent">
                   THE CORE BENCHMARK
                 </span>
-                <span className="font-mono text-[10px] bg-brand-text text-brand-bg px-2 py-0.5 font-bold">IDENTITY FIRST</span>
+                <span className="font-mono text-[10px] bg-brand-text text-brand-bg px-2 py-0.5 font-bold uppercase">IDENTITY FIRST</span>
               </div>
               <h2 className="font-mono text-2xl sm:text-3xl font-black uppercase text-brand-text tracking-tight">
                 SELF-REPRESENTATION OVER CORPORATE PROMOTION.
               </h2>
-              <div className="font-mono text-xs uppercase space-y-4 text-brand-text/80 leading-relaxed">
+              <div className="font-mono text-xs sm:text-[13px] normal-case space-y-4 text-brand-text/85 leading-relaxed">
                 <p>
                   Most contemporary clothing turns the wearer into an unpaid advertising surface for multinational logos. People wear brands to signal external status rather than internal conviction.
                 </p>
@@ -178,7 +178,7 @@ export default function Manifesto({ onBack, onAbout }: ManifestoProps) {
                     <h4 className="font-mono text-sm sm:text-base font-black uppercase tracking-tight text-brand-text leading-snug">
                       {item.title}
                     </h4>
-                    <p className="font-mono text-xs uppercase text-brand-text/80 leading-relaxed">
+                    <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/85 leading-relaxed">
                       {item.body}
                     </p>
                   </div>
@@ -192,7 +192,7 @@ export default function Manifesto({ onBack, onAbout }: ManifestoProps) {
             <h3 className="font-mono text-3xl sm:text-5xl font-black uppercase tracking-tight text-brand-text">
               CHOOSE WHAT YOU REPRESENT
             </h3>
-            <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/80 max-w-xl mx-auto leading-relaxed">
+            <p className="font-mono text-xs sm:text-sm normal-case text-brand-text/80 max-w-xl mx-auto leading-relaxed">
               Explore heavyweight garments, clean headwear, and stoneware vessels built to communicate who you are.
             </p>
             <div className="pt-2 flex flex-col sm:flex-row items-center justify-center gap-4">

@@ -569,7 +569,7 @@ export default function ArtifactDetail({
               <span className="text-[8.5px] font-black text-brand-accent uppercase block mb-1">
                 PILLAR 01 // WHAT THE SYMBOL REPRESENTS
               </span>
-              <p className="font-bold text-brand-text uppercase leading-relaxed text-[11px]">
+              <p className="font-medium text-brand-text normal-case leading-relaxed text-xs sm:text-[13px]">
                 {artifact.pillar1Represents || artifact.concept || "Enduring rootedness and unbending moral conviction."}
               </p>
             </div>
@@ -579,7 +579,7 @@ export default function ArtifactDetail({
               <span className="text-[8.5px] font-black text-brand-accent uppercase block mb-1">
                 PILLAR 02 // WHY IT WAS DELIBERATELY CHOSEN
               </span>
-              <p className="font-bold text-brand-text uppercase leading-relaxed text-[11px]">
+              <p className="font-medium text-brand-text normal-case leading-relaxed text-xs sm:text-[13px]">
                 {artifact.pillar2WhyChosen || "Solidarity is not a fleeting trend; it is an enduring covenant translated into tactile armor."}
               </p>
             </div>
@@ -589,7 +589,7 @@ export default function ArtifactDetail({
               <span className="text-[8.5px] font-black text-brand-accent uppercase block mb-1">
                 PILLAR 03 // WHAT THE ARTIFACT COMMUNICATES
               </span>
-              <p className="font-bold text-brand-text uppercase leading-relaxed text-[11px]">
+              <p className="font-medium text-brand-text normal-case leading-relaxed text-xs sm:text-[13px]">
                 {artifact.pillar3Communicates || "Active, deliberate alignment with truth and refusal to assimilate into consumer compliance."}
               </p>
             </div>
@@ -599,7 +599,7 @@ export default function ArtifactDetail({
               <span className="text-[8.5px] font-black text-brand-accent uppercase block mb-1">
                 PILLAR 04 // WHAT IDEA THE WEARER CARRIES
               </span>
-              <p className="font-bold text-brand-text uppercase leading-relaxed text-[11px]">
+              <p className="font-medium text-brand-text normal-case leading-relaxed text-xs sm:text-[13px]">
                 {artifact.pillar4WearerCarries || "The internal oath to preserve moral clarity in speech, personal conduct, and spiritual devotion."}
               </p>
             </div>

@@ -846,7 +846,7 @@ export default function ProductDetail({
               <h3 className="font-mono text-lg sm:text-xl font-black uppercase text-brand-text tracking-tight">
                 WHAT THE SYMBOL REPRESENTS
               </h3>
-              <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/85 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/85 leading-relaxed font-normal">
                 {symbolKnowledge.represents}
               </p>
             </div>
@@ -864,7 +864,7 @@ export default function ProductDetail({
               <h3 className="font-mono text-lg sm:text-xl font-black uppercase text-brand-text tracking-tight">
                 WHY IT WAS CHOSEN
               </h3>
-              <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/85 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/85 leading-relaxed font-normal">
                 {symbolKnowledge.whyChosen}
               </p>
             </div>
@@ -882,7 +882,7 @@ export default function ProductDetail({
               <h3 className="font-mono text-lg sm:text-xl font-black uppercase text-brand-text tracking-tight">
                 WHAT THE ARTIFACT COMMUNICATES
               </h3>
-              <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/85 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/85 leading-relaxed font-normal">
                 {symbolKnowledge.communicates}
               </p>
             </div>
@@ -900,7 +900,7 @@ export default function ProductDetail({
               <h3 className="font-mono text-lg sm:text-xl font-black uppercase text-brand-text tracking-tight">
                 WHAT IDEA THE WEARER IS CARRYING
               </h3>
-              <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/85 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/85 leading-relaxed font-normal">
                 {symbolKnowledge.wearerCarries}
               </p>
             </div>

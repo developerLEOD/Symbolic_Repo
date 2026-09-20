@@ -50,10 +50,10 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
             </h1>
 
             <div className="space-y-4 max-w-3xl border-l-4 border-brand-accent pl-5">
-              <p className="font-mono text-sm sm:text-base uppercase text-brand-text font-bold leading-relaxed">
+              <p className="font-mono text-sm sm:text-base normal-case text-brand-text font-medium leading-relaxed">
                 SYMBOLIC is a manifestation of conviction, deliberate possession, and unapologetic identity. Rooted in the mission to establish our Deen through daily presence.
               </p>
-              <p className="font-mono text-xs uppercase text-brand-text/70 leading-relaxed">
+              <p className="font-mono text-xs sm:text-[13px] normal-case text-brand-text/70 leading-relaxed">
                 Atelier Archive // Under the Let’s Establish Our Deen (LEOD) Mission.
               </p>
             </div>
@@ -141,7 +141,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   </h3>
 
 
-                  <div className="font-mono text-xs uppercase space-y-4 text-brand-text/80 leading-relaxed border-l-2 border-brand-text pl-4">
+                  <div className="font-mono text-xs sm:text-[13px] normal-case space-y-4 text-brand-text/85 leading-relaxed border-l-2 border-brand-text pl-4">
                     <p>
                       At first glance, the mark is composed of an unmistakable orange square anchoring a singular, solid white circle.
                     </p>
@@ -163,7 +163,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                     <span className="text-brand-accent text-[10px] font-black uppercase block mb-1">
                       01 // VISUAL CONTRAST
                     </span>
-                    <p className="text-[10px] uppercase text-brand-text/80">
+                    <p className="text-[11px] sm:text-xs normal-case text-brand-text/80 leading-relaxed">
                       Unapologetic contrast against the surrounding plane. Recognizable from distance, enduring in presence.
                     </p>
                   </div>
@@ -171,7 +171,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                     <span className="text-brand-accent text-[10px] font-black uppercase block mb-1">
                       02 // UNCOMPROMISED CHARACTER
                     </span>
-                    <p className="text-[10px] uppercase text-brand-text/80">
+                    <p className="text-[11px] sm:text-xs normal-case text-brand-text/80 leading-relaxed">
                       The white dot holds its form without fading or warping, symbolizing steadfast adherence to core values.
                     </p>
                   </div>
@@ -245,7 +245,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                     BORN AS A SUB-PROJECT UNDER THE LET’S ESTABLISH OUR DEEN (LEOD) MISSION.
                   </h3>
 
-                  <div className="font-mono text-xs sm:text-sm uppercase space-y-4 text-brand-text/90 leading-relaxed">
+                  <div className="font-mono text-xs sm:text-sm normal-case space-y-4 text-brand-text/90 leading-relaxed">
                     <p className="font-bold text-brand-accent">
                       Symbolic is owned by a Muslim who initiated this brand as a sub-project under the Let’s Establish Our Deen (LEOD) mission.
                     </p>
@@ -291,11 +291,11 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                     </div>
                   </div>
 
-                  <div className="bg-brand-text text-brand-bg p-5 border-2 border-brand-text font-mono text-xs uppercase space-y-2">
-                    <p className="font-black text-brand-accent">
+                  <div className="bg-brand-text text-brand-bg p-5 border-2 border-brand-text font-mono text-xs space-y-2">
+                    <p className="font-black text-brand-accent uppercase">
                       [ ESTABLISHING THE DEEN ]
                     </p>
-                    <p className="text-[11px] leading-relaxed text-brand-bg/85">
+                    <p className="text-[11px] sm:text-xs normal-case leading-relaxed text-brand-bg/90">
                       Our Deen is not confined to private thought—it shapes what we value, how we walk, and what we choose to represent in the public square.
                     </p>
                   </div>
@@ -315,7 +315,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   <h4 className="text-sm font-black uppercase text-brand-text">
                     DISTINCT APPEARANCE
                   </h4>
-                  <p className="text-xs uppercase text-brand-text/70 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed">
                     Representing the believer whose appearance and manner stand distinct from the crowd with self-respect and intentionality.
                   </p>
                 </motion.div>
@@ -331,7 +331,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   <h4 className="text-sm font-black uppercase text-brand-text">
                     NO BILLBOARD STATUS
                   </h4>
-                  <p className="text-xs uppercase text-brand-text/70 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed">
                     External labels remain discrete. The symbol on your chest or desk belongs to your values, not our corporate marketing.
                   </p>
                 </motion.div>
@@ -347,7 +347,7 @@ export default function About({ onBack, onWhyWeWear }: AboutProps) {
                   <h4 className="text-sm font-black uppercase text-brand-text">
                     ESTABLISHING OUR DEEN
                   </h4>
-                  <p className="text-xs uppercase text-brand-text/70 leading-relaxed">
+                  <p className="text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed">
                     An active sub-project of LEOD designed to cultivate self-esteem, Islamic consciousness, and purposeful youth living.
                   </p>
                 </motion.div>
