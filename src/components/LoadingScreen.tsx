@@ -52,6 +52,19 @@ const STATUS_MESSAGES = [
   }
 ];
 
+// Minimalist set of scattered simple orange circles with size variation and a slow, gentle 1-interval appear/disappear cycle
+const SCATTERED_ORANGE_CIRCLES = [
+  { id: "dot-1", top: "12%", left: "14%", size: 8, duration: 5.8, delay: 0.4, repeatDelay: 4.0 },
+  { id: "dot-2", top: "22%", left: "82%", size: 26, duration: 6.8, delay: 2.2, repeatDelay: 4.8 },
+  { id: "dot-3", top: "45%", left: "8%", size: 16, duration: 6.2, delay: 3.6, repeatDelay: 4.2 },
+  { id: "dot-4", top: "52%", left: "91%", size: 6, duration: 5.2, delay: 1.2, repeatDelay: 4.5 },
+  { id: "dot-5", top: "78%", left: "16%", size: 28, duration: 7.2, delay: 2.8, repeatDelay: 5.0 },
+  { id: "dot-6", top: "84%", left: "85%", size: 12, duration: 6.0, delay: 0.8, repeatDelay: 4.4 },
+  { id: "dot-7", top: "8%", left: "58%", size: 18, duration: 6.5, delay: 4.0, repeatDelay: 4.6 },
+  { id: "dot-8", top: "90%", left: "46%", size: 7, duration: 5.4, delay: 1.8, repeatDelay: 4.1 },
+  { id: "dot-9", top: "34%", left: "24%", size: 14, duration: 6.4, delay: 4.8, repeatDelay: 4.9 }
+];
+
 export default function LoadingScreen() {
   const [index, setIndex] = useState(() => Math.floor(Math.random() * STATUS_MESSAGES.length));
 
@@ -71,16 +84,50 @@ export default function LoadingScreen() {
   const current = STATUS_MESSAGES[index];
 
   return (
-    <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-brand-bg px-4 py-8 sm:py-12 select-none font-mono">
-      {/* Subtle Background Pattern */}
+    <div className="fixed inset-0 z-50 flex flex-col items-center justify-between bg-brand-bg px-4 py-8 sm:py-12 select-none font-mono overflow-hidden">
+      {/* Subtle Background Grid Pattern */}
       <div className="absolute inset-0 opacity-[0.025] pointer-events-none bg-[radial-gradient(#050505_1px,transparent_1px)] [background-size:18px_18px]" />
 
+      {/* Scattered Simple Orange Circles: Slow Grow, Shrink, and Disappear without shadow */}
+      <div className="absolute inset-0 pointer-events-none overflow-hidden z-0" aria-hidden="true">
+        {SCATTERED_ORANGE_CIRCLES.map((circle) => {
+          return (
+            <motion.div
+              key={circle.id}
+              className="absolute -translate-x-1/2 -translate-y-1/2 rounded-full pointer-events-none bg-brand-accent"
+              style={{
+                top: circle.top,
+                left: circle.left,
+                width: `${circle.size}px`,
+                height: `${circle.size}px`
+              }}
+              initial={{
+                scale: 0,
+                opacity: 0
+              }}
+              animate={{
+                scale: [0, 1.2, 0.7, 0],
+                opacity: [0, 0.9, 0.6, 0]
+              }}
+              transition={{
+                duration: circle.duration,
+                delay: circle.delay,
+                repeat: Infinity,
+                repeatDelay: circle.repeatDelay,
+                ease: "easeInOut",
+                times: [0, 0.45, 0.8, 1]
+              }}
+            />
+          );
+        })}
+      </div>
+
       {/* Top Balancing Spacer */}
-      <div className="h-4 sm:h-8 w-full shrink-0" />
+      <div className="h-4 sm:h-8 w-full shrink-0 relative z-10" />
 
       {/* Center: Brand Logo & Title */}
       <div className="relative z-10 flex flex-col items-center max-w-md w-full text-center my-auto">
-        {/* Clean, Prominent Brand Logo Container (without + ornaments) */}
+        {/* Clean, Prominent Brand Logo Container */}
         <motion.div 
           initial={{ scale: 0.95, opacity: 0.9 }}
           animate={{ scale: [0.97, 1.02, 0.97], opacity: [0.93, 1, 0.93] }}
@@ -147,3 +194,4 @@ export default function LoadingScreen() {
     </div>
   );
 }
+
