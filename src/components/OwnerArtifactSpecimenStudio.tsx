@@ -105,9 +105,9 @@ export default function OwnerArtifactSpecimenStudio({
     if (fileList.length === 0) return;
     setIsUploadingGraphic(true);
     try {
-      const dataUrl = await processFileToCompressedDataUrl(fileList[0], 720, 0.72);
+      const dataUrl = await processFileToCompressedDataUrl(fileList[0], 1600, 0.88);
       setArtGraphic(dataUrl);
-      showNotification("success", "Central artwork image loaded and optimized.");
+      showNotification("success", "Central artwork image loaded in high definition.");
     } catch (err) {
       console.error(err);
       showNotification("error", "Failed to load image file.");
@@ -125,11 +125,11 @@ export default function OwnerArtifactSpecimenStudio({
     try {
       const urls: string[] = [];
       for (const file of fileList) {
-        const dataUrl = await processFileToCompressedDataUrl(file, 720, 0.72);
+        const dataUrl = await processFileToCompressedDataUrl(file, 1600, 0.88);
         urls.push(dataUrl);
       }
       setSpecImages(prev => [...prev, ...urls]);
-      showNotification("success", `Added and optimized ${urls.length} photo(s).`);
+      showNotification("success", `Added ${urls.length} high-resolution photo(s).`);
     } catch (err) {
       console.error(err);
       showNotification("error", "Failed to load one or more photos.");

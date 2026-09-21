@@ -11,13 +11,13 @@
 import { Artifact, Specimen, Product } from "../types";
 
 /**
- * Resizes and compresses an image data URL using an offscreen canvas.
- * Produces crisp, lightweight JPEG/WebP representations (typically 30KB - 80KB).
+ * Resizes and optimizes an image data URL using an offscreen canvas with high visual fidelity.
+ * Preserves crisp textures, typography, and calligraphy without aggressive compression artifacts.
  */
 export async function compressDataUrl(
   dataUrl: string,
-  maxDimension = 720,
-  quality = 0.72
+  maxDimension = 1600,
+  quality = 0.88
 ): Promise<string> {
   if (!dataUrl || typeof dataUrl !== "string") return dataUrl;
   
@@ -26,8 +26,8 @@ export async function compressDataUrl(
     return dataUrl;
   }
 
-  // Vector graphics or already small data URLs (< 35KB) don't need re-compression
-  if (dataUrl.startsWith("data:image/svg+xml") || dataUrl.length < 35000) {
+  // Vector graphics (SVG) or already reasonable data URLs (< 80KB) don't need re-compression
+  if (dataUrl.startsWith("data:image/svg+xml") || dataUrl.length < 80000) {
     return dataUrl;
   }
 
@@ -46,7 +46,13 @@ export async function compressDataUrl(
           return;
         }
 
-        // Scale down to fit maxDimension while preserving aspect ratio
+        // If image already fits comfortably within dimensions and is not gigantic in bytes, keep pristine
+        if (width <= maxDimension && height <= maxDimension && dataUrl.length < 350000) {
+          resolve(dataUrl);
+          return;
+        }
+
+        // Scale down gracefully to maxDimension while preserving aspect ratio
         if (width > maxDimension || height > maxDimension) {
           if (width > height) {
             height = Math.round((height * maxDimension) / width);
@@ -66,37 +72,60 @@ export async function compressDataUrl(
           return;
         }
 
-        // Fill background with white for transparency safety
-        ctx.fillStyle = "#FFFFFF";
-        ctx.fillRect(0, 0, width, height);
+        // Enable high-quality image smoothing for crisp downscaling
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = "high";
+
+        const isPng = dataUrl.startsWith("data:image/png");
+        
+        // If not PNG or if exporting to JPEG, provide neutral clean canvas
+        if (!isPng) {
+          ctx.fillStyle = "#FFFFFF";
+          ctx.fillRect(0, 0, width, height);
+        }
+
         ctx.drawImage(img, 0, 0, width, height);
 
-        let compressed = canvas.toDataURL("image/jpeg", quality);
+        // Try WebP first for optimal clarity-to-size ratio, fallback to JPEG
+        let optimized = "";
+        try {
+          optimized = canvas.toDataURL("image/webp", quality);
+          if (!optimized.startsWith("data:image/webp")) {
+            // Browser doesn't support WebP export, use JPEG
+            optimized = canvas.toDataURL("image/jpeg", quality);
+          }
+        } catch {
+          optimized = canvas.toDataURL("image/jpeg", quality);
+        }
 
-        // If still larger than 250KB, step down further
-        if (compressed.length > 250000) {
-          const smallerCanvas = document.createElement("canvas");
-          const smallerWidth = Math.round(width * 0.75);
-          const smallerHeight = Math.round(height * 0.75);
-          smallerCanvas.width = smallerWidth;
-          smallerCanvas.height = smallerHeight;
-          const sCtx = smallerCanvas.getContext("2d");
+        // Only apply a secondary pass if image exceeds safe single-field budget (> 450KB)
+        if (optimized.length > 450000) {
+          const secondaryCanvas = document.createElement("canvas");
+          const sWidth = Math.round(width * 0.85);
+          const sHeight = Math.round(height * 0.85);
+          secondaryCanvas.width = sWidth;
+          secondaryCanvas.height = sHeight;
+          const sCtx = secondaryCanvas.getContext("2d");
           if (sCtx) {
-            sCtx.fillStyle = "#FFFFFF";
-            sCtx.fillRect(0, 0, smallerWidth, smallerHeight);
-            sCtx.drawImage(img, 0, 0, smallerWidth, smallerHeight);
-            compressed = smallerCanvas.toDataURL("image/jpeg", 0.65);
+            sCtx.imageSmoothingEnabled = true;
+            sCtx.imageSmoothingQuality = "high";
+            if (!isPng) {
+              sCtx.fillStyle = "#FFFFFF";
+              sCtx.fillRect(0, 0, sWidth, sHeight);
+            }
+            sCtx.drawImage(img, 0, 0, sWidth, sHeight);
+            optimized = secondaryCanvas.toDataURL("image/jpeg", 0.82);
           }
         }
 
-        // Return the smaller of original or compressed
-        if (compressed.length < dataUrl.length) {
-          resolve(compressed);
+        // Return the smaller of original or optimized
+        if (optimized.length < dataUrl.length) {
+          resolve(optimized);
         } else {
           resolve(dataUrl);
         }
       } catch (e) {
-        console.warn("Canvas image compression failed, using original:", e);
+        console.warn("Canvas image optimization failed, using original:", e);
         resolve(dataUrl);
       }
     };
@@ -106,12 +135,12 @@ export async function compressDataUrl(
 }
 
 /**
- * Reads an uploaded file and returns an optimized, compressed Base64 data URL.
+ * Reads an uploaded file and returns an optimized, high-fidelity Base64 data URL.
  */
 export async function processFileToCompressedDataUrl(
   file: File,
-  maxDimension = 720,
-  quality = 0.72
+  maxDimension = 1600,
+  quality = 0.88
 ): Promise<string> {
   if (!file || !file.type.startsWith("image/")) {
     throw new Error("Provided file is not a valid image");
@@ -137,30 +166,29 @@ export async function processFileToCompressedDataUrl(
 }
 
 /**
- * Sanitizes and compresses an Artifact payload before writing to Firestore.
- * Enforces strict document budget to stay well below the 1MB Firestore limit.
+ * Sanitizes and optimizes an Artifact payload before writing to Firestore.
+ * Preserves high quality while staying within the 1MB Firestore document budget.
  */
 export async function sanitizeArtifactForFirestore(artifact: Artifact): Promise<Artifact> {
   const result: Artifact = { ...artifact };
 
-  // Compress graphic if it's a data URL
+  // Optimize graphic if it's a data URL (High-definition 1600px @ 88% quality)
   if (result.graphic && result.graphic.startsWith("data:image/")) {
-    result.graphic = await compressDataUrl(result.graphic, 720, 0.72);
+    result.graphic = await compressDataUrl(result.graphic, 1600, 0.88);
   }
 
-  // Compress thumbnailImage if it's a data URL
+  // Optimize thumbnailImage if it's a data URL (Crisp 640px @ 85% quality)
   if (result.thumbnailImage && result.thumbnailImage.startsWith("data:image/")) {
     if (result.thumbnailImage === artifact.graphic && result.graphic) {
       result.thumbnailImage = result.graphic;
     } else {
-      result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 400, 0.70);
+      result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 640, 0.85);
     }
   }
 
-  // Compress images array
+  // Optimize images array
   if (Array.isArray(result.images) && result.images.length > 0) {
     const optimizedImages: string[] = [];
-    // Limit to max 6 images per artifact to guarantee small document size
     const imageCandidates = result.images.slice(0, 6);
     
     for (const img of imageCandidates) {
@@ -168,7 +196,7 @@ export async function sanitizeArtifactForFirestore(artifact: Artifact): Promise<
       if (img === artifact.graphic && result.graphic) {
         optimizedImages.push(result.graphic);
       } else if (img.startsWith("data:image/")) {
-        const compressed = await compressDataUrl(img, 720, 0.72);
+        const compressed = await compressDataUrl(img, 1600, 0.88);
         optimizedImages.push(compressed);
       } else {
         optimizedImages.push(img);
@@ -181,16 +209,16 @@ export async function sanitizeArtifactForFirestore(artifact: Artifact): Promise<
   // Emergency safety check: verify estimated document size
   try {
     const rawPayload = JSON.stringify(result);
-    if (rawPayload.length > 700000) {
-      // Document is approaching 700KB, perform ultra-compression
+    if (rawPayload.length > 850000) {
+      // Document is approaching 850KB, apply targeted reduction
       if (result.graphic && result.graphic.startsWith("data:image/")) {
-        result.graphic = await compressDataUrl(result.graphic, 480, 0.55);
+        result.graphic = await compressDataUrl(result.graphic, 1200, 0.80);
       }
       if (result.thumbnailImage && result.thumbnailImage.startsWith("data:image/")) {
-        result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 300, 0.50);
+        result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 500, 0.78);
       }
-      if (Array.isArray(result.images) && result.images.length > 2) {
-        result.images = result.images.slice(0, 2);
+      if (Array.isArray(result.images) && result.images.length > 3) {
+        result.images = result.images.slice(0, 3);
       }
     }
   } catch (e) {
@@ -201,13 +229,13 @@ export async function sanitizeArtifactForFirestore(artifact: Artifact): Promise<
 }
 
 /**
- * Sanitizes and compresses a Specimen payload before writing to Firestore.
+ * Sanitizes and optimizes a Specimen payload before writing to Firestore.
  */
 export async function sanitizeSpecimenForFirestore(specimen: Specimen): Promise<Specimen> {
   const result: Specimen = { ...specimen };
 
   if (result.thumbnailImage && result.thumbnailImage.startsWith("data:image/")) {
-    result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 400, 0.70);
+    result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 640, 0.85);
   }
 
   if (Array.isArray(result.images) && result.images.length > 0) {
@@ -217,7 +245,7 @@ export async function sanitizeSpecimenForFirestore(specimen: Specimen): Promise<
     for (const img of imageCandidates) {
       if (!img) continue;
       if (img.startsWith("data:image/")) {
-        const compressed = await compressDataUrl(img, 720, 0.72);
+        const compressed = await compressDataUrl(img, 1600, 0.88);
         optimizedImages.push(compressed);
       } else {
         optimizedImages.push(img);
@@ -230,13 +258,13 @@ export async function sanitizeSpecimenForFirestore(specimen: Specimen): Promise<
 }
 
 /**
- * Sanitizes and compresses a Product payload before writing to Firestore.
+ * Sanitizes and optimizes a Product payload before writing to Firestore.
  */
 export async function sanitizeProductForFirestore(product: Product): Promise<Product> {
   const result: Product = { ...product };
 
   if (result.thumbnailImage && result.thumbnailImage.startsWith("data:image/")) {
-    result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 400, 0.70);
+    result.thumbnailImage = await compressDataUrl(result.thumbnailImage, 640, 0.85);
   }
 
   if (Array.isArray(result.images) && result.images.length > 0) {
@@ -246,7 +274,7 @@ export async function sanitizeProductForFirestore(product: Product): Promise<Pro
     for (const img of imageCandidates) {
       if (!img) continue;
       if (img.startsWith("data:image/")) {
-        const compressed = await compressDataUrl(img, 720, 0.72);
+        const compressed = await compressDataUrl(img, 1600, 0.88);
         optimizedImages.push(compressed);
       } else {
         optimizedImages.push(img);

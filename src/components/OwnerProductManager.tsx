@@ -267,10 +267,10 @@ export default function OwnerProductManager({
     const fileList: File[] = (Array.from(files) as File[]).filter(f => f.type.startsWith("image/"));
     for (const file of fileList) {
       try {
-        const compressed = await processFileToCompressedDataUrl(file, 720, 0.72);
+        const compressed = await processFileToCompressedDataUrl(file, 1600, 0.88);
         setImages(prev => [...prev, compressed]);
       } catch (err) {
-        console.error("Error compressing product image:", err);
+        console.error("Error optimizing product image:", err);
       }
     }
 
