@@ -43,20 +43,20 @@ const SPECIMEN_OFFSETS = [
   { y: 12, rotate: 0.8 },
 ];
 
-// Brutalist coordinate offsets for orbiting specimen plates (Enlarged, Clear & Vertically Staggered)
+// Brutalist coordinate offsets for orbiting specimen plates (Clean spacing with subtle overlap)
 const SPECIMEN_SCATTER_OFFSETS = [
-  { x: "-195px", y: "10px", rotate: -4.2 },
-  { x: "103%", y: "70px", rotate: 3.8 },
-  { x: "-190px", y: "140px", rotate: 2.5 },
-  { x: "103%", y: "210px", rotate: -3.2 },
-  { x: "-185px", y: "280px", rotate: -2.2 },
-  { x: "103%", y: "350px", rotate: 3.5 },
-  { x: "-195px", y: "420px", rotate: -3.0 },
-  { x: "103%", y: "490px", rotate: 2.8 },
-  { x: "-190px", y: "560px", rotate: -2.5 },
-  { x: "103%", y: "630px", rotate: 3.2 },
-  { x: "-185px", y: "700px", rotate: -2.0 },
-  { x: "103%", y: "770px", rotate: 2.2 },
+  { x: "-195px", y: "-4px", rotate: -3.5 },
+  { x: "103%", y: "24px", rotate: 3.2 },
+  { x: "-190px", y: "196px", rotate: 2.2 },
+  { x: "103%", y: "224px", rotate: -2.6 },
+  { x: "-185px", y: "396px", rotate: -1.8 },
+  { x: "103%", y: "424px", rotate: 2.4 },
+  { x: "-195px", y: "596px", rotate: -2.2 },
+  { x: "103%", y: "624px", rotate: 2.0 },
+  { x: "-190px", y: "796px", rotate: -1.8 },
+  { x: "103%", y: "824px", rotate: 1.8 },
+  { x: "-185px", y: "996px", rotate: -1.5 },
+  { x: "103%", y: "1024px", rotate: 1.5 },
 ];
 
 export default function ArtifactOverlappingCollection({
@@ -1033,7 +1033,7 @@ export default function ArtifactOverlappingCollection({
                             animate={{ opacity: 1, scale: 1, rotate: scatter.rotate }}
                             exit={{ opacity: 0, scale: 0.88 }}
                             transition={{ duration: 0.18, delay: specIdx * 0.02 }}
-                            whileHover={{ scale: 1.04, transition: { duration: 0.12 } }}
+                            whileHover={{ scale: 1.04, zIndex: 60, transition: { duration: 0.12 } }}
                             whileTap={{ scale: 0.98 }}
                             onMouseEnter={(e) => {
                               e.stopPropagation();
