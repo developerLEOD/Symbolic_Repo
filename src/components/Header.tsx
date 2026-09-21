@@ -29,9 +29,43 @@ export default function Header({
   const [categories, setCategories] = useState<Category[]>([]);
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<"corpus" | "collections" | "manifestoes" | null>(null);
+  const [isProductHovered, setIsProductHovered] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Hide header when hovering over any product card, specimen plate, or artifact preview
+  useEffect(() => {
+    const isProductElement = (el: EventTarget | null): boolean => {
+      if (!el || !(el instanceof Element)) return false;
+      return Boolean(
+        el.closest(
+          "[data-product-card], [data-preview-element], [data-preview-canvas], [data-specimen-card], .product-card, .artifact-card, .specimen-card, .featured-product"
+        )
+      );
+    };
+
+    const handleMouseOver = (e: MouseEvent) => {
+      if (isProductElement(e.target)) {
+        setIsProductHovered(true);
+      }
+    };
+
+    const handleMouseOut = (e: MouseEvent) => {
+      if (e.relatedTarget && isProductElement(e.relatedTarget)) {
+        return;
+      }
+      setIsProductHovered(false);
+    };
+
+    window.addEventListener("mouseover", handleMouseOver, { passive: true });
+    window.addEventListener("mouseout", handleMouseOut, { passive: true });
+
+    return () => {
+      window.removeEventListener("mouseover", handleMouseOver);
+      window.removeEventListener("mouseout", handleMouseOut);
+    };
+  }, []);
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -126,8 +160,29 @@ export default function Header({
     navigate(path);
   };
 
+  const isHidden = isProductHovered && !isMenuOpen && !openDropdown;
+
   return (
-    <header className={`fixed top-0 left-0 w-full z-50 transition-all duration-300 bg-brand-bg/85 backdrop-blur-md border-b-2 border-brand-text ${scrolled ? 'shadow-[0_4px_0px_#050505]' : ''}`}>
+    <motion.header 
+      initial={false}
+      animate={
+        isHidden
+          ? { y: "-108%", opacity: 0, scale: 0.98 }
+          : { y: "0%", opacity: 1, scale: 1 }
+      }
+      transition={{
+        type: "spring",
+        stiffness: 480,
+        damping: isHidden ? 32 : 23,
+        mass: 0.75,
+      }}
+      style={{
+        pointerEvents: isHidden ? "none" : "auto",
+      }}
+      className={`fixed top-0 left-0 w-full z-50 bg-brand-bg/85 backdrop-blur-md border-b-2 border-brand-text origin-top ${
+        scrolled ? 'shadow-[0_4px_0px_#050505]' : ''
+      }`}
+    >
       <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 transition-all duration-300 ${scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
         {/* Left: Prominent Brand Identity & Large Logo */}
         <div className="flex items-center shrink-0">
@@ -493,6 +548,6 @@ export default function Header({
           </motion.div>
         )}
       </AnimatePresence>
-    </header>
+    </motion.header>
   );
 }
