@@ -120,6 +120,123 @@ export function getMediumConfig(mediumName: string): SpecimenMediumConfig {
   };
 }
 
+export interface ArchitectureSpecItem {
+  label: string;
+  value: string;
+}
+
+/**
+ * Returns authentic, medium-specific physical architecture specifications
+ * for any given specimen (wear, headwear, vessels, carry, etc.).
+ */
+export function getSpecimenArchitectureSpecs(spec?: Specimen | null): ArchitectureSpecItem[] {
+  if (!spec) {
+    return [
+      { label: "MATERIAL:", value: "400 GSM Combed Organic Cotton" },
+      { label: "WEIGHT / GAUGE:", value: "400 GSM" },
+      { label: "EDITION / BATCH:", value: "050 SPECIMENS" },
+      { label: "FINISH & COLOR:", value: "Charcoal Black" }
+    ];
+  }
+
+  const mediumLower = (spec.medium || "").toLowerCase();
+  const catLower = (spec.mediumCategory || "").toLowerCase();
+
+  // 1. Vessels / Ceramic Stoneware Mugs
+  if (catLower === "vessels" || mediumLower.includes("mug") || mediumLower.includes("vessel") || mediumLower.includes("ceramic") || mediumLower.includes("cup")) {
+    const materialVal = spec.material || "1,280°C High-Fired Dense Stoneware Clay";
+    const capacityVal = spec.capacity 
+      ? `${spec.capacity}${spec.weight ? ` // ${spec.weight}` : " (420g Heavy Base)"}`
+      : (spec.weight ? `${spec.weight} // 380ml (13oz)` : "380ml / 13oz (420g)");
+    const editionVal = spec.edition || "050 SPECIMENS";
+    const finishVal = spec.finish || (spec.color ? `${spec.color} Mineral Glaze` : "Matte Basalt Mineral Glaze");
+
+    return [
+      { label: "MATERIAL:", value: materialVal },
+      { label: "CAPACITY / WEIGHT:", value: capacityVal },
+      { label: "EDITION / BATCH:", value: editionVal },
+      { label: "GLAZE & FINISH:", value: finishVal }
+    ];
+  }
+
+  // 2. Headwear / P-Caps / Structured Caps
+  if (catLower === "headwear" || mediumLower.includes("cap") || mediumLower.includes("hat") || mediumLower.includes("beanie")) {
+    const materialVal = spec.material || "100% Heavy Brushed Cotton Twill";
+    const weightVal = spec.weight || "280 GSM Structured 6-Panel Crown";
+    const editionVal = spec.edition || "050 SPECIMENS";
+    const finishVal = spec.color 
+      ? `${spec.color} // Brass Tension Clasp` 
+      : "Washed Twill // Matte Brass Clasp";
+
+    return [
+      { label: "MATERIAL:", value: materialVal },
+      { label: "WEIGHT & STRUCTURE:", value: weightVal },
+      { label: "EDITION / BATCH:", value: editionVal },
+      { label: "FINISH & CLOSURE:", value: finishVal }
+    ];
+  }
+
+  // 3. Hoodie / Heavyweight Pullover
+  if (mediumLower.includes("hoodie") || mediumLower.includes("sweater") || mediumLower.includes("pullover") || mediumLower.includes("jacket") || mediumLower.includes("fleece")) {
+    const materialVal = spec.material || "450 GSM Double-Faced French Terry";
+    const weightVal = spec.weight || "450 GSM Heavyweight Fleece";
+    const editionVal = spec.edition || "050 SPECIMENS";
+    const colorVal = spec.color || "Washed Carbon Black";
+
+    return [
+      { label: "MATERIAL:", value: materialVal },
+      { label: "WEIGHT / GAUGE:", value: weightVal },
+      { label: "EDITION / BATCH:", value: editionVal },
+      { label: "FINISH & COLOR:", value: colorVal }
+    ];
+  }
+
+  // 4. Full Sleeve / Interlock Long Sleeve
+  if (mediumLower.includes("sleeve") || mediumLower.includes("thermal") || mediumLower.includes("long sleeve") || mediumLower.includes("full-sleeve")) {
+    const materialVal = spec.material || "320 GSM Combed Interlock Cotton";
+    const weightVal = spec.weight || "320 GSM Interlock Thermal";
+    const editionVal = spec.edition || "050 SPECIMENS";
+    const colorVal = spec.color || "Raw Natural Ecru";
+
+    return [
+      { label: "MATERIAL:", value: materialVal },
+      { label: "WEIGHT / GAUGE:", value: weightVal },
+      { label: "EDITION / BATCH:", value: editionVal },
+      { label: "FINISH & COLOR:", value: colorVal }
+    ];
+  }
+
+  // 5. Carry / Tote Bags / Field Carrier
+  if (catLower === "carry" || mediumLower.includes("bag") || mediumLower.includes("tote") || mediumLower.includes("carrier")) {
+    const materialVal = spec.material || "18oz Heavy Industrial Cotton Canvas";
+    const weightVal = spec.weight || "18oz (510 GSM) Reinforced Weave";
+    const editionVal = spec.edition || "050 SPECIMENS";
+    const finishVal = spec.dimensions 
+      ? `${spec.color || "Natural Canvas"} // ${spec.dimensions}` 
+      : (spec.color || "Natural Canvas / Raw Black Handles");
+
+    return [
+      { label: "MATERIAL:", value: materialVal },
+      { label: "DENSITY / WEAVE:", value: weightVal },
+      { label: "EDITION / BATCH:", value: editionVal },
+      { label: "FINISH & FORMAT:", value: finishVal }
+    ];
+  }
+
+  // 6. Default / T-Shirt (Drop Shoulder / Heavyweight Wear)
+  const materialVal = spec.material || "400 GSM 100% Combed Heavyweight Cotton";
+  const weightVal = spec.weight || "400 GSM Archival Jersey";
+  const editionVal = spec.edition || "050 SPECIMENS";
+  const colorVal = spec.color || "Charcoal Black";
+
+  return [
+    { label: "MATERIAL:", value: materialVal },
+    { label: "WEIGHT / GAUGE:", value: weightVal },
+    { label: "EDITION / BATCH:", value: editionVal },
+    { label: "FINISH & COLOR:", value: colorVal }
+  ];
+}
+
 /// Canonical Pre-curated Flagship Artifacts and Specimens
 export const SEED_SPECIMENS: Specimen[] = [
   // --- SUMUD SPECIMENS ---

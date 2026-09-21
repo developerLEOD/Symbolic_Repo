@@ -19,7 +19,7 @@ import {
   MessageCircle
 } from "lucide-react";
 import { Artifact, Specimen, CartItem, Product, ProductVariant } from "../types";
-import { calculateArtifactSetPrice } from "../lib/artifactService";
+import { calculateArtifactSetPrice, getSpecimenArchitectureSpecs } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
 import { buildWhatsAppProductInquiry, getWhatsAppUrl, STUDIO_WHATSAPP_LOCAL_DISPLAY } from "../lib/whatsappService";
 
@@ -609,19 +609,13 @@ export default function ArtifactAcquisitionPage({
 
                   {/* Material & Physical DNA Card */}
                   <div className="border border-brand-text/30 bg-brand-surface p-4 shadow-[3px_3px_0px_#050505] text-[9.5px] uppercase space-y-1.5">
-                    <span className="text-[8px] font-black text-brand-text/60 block">PHYSICAL MANIFESTATION ATTRIBUTES:</span>
-                    <div className="flex justify-between border-b border-brand-text/10 pb-1">
-                      <span className="text-brand-text/60">MATERIAL COMPOSITION:</span>
-                      <span className="font-black text-brand-text">{activeSpecimen.material || "CANONICAL FABRIC"}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-brand-text/10 pb-1">
-                      <span className="text-brand-text/60">WEIGHT / DENSITY:</span>
-                      <span className="font-black text-brand-text">{activeSpecimen.weight || "HEAVYWEIGHT"}</span>
-                    </div>
-                    <div className="flex justify-between border-b border-brand-text/10 pb-1">
-                      <span className="text-brand-text/60">BATCH / EDITION:</span>
-                      <span className="font-black text-brand-text">{activeSpecimen.edition || "LIMITED ARCHIVE RUN"}</span>
-                    </div>
+                    <span className="text-[8px] font-black text-brand-text/60 block">PHYSICAL MANIFESTATION ATTRIBUTES // {activeSpecimen.medium}:</span>
+                    {getSpecimenArchitectureSpecs(activeSpecimen).map((specItem, idx) => (
+                      <div key={idx} className="flex justify-between border-b border-brand-text/10 pb-1">
+                        <span className="text-brand-text/60">{specItem.label}</span>
+                        <span className="font-black text-brand-text">{specItem.value}</span>
+                      </div>
+                    ))}
                   </div>
                 </div>
 

@@ -19,7 +19,7 @@ import {
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Artifact, Specimen, CartItem } from "../types";
-import { calculateArtifactSetPrice } from "../lib/artifactService";
+import { calculateArtifactSetPrice, getSpecimenArchitectureSpecs } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
 import { useAuth } from "../lib/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
@@ -481,25 +481,15 @@ export default function ArtifactDetail({
                   {/* Tactile Material Specifications Ledger */}
                   <div className="border border-brand-text/30 bg-brand-bg p-3.5 space-y-2.5 text-[9.5px] font-mono uppercase">
                     <span className="text-[8px] font-black text-brand-accent block border-b border-brand-text/20 pb-1">
-                      PHYSICAL ARCHITECTURE SPECIFICATIONS //
+                      PHYSICAL ARCHITECTURE SPECIFICATIONS // {activeSpecimen.medium}
                     </span>
                     <div className="grid grid-cols-2 gap-3">
-                      <div>
-                        <span className="text-brand-text/50 block text-[7.5px] font-bold">MATERIAL:</span>
-                        <span className="font-black text-brand-text block">{activeSpecimen.material || "Heavy Cotton Jersey"}</span>
-                      </div>
-                      <div>
-                        <span className="text-brand-text/50 block text-[7.5px] font-bold">WEIGHT / GAUGE:</span>
-                        <span className="font-black text-brand-text block">{activeSpecimen.weight || "400 GSM"}</span>
-                      </div>
-                      <div>
-                        <span className="text-brand-text/50 block text-[7.5px] font-bold">EDITION / BATCH:</span>
-                        <span className="font-black text-brand-text block">{activeSpecimen.edition || "050 SPECIMENS"}</span>
-                      </div>
-                      <div>
-                        <span className="text-brand-text/50 block text-[7.5px] font-bold">FINISH & COLOR:</span>
-                        <span className="font-black text-brand-text block">{activeSpecimen.color || "Standard"}</span>
-                      </div>
+                      {getSpecimenArchitectureSpecs(activeSpecimen).map((specItem, idx) => (
+                        <div key={idx}>
+                          <span className="text-brand-text/50 block text-[7.5px] font-bold">{specItem.label}</span>
+                          <span className="font-black text-brand-text block">{specItem.value}</span>
+                        </div>
+                      ))}
                     </div>
                   </div>
 
