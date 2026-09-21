@@ -24,16 +24,12 @@
   }
 }
 
-/* Custom Cursor Hide Native Cursor on Fine Pointer Devices */
+/* Custom Cursor: Forcefully hide native cursor on all elements for fine pointer devices */
 @media (hover: hover) and (pointer: fine) {
+  html.custom-cursor-active,
+  html.custom-cursor-active *,
   body.custom-cursor-active,
-  body.custom-cursor-active a,
-  body.custom-cursor-active button,
-  body.custom-cursor-active input,
-  body.custom-cursor-active select,
-  body.custom-cursor-active textarea,
-  body.custom-cursor-active [role="button"],
-  body.custom-cursor-active .cursor-pointer {
+  body.custom-cursor-active * {
     cursor: none !important;
   }
 }

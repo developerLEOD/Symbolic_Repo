@@ -34,6 +34,7 @@ export default function CustomCursor() {
     if (!mediaQuery.matches) return;
 
     setIsVisible(true);
+    document.documentElement.classList.add("custom-cursor-active");
     document.body.classList.add("custom-cursor-active");
 
     const checkOrangeBackground = (el: HTMLElement | null): boolean => {
@@ -206,6 +207,7 @@ export default function CustomCursor() {
     resetIdleTimer();
 
     return () => {
+      document.documentElement.classList.remove("custom-cursor-active");
       document.body.classList.remove("custom-cursor-active");
       window.removeEventListener("mousemove", onMouseMove);
       window.removeEventListener("mousedown", onMouseDown);
