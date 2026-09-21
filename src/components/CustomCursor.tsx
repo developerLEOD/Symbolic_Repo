@@ -6,6 +6,7 @@ interface ClickBurst {
   x: number;
   y: number;
   color: string;
+  isCircle: boolean;
 }
 
 interface HoverBounds {
@@ -37,17 +38,50 @@ export default function CustomCursor() {
 
     const checkOrangeBackground = (el: HTMLElement | null): boolean => {
       let curr = el;
-      while (curr && curr !== document.body) {
-        const bg = window.getComputedStyle(curr).backgroundColor;
-        if (
-          bg.includes("255, 69, 0") ||
-          bg.includes("224, 64, 6") ||
-          curr.classList.contains("bg-brand-accent") ||
-          curr.classList.contains("bg-[#ff4500]") ||
-          curr.classList.contains("bg-[#e04006]")
-        ) {
+      while (curr && curr !== document.body && curr !== document.documentElement) {
+        // 1. Check class names
+        const classStr = curr.className || "";
+        if (typeof classStr === "string") {
+          if (
+            classStr.includes("bg-brand-accent") ||
+            classStr.includes("bg-[#ff4500]") ||
+            classStr.includes("bg-[#e04006]") ||
+            classStr.includes("bg-[#ea580c]") ||
+            classStr.includes("bg-[#f97316]") ||
+            classStr.includes("bg-orange-")
+          ) {
+            return true;
+          }
+        }
+
+        // 2. Check dataset attributes
+        if (curr.dataset?.bg === "orange" || curr.dataset?.accent === "orange") {
           return true;
         }
+
+        // 3. Check computed background color
+        const style = window.getComputedStyle(curr);
+        const bg = style.backgroundColor;
+        if (bg && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)") {
+          const match = bg.match(/rgba?\((\d+),\s*(\d+),\s*(\d+)(?:,\s*([\d.]+))?\)/);
+          if (match) {
+            const r = parseInt(match[1], 10);
+            const g = parseInt(match[2], 10);
+            const b = parseInt(match[3], 10);
+            const a = match[4] !== undefined ? parseFloat(match[4]) : 1;
+
+            if (a > 0.2) {
+              // Check if color is in the vibrant orange / red-orange range (e.g. #ff4500 rgb(255, 69, 0))
+              if (
+                (r > 190 && g >= 25 && g <= 150 && b <= 75) ||
+                (r > 215 && g >= 40 && g <= 170 && b <= 90)
+              ) {
+                return true;
+              }
+            }
+          }
+        }
+
         curr = curr.parentElement;
       }
       return false;
@@ -85,14 +119,11 @@ export default function CustomCursor() {
       setIsOverOrange(overOrange);
 
       // 1. Direct action/control elements: buttons, links, inputs, selects, textareas, role="button", data-action, data-cursor.
-      // These represent "other-than-preview elements of products" (e.g. acquire buttons, angle selectors,
-      // specimen switchers, tabs, filters, links, and dossiers controls).
       const directAction = target.closest(
         "button, a, input, select, textarea, [role='button'], [data-action], [data-cursor], [data-collection-filter], [data-view-mode]"
       ) as HTMLElement | null;
 
       if (directAction) {
-        // If this element itself is not a whole product preview card, snap to its bounding limits!
         if (!isProductPreviewElement(directAction)) {
           const rect = directAction.getBoundingClientRect();
           const padding = 6;
@@ -110,14 +141,12 @@ export default function CustomCursor() {
       // 2. Check general clickable containers (.cursor-pointer)
       const clickableContainer = target.closest(".cursor-pointer") as HTMLElement | null;
       if (clickableContainer) {
-        // If the container or target is a product preview element (e.g. card container or artwork canvas), DO NOT SNAP!
         if (isProductPreviewElement(clickableContainer) || isProductPreviewElement(target)) {
           setHoverBounds(null);
           setIsHovered(false);
           return;
         }
 
-        // For other compact interactive elements, snap to them
         const rect = clickableContainer.getBoundingClientRect();
         if (rect.width <= 320 && rect.height <= 180) {
           const padding = 6;
@@ -132,7 +161,7 @@ export default function CustomCursor() {
         }
       }
 
-      // 3. Default: not hovering over any snapping element
+      // 3. Default: free floating
       setHoverBounds(null);
       setIsHovered(false);
     };
@@ -140,8 +169,16 @@ export default function CustomCursor() {
     const onMouseDown = (e: MouseEvent) => {
       setIsClicked(true);
       resetIdleTimer();
-      const currentColor = isOverOrange ? "#050505" : "#ff4500";
-      const newBurst = { id: Date.now(), x: e.clientX, y: e.clientY, color: currentColor };
+      const target = e.target as HTMLElement | null;
+      const overOrange = checkOrangeBackground(target);
+      const currentColor = overOrange ? "#ffffff" : "#ff4500";
+      const newBurst: ClickBurst = {
+        id: Date.now(),
+        x: e.clientX,
+        y: e.clientY,
+        color: currentColor,
+        isCircle: overOrange,
+      };
       setBursts((prev) => [...prev.slice(-2), newBurst]);
     };
 
@@ -177,7 +214,7 @@ export default function CustomCursor() {
       document.removeEventListener("mouseenter", onMouseEnter);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, [isOverOrange]);
+  }, []);
 
   useEffect(() => {
     if (bursts.length === 0) return;
@@ -189,53 +226,52 @@ export default function CustomCursor() {
 
   if (!isVisible) return null;
 
-  const cursorColorClass = isOverOrange ? "border-[#050505]" : "border-[#ff4500]";
-  const bgFillClass = isOverOrange ? "bg-[#050505]" : "bg-[#ff4500]";
+  const isSnapping = isHovered && hoverBounds !== null;
+  const targetX = isSnapping ? hoverBounds.x : position.x;
+  const targetY = isSnapping ? hoverBounds.y : position.y;
+  
+  // Standard dot size when free-floating
+  const defaultSize = 10;
+  const targetWidth = isSnapping ? hoverBounds.width : defaultSize;
+  const targetHeight = isSnapping ? hoverBounds.height : defaultSize;
 
-  // Determine current position and size
-  const targetX = isHovered && hoverBounds ? hoverBounds.x : position.x;
-  const targetY = isHovered && hoverBounds ? hoverBounds.y : position.y;
-  const targetWidth = isHovered && hoverBounds ? hoverBounds.width : 12;
-  const targetHeight = isHovered && hoverBounds ? hoverBounds.height : 12;
-
-  // Scale value: if idle and not hovering, pulse smoothly between 0.9 and 1.1
+  // Scale animation for click / idle
   const scaleAnimation = isClicked
     ? 0.75
     : isIdle && !isHovered
-    ? [0.9, 1.1, 0.9]
+    ? [0.85, 1.15, 0.85]
     : 1;
 
-  const scaleTransition = isIdle && !isHovered && !isClicked
-    ? {
-        repeat: Infinity,
-        duration: 2.2,
-        ease: "easeInOut",
-      }
-    : {
-        type: "spring",
-        stiffness: 520,
-        damping: 28,
-        mass: 0.1,
-      };
+  const springTransition = {
+    type: "spring",
+    stiffness: 550,
+    damping: 30,
+    mass: 0.1,
+  };
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden select-none">
-      {/* Click Burst Frame */}
+      {/* Click Ripple / Burst */}
       <AnimatePresence>
         {bursts.map((b) => (
           <motion.div
             key={b.id}
-            style={{ left: b.x, top: b.y, borderColor: b.color }}
-            initial={{ opacity: 1, scale: 0.5, x: "-50%", y: "-50%" }}
-            animate={{ opacity: 0, scale: 1.8, x: "-50%", y: "-50%" }}
+            style={{
+              left: b.x,
+              top: b.y,
+              borderColor: b.color,
+              borderRadius: b.isCircle ? "50%" : "0px",
+            }}
+            initial={{ opacity: 0.9, scale: 0.6, x: "-50%", y: "-50%" }}
+            animate={{ opacity: 0, scale: 2.2, x: "-50%", y: "-50%" }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.35, ease: "easeOut" }}
-            className="absolute w-8 h-8 border-2 bg-transparent pointer-events-none"
+            transition={{ duration: 0.3, ease: "easeOut" }}
+            className="absolute w-6 h-6 border-[1.5px] bg-transparent pointer-events-none"
           />
         ))}
       </AnimatePresence>
 
-      {/* Main Cursor Reticle Frame Snapping to Hovered Element Bounds */}
+      {/* Main Cursor Frame: Snaps with 4 Corner Brackets on Hover, Clean Dot when Free-Floating */}
       <motion.div
         animate={{
           left: targetX,
@@ -246,57 +282,69 @@ export default function CustomCursor() {
           height: targetHeight,
           scale: scaleAnimation,
         }}
-        transition={scaleTransition}
+        transition={{
+          left: springTransition,
+          top: springTransition,
+          width: springTransition,
+          height: springTransition,
+          scale: isIdle && !isHovered && !isClicked
+            ? { repeat: Infinity, duration: 2.2, ease: "easeInOut" }
+            : springTransition,
+        }}
         className="absolute pointer-events-none flex items-center justify-center bg-transparent"
       >
-        {/* Top-Left Corner Bracket */}
-        <motion.span
-          animate={{
-            width: isHovered ? 10 : 6,
-            height: isHovered ? 10 : 6,
-          }}
-          transition={{ duration: 0.15 }}
-          className={`absolute top-0 left-0 border-t-2 border-l-2 transition-colors duration-150 ${cursorColorClass}`}
-        />
-
-        {/* Top-Right Corner Bracket */}
-        <motion.span
-          animate={{
-            width: isHovered ? 10 : 6,
-            height: isHovered ? 10 : 6,
-          }}
-          transition={{ duration: 0.15 }}
-          className={`absolute top-0 right-0 border-t-2 border-r-2 transition-colors duration-150 ${cursorColorClass}`}
-        />
-
-        {/* Bottom-Left Corner Bracket */}
-        <motion.span
-          animate={{
-            width: isHovered ? 10 : 6,
-            height: isHovered ? 10 : 6,
-          }}
-          transition={{ duration: 0.15 }}
-          className={`absolute bottom-0 left-0 border-b-2 border-l-2 transition-colors duration-150 ${cursorColorClass}`}
-        />
-
-        {/* Bottom-Right Corner Bracket */}
-        <motion.span
-          animate={{
-            width: isHovered ? 10 : 6,
-            height: isHovered ? 10 : 6,
-          }}
-          transition={{ duration: 0.15 }}
-          className={`absolute bottom-0 right-0 border-b-2 border-r-2 transition-colors duration-150 ${cursorColorClass}`}
-        />
-
-        {/* Center Solid Fill - visible when not hovering, dissolves on hover */}
+        {/* Free-Floating Dot: Square when orange/black background, Circle when on orange field */}
         <motion.div
           animate={{
-            scale: isHovered ? 0 : 1,
-            opacity: isHovered ? 0 : 1,
+            opacity: isSnapping ? 0 : 1,
+            scale: isSnapping ? 0 : 1,
+            borderRadius: isOverOrange ? "50%" : "0px",
+            backgroundColor: isOverOrange ? "#ffffff" : "#ff4500",
           }}
-          transition={{ duration: 0.12, ease: "easeInOut" }}
-          className={`w-full h-full transition-colors duration-150 ${bgFillClass}`}
+          transition={{
+            opacity: { duration: 0.12 },
+            scale: { duration: 0.15 },
+            borderRadius: { duration: 0.18, ease: "easeOut" },
+            backgroundColor: { duration: 0.15, ease: "linear" },
+          }}
+          className="w-full h-full pointer-events-none"
+        />
+
+        {/* 4 Bounding Corner Brackets: Active only when snapping to hovered elements (always orange) */}
+        {/* Top-Left Corner */}
+        <motion.span
+          animate={{
+            opacity: isSnapping ? 1 : 0,
+          }}
+          transition={{ duration: 0.15 }}
+          className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-[#ff4500] pointer-events-none"
+        />
+
+        {/* Top-Right Corner */}
+        <motion.span
+          animate={{
+            opacity: isSnapping ? 1 : 0,
+          }}
+          transition={{ duration: 0.15 }}
+          className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 border-[#ff4500] pointer-events-none"
+        />
+
+        {/* Bottom-Left Corner */}
+        <motion.span
+          animate={{
+            opacity: isSnapping ? 1 : 0,
+          }}
+          transition={{ duration: 0.15 }}
+          className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-[#ff4500] pointer-events-none"
+        />
+
+        {/* Bottom-Right Corner */}
+        <motion.span
+          animate={{
+            opacity: isSnapping ? 1 : 0,
+          }}
+          transition={{ duration: 0.15 }}
+          className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-[#ff4500] pointer-events-none"
         />
       </motion.div>
     </div>
