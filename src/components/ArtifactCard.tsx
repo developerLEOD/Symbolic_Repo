@@ -6,7 +6,6 @@ import { buildSpecimenAngleSequence, SpecimenAngleSequenceItem } from "../lib/sp
 import { soundManager } from "../lib/soundEffects";
 import { motion, AnimatePresence } from "motion/react";
 import ArtifactWatermark from "./ArtifactWatermark";
-import { centerElementInViewport } from "../lib/scrollUtils";
 
 interface ArtifactCardProps {
   key?: React.Key;
@@ -151,7 +150,6 @@ export default function ArtifactCard({
         hoverTimerRef.current = setTimeout(() => {
           soundManager.playHover(0.04);
           setIsHovered(true);
-          centerElementInViewport(cardRef.current);
         }, 200);
       }}
       onMouseLeave={() => {

@@ -59,20 +59,41 @@ export default function LiquidCarveButton({
       whileHover={{ y: -2.5, transition: { type: "spring", stiffness: 500, damping: 17 } }}
       whileTap={{ scale: 0.965, y: 0.5, transition: { type: "spring", stiffness: 650, damping: 14 } }}
       className={`relative px-7 py-3.5 rounded-none font-mono text-[11px] uppercase tracking-widest font-black transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none overflow-hidden group ${variantStyles[variant]} ${className}`}
+      data-cursor-snap="true"
       {...props}
     >
+      {/* Corner outline borders effect */}
+      <span className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <span className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <span className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
+      <span className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
+
       {/* Corner crosshairs micro-interaction */}
       <motion.span 
         animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.25 : 1 }}
         transition={{ type: "spring", stiffness: 520, damping: 18 }}
-        className="absolute top-0.5 left-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity"
+        className="absolute top-0.5 left-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
       >
         +
       </motion.span>
       <motion.span 
         animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.25 : 1 }}
         transition={{ type: "spring", stiffness: 520, damping: 18 }}
-        className="absolute top-0.5 right-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity"
+        className="absolute top-0.5 right-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
+      >
+        +
+      </motion.span>
+      <motion.span 
+        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.25 : 1 }}
+        transition={{ type: "spring", stiffness: 520, damping: 18 }}
+        className="absolute bottom-0.5 left-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
+      >
+        +
+      </motion.span>
+      <motion.span 
+        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.25 : 1 }}
+        transition={{ type: "spring", stiffness: 520, damping: 18 }}
+        className="absolute bottom-0.5 right-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
       >
         +
       </motion.span>

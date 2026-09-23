@@ -252,208 +252,120 @@ export default function ArtifactOverlappingCollection({
     return () => el.removeEventListener("scroll", updateScrollBounds);
   }, [displayItems, updateScrollBounds]);
 
-  // Horizontal wheel scroll listener for desktop exhibition (translates vertical scroll to horizontal)
-  useEffect(() => {
-    const container = containerRef.current;
-    if (!container) return;
+  // Step smoothly to a specific artifact by index, centering it in view
+  const shiftToArtifact = useCallback((targetIdx: number) => {
+    if (targetIdx < 0 || targetIdx >= displayItems.length) return;
+    const desktopContainer = containerRef.current;
+    if (desktopContainer) {
+      const targetEl = itemRefs.current[targetIdx];
+      if (targetEl) {
+        const containerRect = desktopContainer.getBoundingClientRect();
+        const cardRect = targetEl.getBoundingClientRect();
+        const currentScroll = desktopContainer.scrollLeft;
+        const cardRelativeLeft = currentScroll + (cardRect.left - containerRect.left);
+        const targetScroll = cardRelativeLeft - (desktopContainer.clientWidth - cardRect.width) / 2;
+        const maxScroll = desktopContainer.scrollWidth - desktopContainer.clientWidth;
+        const clampedTarget = Math.max(0, Math.min(maxScroll, targetScroll));
 
-    const handleWheel = (e: WheelEvent) => {
-      // STRICT REQUIREMENT: Only handle when the mouse is hovering directly over an artifact card!
-      const targetEl = e.target as HTMLElement | null;
-      const cardFromTarget = targetEl?.closest?.(".artifact-card, [data-artifact-card='true']");
-
-      let cardFromPoint: Element | null = null;
-      if (typeof e.clientX === "number" && typeof e.clientY === "number") {
-        const elAtPoint = document.elementFromPoint(e.clientX, e.clientY);
-        cardFromPoint = elAtPoint?.closest?.(".artifact-card, [data-artifact-card='true']") ?? null;
+        desktopContainer.scrollTo({ left: clampedTarget, behavior: "smooth" });
+        setActiveIdx(targetIdx);
+        setScatterVisibleIdx(targetIdx);
+        updateScrollBounds();
       }
+    }
+  }, [displayItems.length, updateScrollBounds]);
 
-      const activeCard = (cardFromTarget || cardFromPoint) as HTMLElement | null;
+  // Keep a reference to current activeIdx and wheel throttle time
+  const activeIdxRef = useRef<number | null>(activeIdx);
+  const lastScrollTimeRef = useRef<number>(0);
 
-      // If the cursor is NOT directly over an artifact card inside the exhibition container, DO NOT intercept!
-      // Let the page scroll vertically as normal.
-      if (!activeCard || !container.contains(activeCard)) {
-        cancelWheelAnimation();
+  useEffect(() => {
+    activeIdxRef.current = activeIdx;
+  }, [activeIdx]);
+
+  // Horizontal wheel scroll listener: shifts to the next/prev entire artifact on one scroll (strictly when hovering an artifact)
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const targetEl = e.target as HTMLElement | null;
+      if (!targetEl) return;
+
+      // STRICT REQUIREMENT: Only handle when the mouse is directly hovering an artifact card!
+      // If the cursor is on the container background, whitespace, margins, headers, or any other area,
+      // return immediately and let the page scroll vertically as normal.
+      const artifactCard = targetEl.closest(".artifact-card, [data-artifact-card='true']") as HTMLElement | null;
+      if (!artifactCard) {
         return;
       }
 
-      // Calculate effective delta from either wheel deltaY or deltaX
+      // Check whether this artifact belongs to the curated desktop or mobile horizontal exhibition
+      const desktopContainer = containerRef.current;
+      const mobileContainer = mobileContainerRef.current;
+
+      const container =
+        (desktopContainer && desktopContainer.contains(artifactCard)) ? desktopContainer :
+        (mobileContainer && mobileContainer.contains(artifactCard)) ? mobileContainer : null;
+
+      if (!container) {
+        // Not inside the curated horizontal exhibition -> normal vertical scroll
+        return;
+      }
+
       const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (rawDelta === 0) return;
+      // Filter out micro-jitter touches below threshold
+      if (Math.abs(rawDelta) < 6) return;
 
-      let delta = rawDelta;
-      if (e.deltaMode === 1) delta *= 36;
-      else if (e.deltaMode === 2) delta *= 300;
+      // Identify the artifact index under the cursor
+      const idxAttr = artifactCard.getAttribute("data-artifact-index");
+      const cardIdx = idxAttr !== null ? parseInt(idxAttr, 10) : 0;
+      const currentIdx = activeIdxRef.current ?? (isNaN(cardIdx) ? 0 : cardIdx);
 
-      const maxScroll = container.scrollWidth - container.clientWidth;
-      if (maxScroll <= 0) return;
-
-      const currentScroll = container.scrollLeft;
+      const direction = rawDelta > 0 ? 1 : -1;
+      const nextIdx = currentIdx + direction;
 
       // Boundary check: If user reached edge in the direction of scroll, allow native page scroll
-      const atStartAndScrollingLeft = currentScroll <= 2 && delta < 0;
-      const atEndAndScrollingRight = currentScroll >= maxScroll - 2 && delta > 0;
-
-      if (atStartAndScrollingLeft || atEndAndScrollingRight) {
-        cancelWheelAnimation();
+      if (nextIdx < 0 || nextIdx >= displayItems.length) {
         return;
       }
 
-      // Intercept wheel scroll to scroll horizontally since cursor is hovering an artifact
+      // Intercept wheel scroll to shift to the next entire artifact
       e.preventDefault();
 
-      const isTrackpad = e.deltaMode === 0 && Math.abs(rawDelta) < 38;
+      // Debounce rapid continuous wheel ticks so one wheel gesture advances exactly one artifact
+      const now = Date.now();
+      if (now - lastScrollTimeRef.current < 350) {
+        return;
+      }
+      lastScrollTimeRef.current = now;
 
-      if (isTrackpad) {
-        // Direct trackpad synchronization: instantaneous 1:1 response
-        cancelWheelAnimation();
-        container.scrollLeft += delta;
-        updateScrollBounds();
+      soundManager.playToggle(0.04);
 
-        // Update hovered artifact index as cards glide under cursor
-        if (e.clientX && e.clientY) {
-          const elUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
-          const cardEl = elUnderMouse?.closest?.("[data-artifact-index]");
-          if (cardEl) {
-            const idxStr = cardEl.getAttribute("data-artifact-index");
-            if (idxStr !== null) {
-              const hoveredIdx = parseInt(idxStr, 10);
-              if (!isNaN(hoveredIdx) && hoveredIdx !== activeIdx) {
-                setActiveIdx(hoveredIdx);
-                setScatterVisibleIdx(hoveredIdx);
-              }
-            }
-          }
-        }
-      } else {
-        // Discrete mouse wheel notch: smooth lerp interpolation
-        const base = targetScrollRef.current ?? currentScroll;
-        const newTarget = Math.max(0, Math.min(maxScroll, base + delta * 1.15));
-        targetScrollRef.current = newTarget;
-
-        const animate = () => {
-          if (!containerRef.current || targetScrollRef.current === null) return;
-          const current = containerRef.current.scrollLeft;
-          const diff = targetScrollRef.current - current;
-
-          if (Math.abs(diff) < 0.75) {
-            containerRef.current.scrollLeft = targetScrollRef.current;
-            targetScrollRef.current = null;
-            rafIdRef.current = null;
-            updateScrollBounds();
-
-            // Detect card under mouse when animation settles
-            if (e.clientX && e.clientY) {
-              const elUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
-              const cardEl = elUnderMouse?.closest?.("[data-artifact-index]");
-              if (cardEl) {
-                const idxStr = cardEl.getAttribute("data-artifact-index");
-                if (idxStr !== null) {
-                  const hoveredIdx = parseInt(idxStr, 10);
-                  if (!isNaN(hoveredIdx) && hoveredIdx !== activeIdx) {
-                    soundManager.playHover(0.02);
-                    setActiveIdx(hoveredIdx);
-                    setScatterVisibleIdx(hoveredIdx);
-                  }
-                }
-              }
-            }
-            return;
-          }
-
-          const factor = Math.abs(diff) > 100 ? 0.22 : 0.32;
-          containerRef.current.scrollLeft += diff * factor;
-          updateScrollBounds();
-
-          // Continuous detection of artifact under pointer during glide
-          if (e.clientX && e.clientY) {
-            const elUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
-            const cardEl = elUnderMouse?.closest?.("[data-artifact-index]");
-            if (cardEl) {
-              const idxStr = cardEl.getAttribute("data-artifact-index");
-              if (idxStr !== null) {
-                const hoveredIdx = parseInt(idxStr, 10);
-                if (!isNaN(hoveredIdx) && hoveredIdx !== activeIdx) {
-                  setActiveIdx(hoveredIdx);
-                  setScatterVisibleIdx(hoveredIdx);
-                }
-              }
-            }
-          }
-
-          rafIdRef.current = requestAnimationFrame(animate);
-        };
-
-        if (rafIdRef.current === null) {
-          rafIdRef.current = requestAnimationFrame(animate);
+      if (container === desktopContainer) {
+        shiftToArtifact(nextIdx);
+      } else if (container === mobileContainer) {
+        const targetEl = mobileCardRefs.current[nextIdx];
+        if (targetEl) {
+          targetEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+          setActiveMobileIdx(nextIdx);
         }
       }
     };
 
-    container.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("wheel", handleWheel, { passive: false });
     return () => {
-      container.removeEventListener("wheel", handleWheel);
-      cancelWheelAnimation();
+      window.removeEventListener("wheel", handleWheel);
     };
-  }, [activeIdx, updateScrollBounds, cancelWheelAnimation]);
-
-  // Mobile horizontal wheel handler (strictly when hovering an artifact)
-  useEffect(() => {
-    const mobileContainer = mobileContainerRef.current;
-    if (!mobileContainer || !isMobile) return;
-
-    const handleMobileWheel = (e: WheelEvent) => {
-      const targetEl = e.target as HTMLElement | null;
-      const cardFromTarget = targetEl?.closest?.(".artifact-card, [data-artifact-card='true']");
-
-      let cardFromPoint: Element | null = null;
-      if (typeof e.clientX === "number" && typeof e.clientY === "number") {
-        cardFromPoint = document.elementFromPoint(e.clientX, e.clientY)?.closest?.(".artifact-card, [data-artifact-card='true']") ?? null;
-      }
-
-      const activeCard = (cardFromTarget || cardFromPoint) as HTMLElement | null;
-      if (!activeCard || !mobileContainer.contains(activeCard)) {
-        return;
-      }
-
-      const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      if (rawDelta === 0) return;
-
-      let delta = rawDelta;
-      if (e.deltaMode === 1) delta *= 36;
-      else if (e.deltaMode === 2) delta *= 300;
-
-      const maxScroll = mobileContainer.scrollWidth - mobileContainer.clientWidth;
-      if (maxScroll <= 0) return;
-
-      const currentScroll = mobileContainer.scrollLeft;
-      const atStartAndScrollingLeft = currentScroll <= 2 && delta < 0;
-      const atEndAndScrollingRight = currentScroll >= maxScroll - 2 && delta > 0;
-
-      if (atStartAndScrollingLeft || atEndAndScrollingRight) {
-        return;
-      }
-
-      e.preventDefault();
-      mobileContainer.scrollLeft += delta;
-    };
-
-    mobileContainer.addEventListener("wheel", handleMobileWheel, { passive: false });
-    return () => {
-      mobileContainer.removeEventListener("wheel", handleMobileWheel);
-    };
-  }, [isMobile]);
+  }, [displayItems.length, shiftToArtifact]);
 
   // Smooth desktop manual pan
   const handlePan = (direction: "left" | "right") => {
     if (!containerRef.current) return;
     cancelWheelAnimation();
     soundManager.playToggle(0.06);
-    const scrollAmount = Math.min(window.innerWidth * 0.5, 420);
-    containerRef.current.scrollBy({
-      left: direction === "left" ? -scrollAmount : scrollAmount,
-      behavior: "smooth",
-    });
+    const current = activeIdxRef.current ?? 0;
+    const next = direction === "right"
+      ? Math.min(displayItems.length - 1, current + 1)
+      : Math.max(0, current - 1);
+    shiftToArtifact(next);
   };
 
   // Desktop Mouse Drag-to-pan
@@ -820,25 +732,35 @@ export default function ArtifactOverlappingCollection({
         <div className="flex items-center gap-3">
           <span className="hidden md:inline-flex items-center gap-1.5 text-[8.5px] font-mono font-bold text-brand-text/65 uppercase tracking-widest border border-brand-text/20 bg-brand-surface/80 px-2 py-0.5 shadow-[1px_1px_0px_#050505]">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
-            <span>HOVER ARTIFACT + SCROLL HORIZONTALLY</span>
+            <span>HOVER ARTIFACT + SCROLL TO SHIFT</span>
           </span>
           <div className="flex items-center gap-1">
             <button
               type="button"
               onClick={() => handlePan("left")}
               disabled={!canScrollLeft}
-              className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer"
-              title="Pan Left"
+              data-cursor-snap="true"
+              className="relative p-1.5 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer group"
+              title="Previous Artifact"
             >
+              <span className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <span className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <span className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <ChevronLeft size={14} />
             </button>
             <button
               type="button"
               onClick={() => handlePan("right")}
               disabled={!canScrollRight}
-              className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer"
-              title="Pan Right"
+              data-cursor-snap="true"
+              className="relative p-1.5 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer group"
+              title="Next Artifact"
             >
+              <span className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <span className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <span className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
+              <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <ChevronRight size={14} />
             </button>
           </div>

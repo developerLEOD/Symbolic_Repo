@@ -4,7 +4,6 @@ import { ArrowUpRight, ChevronLeft, ChevronRight, Compass, Camera } from "lucide
 import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 import { motion, AnimatePresence } from "motion/react";
-import { centerElementInViewport } from "../lib/scrollUtils";
 
 interface ProductCardProps {
   product: Product;
@@ -91,10 +90,6 @@ export default function ProductCard({
       soundManager.playHover();
       setIsHovered(true);
       setShowAngles(true);
-
-      if (cardRef.current) {
-        centerElementInViewport(cardRef.current);
-      }
     }, 200);
   };
 

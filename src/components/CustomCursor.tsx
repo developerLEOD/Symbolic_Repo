@@ -9,10 +9,16 @@ interface ClickBurst {
   isCircle: boolean;
 }
 
+interface BoundaryTarget {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+}
+
 export default function CustomCursor() {
   const [position, setPosition] = useState({ x: -100, y: -100 });
-  const [isInteractive, setIsInteractive] = useState(false);
-  const [isProductHovered, setIsProductHovered] = useState(false);
+  const [boundaryTarget, setBoundaryTarget] = useState<BoundaryTarget | null>(null);
   const [isClicked, setIsClicked] = useState(false);
   const [isOverOrange, setIsOverOrange] = useState(false);
   const [isIdle, setIsIdle] = useState(false);
@@ -20,9 +26,11 @@ export default function CustomCursor() {
   const [isVisible, setIsVisible] = useState(false);
 
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const lastPointRef = useRef({ x: -100, y: -100 });
+  const activeElementRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    // Enable custom cursor on desktop/fine pointer devices
+    // Enable custom cursor on desktop / fine pointer devices
     const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
     if (!mediaQuery.matches) return;
 
@@ -88,34 +96,45 @@ export default function CustomCursor() {
     };
 
     const updateHoverAtPoint = (clientX: number, clientY: number) => {
+      lastPointRef.current = { x: clientX, y: clientY };
       if (clientX < 0 || clientY < 0) return;
       const target = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
       if (!target) {
-        setIsInteractive(false);
-        setIsProductHovered(false);
+        setBoundaryTarget(null);
+        activeElementRef.current = null;
         return;
       }
 
       const overOrange = checkOrangeBackground(target);
       setIsOverOrange(overOrange);
 
-      const productCard = target.closest(
-        "[data-product-card], .product-card, .artifact-card, .specimen-card, .featured-product, [data-featured-object], [data-preview-element], [data-preview-canvas]"
-      );
+      // Identify element to expand the cursor boundaries to:
+      // 1. Button or interactive action element
+      // 2. Artifact card, Specimen card, or Product card
+      // 3. Featured object or preview canvas
+      const buttonEl = target.closest("button, a, [role='button'], [data-cursor-expand='true']") as HTMLElement | null;
+      const cardEl = target.closest(
+        ".artifact-card, [data-artifact-card='true'], [data-product-card='true'], .specimen-card, .featured-product, [data-featured-object], [data-preview-canvas]"
+      ) as HTMLElement | null;
 
-      if (productCard) {
-        setIsProductHovered(true);
-        setIsInteractive(true);
-        return;
-      } else {
-        setIsProductHovered(false);
+      const elementToExpand = buttonEl || cardEl;
+
+      if (elementToExpand && elementToExpand.isConnected) {
+        activeElementRef.current = elementToExpand;
+        const rect = elementToExpand.getBoundingClientRect();
+        if (rect.width > 8 && rect.height > 8) {
+          setBoundaryTarget({
+            x: rect.left + rect.width / 2,
+            y: rect.top + rect.height / 2,
+            width: Math.round(rect.width + 12),
+            height: Math.round(rect.height + 12),
+          });
+          return;
+        }
       }
 
-      const interactiveEl = target.closest(
-        "button, a, input, select, textarea, [role='button'], [data-action], [data-cursor], [data-collection-filter], [data-view-mode], .cursor-pointer"
-      );
-
-      setIsInteractive(!!interactiveEl);
+      activeElementRef.current = null;
+      setBoundaryTarget(null);
     };
 
     const onMouseMove = (e: MouseEvent) => {
@@ -125,7 +144,17 @@ export default function CustomCursor() {
     };
 
     const onScrollOrShift = () => {
-      updateHoverAtPoint(position.x, position.y);
+      if (activeElementRef.current && activeElementRef.current.isConnected) {
+        const rect = activeElementRef.current.getBoundingClientRect();
+        setBoundaryTarget({
+          x: rect.left + rect.width / 2,
+          y: rect.top + rect.height / 2,
+          width: Math.round(rect.width + 12),
+          height: Math.round(rect.height + 12),
+        });
+      } else {
+        updateHoverAtPoint(lastPointRef.current.x, lastPointRef.current.y);
+      }
     };
 
     const onMouseDown = (e: MouseEvent) => {
@@ -160,7 +189,7 @@ export default function CustomCursor() {
     };
 
     window.addEventListener("mousemove", onMouseMove, { passive: true });
-    window.addEventListener("scroll", onScrollOrShift, { passive: true });
+    window.addEventListener("scroll", onScrollOrShift, { passive: true, capture: true });
     window.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mouseup", onMouseUp);
     document.addEventListener("mouseleave", onMouseLeave);
@@ -172,14 +201,14 @@ export default function CustomCursor() {
       document.documentElement.classList.remove("custom-cursor-active");
       document.body.classList.remove("custom-cursor-active");
       window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("scroll", onScrollOrShift);
+      window.removeEventListener("scroll", onScrollOrShift, { capture: true } as EventListenerOptions);
       window.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mouseup", onMouseUp);
       document.removeEventListener("mouseleave", onMouseLeave);
       document.removeEventListener("mouseenter", onMouseEnter);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, [position.x, position.y]);
+  }, []);
 
   useEffect(() => {
     if (bursts.length === 0) return;
@@ -191,22 +220,8 @@ export default function CustomCursor() {
 
   if (!isVisible) return null;
 
-  // Responsive cursor dimensions based on context
-  const cursorSize = isProductHovered ? 28 : isInteractive ? 18 : 10;
-
-  // Scale animation for click / idle
-  const scaleAnimation = isClicked
-    ? 0.75
-    : isIdle && !isInteractive
-    ? [0.85, 1.15, 0.85]
-    : 1;
-
-  const springTransition = {
-    type: "spring",
-    stiffness: 1100,
-    damping: 46,
-    mass: 0.03,
-  };
+  const cornerColorClass = isOverOrange ? "border-white text-white" : "border-[#ff4500] text-[#ff4500]";
+  const dashedColorClass = isOverOrange ? "border-white/60 outline-white/30" : "border-[#ff4500]/60 outline-[#ff4500]/30";
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden select-none">
@@ -230,76 +245,71 @@ export default function CustomCursor() {
         ))}
       </AnimatePresence>
 
-      {/* Main Cursor Frame: Strictly follows mouse coordinates with instant response */}
+      {/* EXPANDED BOUNDARY CORNERS FRAME: Expands directly to the boundary corners of the hovered element */}
       <motion.div
         animate={{
-          left: position.x,
-          top: position.y,
-          x: "-50%",
-          y: "-50%",
-          width: cursorSize,
-          height: cursorSize,
-          scale: scaleAnimation,
+          left: boundaryTarget ? boundaryTarget.x : position.x,
+          top: boundaryTarget ? boundaryTarget.y : position.y,
+          width: boundaryTarget ? boundaryTarget.width : 22,
+          height: boundaryTarget ? boundaryTarget.height : 22,
+          opacity: boundaryTarget ? 1 : 0,
+          scale: isClicked ? 0.985 : 1,
         }}
         transition={{
-          left: springTransition,
-          top: springTransition,
-          width: { duration: 0.12, ease: "easeOut" },
-          height: { duration: 0.12, ease: "easeOut" },
-          scale: isIdle && !isInteractive && !isClicked
-            ? { repeat: Infinity, duration: 2.2, ease: "easeInOut" }
-            : springTransition,
+          left: { type: "spring", stiffness: 480, damping: 28, mass: 0.12 },
+          top: { type: "spring", stiffness: 480, damping: 28, mass: 0.12 },
+          width: { type: "spring", stiffness: 440, damping: 26, mass: 0.14 },
+          height: { type: "spring", stiffness: 440, damping: 26, mass: 0.14 },
+          opacity: { duration: 0.14 },
         }}
-        className="absolute pointer-events-none flex items-center justify-center bg-transparent"
+        className="fixed -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[9998]"
       >
-        {/* Core Dot: Square on standard surfaces, Circle on orange backgrounds */}
-        <motion.div
-          animate={{
-            scale: isProductHovered ? 0.6 : 1,
-            borderRadius: isOverOrange ? "50%" : "0px",
-            backgroundColor: isOverOrange ? "#ffffff" : "#ff4500",
-          }}
-          transition={{
-            scale: { duration: 0.12 },
-            borderRadius: { duration: 0.15, ease: "easeOut" },
-            backgroundColor: { duration: 0.12, ease: "linear" },
-          }}
-          className="w-2.5 h-2.5 pointer-events-none"
+        {/* Outer dashed border frame with outline offset around the entire element */}
+        <div
+          className={`absolute inset-0 border border-dashed outline outline-1 outline-offset-1 pointer-events-none ${dashedColorClass}`}
         />
 
-        {/* Framing brackets on product hover */}
-        {isProductHovered && (
-          <>
-            <motion.div
-              initial={{ opacity: 0, scale: 0.7 }}
-              animate={{ opacity: 1, scale: 1 }}
-              exit={{ opacity: 0 }}
-              transition={{ duration: 0.1 }}
-              className={`absolute inset-0 border border-brand-accent pointer-events-none ${
-                isOverOrange ? "border-white" : "border-[#ff4500]"
-              }`}
-            />
-            {/* Corner Crosshairs */}
-            <div className={`absolute -top-1 -left-1 w-1.5 h-1.5 border-t-2 border-l-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
-            <div className={`absolute -top-1 -right-1 w-1.5 h-1.5 border-t-2 border-r-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
-            <div className={`absolute -bottom-1 -left-1 w-1.5 h-1.5 border-b-2 border-l-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
-            <div className={`absolute -bottom-1 -right-1 w-1.5 h-1.5 border-b-2 border-r-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
-          </>
-        )}
+        {/* 4 Precise Corner Outline Borders (brackets) at the element's boundaries */}
+        <div className={`absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 pointer-events-none ${cornerColorClass}`} />
+        <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 pointer-events-none ${cornerColorClass}`} />
+        <div className={`absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 pointer-events-none ${cornerColorClass}`} />
+        <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 pointer-events-none ${cornerColorClass}`} />
 
-        {/* Hover ring on general interactive elements */}
-        {isInteractive && !isProductHovered && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.5 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.12 }}
-            className={`absolute -inset-1 border border-dashed pointer-events-none ${
-              isOverOrange ? "border-white/80" : "border-[#ff4500]/80"
-            }`}
-          />
-        )}
+        {/* 4 Technical Corner Crosshair Reticles (+) at the element's boundaries */}
+        <span className={`absolute -top-3.5 -left-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
+          +
+        </span>
+        <span className={`absolute -top-3.5 -right-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
+          +
+        </span>
+        <span className={`absolute -bottom-3.5 -left-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
+          +
+        </span>
+        <span className={`absolute -bottom-3.5 -right-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
+          +
+        </span>
       </motion.div>
+
+      {/* MOUSE POINTER CORE DOT: Always tracks cursor position accurately with zero lag */}
+      <motion.div
+        style={{
+          left: position.x,
+          top: position.y,
+        }}
+        animate={{
+          scale: isClicked ? 0.75 : boundaryTarget ? 0.8 : isIdle ? [0.85, 1.15, 0.85] : 1,
+          borderRadius: isOverOrange ? "50%" : "0px",
+          backgroundColor: isOverOrange ? "#ffffff" : "#ff4500",
+        }}
+        transition={{
+          scale: isIdle && !boundaryTarget && !isClicked
+            ? { repeat: Infinity, duration: 2.2, ease: "easeInOut" }
+            : { duration: 0.1 },
+          borderRadius: { duration: 0.12 },
+          backgroundColor: { duration: 0.1 },
+        }}
+        className="fixed -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 pointer-events-none z-[9999]"
+      />
     </div>
   );
 }

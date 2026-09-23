@@ -500,14 +500,7 @@ export default function ArtifactDetail({
 
               {/* Multi-angle Thumbnails */}
               {displayImages.length > 1 && (
-                <div 
-                  className="flex gap-2.5 overflow-x-auto pb-2"
-                  onWheel={(e) => {
-                    if (e.deltaY !== 0) {
-                      e.currentTarget.scrollLeft += e.deltaY;
-                    }
-                  }}
-                >
+                <div className="flex gap-2.5 overflow-x-auto pb-2">
                   {displayImages.map((img, i) => (
                     <button
                       key={i}

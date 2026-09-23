@@ -3,7 +3,6 @@ import { Specimen, Artifact } from "../types";
 import { ArrowUpRight, ChevronLeft, ChevronRight, ShieldCheck, Camera } from "lucide-react";
 import { soundManager } from "../lib/soundEffects";
 import { motion, AnimatePresence } from "motion/react";
-import { centerElementInViewport } from "../lib/scrollUtils";
 
 interface SpecimenCardProps {
   specimen: Specimen;
@@ -103,7 +102,6 @@ export default function SpecimenCard({
         hoverTimerRef.current = setTimeout(() => {
           soundManager.playHover(0.03);
           setIsHovered(true);
-          centerElementInViewport(cardRef.current);
         }, 200);
       }}
       onMouseLeave={() => {

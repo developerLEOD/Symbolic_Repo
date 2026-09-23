@@ -597,14 +597,7 @@ export default function ArtifactAcquisitionPage({
 
                   {/* Multi-angle preview thumbnails */}
                   {displayImages.length > 1 && (
-                    <div 
-                      className="flex gap-2 overflow-x-auto pb-1"
-                      onWheel={(e) => {
-                        if (e.deltaY !== 0) {
-                          e.currentTarget.scrollLeft += e.deltaY;
-                        }
-                      }}
-                    >
+                    <div className="flex gap-2 overflow-x-auto pb-1">
                       {displayImages.map((img, i) => (
                         <button
                           key={i}
