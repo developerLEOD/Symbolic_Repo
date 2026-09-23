@@ -56,22 +56,22 @@ export default function LiquidCarveButton({
       onClick={handleClick}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={() => setIsHovered(false)}
-      whileHover={{ y: -2, transition: { type: "spring", stiffness: 450, damping: 18 } }}
-      whileTap={{ scale: 0.97, y: 1, transition: { type: "spring", stiffness: 600, damping: 15 } }}
+      whileHover={{ y: -2.5, transition: { type: "spring", stiffness: 500, damping: 17 } }}
+      whileTap={{ scale: 0.965, y: 0.5, transition: { type: "spring", stiffness: 650, damping: 14 } }}
       className={`relative px-7 py-3.5 rounded-none font-mono text-[11px] uppercase tracking-widest font-black transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none overflow-hidden group ${variantStyles[variant]} ${className}`}
       {...props}
     >
       {/* Corner crosshairs micro-interaction */}
       <motion.span 
-        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.2 : 1 }}
-        transition={{ type: "spring", stiffness: 500, damping: 20 }}
+        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.25 : 1 }}
+        transition={{ type: "spring", stiffness: 520, damping: 18 }}
         className="absolute top-0.5 left-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity"
       >
         +
       </motion.span>
       <motion.span 
-        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.2 : 1 }}
-        transition={{ type: "spring", stiffness: 500, damping: 20 }}
+        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.25 : 1 }}
+        transition={{ type: "spring", stiffness: 520, damping: 18 }}
         className="absolute top-0.5 right-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity"
       >
         +
@@ -79,10 +79,10 @@ export default function LiquidCarveButton({
 
       {/* Diagonal scanline glint sweep on hover */}
       <motion.span
-        initial={{ x: "-120%", skewX: -25 }}
-        animate={{ x: isHovered ? "220%" : "-120%", skewX: -25 }}
-        transition={{ duration: 0.65, ease: "easeInOut" }}
-        className="absolute inset-y-0 w-1/3 bg-white/20 pointer-events-none z-0"
+        initial={{ x: "-130%", skewX: -25 }}
+        animate={{ x: isHovered ? "230%" : "-130%", skewX: -25 }}
+        transition={{ duration: 0.55, ease: [0.16, 1, 0.3, 1] }}
+        className="absolute inset-y-0 w-1/3 bg-white/25 pointer-events-none z-0"
       />
 
       <span className="relative z-10 flex items-center gap-2">

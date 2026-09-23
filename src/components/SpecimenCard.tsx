@@ -3,6 +3,7 @@ import { Specimen, Artifact } from "../types";
 import { ArrowUpRight, ChevronLeft, ChevronRight, ShieldCheck, Camera } from "lucide-react";
 import { soundManager } from "../lib/soundEffects";
 import { motion, AnimatePresence } from "motion/react";
+import { centerElementInViewport } from "../lib/scrollUtils";
 
 interface SpecimenCardProps {
   specimen: Specimen;
@@ -19,6 +20,16 @@ export default function SpecimenCard({
 }: SpecimenCardProps) {
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   const images = specimen.images && specimen.images.length > 0 
     ? specimen.images 
@@ -56,34 +67,50 @@ export default function SpecimenCard({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
         type: "spring", 
-        stiffness: 300, 
+        stiffness: 340, 
         damping: 24, 
-        delay: Math.min(index * 0.04, 0.25) 
+        delay: Math.min(index * 0.035, 0.22) 
       }}
       whileHover={{ 
         y: -6, 
         scale: 1.012, 
-        transition: { type: "spring", stiffness: 420, damping: 18 } 
+        transition: { type: "spring", stiffness: 460, damping: 18 } 
       }}
       whileTap={{ 
         scale: 0.985,
-        transition: { type: "spring", stiffness: 500, damping: 20 }
+        y: -1,
+        transition: { type: "spring", stiffness: 600, damping: 18 }
       }}
-      className="group specimen-card cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      ref={cardRef}
+      className={`group specimen-card cursor-pointer rounded-none border-2 transition-all duration-200 flex flex-col justify-between relative p-3.5 sm:p-4 transform-gpu will-change-transform ${
+        isHovered
+          ? "border-brand-accent outline outline-2 outline-offset-3 outline-brand-accent bg-brand-bg shadow-[10px_10px_0px_#050505]"
+          : "border-brand-text bg-brand-surface hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
+      } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
       onClick={() => {
         soundManager.playClick();
         onClick();
       }}
       onMouseEnter={() => {
-        soundManager.playHover(0.03);
-        setIsHovered(true);
+        if (hoverTimerRef.current) {
+          clearTimeout(hoverTimerRef.current);
+        }
+        hoverTimerRef.current = setTimeout(() => {
+          soundManager.playHover(0.03);
+          setIsHovered(true);
+          centerElementInViewport(cardRef.current);
+        }, 200);
       }}
       onMouseLeave={() => {
+        if (hoverTimerRef.current) {
+          clearTimeout(hoverTimerRef.current);
+          hoverTimerRef.current = null;
+        }
         setIsHovered(false);
         setActiveImageIndex(0);
       }}

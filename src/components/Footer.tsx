@@ -53,7 +53,7 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
                   <h2 className="text-xs sm:text-sm font-mono font-black tracking-widest uppercase text-brand-text leading-none">
                     SYMBOLIC
                   </h2>
-                  <span className="text-[8.5px] sm:text-[9.5px] font-mono font-bold italic tracking-wider text-brand-accent leading-none mt-1">
+                  <span className="text-[7.5px] sm:text-[8.5px] font-mono font-black italic tracking-wider text-brand-accent leading-[10px] -mt-[2px]">
                     MUSLIMS
                   </span>
                 </div>

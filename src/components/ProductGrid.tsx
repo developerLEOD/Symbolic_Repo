@@ -200,7 +200,12 @@ export default function ProductGrid({
   }
 
   return (
-    <section id="catalog-section" aria-label="The Collection" className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-12 space-y-8 bg-transparent">
+    <section 
+      id="catalog-section" 
+      aria-label="The Collection" 
+      data-collection-section="true" 
+      className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-12 space-y-8 bg-transparent"
+    >
       {/* 1. CLEAN ARCHITECTURAL HEADER */}
       <div className="border-b-2 border-brand-text pb-6 space-y-3">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
@@ -425,10 +430,10 @@ export default function ProductGrid({
             /* ARCHIVAL REGISTRY LEDGER VIEW (Organized by Artifact with separate Specimens) */
             <motion.div
               key="ledger-view"
-              initial={{ opacity: 0, y: 12 }}
+              initial={{ opacity: 0, y: 10 }}
               animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -12 }}
-              transition={{ duration: 0.2 }}
+              exit={{ opacity: 0, y: -10 }}
+              transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
               className="border-2 border-brand-text bg-brand-surface shadow-[6px_6px_0px_#050505] overflow-x-auto"
             >
               <table className="w-full text-left font-mono border-collapse">
@@ -586,10 +591,10 @@ export default function ProductGrid({
         /* ARTIFACT CARDS GRID VIEW */
         <motion.div
           key="grid-view"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
           className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6 sm:gap-8"
         >
           {filteredArtifacts.map((art, idx) => (
@@ -606,10 +611,10 @@ export default function ProductGrid({
         /* 4. CURATED HORIZONTAL OVERLAPPING ARTIFACT EXHIBITION */
         <motion.div
           key="exhibition-view"
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.2 }}
+          initial={{ opacity: 0, y: 8 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: -8 }}
+          transition={{ duration: 0.32, ease: [0.16, 1, 0.3, 1] }}
         >
           <ArtifactOverlappingCollection 
             artifacts={filteredArtifacts}

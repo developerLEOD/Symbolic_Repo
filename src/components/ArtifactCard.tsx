@@ -5,6 +5,8 @@ import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { buildSpecimenAngleSequence, SpecimenAngleSequenceItem } from "../lib/specimenAngles";
 import { soundManager } from "../lib/soundEffects";
 import { motion, AnimatePresence } from "motion/react";
+import ArtifactWatermark from "./ArtifactWatermark";
+import { centerElementInViewport } from "../lib/scrollUtils";
 
 interface ArtifactCardProps {
   key?: React.Key;
@@ -23,12 +25,22 @@ export default function ArtifactCard({
   const [isHovered, setIsHovered] = useState(false);
   const [hoverCycleIndex, setHoverCycleIndex] = useState(0);
   const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null);
+  const cardRef = useRef<HTMLDivElement | null>(null);
+  const hoverTimerRef = useRef<NodeJS.Timeout | null>(null);
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
       return window.innerWidth < 768;
     }
     return false;
   });
+
+  useEffect(() => {
+    return () => {
+      if (hoverTimerRef.current) {
+        clearTimeout(hoverTimerRef.current);
+      }
+    };
+  }, []);
 
   useEffect(() => {
     const handleResize = () => {
@@ -105,32 +117,48 @@ export default function ArtifactCard({
 
   return (
     <motion.div 
-      initial={{ opacity: 0, y: 14 }}
+      initial={{ opacity: 0, y: 16 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
         type: "spring", 
-        stiffness: 300, 
+        stiffness: 240, 
         damping: 24, 
-        delay: Math.min(index * 0.04, 0.25) 
+        delay: Math.min(index * 0.035, 0.22) 
       }}
       whileHover={{ 
-        y: -6, 
+        y: -4, 
         scale: 1.012, 
-        transition: { type: "spring", stiffness: 420, damping: 18 } 
+        transition: { duration: 0.28, ease: [0.16, 1, 0.3, 1] } 
       }}
       whileTap={{ 
         scale: 0.985,
-        transition: { type: "spring", stiffness: 500, damping: 20 }
+        y: -1,
+        transition: { duration: 0.12, ease: "easeOut" }
       }}
-      className="group artifact-card cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface/85 backdrop-blur-md hover:bg-brand-bg/90 transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      ref={cardRef}
+      className={`group artifact-card cursor-pointer rounded-none border-2 bg-brand-surface/85 backdrop-blur-md transition-all duration-200 flex flex-col justify-between relative p-3.5 sm:p-4 transform-gpu will-change-transform ${
+        isHovered
+          ? "border-brand-accent outline outline-2 outline-offset-3 outline-brand-accent bg-brand-bg/95 shadow-[10px_10px_0px_#050505]"
+          : "border-brand-text hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg/90 shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
+      } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
       data-preview-element="true"
       onClick={handleCardClick}
       onMouseEnter={() => {
-        soundManager.playHover(0.04);
-        setIsHovered(true);
+        if (hoverTimerRef.current) {
+          clearTimeout(hoverTimerRef.current);
+        }
+        hoverTimerRef.current = setTimeout(() => {
+          soundManager.playHover(0.04);
+          setIsHovered(true);
+          centerElementInViewport(cardRef.current);
+        }, 200);
       }}
       onMouseLeave={() => {
+        if (hoverTimerRef.current) {
+          clearTimeout(hoverTimerRef.current);
+          hoverTimerRef.current = null;
+        }
         setIsHovered(false);
       }}
     >
@@ -186,6 +214,16 @@ export default function ArtifactCard({
           }}
           className="w-full h-full object-contain object-center p-1 sm:p-2 select-none pointer-events-none"
         />
+
+        {/* Archival Watermark on Central Graphic / Artwork */}
+        {(!activeSpecimen && !currentAngleItem || displayImage === artifact.graphic) && (
+          <ArtifactWatermark
+            artifactName={artifact.name}
+            artifactId={artifact.artifactId}
+            collectionName={artifact.collectionName}
+            variant="subtle"
+          />
+        )}
 
         {/* Top Artifact ID Ribbon & Specimen Tag */}
         <div className="absolute top-2 left-2 z-10 flex items-center gap-1">

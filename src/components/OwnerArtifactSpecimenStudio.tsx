@@ -31,12 +31,14 @@ import {
   ChevronRight,
   Sparkles,
   ExternalLink,
-  Upload
+  Upload,
+  ShieldCheck
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { soundManager } from "../lib/soundEffects";
 import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
-import { processFileToCompressedDataUrl, compressDataUrl } from "../lib/imageOptimization";
+import { processFileToCompressedDataUrl, compressDataUrl, applyArchivalWatermarkToCanvas } from "../lib/imageOptimization";
+import ArtifactWatermark from "./ArtifactWatermark";
 
 interface OwnerArtifactSpecimenStudioProps {
   onDataChanged?: () => void;
@@ -95,6 +97,8 @@ export default function OwnerArtifactSpecimenStudio({
   const [isUploadingSpecImages, setIsUploadingSpecImages] = useState(false);
   const [isDraggingGraphic, setIsDraggingGraphic] = useState(false);
   const [isDraggingSpecImages, setIsDraggingSpecImages] = useState(false);
+  const [autoWatermarkGraphic, setAutoWatermarkGraphic] = useState(true);
+  const [isWatermarking, setIsWatermarking] = useState(false);
 
   const artGraphicFileRef = useRef<HTMLInputElement | null>(null);
   const specImagesFileRef = useRef<HTMLInputElement | null>(null);
@@ -105,15 +109,34 @@ export default function OwnerArtifactSpecimenStudio({
     if (fileList.length === 0) return;
     setIsUploadingGraphic(true);
     try {
-      const dataUrl = await processFileToCompressedDataUrl(fileList[0], 1600, 0.88);
+      let dataUrl = await processFileToCompressedDataUrl(fileList[0], 1600, 0.88);
+      if (autoWatermarkGraphic) {
+        dataUrl = await applyArchivalWatermarkToCanvas(dataUrl, artName || "ARTIFACT", artId || "SYM-ART");
+      }
       setArtGraphic(dataUrl);
-      showNotification("success", "Central artwork image loaded in high definition.");
+      showNotification("success", autoWatermarkGraphic ? "Central artwork loaded & archival watermark stamped." : "Central artwork image loaded in high definition.");
     } catch (err) {
       console.error(err);
       showNotification("error", "Failed to load image file.");
     } finally {
       setIsUploadingGraphic(false);
       if (artGraphicFileRef.current) artGraphicFileRef.current.value = "";
+    }
+  };
+
+  // Stamp archival watermark into current central artwork
+  const handleStampArchivalWatermark = async () => {
+    if (!artGraphic) return;
+    setIsWatermarking(true);
+    try {
+      const watermarked = await applyArchivalWatermarkToCanvas(artGraphic, artName || "ARTIFACT", artId || "SYM-ART");
+      setArtGraphic(watermarked);
+      showNotification("success", "Archival watermark permanently stamped into central graphic!");
+    } catch (err) {
+      console.error(err);
+      showNotification("error", "Failed to stamp archival watermark.");
+    } finally {
+      setIsWatermarking(false);
     }
   };
 
@@ -630,13 +653,14 @@ export default function OwnerArtifactSpecimenStudio({
                     <div className="p-4 sm:p-5 border-b-2 border-brand-text bg-brand-bg/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
                       <div className="flex items-start gap-4">
                         {/* Artifact Artwork / Graphic Thumbnail */}
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] overflow-hidden p-1 flex items-center justify-center">
+                        <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] overflow-hidden p-1 flex items-center justify-center relative">
                           <img 
                             src={art.graphic || "/Logo_NoName.jpg"} 
                             alt={art.name}
                             referrerPolicy="no-referrer"
                             className="w-full h-full object-contain"
                           />
+                          <ArtifactWatermark variant="badge" />
                         </div>
 
                         <div className="space-y-1">
@@ -951,6 +975,17 @@ export default function OwnerArtifactSpecimenStudio({
                       or drag & drop
                     </span>
                   </div>
+
+                  {/* Watermark toggle */}
+                  <label className="flex items-center gap-1.5 text-[8.5px] font-mono uppercase text-brand-text/80 cursor-pointer pt-0.5 select-none">
+                    <input
+                      type="checkbox"
+                      checked={autoWatermarkGraphic}
+                      onChange={e => setAutoWatermarkGraphic(e.target.checked)}
+                      className="accent-brand-accent w-3 h-3 cursor-pointer"
+                    />
+                    <span>Stamp Archival Security Watermark into file</span>
+                  </label>
                 </div>
 
                 {/* URL Input */}
@@ -974,24 +1009,52 @@ export default function OwnerArtifactSpecimenStudio({
                   )}
                 </div>
 
-                {/* Graphic Preview */}
+                {/* Graphic Preview & Watermark Tooling */}
                 {artGraphic && (
-                  <div className="flex items-center gap-2 p-1.5 bg-brand-surface border border-brand-text/30">
-                    <div className="w-10 h-10 bg-brand-bg border border-brand-text overflow-hidden shrink-0">
-                      <img 
-                        src={artGraphic} 
-                        alt="Central Graphic Preview" 
-                        referrerPolicy="no-referrer"
-                        className="w-full h-full object-contain" 
-                      />
+                  <div className="p-2.5 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] space-y-2">
+                    <div className="flex items-center gap-3">
+                      <div className="w-14 h-14 bg-brand-bg border-2 border-brand-text overflow-hidden shrink-0 relative flex items-center justify-center p-1">
+                        <img 
+                          src={artGraphic} 
+                          alt="Central Graphic Preview" 
+                          referrerPolicy="no-referrer"
+                          className="w-full h-full object-contain" 
+                        />
+                        <ArtifactWatermark variant="badge" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <span className="text-[9px] font-mono font-black uppercase text-brand-text block truncate">
+                          {artGraphic.startsWith("data:") ? "Archival Device Artwork (High-Def Data)" : artGraphic}
+                        </span>
+                        <div className="flex items-center gap-1.5 mt-0.5">
+                          <span className="w-1.5 h-1.5 bg-emerald-500 inline-block" />
+                          <span className="text-[8px] font-mono text-emerald-700 font-black uppercase">
+                            Primary Artwork Active & Protected
+                          </span>
+                        </div>
+                      </div>
                     </div>
-                    <div className="flex-1 min-w-0">
-                      <span className="text-[8.5px] font-mono font-bold uppercase text-brand-text block truncate">
-                        {artGraphic.startsWith("data:") ? "Custom Device Artwork (Encoded)" : artGraphic}
-                      </span>
-                      <span className="text-[7.5px] font-mono text-emerald-600 font-bold uppercase">
-                        ✓ Primary Artwork Ready
-                      </span>
+
+                    {/* Watermark Actions Bar */}
+                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-brand-text/20">
+                      <div className="text-[8px] font-mono uppercase text-brand-text/60">
+                        ARCHIVAL WATERMARK PROTOCOL
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={handleStampArchivalWatermark}
+                        disabled={isWatermarking}
+                        className="px-2.5 py-1 bg-brand-bg hover:bg-brand-text hover:text-white border border-brand-text text-[8.5px] font-mono font-black uppercase flex items-center gap-1.5 shadow-[1px_1px_0px_#050505] transition-colors cursor-pointer"
+                        title="Permanently bake archival watermark into image canvas"
+                      >
+                        {isWatermarking ? (
+                          <RefreshCw size={10} className="animate-spin text-brand-accent" />
+                        ) : (
+                          <ShieldCheck size={10} className="text-brand-accent" />
+                        )}
+                        <span>{isWatermarking ? "STAMPING..." : "BAKE WATERMARK INTO CANVAS"}</span>
+                      </button>
                     </div>
                   </div>
                 )}

@@ -6,6 +6,7 @@ import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE }
 import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { buildSpecimenAngleSequence, SpecimenAngleSequenceItem } from "../lib/specimenAngles";
 import { soundManager } from "../lib/soundEffects";
+import ArtifactWatermark from "./ArtifactWatermark";
 
 interface ArtifactOverlappingCollectionProps {
   artifacts?: Artifact[];
@@ -213,14 +214,27 @@ export default function ArtifactOverlappingCollection({
     }
   }, [displayItems.length, activeMobileIdx]);
 
+  // Desktop target scroll & animation references for wheel horizontal navigation
+  const targetScrollRef = useRef<number | null>(null);
+  const rafIdRef = useRef<number | null>(null);
+
+  const cancelWheelAnimation = useCallback(() => {
+    if (rafIdRef.current !== null) {
+      cancelAnimationFrame(rafIdRef.current);
+      rafIdRef.current = null;
+    }
+    targetScrollRef.current = null;
+  }, []);
+
   // Clear timers on unmount
   useEffect(() => {
     return () => {
       if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
       if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
       if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
+      cancelWheelAnimation();
     };
-  }, []);
+  }, [cancelWheelAnimation]);
 
   // Monitor desktop scroll bounds
   const updateScrollBounds = useCallback(() => {
@@ -238,9 +252,202 @@ export default function ArtifactOverlappingCollection({
     return () => el.removeEventListener("scroll", updateScrollBounds);
   }, [displayItems, updateScrollBounds]);
 
+  // Horizontal wheel scroll listener for desktop exhibition (translates vertical scroll to horizontal)
+  useEffect(() => {
+    const container = containerRef.current;
+    if (!container) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // STRICT REQUIREMENT: Only handle when the mouse is hovering directly over an artifact card!
+      const targetEl = e.target as HTMLElement | null;
+      const cardFromTarget = targetEl?.closest?.(".artifact-card, [data-artifact-card='true']");
+
+      let cardFromPoint: Element | null = null;
+      if (typeof e.clientX === "number" && typeof e.clientY === "number") {
+        const elAtPoint = document.elementFromPoint(e.clientX, e.clientY);
+        cardFromPoint = elAtPoint?.closest?.(".artifact-card, [data-artifact-card='true']") ?? null;
+      }
+
+      const activeCard = (cardFromTarget || cardFromPoint) as HTMLElement | null;
+
+      // If the cursor is NOT directly over an artifact card inside the exhibition container, DO NOT intercept!
+      // Let the page scroll vertically as normal.
+      if (!activeCard || !container.contains(activeCard)) {
+        cancelWheelAnimation();
+        return;
+      }
+
+      // Calculate effective delta from either wheel deltaY or deltaX
+      const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (rawDelta === 0) return;
+
+      let delta = rawDelta;
+      if (e.deltaMode === 1) delta *= 36;
+      else if (e.deltaMode === 2) delta *= 300;
+
+      const maxScroll = container.scrollWidth - container.clientWidth;
+      if (maxScroll <= 0) return;
+
+      const currentScroll = container.scrollLeft;
+
+      // Boundary check: If user reached edge in the direction of scroll, allow native page scroll
+      const atStartAndScrollingLeft = currentScroll <= 2 && delta < 0;
+      const atEndAndScrollingRight = currentScroll >= maxScroll - 2 && delta > 0;
+
+      if (atStartAndScrollingLeft || atEndAndScrollingRight) {
+        cancelWheelAnimation();
+        return;
+      }
+
+      // Intercept wheel scroll to scroll horizontally since cursor is hovering an artifact
+      e.preventDefault();
+
+      const isTrackpad = e.deltaMode === 0 && Math.abs(rawDelta) < 38;
+
+      if (isTrackpad) {
+        // Direct trackpad synchronization: instantaneous 1:1 response
+        cancelWheelAnimation();
+        container.scrollLeft += delta;
+        updateScrollBounds();
+
+        // Update hovered artifact index as cards glide under cursor
+        if (e.clientX && e.clientY) {
+          const elUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
+          const cardEl = elUnderMouse?.closest?.("[data-artifact-index]");
+          if (cardEl) {
+            const idxStr = cardEl.getAttribute("data-artifact-index");
+            if (idxStr !== null) {
+              const hoveredIdx = parseInt(idxStr, 10);
+              if (!isNaN(hoveredIdx) && hoveredIdx !== activeIdx) {
+                setActiveIdx(hoveredIdx);
+                setScatterVisibleIdx(hoveredIdx);
+              }
+            }
+          }
+        }
+      } else {
+        // Discrete mouse wheel notch: smooth lerp interpolation
+        const base = targetScrollRef.current ?? currentScroll;
+        const newTarget = Math.max(0, Math.min(maxScroll, base + delta * 1.15));
+        targetScrollRef.current = newTarget;
+
+        const animate = () => {
+          if (!containerRef.current || targetScrollRef.current === null) return;
+          const current = containerRef.current.scrollLeft;
+          const diff = targetScrollRef.current - current;
+
+          if (Math.abs(diff) < 0.75) {
+            containerRef.current.scrollLeft = targetScrollRef.current;
+            targetScrollRef.current = null;
+            rafIdRef.current = null;
+            updateScrollBounds();
+
+            // Detect card under mouse when animation settles
+            if (e.clientX && e.clientY) {
+              const elUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
+              const cardEl = elUnderMouse?.closest?.("[data-artifact-index]");
+              if (cardEl) {
+                const idxStr = cardEl.getAttribute("data-artifact-index");
+                if (idxStr !== null) {
+                  const hoveredIdx = parseInt(idxStr, 10);
+                  if (!isNaN(hoveredIdx) && hoveredIdx !== activeIdx) {
+                    soundManager.playHover(0.02);
+                    setActiveIdx(hoveredIdx);
+                    setScatterVisibleIdx(hoveredIdx);
+                  }
+                }
+              }
+            }
+            return;
+          }
+
+          const factor = Math.abs(diff) > 100 ? 0.22 : 0.32;
+          containerRef.current.scrollLeft += diff * factor;
+          updateScrollBounds();
+
+          // Continuous detection of artifact under pointer during glide
+          if (e.clientX && e.clientY) {
+            const elUnderMouse = document.elementFromPoint(e.clientX, e.clientY);
+            const cardEl = elUnderMouse?.closest?.("[data-artifact-index]");
+            if (cardEl) {
+              const idxStr = cardEl.getAttribute("data-artifact-index");
+              if (idxStr !== null) {
+                const hoveredIdx = parseInt(idxStr, 10);
+                if (!isNaN(hoveredIdx) && hoveredIdx !== activeIdx) {
+                  setActiveIdx(hoveredIdx);
+                  setScatterVisibleIdx(hoveredIdx);
+                }
+              }
+            }
+          }
+
+          rafIdRef.current = requestAnimationFrame(animate);
+        };
+
+        if (rafIdRef.current === null) {
+          rafIdRef.current = requestAnimationFrame(animate);
+        }
+      }
+    };
+
+    container.addEventListener("wheel", handleWheel, { passive: false });
+    return () => {
+      container.removeEventListener("wheel", handleWheel);
+      cancelWheelAnimation();
+    };
+  }, [activeIdx, updateScrollBounds, cancelWheelAnimation]);
+
+  // Mobile horizontal wheel handler (strictly when hovering an artifact)
+  useEffect(() => {
+    const mobileContainer = mobileContainerRef.current;
+    if (!mobileContainer || !isMobile) return;
+
+    const handleMobileWheel = (e: WheelEvent) => {
+      const targetEl = e.target as HTMLElement | null;
+      const cardFromTarget = targetEl?.closest?.(".artifact-card, [data-artifact-card='true']");
+
+      let cardFromPoint: Element | null = null;
+      if (typeof e.clientX === "number" && typeof e.clientY === "number") {
+        cardFromPoint = document.elementFromPoint(e.clientX, e.clientY)?.closest?.(".artifact-card, [data-artifact-card='true']") ?? null;
+      }
+
+      const activeCard = (cardFromTarget || cardFromPoint) as HTMLElement | null;
+      if (!activeCard || !mobileContainer.contains(activeCard)) {
+        return;
+      }
+
+      const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+      if (rawDelta === 0) return;
+
+      let delta = rawDelta;
+      if (e.deltaMode === 1) delta *= 36;
+      else if (e.deltaMode === 2) delta *= 300;
+
+      const maxScroll = mobileContainer.scrollWidth - mobileContainer.clientWidth;
+      if (maxScroll <= 0) return;
+
+      const currentScroll = mobileContainer.scrollLeft;
+      const atStartAndScrollingLeft = currentScroll <= 2 && delta < 0;
+      const atEndAndScrollingRight = currentScroll >= maxScroll - 2 && delta > 0;
+
+      if (atStartAndScrollingLeft || atEndAndScrollingRight) {
+        return;
+      }
+
+      e.preventDefault();
+      mobileContainer.scrollLeft += delta;
+    };
+
+    mobileContainer.addEventListener("wheel", handleMobileWheel, { passive: false });
+    return () => {
+      mobileContainer.removeEventListener("wheel", handleMobileWheel);
+    };
+  }, [isMobile]);
+
   // Smooth desktop manual pan
   const handlePan = (direction: "left" | "right") => {
     if (!containerRef.current) return;
+    cancelWheelAnimation();
     soundManager.playToggle(0.06);
     const scrollAmount = Math.min(window.innerWidth * 0.5, 420);
     containerRef.current.scrollBy({
@@ -252,6 +459,7 @@ export default function ArtifactOverlappingCollection({
   // Desktop Mouse Drag-to-pan
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
+    cancelWheelAnimation();
     setIsDragging(true);
     setHasMovedDuringDrag(false);
     setStartX(e.pageX - containerRef.current.offsetLeft);
@@ -412,9 +620,11 @@ export default function ArtifactOverlappingCollection({
                   mobileCardRefs.current[idx] = el;
                 }}
                 onClick={() => handleMobileSelectIdx(idx)}
+                data-artifact-card="true"
                 data-product-card="true"
                 data-preview-element="true"
-                className={`product-card shrink-0 w-[78vw] max-w-[320px] snap-center aspect-[4/5] bg-brand-surface border-3 border-brand-text transition-all duration-300 relative cursor-pointer ${
+                data-artifact-index={idx}
+                className={`product-card artifact-card shrink-0 w-[78vw] max-w-[320px] snap-center aspect-[4/5] bg-brand-surface border-3 border-brand-text transition-all duration-300 relative cursor-pointer ${
                   isCurrent
                     ? "shadow-[8px_8px_0px_#050505] scale-100 ring-2 ring-brand-accent"
                     : "shadow-[3px_3px_0px_#050505] opacity-80 scale-95"
@@ -429,6 +639,16 @@ export default function ArtifactOverlappingCollection({
                     className="w-full h-full object-contain object-center select-none"
                     loading="lazy"
                   />
+
+                  {/* Archival Watermark on Central Graphic / Artwork */}
+                  {(!itemActiveSpec || cardImg === item.graphic) && (
+                    <ArtifactWatermark
+                      artifactName={item.name}
+                      artifactId={item.artifactId}
+                      collectionName={item.collectionName}
+                      variant="subtle"
+                    />
+                  )}
 
                   {/* Top Accession Tag */}
                   <div className="absolute top-2.5 left-2.5 z-10 flex items-center gap-1">
@@ -597,25 +817,31 @@ export default function ArtifactOverlappingCollection({
           <span className="w-2 h-2 bg-brand-accent inline-block" />
           <span>CURATED ARTIFACT EXHIBITION // {displayItems.length} MASTER ARTIFACTS</span>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            type="button"
-            onClick={() => handlePan("left")}
-            disabled={!canScrollLeft}
-            className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505]"
-            title="Pan Left"
-          >
-            <ChevronLeft size={14} />
-          </button>
-          <button
-            type="button"
-            onClick={() => handlePan("right")}
-            disabled={!canScrollRight}
-            className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505]"
-            title="Pan Right"
-          >
-            <ChevronRight size={14} />
-          </button>
+        <div className="flex items-center gap-3">
+          <span className="hidden md:inline-flex items-center gap-1.5 text-[8.5px] font-mono font-bold text-brand-text/65 uppercase tracking-widest border border-brand-text/20 bg-brand-surface/80 px-2 py-0.5 shadow-[1px_1px_0px_#050505]">
+            <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
+            <span>HOVER ARTIFACT + SCROLL HORIZONTALLY</span>
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => handlePan("left")}
+              disabled={!canScrollLeft}
+              className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer"
+              title="Pan Left"
+            >
+              <ChevronLeft size={14} />
+            </button>
+            <button
+              type="button"
+              onClick={() => handlePan("right")}
+              disabled={!canScrollRight}
+              className="p-1 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer"
+              title="Pan Right"
+            >
+              <ChevronRight size={14} />
+            </button>
+          </div>
         </div>
       </div>
 
@@ -719,8 +945,10 @@ export default function ArtifactOverlappingCollection({
                   marginLeft: idx === 0 ? "0px" : "-140px",
                   zIndex: targetZ,
                 }}
+                data-artifact-card="true"
                 data-product-card="true"
                 data-preview-element="true"
+                data-artifact-index={idx}
                 className={`product-card artifact-card relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] group cursor-pointer ${
                   idx !== 0 ? "sm:-ml-[170px] md:-ml-[200px] lg:-ml-[230px]" : ""
                 }`}
@@ -764,6 +992,16 @@ export default function ArtifactOverlappingCollection({
                       className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1"
                       loading="lazy"
                     />
+
+                    {/* Archival Watermark on Central Graphic / Artwork */}
+                    {(!activeSpecimen && !currentAngleItem || currentImg === item.graphic) && (
+                      <ArtifactWatermark
+                        artifactName={item.name}
+                        artifactId={item.artifactId}
+                        collectionName={item.collectionName}
+                        variant="subtle"
+                      />
+                    )}
 
                     {/* Top Accession & Collection Badge */}
                     <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 font-mono">

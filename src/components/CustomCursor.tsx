@@ -9,17 +9,10 @@ interface ClickBurst {
   isCircle: boolean;
 }
 
-interface HoverBounds {
-  x: number;
-  y: number;
-  width: number;
-  height: number;
-}
-
 export default function CustomCursor() {
   const [position, setPosition] = useState({ x: -100, y: -100 });
-  const [isHovered, setIsHovered] = useState(false);
-  const [hoverBounds, setHoverBounds] = useState<HoverBounds | null>(null);
+  const [isInteractive, setIsInteractive] = useState(false);
+  const [isProductHovered, setIsProductHovered] = useState(false);
   const [isClicked, setIsClicked] = useState(false);
   const [isOverOrange, setIsOverOrange] = useState(false);
   const [isIdle, setIsIdle] = useState(false);
@@ -40,7 +33,6 @@ export default function CustomCursor() {
     const checkOrangeBackground = (el: HTMLElement | null): boolean => {
       let curr = el;
       while (curr && curr !== document.body && curr !== document.documentElement) {
-        // 1. Check class names
         const classStr = curr.className || "";
         if (typeof classStr === "string") {
           if (
@@ -55,12 +47,10 @@ export default function CustomCursor() {
           }
         }
 
-        // 2. Check dataset attributes
         if (curr.dataset?.bg === "orange" || curr.dataset?.accent === "orange") {
           return true;
         }
 
-        // 3. Check computed background color
         const style = window.getComputedStyle(curr);
         const bg = style.backgroundColor;
         if (bg && bg !== "transparent" && bg !== "rgba(0, 0, 0, 0)") {
@@ -72,7 +62,6 @@ export default function CustomCursor() {
             const a = match[4] !== undefined ? parseFloat(match[4]) : 1;
 
             if (a > 0.2) {
-              // Check if color is in the vibrant orange / red-orange range (e.g. #ff4500 rgb(255, 69, 0))
               if (
                 (r > 190 && g >= 25 && g <= 150 && b <= 75) ||
                 (r > 215 && g >= 40 && g <= 170 && b <= 90)
@@ -88,17 +77,6 @@ export default function CustomCursor() {
       return false;
     };
 
-    const isProductPreviewElement = (el: HTMLElement | null): boolean => {
-      if (!el) return false;
-      return Boolean(
-        el.matches(
-          "[data-preview-element], [data-preview-canvas], [data-product-card], .product-card, .artifact-card, .featured-product, [data-card]"
-        ) ||
-        ((el.classList.contains("aspect-[4/5]") || el.classList.contains("aspect-[3/4]")) &&
-          Boolean(el.closest("[data-preview-element], [data-product-card], .product-card, .artifact-card, #catalog-section")))
-      );
-    };
-
     const resetIdleTimer = () => {
       setIsIdle(false);
       if (idleTimerRef.current) {
@@ -109,62 +87,45 @@ export default function CustomCursor() {
       }, 2000);
     };
 
-    const onMouseMove = (e: MouseEvent) => {
-      setPosition({ x: e.clientX, y: e.clientY });
-      resetIdleTimer();
-
-      const target = e.target as HTMLElement | null;
-      if (!target) return;
+    const updateHoverAtPoint = (clientX: number, clientY: number) => {
+      if (clientX < 0 || clientY < 0) return;
+      const target = document.elementFromPoint(clientX, clientY) as HTMLElement | null;
+      if (!target) {
+        setIsInteractive(false);
+        setIsProductHovered(false);
+        return;
+      }
 
       const overOrange = checkOrangeBackground(target);
       setIsOverOrange(overOrange);
 
-      // 1. Direct action/control elements: buttons, links, inputs, selects, textareas, role="button", data-action, data-cursor.
-      const directAction = target.closest(
-        "button, a, input, select, textarea, [role='button'], [data-action], [data-cursor], [data-collection-filter], [data-view-mode]"
-      ) as HTMLElement | null;
+      const productCard = target.closest(
+        "[data-product-card], .product-card, .artifact-card, .specimen-card, .featured-product, [data-featured-object], [data-preview-element], [data-preview-canvas]"
+      );
 
-      if (directAction) {
-        if (!isProductPreviewElement(directAction)) {
-          const rect = directAction.getBoundingClientRect();
-          const padding = 6;
-          setHoverBounds({
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-            width: rect.width + padding * 2,
-            height: rect.height + padding * 2,
-          });
-          setIsHovered(true);
-          return;
-        }
+      if (productCard) {
+        setIsProductHovered(true);
+        setIsInteractive(true);
+        return;
+      } else {
+        setIsProductHovered(false);
       }
 
-      // 2. Check general clickable containers (.cursor-pointer)
-      const clickableContainer = target.closest(".cursor-pointer") as HTMLElement | null;
-      if (clickableContainer) {
-        if (isProductPreviewElement(clickableContainer) || isProductPreviewElement(target)) {
-          setHoverBounds(null);
-          setIsHovered(false);
-          return;
-        }
+      const interactiveEl = target.closest(
+        "button, a, input, select, textarea, [role='button'], [data-action], [data-cursor], [data-collection-filter], [data-view-mode], .cursor-pointer"
+      );
 
-        const rect = clickableContainer.getBoundingClientRect();
-        if (rect.width <= 320 && rect.height <= 180) {
-          const padding = 6;
-          setHoverBounds({
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-            width: rect.width + padding * 2,
-            height: rect.height + padding * 2,
-          });
-          setIsHovered(true);
-          return;
-        }
-      }
+      setIsInteractive(!!interactiveEl);
+    };
 
-      // 3. Default: free floating
-      setHoverBounds(null);
-      setIsHovered(false);
+    const onMouseMove = (e: MouseEvent) => {
+      setPosition({ x: e.clientX, y: e.clientY });
+      resetIdleTimer();
+      updateHoverAtPoint(e.clientX, e.clientY);
+    };
+
+    const onScrollOrShift = () => {
+      updateHoverAtPoint(position.x, position.y);
     };
 
     const onMouseDown = (e: MouseEvent) => {
@@ -198,7 +159,8 @@ export default function CustomCursor() {
       resetIdleTimer();
     };
 
-    window.addEventListener("mousemove", onMouseMove);
+    window.addEventListener("mousemove", onMouseMove, { passive: true });
+    window.addEventListener("scroll", onScrollOrShift, { passive: true });
     window.addEventListener("mousedown", onMouseDown);
     window.addEventListener("mouseup", onMouseUp);
     document.addEventListener("mouseleave", onMouseLeave);
@@ -210,13 +172,14 @@ export default function CustomCursor() {
       document.documentElement.classList.remove("custom-cursor-active");
       document.body.classList.remove("custom-cursor-active");
       window.removeEventListener("mousemove", onMouseMove);
+      window.removeEventListener("scroll", onScrollOrShift);
       window.removeEventListener("mousedown", onMouseDown);
       window.removeEventListener("mouseup", onMouseUp);
       document.removeEventListener("mouseleave", onMouseLeave);
       document.removeEventListener("mouseenter", onMouseEnter);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
     };
-  }, []);
+  }, [position.x, position.y]);
 
   useEffect(() => {
     if (bursts.length === 0) return;
@@ -228,27 +191,21 @@ export default function CustomCursor() {
 
   if (!isVisible) return null;
 
-  const isSnapping = isHovered && hoverBounds !== null;
-  const targetX = isSnapping ? hoverBounds.x : position.x;
-  const targetY = isSnapping ? hoverBounds.y : position.y;
-  
-  // Standard dot size when free-floating
-  const defaultSize = 10;
-  const targetWidth = isSnapping ? hoverBounds.width : defaultSize;
-  const targetHeight = isSnapping ? hoverBounds.height : defaultSize;
+  // Responsive cursor dimensions based on context
+  const cursorSize = isProductHovered ? 28 : isInteractive ? 18 : 10;
 
   // Scale animation for click / idle
   const scaleAnimation = isClicked
     ? 0.75
-    : isIdle && !isHovered
+    : isIdle && !isInteractive
     ? [0.85, 1.15, 0.85]
     : 1;
 
   const springTransition = {
     type: "spring",
-    stiffness: 550,
-    damping: 30,
-    mass: 0.1,
+    stiffness: 1100,
+    damping: 46,
+    mass: 0.03,
   };
 
   return (
@@ -264,90 +221,84 @@ export default function CustomCursor() {
               borderColor: b.color,
               borderRadius: b.isCircle ? "50%" : "0px",
             }}
-            initial={{ opacity: 0.9, scale: 0.6, x: "-50%", y: "-50%" }}
-            animate={{ opacity: 0, scale: 2.2, x: "-50%", y: "-50%" }}
+            initial={{ opacity: 0.95, scale: 0.5, x: "-50%", y: "-50%" }}
+            animate={{ opacity: 0, scale: 2.4, x: "-50%", y: "-50%" }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.3, ease: "easeOut" }}
-            className="absolute w-6 h-6 border-[1.5px] bg-transparent pointer-events-none"
+            transition={{ duration: 0.28, ease: [0.16, 1, 0.3, 1] }}
+            className="absolute w-6 h-6 border-2 bg-transparent pointer-events-none"
           />
         ))}
       </AnimatePresence>
 
-      {/* Main Cursor Frame: Snaps with 4 Corner Brackets on Hover, Clean Dot when Free-Floating */}
+      {/* Main Cursor Frame: Strictly follows mouse coordinates with instant response */}
       <motion.div
         animate={{
-          left: targetX,
-          top: targetY,
+          left: position.x,
+          top: position.y,
           x: "-50%",
           y: "-50%",
-          width: targetWidth,
-          height: targetHeight,
+          width: cursorSize,
+          height: cursorSize,
           scale: scaleAnimation,
         }}
         transition={{
           left: springTransition,
           top: springTransition,
-          width: springTransition,
-          height: springTransition,
-          scale: isIdle && !isHovered && !isClicked
+          width: { duration: 0.12, ease: "easeOut" },
+          height: { duration: 0.12, ease: "easeOut" },
+          scale: isIdle && !isInteractive && !isClicked
             ? { repeat: Infinity, duration: 2.2, ease: "easeInOut" }
             : springTransition,
         }}
         className="absolute pointer-events-none flex items-center justify-center bg-transparent"
       >
-        {/* Free-Floating Dot: Square when orange/black background, Circle when on orange field */}
+        {/* Core Dot: Square on standard surfaces, Circle on orange backgrounds */}
         <motion.div
           animate={{
-            opacity: isSnapping ? 0 : 1,
-            scale: isSnapping ? 0 : 1,
+            scale: isProductHovered ? 0.6 : 1,
             borderRadius: isOverOrange ? "50%" : "0px",
             backgroundColor: isOverOrange ? "#ffffff" : "#ff4500",
           }}
           transition={{
-            opacity: { duration: 0.12 },
-            scale: { duration: 0.15 },
-            borderRadius: { duration: 0.18, ease: "easeOut" },
-            backgroundColor: { duration: 0.15, ease: "linear" },
+            scale: { duration: 0.12 },
+            borderRadius: { duration: 0.15, ease: "easeOut" },
+            backgroundColor: { duration: 0.12, ease: "linear" },
           }}
-          className="w-full h-full pointer-events-none"
+          className="w-2.5 h-2.5 pointer-events-none"
         />
 
-        {/* 4 Bounding Corner Brackets: Active only when snapping to hovered elements (always orange) */}
-        {/* Top-Left Corner */}
-        <motion.span
-          animate={{
-            opacity: isSnapping ? 1 : 0,
-          }}
-          transition={{ duration: 0.15 }}
-          className="absolute top-0 left-0 w-2.5 h-2.5 border-t-2 border-l-2 border-[#ff4500] pointer-events-none"
-        />
+        {/* Framing brackets on product hover */}
+        {isProductHovered && (
+          <>
+            <motion.div
+              initial={{ opacity: 0, scale: 0.7 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 0.1 }}
+              className={`absolute inset-0 border border-brand-accent pointer-events-none ${
+                isOverOrange ? "border-white" : "border-[#ff4500]"
+              }`}
+            />
+            {/* Corner Crosshairs */}
+            <div className={`absolute -top-1 -left-1 w-1.5 h-1.5 border-t-2 border-l-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
+            <div className={`absolute -top-1 -right-1 w-1.5 h-1.5 border-t-2 border-r-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
+            <div className={`absolute -bottom-1 -left-1 w-1.5 h-1.5 border-b-2 border-l-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
+            <div className={`absolute -bottom-1 -right-1 w-1.5 h-1.5 border-b-2 border-r-2 ${isOverOrange ? "border-white" : "border-[#ff4500]"}`} />
+          </>
+        )}
 
-        {/* Top-Right Corner */}
-        <motion.span
-          animate={{
-            opacity: isSnapping ? 1 : 0,
-          }}
-          transition={{ duration: 0.15 }}
-          className="absolute top-0 right-0 w-2.5 h-2.5 border-t-2 border-r-2 border-[#ff4500] pointer-events-none"
-        />
-
-        {/* Bottom-Left Corner */}
-        <motion.span
-          animate={{
-            opacity: isSnapping ? 1 : 0,
-          }}
-          transition={{ duration: 0.15 }}
-          className="absolute bottom-0 left-0 w-2.5 h-2.5 border-b-2 border-l-2 border-[#ff4500] pointer-events-none"
-        />
-
-        {/* Bottom-Right Corner */}
-        <motion.span
-          animate={{
-            opacity: isSnapping ? 1 : 0,
-          }}
-          transition={{ duration: 0.15 }}
-          className="absolute bottom-0 right-0 w-2.5 h-2.5 border-b-2 border-r-2 border-[#ff4500] pointer-events-none"
-        />
+        {/* Hover ring on general interactive elements */}
+        {isInteractive && !isProductHovered && (
+          <motion.div
+            initial={{ opacity: 0, scale: 0.5 }}
+            animate={{ opacity: 1, scale: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.12 }}
+            className={`absolute -inset-1 border border-dashed pointer-events-none ${
+              isOverOrange ? "border-white/80" : "border-[#ff4500]/80"
+            }`}
+          />
+        )}
       </motion.div>
     </div>
   );

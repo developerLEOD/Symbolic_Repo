@@ -23,6 +23,7 @@ import { calculateArtifactSetPrice, getSpecimenArchitectureSpecs } from "../lib/
 import { soundManager } from "../lib/soundEffects";
 import { useAuth } from "../lib/AuthContext";
 import { motion, AnimatePresence } from "motion/react";
+import ArtifactWatermark from "./ArtifactWatermark";
 
 interface ArtifactDetailProps {
   artifact: Artifact;
@@ -62,16 +63,20 @@ export default function ArtifactDetail({
   // Complete Artifact Set Calculation
   const setCalculation = calculateArtifactSetPrice(artifact, childSpecimens);
 
-  // Active specimen selected
+  // Active specimen selected (can also be "central_artwork")
   const [activeSpecimenId, setActiveSpecimenId] = useState<string>(() => {
     if (initialSpecimenId && childSpecimens.some(s => s.id === initialSpecimenId)) {
       return initialSpecimenId;
     }
-    return childSpecimens[0]?.id || "";
+    return childSpecimens[0]?.id || (artifact.graphic ? "central_artwork" : "");
   });
 
+  const isViewingArtwork = activeSpecimenId === "central_artwork";
+
   // Selected specimen object
-  const activeSpecimen = childSpecimens.find(s => s.id === activeSpecimenId) || childSpecimens[0];
+  const activeSpecimen = isViewingArtwork 
+    ? null 
+    : (childSpecimens.find(s => s.id === activeSpecimenId) || childSpecimens[0] || null);
 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [showSizeGuide, setShowSizeGuide] = useState(false);
@@ -83,10 +88,12 @@ export default function ArtifactDetail({
     setActiveImageIndex(0);
   }, [activeSpecimenId]);
 
-  // Image list for active specimen (falls back to artifact images)
-  const displayImages = activeSpecimen?.images?.length 
-    ? activeSpecimen.images 
-    : (artifact.images?.length ? artifact.images : [artifact.graphic]);
+  // Image list for active specimen (falls back to artifact images / graphic)
+  const displayImages = isViewingArtwork
+    ? [artifact.graphic || "/Logo_NoName.jpg"]
+    : activeSpecimen?.images?.length 
+      ? activeSpecimen.images 
+      : (artifact.images?.length ? artifact.images : [artifact.graphic || "/Logo_NoName.jpg"]);
 
   // Is active specimen sold out?
   const isSpecimenSoldOut = !activeSpecimen || !activeSpecimen.availability || activeSpecimen.status === "sold_out" || activeSpecimen.inventory <= 0;
@@ -255,6 +262,68 @@ export default function ArtifactDetail({
 
           {/* Scattered Specimen Preview Cards */}
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 pt-1 pb-2">
+            {/* 00 // Canonical Artwork Graphic Card */}
+            {artifact.graphic && (
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick();
+                  setActiveSpecimenId("central_artwork");
+                }}
+                onMouseEnter={() => soundManager.playHover(0.02)}
+                className={`p-2.5 text-left border-2 font-mono transition-colors flex flex-col justify-between relative cursor-pointer group ${
+                  isViewingArtwork 
+                    ? "border-brand-accent bg-brand-surface ring-2 ring-brand-accent shadow-[5px_5px_0px_#ff4500] z-10" 
+                    : "border-brand-text bg-brand-surface hover:border-brand-accent shadow-[3px_3px_0px_#050505] hover:shadow-[5px_5px_0px_#050505]"
+                }`}
+                title={`View ${artifact.name} Central Graphic Artwork`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-[8.5px] font-black uppercase tracking-wider text-brand-text/70">
+                    00 //
+                  </span>
+                  <span className="text-[7.5px] font-black uppercase px-1 py-0.2 border bg-brand-text text-brand-bg border-brand-text">
+                    CENTRAL ART
+                  </span>
+                </div>
+
+                <div className="w-full h-24 sm:h-28 bg-brand-bg border border-brand-text/30 overflow-hidden flex items-center justify-center relative my-1">
+                  <img
+                    src={artifact.graphic}
+                    alt={artifact.name}
+                    referrerPolicy="no-referrer"
+                    className="w-full h-full object-contain p-1.5 select-none pointer-events-none group-hover:scale-105 transition-transform duration-200"
+                    loading="lazy"
+                  />
+                  <ArtifactWatermark variant="badge" />
+                  <div className="absolute bottom-0 inset-x-0 bg-brand-bg/90 backdrop-blur-[1px] border-t border-brand-text/20 px-1 py-0.5 flex items-center justify-between">
+                    <span className="text-[7px] font-black uppercase text-brand-text/75 truncate">
+                      CANONICAL GRAPHIC
+                    </span>
+                    {isViewingArtwork && (
+                      <Check size={9} className="text-brand-accent shrink-0" />
+                    )}
+                  </div>
+                </div>
+
+                <div className="pt-1">
+                  <h3 className="text-xs sm:text-sm font-black uppercase text-brand-text leading-tight group-hover:text-brand-accent transition-colors truncate">
+                    CENTRAL GRAPHIC
+                  </h3>
+                  <p className="text-[8px] font-bold uppercase text-brand-text/60 line-clamp-1">
+                    Design & Thesis
+                  </p>
+                </div>
+
+                <div className="mt-2 pt-1.5 border-t border-brand-text/20 flex items-baseline justify-between text-[8px]">
+                  <span className="font-bold text-brand-text/50">WATERMARK</span>
+                  <span className="font-black text-brand-accent truncate ml-1">
+                    ENFORCED
+                  </span>
+                </div>
+              </button>
+            )}
+
             {childSpecimens.map((spec, idx) => {
               const isSelected = spec.id === activeSpecimenId;
               const isSold = !spec.availability || spec.status === "sold_out" || spec.inventory <= 0;
@@ -333,17 +402,17 @@ export default function ArtifactDetail({
           </div>
         </div>
 
-        {/* ─── 3. ACTIVE SPECIMEN DOSSIER & ACQUISITION SUITE ─── */}
-        {activeSpecimen ? (
+        {/* ─── 3. ACTIVE SPECIMEN DOSSIER & ACQUISITION SUITE OR CENTRAL GRAPHIC DOSSIER ─── */}
+        {(activeSpecimen || isViewingArtwork) ? (
           <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-10 mb-12">
             
             {/* Left Column: Visual Gallery Canvas (7 Cols) */}
             <div className="lg:col-span-7 space-y-4">
               <div className="relative aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[6px_6px_0px_#050505] flex items-center justify-center overflow-hidden">
                 <motion.img 
-                  key={`${activeSpecimen.id}_${activeImageIndex}`}
-                  src={displayImages[activeImageIndex] || activeSpecimen.thumbnailImage} 
-                  alt={`${artifact.name} ${activeSpecimen.medium}`}
+                  key={isViewingArtwork ? "artwork_graphic" : `${activeSpecimen?.id || "spec"}_${activeImageIndex}`}
+                  src={displayImages[activeImageIndex] || artifact.graphic || "/Logo_NoName.jpg"} 
+                  alt={isViewingArtwork ? `${artifact.name} — Canonical Graphic` : `${artifact.name} ${activeSpecimen?.medium || ""}`}
                   referrerPolicy="no-referrer"
                   initial={{ scale: 0.94, y: 5 }}
                   animate={{ 
@@ -359,21 +428,44 @@ export default function ArtifactDetail({
                   className="w-full h-full object-contain p-4"
                 />
 
-                {/* Specimen Tag Overlay */}
-                <div className="absolute top-3 left-3 z-10 flex flex-col gap-1 items-start">
-                  <span className="text-[9px] font-mono font-black uppercase bg-brand-text text-brand-bg px-2 py-0.5">
-                    SPECIMEN: {activeSpecimen.medium}
-                  </span>
-                  <span className="text-[8.5px] font-mono font-black uppercase bg-brand-bg text-brand-text px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
-                    SKU: {activeSpecimen.sku}
-                  </span>
+                {/* Archival Watermark on Central Graphic */}
+                {(isViewingArtwork || displayImages[activeImageIndex] === artifact.graphic) && (
+                  <ArtifactWatermark
+                    artifactName={artifact.name}
+                    artifactId={artifact.artifactId}
+                    collectionName={artifact.collectionName}
+                    variant="full"
+                  />
+                )}
+
+                {/* Specimen or Central Graphic Tag Overlay */}
+                <div className="absolute top-3 left-3 z-20 flex flex-col gap-1 items-start">
+                  {isViewingArtwork ? (
+                    <>
+                      <span className="text-[9px] font-mono font-black uppercase bg-brand-accent text-white px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                        CANONICAL CENTRAL GRAPHIC
+                      </span>
+                      <span className="text-[8.5px] font-mono font-black uppercase bg-brand-bg text-brand-text px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                        ARCHIVAL PROOF // WATERMARKED
+                      </span>
+                    </>
+                  ) : activeSpecimen ? (
+                    <>
+                      <span className="text-[9px] font-mono font-black uppercase bg-brand-text text-brand-bg px-2 py-0.5">
+                        SPECIMEN: {activeSpecimen.medium}
+                      </span>
+                      <span className="text-[8.5px] font-mono font-black uppercase bg-brand-bg text-brand-text px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                        SKU: {activeSpecimen.sku}
+                      </span>
+                    </>
+                  ) : null}
                 </div>
 
                 {/* Fullscreen Button */}
                 <button
                   type="button"
                   onClick={() => setShowFullscreenImage(true)}
-                  className="absolute top-3 right-3 z-10 p-1.5 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border border-brand-text transition-colors shadow-[1.5px_1.5px_0px_#050505] cursor-pointer"
+                  className="absolute top-3 right-3 z-20 p-1.5 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border border-brand-text transition-colors shadow-[1.5px_1.5px_0px_#050505] cursor-pointer"
                   title="View High Resolution"
                 >
                   <Maximize2 size={16} />
@@ -408,7 +500,14 @@ export default function ArtifactDetail({
 
               {/* Multi-angle Thumbnails */}
               {displayImages.length > 1 && (
-                <div className="flex gap-2.5 overflow-x-auto pb-2">
+                <div 
+                  className="flex gap-2.5 overflow-x-auto pb-2"
+                  onWheel={(e) => {
+                    if (e.deltaY !== 0) {
+                      e.currentTarget.scrollLeft += e.deltaY;
+                    }
+                  }}
+                >
                   {displayImages.map((img, i) => (
                     <button
                       key={i}
@@ -435,91 +534,181 @@ export default function ArtifactDetail({
               )}
             </div>
 
-            {/* Right Column: Specimen Configurator & Dual Acquisition (5 Cols) */}
+            {/* Right Column: Specimen Configurator OR Central Graphic Dossier (5 Cols) */}
             <div className="lg:col-span-5 space-y-6">
-              
-              {/* Specimen Header & Identification */}
-              <div className="border-2 border-brand-text bg-brand-surface p-5 shadow-[4px_4px_0px_#050505]">
-                <div className="flex items-baseline justify-between gap-2 border-b-2 border-brand-text pb-3 mb-3">
-                  <div>
-                    <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-brand-text/60">
-                      SPECIMEN MANIFESTATION
-                    </span>
-                    <h2 className="text-xl sm:text-2xl font-mono font-black uppercase text-brand-text leading-tight">
-                      {activeSpecimen.medium}
-                    </h2>
+              {isViewingArtwork ? (
+                /* Central Graphic / Artwork Archival Ledger */
+                <div className="border-2 border-brand-text bg-brand-surface p-5 shadow-[4px_4px_0px_#050505] space-y-5">
+                  <div className="flex items-baseline justify-between gap-2 border-b-2 border-brand-text pb-3">
+                    <div>
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-brand-accent">
+                        ARCHIVAL DESIGN REGISTER
+                      </span>
+                      <h2 className="text-xl sm:text-2xl font-mono font-black uppercase text-brand-text leading-tight">
+                        {artifact.name}
+                      </h2>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[8.5px] font-mono font-bold text-brand-text/60 block">ARCHIVAL ID</span>
+                      <span className="text-sm font-mono font-black text-brand-accent">
+                        {artifact.artifactId || "SYM-ART"}
+                      </span>
+                    </div>
                   </div>
-                  <div className="text-right">
-                    <span className="text-[9px] font-mono font-bold text-brand-text/60 block">SPECIMEN ID</span>
-                    <span className="text-sm font-mono font-black text-brand-accent">
-                      {activeSpecimen.sku || "SYM-SPEC"}
-                    </span>
-                  </div>
-                </div>
 
-                {/* Physical & Material Specifications Ledger */}
-                <div className="space-y-4">
-                  {/* Sizing Information Link */}
-                  {activeSpecimen.availableSizes && activeSpecimen.availableSizes.length > 0 && activeSpecimen.mediumCategory === "wear" && (
-                    <div className="flex items-center justify-between p-2.5 bg-brand-bg border border-brand-text/30">
-                      <div className="flex items-center gap-2">
-                        <Ruler size={13} className="text-brand-accent" />
-                        <span className="text-[10px] font-mono font-bold uppercase text-brand-text">
-                          SIZING MATRIX: {activeSpecimen.availableSizes.join(" / ")}
-                        </span>
-                      </div>
-                      <button
-                        type="button"
-                        onClick={() => setShowSizeGuide(true)}
-                        className="text-[9px] font-mono font-black uppercase text-brand-accent hover:underline cursor-pointer"
-                      >
-                        [ VIEW DIMENSIONS ]
-                      </button>
+                  {artifact.inscription && (
+                    <div className="p-3 bg-brand-bg border border-brand-text/30 flex items-center justify-between">
+                      <span className="text-[9px] font-mono font-bold uppercase text-brand-text/70">
+                        ORIGINAL INSCRIPTION:
+                      </span>
+                      <span className="font-serif text-lg font-black text-brand-accent">
+                        {artifact.inscription}
+                      </span>
                     </div>
                   )}
 
-                  {/* Tactile Material Specifications Ledger */}
-                  <div className="border border-brand-text/30 bg-brand-bg p-3.5 space-y-2.5 text-[9.5px] font-mono uppercase">
-                    <span className="text-[8px] font-black text-brand-accent block border-b border-brand-text/20 pb-1">
-                      PHYSICAL ARCHITECTURE SPECIFICATIONS // {activeSpecimen.medium}
+                  <div className="border border-brand-text/30 bg-brand-bg p-3.5 space-y-2 text-xs font-mono">
+                    <span className="text-[8.5px] font-black uppercase text-brand-accent block border-b border-brand-text/20 pb-1">
+                      CONCEPTUAL THESIS & ARCHIVAL STATUS
                     </span>
-                    <div className="grid grid-cols-2 gap-3">
-                      {getSpecimenArchitectureSpecs(activeSpecimen).map((specItem, idx) => (
-                        <div key={idx}>
-                          <span className="text-brand-text/50 block text-[7.5px] font-bold">{specItem.label}</span>
-                          <span className="font-black text-brand-text block">{specItem.value}</span>
-                        </div>
-                      ))}
+                    <p className="text-[11px] font-sans font-medium text-brand-text leading-relaxed">
+                      {artifact.concept || artifact.shortDescription || artifact.description}
+                    </p>
+                    <div className="mt-2 pt-2 border-t border-brand-text/15 flex items-center justify-between text-[8px] uppercase">
+                      <span className="text-brand-text/60">WATERMARK PROTOCOL:</span>
+                      <span className="font-black text-emerald-700">ENFORCED // CANONICAL ARCHIVE</span>
                     </div>
                   </div>
 
-                  {/* ONLY THE ACQUIRE! BUTTON ON THE SPECIFICATION PAGE */}
-                  <div className="pt-3 border-t-2 border-brand-text space-y-3">
-                    <button
-                      type="button"
-                      onClick={() => handleProceedToAcquire(activeSpecimen?.id)}
-                      className="w-full py-5 sm:py-6 px-6 font-mono text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-between gap-4 cursor-pointer group"
-                    >
-                      <div className="flex flex-col text-left">
-                        <span className="text-[10px] sm:text-xs font-bold text-white/80 uppercase tracking-widest">
-                          PHYSICAL ALLOTMENT PROTOCOL //
+                  {childSpecimens.length > 0 && (
+                    <div className="pt-2 border-t-2 border-brand-text space-y-3">
+                      <div className="flex items-center justify-between">
+                        <span className="text-[9px] font-mono font-black uppercase text-brand-text">
+                          PHYSICAL MANIFESTATIONS ({childSpecimens.length}):
                         </span>
-                        <span className="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-wider">
-                          ACQUIRE!
+                        <span className="text-[8px] font-mono font-bold text-brand-text/60 uppercase">
+                          Select to configure
                         </span>
                       </div>
-                      <div className="flex items-center gap-2 bg-brand-text/30 px-4 py-3 border border-white/20 shrink-0 group-hover:bg-brand-accent transition-colors">
-                        <span className="text-xs font-black uppercase tracking-wider hidden sm:inline">PROCEED</span>
-                        <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform text-white" />
+                      <div className="grid grid-cols-2 gap-2">
+                        {childSpecimens.map((spec) => (
+                          <button
+                            key={spec.id}
+                            type="button"
+                            onClick={() => {
+                              soundManager.playClick();
+                              setActiveSpecimenId(spec.id);
+                            }}
+                            className="p-2.5 border-2 border-brand-text bg-brand-bg hover:bg-brand-text hover:text-brand-bg text-left font-mono transition-colors cursor-pointer flex flex-col justify-between group/btn shadow-[2px_2px_0px_#050505]"
+                          >
+                            <span className="text-[9.5px] font-black uppercase group-hover/btn:text-brand-accent transition-colors truncate">
+                              {spec.medium}
+                            </span>
+                            <span className="text-[8.5px] font-bold text-brand-accent mt-1">
+                              PKR {spec.price.toLocaleString()}
+                            </span>
+                          </button>
+                        ))}
                       </div>
-                    </button>
 
-                    <p className="text-[9.5px] font-mono font-bold uppercase text-brand-text/60 text-center tracking-wider pt-1">
-                      [ CHOOSE INDIVIDUAL SPECIMENS OR COMPLETE SET BUNDLE IN THE ACQUISITION SUITE ]
-                    </p>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundManager.playClick();
+                          if (childSpecimens[0]) setActiveSpecimenId(childSpecimens[0].id);
+                        }}
+                        className="w-full py-4 px-4 bg-brand-accent text-white hover:bg-brand-text font-mono text-sm font-black uppercase tracking-wider border-2 border-brand-text shadow-[4px_4px_0px_#050505] cursor-pointer flex items-center justify-center gap-2 transition-colors mt-2"
+                      >
+                        <span>CONFIGURE SPECIMEN OF THIS ARTWORK</span>
+                        <ArrowRight size={16} />
+                      </button>
+                    </div>
+                  )}
+                </div>
+              ) : activeSpecimen ? (
+                /* Specimen Header & Identification */
+                <div className="border-2 border-brand-text bg-brand-surface p-5 shadow-[4px_4px_0px_#050505]">
+                  <div className="flex items-baseline justify-between gap-2 border-b-2 border-brand-text pb-3 mb-3">
+                    <div>
+                      <span className="text-[9px] font-mono font-bold uppercase tracking-wider text-brand-text/60">
+                        SPECIMEN MANIFESTATION
+                      </span>
+                      <h2 className="text-xl sm:text-2xl font-mono font-black uppercase text-brand-text leading-tight">
+                        {activeSpecimen.medium}
+                      </h2>
+                    </div>
+                    <div className="text-right">
+                      <span className="text-[9px] font-mono font-bold text-brand-text/60 block">SPECIMEN ID</span>
+                      <span className="text-sm font-mono font-black text-brand-accent">
+                        {activeSpecimen.sku || "SYM-SPEC"}
+                      </span>
+                    </div>
+                  </div>
+
+                  {/* Physical & Material Specifications Ledger */}
+                  <div className="space-y-4">
+                    {/* Sizing Information Link */}
+                    {activeSpecimen.availableSizes && activeSpecimen.availableSizes.length > 0 && activeSpecimen.mediumCategory === "wear" && (
+                      <div className="flex items-center justify-between p-2.5 bg-brand-bg border border-brand-text/30">
+                        <div className="flex items-center gap-2">
+                          <Ruler size={13} className="text-brand-accent" />
+                          <span className="text-[10px] font-mono font-bold uppercase text-brand-text">
+                            SIZING MATRIX: {activeSpecimen.availableSizes.join(" / ")}
+                          </span>
+                        </div>
+                        <button
+                          type="button"
+                          onClick={() => setShowSizeGuide(true)}
+                          className="text-[9px] font-mono font-black uppercase text-brand-accent hover:underline cursor-pointer"
+                        >
+                          [ VIEW DIMENSIONS ]
+                        </button>
+                      </div>
+                    )}
+
+                    {/* Tactile Material Specifications Ledger */}
+                    <div className="border border-brand-text/30 bg-brand-bg p-3.5 space-y-2.5 text-[9.5px] font-mono uppercase">
+                      <span className="text-[8px] font-black text-brand-accent block border-b border-brand-text/20 pb-1">
+                        PHYSICAL ARCHITECTURE SPECIFICATIONS // {activeSpecimen.medium}
+                      </span>
+                      <div className="grid grid-cols-2 gap-3">
+                        {getSpecimenArchitectureSpecs(activeSpecimen).map((specItem, idx) => (
+                          <div key={idx}>
+                            <span className="text-brand-text/50 block text-[7.5px] font-bold">{specItem.label}</span>
+                            <span className="font-black text-brand-text block">{specItem.value}</span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* ONLY THE ACQUIRE! BUTTON ON THE SPECIFICATION PAGE */}
+                    <div className="pt-3 border-t-2 border-brand-text space-y-3">
+                      <button
+                        type="button"
+                        onClick={() => handleProceedToAcquire(activeSpecimen?.id)}
+                        className="w-full py-5 sm:py-6 px-6 font-mono text-xl sm:text-2xl md:text-3xl font-black uppercase tracking-wider bg-brand-accent text-white hover:bg-brand-text border-2 border-brand-text shadow-[6px_6px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center justify-between gap-4 cursor-pointer group"
+                      >
+                        <div className="flex flex-col text-left">
+                          <span className="text-[10px] sm:text-xs font-bold text-white/80 uppercase tracking-widest">
+                            PHYSICAL ALLOTMENT PROTOCOL //
+                          </span>
+                          <span className="text-xl sm:text-2xl md:text-3xl font-black text-white uppercase tracking-wider">
+                            ACQUIRE!
+                          </span>
+                        </div>
+                        <div className="flex items-center gap-2 bg-brand-text/30 px-4 py-3 border border-white/20 shrink-0 group-hover:bg-brand-accent transition-colors">
+                          <span className="text-xs font-black uppercase tracking-wider hidden sm:inline">PROCEED</span>
+                          <ArrowRight size={24} className="group-hover:translate-x-1 transition-transform text-white" />
+                        </div>
+                      </button>
+
+                      <p className="text-[9.5px] font-mono font-bold uppercase text-brand-text/60 text-center tracking-wider pt-1">
+                        [ CHOOSE INDIVIDUAL SPECIMENS OR COMPLETE SET BUNDLE IN THE ACQUISITION SUITE ]
+                      </p>
+                    </div>
                   </div>
                 </div>
-              </div>
+              ) : null}
             </div>
           </div>
         ) : (
@@ -605,17 +794,27 @@ export default function ArtifactDetail({
             <button
               type="button"
               onClick={() => setShowFullscreenImage(false)}
-              className="absolute top-4 right-4 p-2 text-white hover:text-brand-accent transition-colors"
+              className="absolute top-4 right-4 p-2 text-white hover:text-brand-accent transition-colors z-30"
               aria-label="Close fullscreen"
             >
               <X size={24} />
             </button>
-            <img 
-              src={displayImages[activeImageIndex] || artifact.graphic} 
-              alt={artifact.name}
-              referrerPolicy="no-referrer"
-              className="max-h-[85vh] max-w-[90vw] object-contain"
-            />
+            <div className="relative max-h-[85vh] max-w-[90vw] flex items-center justify-center">
+              <img 
+                src={displayImages[activeImageIndex] || artifact.graphic} 
+                alt={artifact.name}
+                referrerPolicy="no-referrer"
+                className="max-h-[85vh] max-w-[90vw] object-contain"
+              />
+              {(isViewingArtwork || (displayImages[activeImageIndex] || artifact.graphic) === artifact.graphic) && (
+                <ArtifactWatermark
+                  artifactName={artifact.name}
+                  artifactId={artifact.artifactId}
+                  collectionName={artifact.collectionName}
+                  variant="full"
+                />
+              )}
+            </div>
           </div>
         )}
 

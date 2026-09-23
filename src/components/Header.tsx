@@ -30,9 +30,70 @@ export default function Header({
   const [scrolled, setScrolled] = useState(false);
   const [openDropdown, setOpenDropdown] = useState<"corpus" | "collections" | "manifestoes" | null>(null);
   const [isProductHovered, setIsProductHovered] = useState(false);
+  const [isInCollectionSection, setIsInCollectionSection] = useState(false);
   const navRef = useRef<HTMLElement>(null);
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Detect when the screen is in THE COLLECTION SECTION and hide header all the time
+  useEffect(() => {
+    const checkCollectionSectionInView = () => {
+      const collectionSection =
+        document.getElementById("catalog-section") ||
+        document.querySelector("[data-collection-section='true']");
+
+      if (!collectionSection) {
+        setIsInCollectionSection(false);
+        return;
+      }
+
+      const rect = collectionSection.getBoundingClientRect();
+      const windowHeight = window.innerHeight || document.documentElement.clientHeight;
+
+      // Active in view if collection top has reached viewing area and bottom hasn't scrolled away
+      const inView = rect.top < windowHeight * 0.85 && rect.bottom > 70;
+      setIsInCollectionSection(inView);
+    };
+
+    checkCollectionSectionInView();
+
+    const handleScrollAndCheck = () => {
+      checkCollectionSectionInView();
+    };
+
+    window.addEventListener("scroll", handleScrollAndCheck, { passive: true });
+    window.addEventListener("resize", handleScrollAndCheck, { passive: true });
+
+    let observer: IntersectionObserver | null = null;
+    const target =
+      document.getElementById("catalog-section") ||
+      document.querySelector("[data-collection-section='true']");
+
+    if (target && typeof IntersectionObserver !== "undefined") {
+      observer = new IntersectionObserver(
+        () => {
+          checkCollectionSectionInView();
+        },
+        {
+          root: null,
+          rootMargin: "-70px 0px -70px 0px",
+          threshold: [0, 0.05, 0.1, 0.25, 0.5, 0.75, 1],
+        }
+      );
+      observer.observe(target);
+    }
+
+    const timer = window.setTimeout(checkCollectionSectionInView, 120);
+    const timer2 = window.setTimeout(checkCollectionSectionInView, 400);
+
+    return () => {
+      window.removeEventListener("scroll", handleScrollAndCheck);
+      window.removeEventListener("resize", handleScrollAndCheck);
+      if (observer) observer.disconnect();
+      window.clearTimeout(timer);
+      window.clearTimeout(timer2);
+    };
+  }, [location.pathname]);
 
   // Hide header when hovering over any product card, specimen plate, or artifact preview
   useEffect(() => {
@@ -160,7 +221,7 @@ export default function Header({
     navigate(path);
   };
 
-  const isHidden = isProductHovered && !isMenuOpen && !openDropdown;
+  const isHidden = (isInCollectionSection || isProductHovered) && !isMenuOpen && !openDropdown;
 
   return (
     <motion.header 
@@ -207,7 +268,7 @@ export default function Header({
                 <span className={`block font-mono font-black tracking-tight sm:tracking-normal uppercase text-brand-text leading-none transition-all duration-200 ${scrolled ? 'text-sm sm:text-base md:text-lg' : 'text-base sm:text-xl md:text-2xl lg:text-[25px]'}`}>
                   SYMBOLIC
                 </span>
-                <span className={`self-end font-mono font-black italic tracking-wider text-brand-accent leading-none mt-0 sm:mt-0 transition-all duration-200 ${scrolled ? 'text-[9.5px] sm:text-[11px]' : 'text-xs sm:text-sm lg:text-base'}`}>
+                <span className={`self-end font-mono font-black italic tracking-wider text-brand-accent leading-[12px] -mt-[3px] transition-all duration-200 ${scrolled ? 'text-[8px] sm:text-[9px] md:text-[9.5px]' : 'text-[9.5px] sm:text-[11px] md:text-xs lg:text-[12.5px]'}`}>
                   MUSLIMS
                 </span>
               </div>

@@ -4,6 +4,7 @@ import { ArrowUpRight, ChevronLeft, ChevronRight, Compass, Camera } from "lucide
 import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { soundManager } from "../lib/soundEffects";
 import { motion, AnimatePresence } from "motion/react";
+import { centerElementInViewport } from "../lib/scrollUtils";
 
 interface ProductCardProps {
   product: Product;
@@ -23,6 +24,7 @@ export default function ProductCard({
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [isHovered, setIsHovered] = useState(false);
   const [showAngles, setShowAngles] = useState(false);
+  const cardRef = useRef<HTMLDivElement | null>(null);
   const enterTimerRef = useRef<NodeJS.Timeout | null>(null);
   const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
@@ -81,14 +83,19 @@ export default function ProductCard({
       clearTimeout(leaveTimerRef.current);
       leaveTimerRef.current = null;
     }
-    soundManager.playHover();
-    setIsHovered(true);
-
     if (enterTimerRef.current) {
       clearTimeout(enterTimerRef.current);
     }
-    // Instant, lag-free satellite preview activation
-    setShowAngles(true);
+
+    enterTimerRef.current = setTimeout(() => {
+      soundManager.playHover();
+      setIsHovered(true);
+      setShowAngles(true);
+
+      if (cardRef.current) {
+        centerElementInViewport(cardRef.current);
+      }
+    }, 200);
   };
 
   const handleMouseLeave = () => {
@@ -110,6 +117,7 @@ export default function ProductCard({
 
   return (
     <motion.div 
+      ref={cardRef}
       initial={{ opacity: 0, y: 14 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ 
@@ -127,7 +135,11 @@ export default function ProductCard({
         scale: 0.985,
         transition: { type: "spring", stiffness: 500, damping: 20 }
       }}
-      className="group product-card cursor-pointer rounded-none border-2 border-brand-text bg-brand-surface hover:bg-brand-bg transition-colors duration-150 flex flex-col justify-between relative shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] active:shadow-[2px_2px_0px_#050505] p-3.5 sm:p-4"
+      className={`group product-card cursor-pointer rounded-none border-2 transition-all duration-200 flex flex-col justify-between relative p-3.5 sm:p-4 transform-gpu will-change-transform ${
+        isHovered
+          ? "border-brand-accent outline outline-2 outline-offset-3 outline-brand-accent bg-brand-bg shadow-[10px_10px_0px_#050505]"
+          : "border-brand-text bg-brand-surface hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
+      } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
       data-preview-element="true"
       onClick={handleCardClick}

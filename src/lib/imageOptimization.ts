@@ -166,6 +166,145 @@ export async function processFileToCompressedDataUrl(
 }
 
 /**
+ * Stamps a permanent, sophisticated brutalist archival watermark directly onto
+ * the pixel canvas of an Artifact graphic image.
+ * Ensures the image is protected even if downloaded, screenshotted, or shared outside the app.
+ */
+export async function applyArchivalWatermarkToCanvas(
+  dataUrl: string,
+  artifactName?: string,
+  artifactId?: string
+): Promise<string> {
+  if (!dataUrl || typeof dataUrl !== "string") return dataUrl;
+  if (dataUrl.startsWith("data:image/svg+xml")) return dataUrl;
+
+  return new Promise((resolve) => {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.onerror = () => resolve(dataUrl);
+    img.onload = () => {
+      try {
+        const width = img.naturalWidth || img.width;
+        const height = img.naturalHeight || img.height;
+        if (!width || !height) {
+          resolve(dataUrl);
+          return;
+        }
+
+        const canvas = document.createElement("canvas");
+        canvas.width = width;
+        canvas.height = height;
+        const ctx = canvas.getContext("2d");
+        if (!ctx) {
+          resolve(dataUrl);
+          return;
+        }
+
+        // Draw original graphic
+        ctx.drawImage(img, 0, 0, width, height);
+
+        const displayName = (artifactName || "CANONICAL ARTIFACT").toUpperCase();
+        const displayId = (artifactId || "SYM-ART").toUpperCase();
+
+        // 1. Technical Corner Reticles
+        const cornerMargin = Math.max(16, Math.round(width * 0.03));
+        const crossSize = Math.max(12, Math.round(width * 0.02));
+        ctx.strokeStyle = "rgba(120, 120, 120, 0.4)";
+        ctx.lineWidth = Math.max(1.5, Math.round(width * 0.002));
+
+        const drawCross = (cx: number, cy: number) => {
+          ctx.beginPath();
+          ctx.moveTo(cx - crossSize / 2, cy);
+          ctx.lineTo(cx + crossSize / 2, cy);
+          ctx.moveTo(cx, cy - crossSize / 2);
+          ctx.lineTo(cx, cy + crossSize / 2);
+          ctx.stroke();
+        };
+
+        drawCross(cornerMargin, cornerMargin);
+        drawCross(width - cornerMargin, cornerMargin);
+        drawCross(cornerMargin, height - cornerMargin);
+        drawCross(width - cornerMargin, height - cornerMargin);
+
+        // 2. Diagonal Repeating Watermark Ribbon
+        ctx.save();
+        ctx.translate(width / 2, height / 2);
+        ctx.rotate((-28 * Math.PI) / 180);
+
+        const baseFontSize = Math.max(14, Math.round(width * 0.028));
+        ctx.font = `900 ${baseFontSize}px monospace, ui-monospace, sans-serif`;
+        ctx.textAlign = "center";
+        ctx.textBaseline = "middle";
+
+        // Center primary watermark bar
+        const mainText = `• SYMBOLIC MUSLIMS // ${displayName} // ${displayId} •`;
+        ctx.fillStyle = "rgba(100, 100, 100, 0.28)";
+        ctx.fillText(mainText, 0, 0);
+
+        // Sub text streams above and below
+        const subFontSize = Math.max(10, Math.round(baseFontSize * 0.72));
+        ctx.font = `800 ${subFontSize}px monospace, ui-monospace, sans-serif`;
+        ctx.fillStyle = "rgba(100, 100, 100, 0.2)";
+        const spacingY = baseFontSize * 1.8;
+
+        const subText1 = "SYMBOLIC MUSLIMS • CANONICAL ARTIFACT • ARCHIVAL REGISTER • DO NOT REPRODUCE";
+        const subText2 = "AUTHENTIC DESIGN SPECIFICATION • SYMBOLIC ARCHIVE • PROPERTY OF SYMBOLIC";
+        ctx.fillText(subText1, 0, -spacingY);
+        ctx.fillText(subText2, 0, spacingY);
+
+        ctx.restore();
+
+        // 3. Archival Seal Box in Bottom Right
+        const badgeWidth = Math.max(180, Math.round(width * 0.32));
+        const badgeHeight = Math.max(28, Math.round(height * 0.055));
+        const badgeX = width - cornerMargin - badgeWidth;
+        const badgeY = height - cornerMargin - badgeHeight;
+
+        ctx.fillStyle = "rgba(255, 255, 255, 0.88)";
+        ctx.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
+        ctx.strokeStyle = "rgba(5, 5, 5, 0.65)";
+        ctx.lineWidth = 1.5;
+        ctx.strokeRect(badgeX, badgeY, badgeWidth, badgeHeight);
+
+        // Badge Red accent block
+        const accentSize = Math.max(6, Math.round(badgeHeight * 0.28));
+        ctx.fillStyle = "#FF4500";
+        ctx.fillRect(badgeX + 8, badgeY + (badgeHeight - accentSize) / 2, accentSize, accentSize);
+
+        // Badge Text
+        const badgeFontSize = Math.max(8, Math.round(badgeHeight * 0.36));
+        ctx.font = `900 ${badgeFontSize}px monospace, ui-monospace, sans-serif`;
+        ctx.fillStyle = "#050505";
+        ctx.textAlign = "left";
+        ctx.textBaseline = "middle";
+        ctx.fillText(
+          `SYMBOLIC // ARCHIVE PROOF`,
+          badgeX + 10 + accentSize + 6,
+          badgeY + badgeHeight / 2
+        );
+
+        // Export high-quality image with watermark baked in
+        let watermarkedUrl = "";
+        try {
+          watermarkedUrl = canvas.toDataURL("image/webp", 0.9);
+          if (!watermarkedUrl.startsWith("data:image/webp")) {
+            watermarkedUrl = canvas.toDataURL("image/jpeg", 0.9);
+          }
+        } catch {
+          watermarkedUrl = canvas.toDataURL("image/jpeg", 0.9);
+        }
+
+        resolve(watermarkedUrl || dataUrl);
+      } catch (err) {
+        console.warn("Watermarking canvas failed, falling back:", err);
+        resolve(dataUrl);
+      }
+    };
+    img.src = dataUrl;
+  });
+}
+
+/**
  * Sanitizes and optimizes an Artifact payload before writing to Firestore.
  * Preserves high quality while staying within the 1MB Firestore document budget.
  */

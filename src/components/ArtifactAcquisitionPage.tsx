@@ -22,6 +22,7 @@ import { Artifact, Specimen, CartItem, Product, ProductVariant } from "../types"
 import { calculateArtifactSetPrice, getSpecimenArchitectureSpecs } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
 import { buildWhatsAppProductInquiry, getWhatsAppUrl, STUDIO_WHATSAPP_LOCAL_DISPLAY } from "../lib/whatsappService";
+import ArtifactWatermark from "./ArtifactWatermark";
 
 interface ArtifactAcquisitionPageProps {
   artifact?: Artifact | null;
@@ -563,6 +564,16 @@ export default function ArtifactAcquisitionPage({
                       referrerPolicy="no-referrer"
                       className="w-full h-full object-contain p-6"
                     />
+
+                    {/* Archival Watermark on Central Graphic */}
+                    {(displayImages[activeImageIndex] === artifact.graphic || (!displayImages[activeImageIndex] && !activeSpecimen.thumbnailImage)) && (
+                      <ArtifactWatermark
+                        artifactName={artifact.name}
+                        artifactId={artifact.artifactId}
+                        collectionName={artifact.collectionName}
+                        variant="subtle"
+                      />
+                    )}
                     
                     {/* Badge */}
                     <div className="absolute top-3 left-3 z-10 flex flex-col gap-1">
@@ -586,7 +597,14 @@ export default function ArtifactAcquisitionPage({
 
                   {/* Multi-angle preview thumbnails */}
                   {displayImages.length > 1 && (
-                    <div className="flex gap-2 overflow-x-auto pb-1">
+                    <div 
+                      className="flex gap-2 overflow-x-auto pb-1"
+                      onWheel={(e) => {
+                        if (e.deltaY !== 0) {
+                          e.currentTarget.scrollLeft += e.deltaY;
+                        }
+                      }}
+                    >
                       {displayImages.map((img, i) => (
                         <button
                           key={i}
