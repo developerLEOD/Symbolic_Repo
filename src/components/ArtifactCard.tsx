@@ -141,6 +141,7 @@ export default function ArtifactCard({
           : "border-brand-text hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg/90 shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
       } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
+      data-artifact-card="true"
       data-preview-element="true"
       onClick={handleCardClick}
       onMouseEnter={() => {

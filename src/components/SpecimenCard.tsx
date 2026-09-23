@@ -91,6 +91,7 @@ export default function SpecimenCard({
           : "border-brand-text bg-brand-surface hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
       } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
+      data-artifact-card="true"
       onClick={() => {
         soundManager.playClick();
         onClick();

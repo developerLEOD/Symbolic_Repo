@@ -21,7 +21,7 @@ interface UserProfileModalProps {
 }
 
 export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, initialTab }: UserProfileModalProps) {
-  const { user, userProfile, isOwner, signOutUser, updateUserProfileData } = useAuth();
+  const { user, userProfile, isOwner, signOutUser, updateUserProfileData, isQuotaExceeded, quotaUpgradeUrl } = useAuth();
   
   const [activeTab, setActiveTab] = useState<"profile" | "orders" | "referral">(initialTab || "orders");
   const [orders, setOrders] = useState<Order[]>([]);
@@ -104,11 +104,24 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
           }
         }
 
+        // Check local cache if network/quota prevented query
+        const cacheKey = `sym_user_cached_orders_${user.uid}`;
+        if (userOrders.length > 0) {
+          try {
+            localStorage.setItem(cacheKey, JSON.stringify(userOrders));
+          } catch (_) {}
+        } else if (typeof window !== "undefined") {
+          try {
+            const cached = localStorage.getItem(cacheKey);
+            if (cached) userOrders = JSON.parse(cached);
+          } catch (_) {}
+        }
+
         // Sort by createdAt descending
         userOrders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
         setOrders(userOrders);
       } catch (err) {
-        console.error("Error loading user orders:", err);
+        console.warn("User orders load fallback:", err);
       } finally {
         setLoadingOrders(false);
       }
@@ -246,6 +259,32 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
               <span className="truncate">IDENTITY</span>
             </button>
           </div>
+
+          {/* Firestore Quota Notice Banner (Spark Free-tier daily read limit) */}
+          {isQuotaExceeded && (
+            <div className="mb-4 p-3 border-2 border-brand-accent bg-brand-accent/10 text-brand-text text-[11px] font-mono leading-relaxed shadow-[2px_2px_0px_#ff4500]">
+              <div className="flex items-start gap-2">
+                <AlertCircle size={15} className="text-brand-accent shrink-0 mt-0.5" />
+                <div className="flex-1">
+                  <p className="font-bold text-brand-accent uppercase tracking-wider mb-1">
+                    Firestore Free Tier Quota Limit Reached
+                  </p>
+                  <p className="text-brand-text/80 text-[10px] mb-2">
+                    Daily free read units have reached capacity for today. The application is running smoothly using offline cached profile data. Quota automatically resets tomorrow.
+                  </p>
+                  <a
+                    href={quotaUpgradeUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-[10px] font-bold text-brand-bg bg-brand-accent hover:bg-brand-text px-2.5 py-1 border border-brand-text transition-colors shadow-[1px_1px_0px_#050505]"
+                  >
+                    <span>ENABLE BILLING / UPGRADE DATABASE</span>
+                    <ExternalLink size={10} />
+                  </a>
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Tab Content */}
           <div className="overflow-y-auto flex-1 pr-1 space-y-4 font-mono text-xs">

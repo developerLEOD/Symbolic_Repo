@@ -333,36 +333,37 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
     setCompletedOrderSnapshot(orderSnapshot);
     setOrderNumber(randomOrderNo);
 
+    // Construct structured order data
+    const orderData = {
+      orderNumber: randomOrderNo,
+      userId: user ? user.uid : null,
+      items: [...items],
+      subtotal: valuation.subtotal,
+      shipping: valuation.shippingFee,
+      discount: valuation.discountAmount,
+      total: valuation.total,
+      totalSavings: valuation.totalSavings,
+      isComplimentaryShipping: valuation.isComplimentaryShipping,
+      referralCode: appliedReferral ? appliedReferral.code : null,
+      referrerUid: appliedReferral?.referrerUid || null,
+      isReferrerReward: Boolean(appliedReferral?.isReferrerReward),
+      status: "pending_wa_verification",
+      paymentMethod: "whatsapp_interaction",
+      createdAt: Date.now(),
+      customerInfo: {
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        phone: formData.phone,
+        address: `${formData.houseNo ? `${formData.houseNo}, ` : ''}${formData.street}, ${formData.suburb}`,
+        city: formData.city,
+        zip: formData.zip,
+        country: formData.country
+      }
+    };
+
     try {
       // Save order to Firestore
-      const orderData = {
-        orderNumber: randomOrderNo,
-        userId: user ? user.uid : null,
-        items: [...items],
-        subtotal: valuation.subtotal,
-        shipping: valuation.shippingFee,
-        discount: valuation.discountAmount,
-        total: valuation.total,
-        totalSavings: valuation.totalSavings,
-        isComplimentaryShipping: valuation.isComplimentaryShipping,
-        referralCode: appliedReferral ? appliedReferral.code : null,
-        referrerUid: appliedReferral?.referrerUid || null,
-        isReferrerReward: Boolean(appliedReferral?.isReferrerReward),
-        status: "pending_wa_verification",
-        paymentMethod: "whatsapp_interaction",
-        createdAt: Date.now(),
-        customerInfo: {
-          firstName: formData.firstName,
-          lastName: formData.lastName,
-          email: formData.email,
-          phone: formData.phone,
-          address: `${formData.houseNo ? `${formData.houseNo}, ` : ''}${formData.street}, ${formData.suburb}`,
-          city: formData.city,
-          zip: formData.zip,
-          country: formData.country
-        }
-      };
-
       const orderRef = await addDoc(collection(db, "orders"), orderData);
 
       // Record referral redemption if code applied
@@ -378,6 +379,15 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
         });
       }
 
+      // Cache order locally so customer can see it immediately regardless of Firestore quota status
+      if (user?.uid) {
+        try {
+          const cacheKey = `sym_user_cached_orders_${user.uid}`;
+          const existing = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+          localStorage.setItem(cacheKey, JSON.stringify([{ id: orderRef.id, ...orderData }, ...existing]));
+        } catch (_) {}
+      }
+
       setStep("success");
 
       // Transmit complete order directive to WhatsApp with the captured snapshot
@@ -386,8 +396,15 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
       // Clear the cart now that snapshot is safely secured
       onClearCart();
     } catch (err) {
-      console.error("Error creating order record in Firestore:", err);
+      console.warn("Firestore order record note (proceeding smoothly with local dispatch):", err);
       // Even if Firestore encounters an issue, proceed smoothly so customer is not blocked
+      if (user?.uid) {
+        try {
+          const cacheKey = `sym_user_cached_orders_${user.uid}`;
+          const existing = JSON.parse(localStorage.getItem(cacheKey) || "[]");
+          localStorage.setItem(cacheKey, JSON.stringify([{ id: `local-${Date.now()}`, ...orderData }, ...existing]));
+        } catch (_) {}
+      }
       setStep("success");
       handleSendWhatsAppOrder(randomOrderNo, orderSnapshot);
       onClearCart();

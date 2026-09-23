@@ -159,17 +159,15 @@ export default function ArtifactOverlappingCollection({
   const [desktopHoverCycleIndex, setDesktopHoverCycleIndex] = useState(0);
 
   // Desktop state
+  const sectionRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const trackRef = useRef<HTMLDivElement>(null);
   const [activeIdx, setActiveIdx] = useState<number | null>(null);
   const [scatterVisibleIdx, setScatterVisibleIdx] = useState<number | null>(null);
-  const scatterEnterTimerRef = useRef<NodeJS.Timeout | null>(null);
-  const scatterLeaveTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isInteractingWithSatellitesRef = useRef(false);
-  const satelliteExitTimerRef = useRef<NodeJS.Timeout | null>(null);
   const itemRefs = useRef<(HTMLDivElement | null)[]>([]);
 
-  // Interval-driven clean cycling on hover through all specimen angles
+  // Interval-driven clean cycling through specimen angles for the centered active artifact
   useEffect(() => {
     if (activeIdx === null) {
       setDesktopHoverCycleIndex(0);
@@ -188,7 +186,7 @@ export default function ArtifactOverlappingCollection({
     setDesktopHoverCycleIndex(0);
     const interval = setInterval(() => {
       setDesktopHoverCycleIndex((prev) => (prev + 1) % angleSeq.length);
-    }, 1500);
+    }, 1600);
 
     return () => {
       clearInterval(interval);
@@ -214,9 +212,27 @@ export default function ArtifactOverlappingCollection({
     }
   }, [displayItems.length, activeMobileIdx]);
 
-  // Desktop target scroll & animation references for wheel horizontal navigation
+  // Desktop target scroll & animation references for smooth LERP centering
   const targetScrollRef = useRef<number | null>(null);
   const rafIdRef = useRef<number | null>(null);
+  const isTransitioningRef = useRef(false);
+  const lastScrollTimeRef = useRef<number>(0);
+  const lastUserMouseMoveTimeRef = useRef<number>(0);
+  const lastMousePosRef = useRef({ x: -100, y: -100 });
+
+  // Track intentional user mouse movement vs stationary cursor
+  useEffect(() => {
+    const onGlobalMouseMove = (e: MouseEvent) => {
+      const dx = Math.abs(e.clientX - lastMousePosRef.current.x);
+      const dy = Math.abs(e.clientY - lastMousePosRef.current.y);
+      if (dx > 3 || dy > 3) {
+        lastMousePosRef.current = { x: e.clientX, y: e.clientY };
+        lastUserMouseMoveTimeRef.current = Date.now();
+      }
+    };
+    window.addEventListener("mousemove", onGlobalMouseMove, { passive: true });
+    return () => window.removeEventListener("mousemove", onGlobalMouseMove);
+  }, []);
 
   const cancelWheelAnimation = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -224,17 +240,8 @@ export default function ArtifactOverlappingCollection({
       rafIdRef.current = null;
     }
     targetScrollRef.current = null;
+    isTransitioningRef.current = false;
   }, []);
-
-  // Clear timers on unmount
-  useEffect(() => {
-    return () => {
-      if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
-      if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
-      if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
-      cancelWheelAnimation();
-    };
-  }, [cancelWheelAnimation]);
 
   // Monitor desktop scroll bounds
   const updateScrollBounds = useCallback(() => {
@@ -244,6 +251,70 @@ export default function ArtifactOverlappingCollection({
     setCanScrollRight(scrollLeft < scrollWidth - clientWidth - 10);
   }, []);
 
+  // Smooth LERP (Linear Interpolation) scrolling engine to center artifacts
+  const lerpScrollTo = useCallback((targetScrollLeft: number, onFrame?: () => void, onComplete?: () => void) => {
+    const desktopContainer = containerRef.current;
+    if (!desktopContainer) return;
+
+    cancelWheelAnimation();
+
+    const maxScroll = desktopContainer.scrollWidth - desktopContainer.clientWidth;
+    const clampedTarget = Math.max(0, Math.min(maxScroll, targetScrollLeft));
+    let current = desktopContainer.scrollLeft;
+
+    if (Math.abs(current - clampedTarget) < 0.8) {
+      desktopContainer.scrollLeft = clampedTarget;
+      updateScrollBounds();
+      isTransitioningRef.current = false;
+      onFrame?.();
+      onComplete?.();
+      return;
+    }
+
+    targetScrollRef.current = clampedTarget;
+    isTransitioningRef.current = true;
+    const lerpSpeed = 0.12; // buttery, fluid LERP rate
+    let lastTime = performance.now();
+
+    const step = (now: number) => {
+      if (!containerRef.current) return;
+      const deltaMs = Math.min(32, now - lastTime);
+      lastTime = now;
+
+      // Frame-rate independent lerp calculation
+      const dynamicFactor = 1 - Math.pow(1 - lerpSpeed, deltaMs / 16.666);
+      const diff = clampedTarget - current;
+      current += diff * dynamicFactor;
+
+      containerRef.current.scrollLeft = current;
+      updateScrollBounds();
+      onFrame?.();
+
+      if (Math.abs(clampedTarget - current) > 0.5) {
+        rafIdRef.current = requestAnimationFrame(step);
+      } else {
+        containerRef.current.scrollLeft = clampedTarget;
+        rafIdRef.current = null;
+        targetScrollRef.current = null;
+        setTimeout(() => {
+          isTransitioningRef.current = false;
+        }, 80);
+        updateScrollBounds();
+        onFrame?.();
+        onComplete?.();
+      }
+    };
+
+    rafIdRef.current = requestAnimationFrame(step);
+  }, [cancelWheelAnimation, updateScrollBounds]);
+
+  // Clear timers on unmount
+  useEffect(() => {
+    return () => {
+      cancelWheelAnimation();
+    };
+  }, [cancelWheelAnimation]);
+
   useEffect(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -252,99 +323,142 @@ export default function ArtifactOverlappingCollection({
     return () => el.removeEventListener("scroll", updateScrollBounds);
   }, [displayItems, updateScrollBounds]);
 
-  // Step smoothly to a specific artifact by index, centering it in view
+  // Step smoothly to a specific artifact by index, LERPing it directly into center
   const shiftToArtifact = useCallback((targetIdx: number) => {
     if (targetIdx < 0 || targetIdx >= displayItems.length) return;
     const desktopContainer = containerRef.current;
     if (desktopContainer) {
       const targetEl = itemRefs.current[targetIdx];
       if (targetEl) {
-        const containerRect = desktopContainer.getBoundingClientRect();
-        const cardRect = targetEl.getBoundingClientRect();
-        const currentScroll = desktopContainer.scrollLeft;
-        const cardRelativeLeft = currentScroll + (cardRect.left - containerRect.left);
-        const targetScroll = cardRelativeLeft - (desktopContainer.clientWidth - cardRect.width) / 2;
-        const maxScroll = desktopContainer.scrollWidth - desktopContainer.clientWidth;
-        const clampedTarget = Math.max(0, Math.min(maxScroll, targetScroll));
+        // Mark transition as active to suppress accidental mouseenter from cards scrolling underneath cursor
+        isTransitioningRef.current = true;
+        lastScrollTimeRef.current = Date.now();
 
-        desktopContainer.scrollTo({ left: clampedTarget, behavior: "smooth" });
+        // Use immutable offsetLeft / offsetWidth for rock-solid centering
+        const cardCenter = targetEl.offsetLeft + targetEl.offsetWidth / 2;
+        const targetScroll = cardCenter - desktopContainer.clientWidth / 2;
+
         setActiveIdx(targetIdx);
         setScatterVisibleIdx(targetIdx);
-        updateScrollBounds();
+
+        lerpScrollTo(targetScroll);
       }
     }
-  }, [displayItems.length, updateScrollBounds]);
+  }, [displayItems.length, lerpScrollTo]);
 
-  // Keep a reference to current activeIdx and wheel throttle time
+  // Idle timer to revert back to default centered state if no hovering occurs for a few moments
+  const idleRevertTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  const resetIdleTimer = useCallback(() => {
+    if (idleRevertTimeoutRef.current) {
+      clearTimeout(idleRevertTimeoutRef.current);
+      idleRevertTimeoutRef.current = null;
+    }
+  }, []);
+
+  const scheduleIdleRevert = useCallback((delayMs = 3200) => {
+    resetIdleTimer();
+    idleRevertTimeoutRef.current = setTimeout(() => {
+      setActiveIdx(null);
+      setScatterVisibleIdx(null);
+      // Smoothly LERP container back to centering default stacked layout
+      const desktopContainer = containerRef.current;
+      const centerIdx = Math.floor(displayItems.length / 2);
+      const centerEl = itemRefs.current[centerIdx] || itemRefs.current[0];
+      if (desktopContainer && centerEl) {
+        const cardCenter = centerEl.offsetLeft + centerEl.offsetWidth / 2;
+        const targetScroll = cardCenter - desktopContainer.clientWidth / 2;
+        lerpScrollTo(targetScroll);
+      }
+    }, delayMs);
+  }, [displayItems.length, lerpScrollTo, resetIdleTimer]);
+
+  // Initial mount & resize centering for default state
+  useEffect(() => {
+    if (displayItems.length > 0 && containerRef.current) {
+      const centerDefaultState = () => {
+        const desktopContainer = containerRef.current;
+        const centerIdx = Math.floor(displayItems.length / 2);
+        const centerEl = itemRefs.current[centerIdx] || itemRefs.current[0];
+        if (desktopContainer && centerEl) {
+          const cardCenter = centerEl.offsetLeft + centerEl.offsetWidth / 2;
+          desktopContainer.scrollLeft = cardCenter - desktopContainer.clientWidth / 2;
+        }
+      };
+      centerDefaultState();
+      const timer = setTimeout(centerDefaultState, 100);
+      return () => clearTimeout(timer);
+    }
+  }, [displayItems.length]);
+
+  // Revert timer whenever activeIdx changes to a non-null index
+  useEffect(() => {
+    if (activeIdx !== null) {
+      scheduleIdleRevert(3200);
+    }
+    return () => {
+      resetIdleTimer();
+    };
+  }, [activeIdx, scheduleIdleRevert, resetIdleTimer]);
+
+  // Keep a reference to current activeIdx
   const activeIdxRef = useRef<number | null>(activeIdx);
-  const lastScrollTimeRef = useRef<number>(0);
 
   useEffect(() => {
     activeIdxRef.current = activeIdx;
   }, [activeIdx]);
 
-  // Horizontal wheel scroll listener: shifts to the next/prev entire artifact on one scroll (strictly when hovering an artifact)
+  // Section-wide wheel scroll listener: shifts exactly 1 entire artifact per scroll in the section
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
-      const targetEl = e.target as HTMLElement | null;
-      if (!targetEl) return;
-
-      // STRICT REQUIREMENT: Only handle when the mouse is directly hovering an artifact card!
-      // If the cursor is on the container background, whitespace, margins, headers, or any other area,
-      // return immediately and let the page scroll vertically as normal.
-      const artifactCard = targetEl.closest(".artifact-card, [data-artifact-card='true']") as HTMLElement | null;
-      if (!artifactCard) {
-        return;
-      }
-
-      // Check whether this artifact belongs to the curated desktop or mobile horizontal exhibition
+      const sectionEl = sectionRef.current;
       const desktopContainer = containerRef.current;
       const mobileContainer = mobileContainerRef.current;
 
-      const container =
-        (desktopContainer && desktopContainer.contains(artifactCard)) ? desktopContainer :
-        (mobileContainer && mobileContainer.contains(artifactCard)) ? mobileContainer : null;
+      const targetEl = e.target as HTMLElement | null;
+      if (!targetEl) return;
 
-      if (!container) {
-        // Not inside the curated horizontal exhibition -> normal vertical scroll
+      const isInsideDesktop = sectionEl && sectionEl.contains(targetEl);
+      const isInsideMobile = mobileContainer && mobileContainer.contains(targetEl);
+
+      if (!isInsideDesktop && !isInsideMobile) {
         return;
       }
 
       const rawDelta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
-      // Filter out micro-jitter touches below threshold
       if (Math.abs(rawDelta) < 6) return;
 
-      // Identify the artifact index under the cursor
-      const idxAttr = artifactCard.getAttribute("data-artifact-index");
-      const cardIdx = idxAttr !== null ? parseInt(idxAttr, 10) : 0;
-      const currentIdx = activeIdxRef.current ?? (isNaN(cardIdx) ? 0 : cardIdx);
-
-      const direction = rawDelta > 0 ? 1 : -1;
-      const nextIdx = currentIdx + direction;
+      const currentIdx = activeIdxRef.current;
+      let nextIdx: number;
+      if (currentIdx === null) {
+        nextIdx = rawDelta > 0 ? 0 : 0;
+      } else {
+        const direction = rawDelta > 0 ? 1 : -1;
+        nextIdx = currentIdx + direction;
+      }
 
       // Boundary check: If user reached edge in the direction of scroll, allow native page scroll
       if (nextIdx < 0 || nextIdx >= displayItems.length) {
         return;
       }
 
-      // Intercept wheel scroll to shift to the next entire artifact
+      // Intercept wheel scroll to step exactly 1 artifact in the direction of scroll
       e.preventDefault();
 
-      // Debounce rapid continuous wheel ticks so one wheel gesture advances exactly one artifact
       const now = Date.now();
-      if (now - lastScrollTimeRef.current < 350) {
+      if (now - lastScrollTimeRef.current < 300) {
         return;
       }
       lastScrollTimeRef.current = now;
 
       soundManager.playToggle(0.04);
 
-      if (container === desktopContainer) {
+      if (isInsideDesktop && desktopContainer) {
         shiftToArtifact(nextIdx);
-      } else if (container === mobileContainer) {
-        const targetEl = mobileCardRefs.current[nextIdx];
-        if (targetEl) {
-          targetEl.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
+      } else if (isInsideMobile && mobileContainer) {
+        const targetCard = mobileCardRefs.current[nextIdx];
+        if (targetCard) {
+          targetCard.scrollIntoView({ behavior: "smooth", inline: "center", block: "nearest" });
           setActiveMobileIdx(nextIdx);
         }
       }
@@ -390,10 +504,28 @@ export default function ArtifactOverlappingCollection({
   };
 
   const handleMouseUpOrLeave = () => {
+    if (isDragging && hasMovedDuringDrag && containerRef.current) {
+      const container = containerRef.current;
+      const containerCenter = container.scrollLeft + container.clientWidth / 2;
+      let closestIdx = 0;
+      let minDistance = Infinity;
+
+      itemRefs.current.forEach((el, idx) => {
+        if (!el) return;
+        const cardCenter = el.offsetLeft + el.offsetWidth / 2;
+        const dist = Math.abs(containerCenter - cardCenter);
+        if (dist < minDistance) {
+          minDistance = dist;
+          closestIdx = idx;
+        }
+      });
+
+      shiftToArtifact(closestIdx);
+    }
     setIsDragging(false);
   };
 
-  // Specimen switching handlers
+  // Specimen switching handlers on the centered artifact
   const handleSelectSpecimen = (artifactId: string, specimenId: string | null, e?: React.MouseEvent) => {
     if (e) e.stopPropagation();
     soundManager.playToggle(0.08);
@@ -401,45 +533,6 @@ export default function ArtifactOverlappingCollection({
       ...prev,
       [artifactId]: prev[artifactId] === specimenId ? null : specimenId,
     }));
-  };
-
-  // Desktop card hover interaction
-  const handleDesktopItemHover = (index: number) => {
-    if (isDragging || hasMovedDuringDrag) return;
-
-    if (activeIdx === index) {
-      if (scatterLeaveTimerRef.current) {
-        clearTimeout(scatterLeaveTimerRef.current);
-        scatterLeaveTimerRef.current = null;
-      }
-      if (satelliteExitTimerRef.current) {
-        clearTimeout(satelliteExitTimerRef.current);
-        satelliteExitTimerRef.current = null;
-      }
-      return;
-    }
-
-    if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
-    if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
-    if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
-
-    soundManager.playHover(0.03);
-    setActiveIdx(index);
-    setScatterVisibleIdx(index);
-  };
-
-  const handleDesktopItemLeave = (index: number) => {
-    if (isInteractingWithSatellitesRef.current) return;
-
-    if (scatterEnterTimerRef.current) clearTimeout(scatterEnterTimerRef.current);
-    if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
-
-    scatterLeaveTimerRef.current = setTimeout(() => {
-      if (!isInteractingWithSatellitesRef.current) {
-        if (activeIdx === index) setActiveIdx(null);
-        if (scatterVisibleIdx === index) setScatterVisibleIdx(null);
-      }
-    }, 120);
   };
 
   const handleDesktopItemClick = (item: DisplayArtifact, index: number) => {
@@ -722,7 +815,11 @@ export default function ArtifactOverlappingCollection({
   // Central Graphics with interactive separate specimen satellites & dossier.
   // =========================================================================
   return (
-    <div className="relative w-full overflow-hidden select-none py-4">
+    <div
+      ref={sectionRef}
+      onMouseLeave={() => scheduleIdleRevert(800)}
+      className="relative w-full overflow-hidden select-none py-4"
+    >
       {/* Desktop Exhibition Controls */}
       <div className="flex items-center justify-between px-6 sm:px-12 mb-2 font-mono text-[9px] font-black uppercase tracking-wider text-brand-text/70">
         <div className="flex items-center gap-2">
@@ -732,7 +829,7 @@ export default function ArtifactOverlappingCollection({
         <div className="flex items-center gap-3">
           <span className="hidden md:inline-flex items-center gap-1.5 text-[8.5px] font-mono font-bold text-brand-text/65 uppercase tracking-widest border border-brand-text/20 bg-brand-surface/80 px-2 py-0.5 shadow-[1px_1px_0px_#050505]">
             <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
-            <span>HOVER ARTIFACT + SCROLL TO SHIFT</span>
+            <span>SCROLL ANYWHERE TO MOVE ARTIFACTS</span>
           </span>
           <div className="flex items-center gap-1">
             <button
@@ -774,27 +871,30 @@ export default function ArtifactOverlappingCollection({
         onMouseMove={handleMouseMove}
         onMouseUp={handleMouseUpOrLeave}
         onMouseLeave={handleMouseUpOrLeave}
-        className={`w-full overflow-x-auto hide-scrollbar pt-20 sm:pt-24 pb-24 px-6 sm:px-12 cursor-grab active:cursor-grabbing transition-all ${
+        className={`w-full overflow-x-auto hide-scrollbar pt-20 sm:pt-24 pb-24 px-0 cursor-grab active:cursor-grabbing transition-all ${
           isDragging ? "select-none" : ""
         }`}
       >
         <div
           ref={trackRef}
-          className="flex items-center min-w-max mx-auto w-fit pl-[260px] pr-[260px] sm:pl-[300px] sm:pr-[300px]"
-          style={{ minHeight: "620px" }}
+          className="flex items-center min-w-max w-max"
+          style={{
+            minHeight: "620px",
+            paddingLeft: "calc(50vw - 190px)",
+            paddingRight: "calc(50vw - 190px)",
+          }}
         >
           {displayItems.map((item, idx) => {
-            const isHovered = activeIdx === idx;
-            const isAnyHovered = activeIdx !== null;
+            const isCentered = activeIdx === idx;
             const baseOffset = SPECIMEN_OFFSETS[idx % SPECIMEN_OFFSETS.length];
             const artifactNum = String(idx + 1).padStart(2, "0");
 
             const selectedSpecId = selectedSpecimenMap[item.id];
             const childSpecimens = item.specimens;
             
-            // Build multi-angle sequence for this item
+            // Multi-angle cycling on centered artifact
             const itemAngleSeq = buildSpecimenAngleSequence(childSpecimens, item.graphic);
-            const isAutoCycling = isHovered && itemAngleSeq.length > 0 && !selectedSpecId;
+            const isAutoCycling = isCentered && itemAngleSeq.length > 0 && !selectedSpecId;
             const currentAngleItem = isAutoCycling
               ? itemAngleSeq[desktopHoverCycleIndex % itemAngleSeq.length]
               : null;
@@ -809,36 +909,33 @@ export default function ArtifactOverlappingCollection({
               ? currentAngleItem.image
               : activeSpecimen?.images?.[0] || activeSpecimen?.thumbnailImage || item.graphic;
 
-            const minPrice = childSpecimens.length > 0 ? Math.min(...childSpecimens.map((s) => s.price)) : 0;
             const setCalculation = calculateArtifactSetPrice(item.rawEntity as any, childSpecimens);
 
-            // Spatial Separation Displacement on hover
+            // Centered artifact is prominently featured; neighboring artifacts part cleanly
             let displacementX = 0;
-            let targetScale = 1;
+            let targetScale = activeIdx === null ? 1 : 0.96;
             let targetZ = 10 + idx;
             let targetY = baseOffset.y;
             let targetRotate = baseOffset.rotate;
 
-            if (isAnyHovered) {
-              if (isHovered) {
-                displacementX = 0;
-                targetScale = 1.05;
-                targetZ = 50;
-                targetY = -18;
-                targetRotate = 0;
-              } else if (idx < activeIdx) {
-                const distanceFactor = Math.max(0, activeIdx - idx - 1);
-                displacementX = -(175 + distanceFactor * 25);
-                targetScale = 0.96;
-                targetZ = 10 + idx;
-                targetY = baseOffset.y + 4;
-              } else if (idx > activeIdx) {
-                const distanceFactor = Math.max(0, idx - activeIdx - 1);
-                displacementX = +(175 + distanceFactor * 25);
-                targetScale = 0.96;
-                targetZ = 10 + idx;
-                targetY = baseOffset.y + 4;
-              }
+            if (isCentered) {
+              displacementX = 0;
+              targetScale = 1.05;
+              targetZ = 50;
+              targetY = -18;
+              targetRotate = 0;
+            } else if (activeIdx !== null && idx < activeIdx) {
+              const distanceFactor = Math.max(0, activeIdx - idx - 1);
+              displacementX = -(260 + distanceFactor * 35);
+              targetScale = 0.96;
+              targetZ = 10 + idx;
+              targetY = baseOffset.y + 4;
+            } else if (activeIdx !== null && idx > activeIdx) {
+              const distanceFactor = Math.max(0, idx - activeIdx - 1);
+              displacementX = +(260 + distanceFactor * 35);
+              targetScale = 0.96;
+              targetZ = 10 + idx;
+              targetY = baseOffset.y + 4;
             }
 
             return (
@@ -847,9 +944,28 @@ export default function ArtifactOverlappingCollection({
                 ref={(el) => {
                   itemRefs.current[idx] = el;
                 }}
-                onMouseEnter={() => handleDesktopItemHover(idx)}
-                onMouseLeave={() => handleDesktopItemLeave(idx)}
-                onClick={() => handleDesktopItemClick(item, idx)}
+                onMouseEnter={() => {
+                  // Ignore hover events triggered by cards sliding under a stationary cursor during or right after scrolling
+                  if (isTransitioningRef.current || Date.now() - lastScrollTimeRef.current < 450) {
+                    return;
+                  }
+                  if (lastUserMouseMoveTimeRef.current < lastScrollTimeRef.current) {
+                    return;
+                  }
+                  scheduleIdleRevert(3200);
+                  if (activeIdx !== idx) {
+                    setActiveIdx(idx);
+                    setScatterVisibleIdx(idx);
+                    soundManager.playHover(0.02);
+                  }
+                }}
+                onClick={() => {
+                  if (isCentered) {
+                    handleDesktopItemClick(item, idx);
+                  } else {
+                    shiftToArtifact(idx);
+                  }
+                }}
                 animate={{
                   x: displacementX,
                   y: targetY,
@@ -864,24 +980,23 @@ export default function ArtifactOverlappingCollection({
                   mass: 0.5,
                 }}
                 style={{
-                  marginLeft: idx === 0 ? "0px" : "-140px",
+                  marginLeft: idx === 0 ? "0px" : "-115px",
                   zIndex: targetZ,
                 }}
-                data-artifact-card="true"
-                data-product-card="true"
-                data-preview-element="true"
+                data-artifact-card={isCentered ? "true" : undefined}
+                data-active-artifact={isCentered ? "true" : undefined}
                 data-artifact-index={idx}
-                className={`product-card artifact-card relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] group cursor-pointer ${
-                  idx !== 0 ? "sm:-ml-[170px] md:-ml-[200px] lg:-ml-[230px]" : ""
+                className={`product-card artifact-card relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] cursor-pointer ${
+                  idx !== 0 ? "sm:-ml-[140px] md:-ml-[165px] lg:-ml-[190px]" : ""
                 }`}
               >
                 {/* PHYSICAL 3:4 ARTIFACT FRAME */}
                 <div
-                  data-preview-canvas="true"
+                  data-preview-canvas={isCentered ? "true" : undefined}
                   className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text transition-all duration-300 ${
-                    isHovered
-                      ? "shadow-[10px_10px_0px_#050505,0_0_0_1.5px_#ff4500]"
-                      : "shadow-[5px_5px_0px_#050505] hover:shadow-[8px_8px_0px_#050505]"
+                    isCentered
+                      ? "shadow-[10px_10px_0px_#050505,0_0_0_1.5px_#ff4500] opacity-100"
+                      : "shadow-[5px_5px_0px_#050505] opacity-100"
                   }`}
                 >
                   {/* Central Graphic Canvas */}
@@ -900,15 +1015,6 @@ export default function ArtifactOverlappingCollection({
                           stiffness: 650,
                           damping: 26,
                           mass: 0.4
-                        }
-                      }}
-                      whileHover={{
-                        scale: 1.05,
-                        y: -3,
-                        transition: {
-                          type: "spring",
-                          stiffness: 450,
-                          damping: 16
                         }
                       }}
                       className="w-full h-full object-contain object-center select-none pointer-events-none p-0 sm:p-1"
@@ -960,7 +1066,7 @@ export default function ArtifactOverlappingCollection({
                       )}
                     </div>
 
-                    {/* Clean segment dots on hover */}
+                    {/* Clean segment dots on auto-cycling */}
                     {isAutoCycling && itemAngleSeq.length > 1 && (
                       <div className="absolute bottom-3 inset-x-4 z-20 flex items-center justify-center gap-1">
                         <div className="bg-brand-surface/90 border border-brand-text px-2 py-0.5 flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
@@ -992,17 +1098,17 @@ export default function ArtifactOverlappingCollection({
                       </div>
                     )}
 
-                    {/* Unhovered Bottom Specimen Count */}
-                    {!isHovered && (
+                    {/* Uncentered Bottom Specimen Count */}
+                    {!isCentered && (
                       <div className="absolute bottom-2.5 right-2.5 z-20 font-mono text-[8.5px] font-black uppercase bg-brand-surface text-brand-text px-2 py-0.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
                         {childSpecimens.length} SPECIMENS
                       </div>
                     )}
                   </div>
 
-                  {/* CURATORIAL ARTIFACT DOSSIER (Revealed on hover/focus) */}
+                  {/* CURATORIAL ARTIFACT DOSSIER (Always shown on centered artifact) */}
                   <AnimatePresence>
-                    {isHovered && (
+                    {isCentered && (
                       <motion.div
                         initial={{ y: 24, opacity: 0 }}
                         animate={{ y: 0, opacity: 1 }}
@@ -1037,83 +1143,7 @@ export default function ArtifactOverlappingCollection({
                         </p>
                       </div>
 
-                      {/* Inside Specimen Selector: Only shown if side-specimens-preview is null AND screen resolution is mobile phone size */}
-                      {isMobile && childSpecimens.length > 0 && (
-                        <div className="border-t border-brand-text/20 pt-2 space-y-1 bg-brand-text/5 p-2 border border-brand-text/15">
-                          <div className="flex items-center justify-between text-[8px] font-black uppercase text-brand-text/80">
-                            <span className="flex items-center gap-1">
-                              <Layers size={10} className="text-brand-accent" />
-                              <span>SEPARATE SPECIMENS ({childSpecimens.length}):</span>
-                            </span>
-                            {activeSpecimen && (
-                              <button
-                                type="button"
-                                onClick={(e) => handleSelectSpecimen(item.id, null, e)}
-                                className="text-[7.5px] font-black text-brand-accent underline hover:text-brand-text uppercase"
-                              >
-                                VIEW GRAPHIC
-                              </button>
-                            )}
-                          </div>
-
-                          <div className={`grid gap-2 py-1.5 px-0.5 ${
-                            childSpecimens.length <= 2 ? "grid-cols-2" : "grid-cols-3"
-                          }`}>
-                            {childSpecimens.map((spec, specIdx) => {
-                              const isSelected = selectedSpecId === spec.id;
-                              const specImg = spec.images?.[0] || spec.thumbnailImage || item.graphic;
-
-                              return (
-                                <button
-                                  key={spec.id}
-                                  type="button"
-                                  onClick={(e) => handleSelectSpecimen(item.id, spec.id, e)}
-                                  onMouseEnter={() => soundManager.playHover(0.02)}
-                                  className={`relative p-1.5 text-left border-2 font-mono transition-colors cursor-pointer flex flex-col justify-between ${
-                                    isSelected
-                                      ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[3px_3px_0px_#ff4500] z-10"
-                                      : "bg-brand-surface border-brand-text shadow-[2px_2px_0px_#050505] hover:border-brand-accent hover:shadow-[3px_3px_0px_#050505]"
-                                  }`}
-                                  title={`Preview ${spec.medium}`}
-                                >
-                                  {/* Small Specimen Thumbnail */}
-                                  <div className="w-full h-14 bg-brand-bg border border-brand-text/30 overflow-hidden flex items-center justify-center relative">
-                                    <img
-                                      src={specImg}
-                                      alt={spec.medium}
-                                      referrerPolicy="no-referrer"
-                                      className="w-full h-full object-contain p-0.5 select-none pointer-events-none"
-                                      loading="lazy"
-                                    />
-                                    {isSelected ? (
-                                      <div className="absolute top-0.5 right-0.5 px-1 py-0.2 bg-brand-accent text-white text-[6.5px] font-black uppercase tracking-wider leading-none shadow-[1px_1px_0px_#050505]">
-                                        ACTIVE
-                                      </div>
-                                    ) : (
-                                      <div className="absolute top-0.5 right-0.5 px-0.5 py-0.2 bg-brand-surface/90 text-brand-text text-[6px] font-black leading-none">
-                                        0{specIdx + 1}
-                                      </div>
-                                    )}
-                                  </div>
-
-                                  {/* Specimen Info */}
-                                  <div className="pt-1 space-y-0.5">
-                                    <div className="text-[8.5px] font-black uppercase truncate flex items-center justify-between text-brand-text">
-                                      <span className="truncate">{spec.medium}</span>
-                                      {isSelected && <Check size={8} className="text-brand-accent shrink-0 ml-0.5" />}
-                                    </div>
-                                    <div className={`text-[7px] font-bold uppercase truncate ${isSelected ? "text-brand-accent" : "text-brand-text/60"}`}>
-                                      {spec.material || "CANONICAL"}
-                                    </div>
-                                  </div>
-                                </button>
-                              );
-                            })}
-                          </div>
-                        </div>
-                      )}
-
-                      {/* Complete Set Acquisition Bar (No price in previews) */}
+                      {/* Complete Set Acquisition Bar */}
                       {setCalculation.hasDiscount && setCalculation.setPrice > 0 && (
                         <div className="bg-brand-accent/10 border border-brand-accent/40 p-1.5 flex items-center justify-between font-mono text-[8px]">
                           <div className="flex items-center gap-1 font-black text-brand-text uppercase">
@@ -1145,9 +1175,9 @@ export default function ArtifactOverlappingCollection({
                 </AnimatePresence>
                 </div>
 
-                {/* ORBITING SPECIMEN SATELLITES AROUND ARTIFACT CARD */}
+                {/* ORBITING SPECIMEN SATELLITES AROUND CENTERED ARTIFACT */}
                 <AnimatePresence>
-                  {scatterVisibleIdx === idx && childSpecimens.length > 0 && (
+                  {isCentered && childSpecimens.length > 0 && (
                     <>
                       {/* Architectural Header floating above card */}
                       <motion.div
@@ -1155,31 +1185,26 @@ export default function ArtifactOverlappingCollection({
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -6 }}
                         transition={{ duration: 0.15 }}
-                        onMouseEnter={() => {
-                          if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
-                          if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
-                          isInteractingWithSatellitesRef.current = true;
-                          setScatterVisibleIdx(idx);
-                          setActiveIdx(idx);
-                        }}
-                        onMouseLeave={() => {
-                          if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
-                          satelliteExitTimerRef.current = setTimeout(() => {
-                            isInteractingWithSatellitesRef.current = false;
-                            handleDesktopItemLeave(idx);
-                          }, 120);
-                        }}
-                        className="absolute -top-10 inset-x-0 z-50 flex items-center justify-between px-2.5 py-1 bg-brand-surface border-2 border-brand-text shadow-[3px_3px_0px_#050505] font-mono text-[8px] font-black uppercase tracking-widest text-brand-text pointer-events-auto"
-                        onClick={(e) => e.stopPropagation()}
+                        className="absolute -top-10 inset-x-0 flex items-center justify-between pointer-events-none z-40 px-2 font-mono"
                       >
-                        <div className="flex items-center gap-1.5">
-                          <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
-                          <span>SEPARATE PHYSICAL SPECIMENS</span>
+                        <div className="flex items-center gap-1.5 bg-brand-bg/95 border border-brand-text/50 px-2 py-0.5 shadow-[1.5px_1.5px_0px_#050505]">
+                          <span className="w-1.5 h-1.5 bg-brand-accent inline-block animate-pulse" />
+                          <span className="text-[8px] font-black uppercase text-brand-text tracking-widest">
+                            SPECIMEN SATELLITES ({childSpecimens.length})
+                          </span>
                         </div>
-                        <span className="text-brand-accent">{childSpecimens.length} MEDIA TYPES</span>
+                        {selectedSpecId && (
+                          <button
+                            type="button"
+                            onClick={(e) => handleSelectSpecimen(item.id, null, e)}
+                            className="pointer-events-auto bg-brand-accent text-white border border-brand-text px-1.5 py-0.5 text-[7.5px] font-mono font-black uppercase tracking-wider hover:bg-brand-text transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer"
+                          >
+                            RESET PIN ✕
+                          </button>
+                        )}
                       </motion.div>
 
-                      {/* Scattered Brutalist Specimen Thumbnail Plates (Enlarged & Prominent) */}
+                      {/* Orbiting Satellite Cards */}
                       {childSpecimens.map((spec, specIdx) => {
                         const scatter = SPECIMEN_SCATTER_OFFSETS[specIdx % SPECIMEN_SCATTER_OFFSETS.length];
                         const isSelected = selectedSpecId === spec.id;
@@ -1195,30 +1220,27 @@ export default function ArtifactOverlappingCollection({
                             transition={{ duration: 0.18, delay: specIdx * 0.02 }}
                             whileHover={{ scale: 1.04, zIndex: 60, transition: { duration: 0.12 } }}
                             whileTap={{ scale: 0.98 }}
-                            onMouseEnter={(e) => {
-                              e.stopPropagation();
-                              if (scatterLeaveTimerRef.current) clearTimeout(scatterLeaveTimerRef.current);
-                              if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
-                              isInteractingWithSatellitesRef.current = true;
-                              setScatterVisibleIdx(idx);
-                              setActiveIdx(idx);
-                              soundManager.playHover(0.02);
+                            onMouseEnter={() => {
+                              if (isTransitioningRef.current || Date.now() - lastScrollTimeRef.current < 450) {
+                                return;
+                              }
+                              if (lastUserMouseMoveTimeRef.current < lastScrollTimeRef.current) {
+                                return;
+                              }
+                              scheduleIdleRevert(3200);
+                              handleSelectSpecimen(item.id, spec.id);
                             }}
-                            onMouseLeave={(e) => {
-                              e.stopPropagation();
-                              if (satelliteExitTimerRef.current) clearTimeout(satelliteExitTimerRef.current);
-                              satelliteExitTimerRef.current = setTimeout(() => {
-                                isInteractingWithSatellitesRef.current = false;
-                                handleDesktopItemLeave(idx);
-                              }, 120);
+                            onClick={(e) => {
+                              scheduleIdleRevert(3200);
+                              handleSelectSpecimen(item.id, spec.id, e);
                             }}
-                            onClick={(e) => handleSelectSpecimen(item.id, spec.id, e)}
                             style={{
                               position: "absolute",
                               left: scatter.x.includes("%") ? scatter.x : undefined,
                               right: !scatter.x.includes("%") && !scatter.x.startsWith("-") ? scatter.x : undefined,
                               top: scatter.y,
                               marginLeft: !scatter.x.includes("%") && scatter.x.startsWith("-") ? scatter.x : undefined,
+                              pointerEvents: isTransitioningRef.current ? "none" : "auto",
                             }}
                             data-product-card="true"
                             className={`product-card specimen-card w-38 sm:w-44 h-52 sm:h-56 z-40 bg-brand-surface border-2 transition-colors p-2 flex flex-col justify-between shadow-[4px_4px_0px_#050505] cursor-pointer text-left ${
@@ -1226,7 +1248,7 @@ export default function ArtifactOverlappingCollection({
                                 ? "border-brand-accent ring-2 ring-brand-accent bg-brand-surface shadow-[6px_6px_0px_#ff4500]"
                                 : "border-brand-text hover:border-brand-accent hover:shadow-[6px_6px_0px_#050505]"
                             }`}
-                            title={`Click to preview ${spec.medium}`}
+                            title={`Hover or click to preview ${spec.medium}`}
                           >
                             {/* Product Mockup Image Container */}
                             <div className="w-full h-30 sm:h-34 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30 relative">

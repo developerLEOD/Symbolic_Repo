@@ -86,7 +86,7 @@ export default function ProductGrid({
         setSpecimens(specs);
       }
     } catch (err) {
-      console.error("Archive background sync error:", err);
+      console.warn("Archive background sync note (using cached/preset archive):", err);
     } finally {
       setLoading(false);
       setReverifying(false);

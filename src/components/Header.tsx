@@ -167,7 +167,7 @@ export default function Header({
           setCategories(loadedCats);
         }
       } catch (err) {
-        console.error("Failed to load categories in header:", err);
+        console.warn("Categories header sync note (using fallback):", err);
       }
     };
     loadCategories();

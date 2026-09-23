@@ -574,7 +574,11 @@ export default function ProductDetail({
               
               {/* Primary Image Viewport (Strict 3:4 Archival Specification) */}
               <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center">
-                <div className="w-full max-w-[480px] aspect-[3/4] max-h-[620px] relative bg-brand-bg border-2 border-brand-text overflow-hidden group shadow-[4px_4px_0px_#050505]">
+                <div 
+                  data-artifact-card="true"
+                  data-preview-canvas="true"
+                  className="w-full max-w-[480px] aspect-[3/4] max-h-[620px] relative bg-brand-bg border-2 border-brand-text overflow-hidden group shadow-[4px_4px_0px_#050505]"
+                >
                   <motion.img 
                     key={activeImageIndex}
                     src={images[activeImageIndex] || STUDIO_FALLBACK_IMAGE} 

@@ -26,6 +26,7 @@ export default function CustomCursor() {
   const [isVisible, setIsVisible] = useState(false);
 
   const idleTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const scrollDebounceTimerRef = useRef<NodeJS.Timeout | null>(null);
   const lastPointRef = useRef({ x: -100, y: -100 });
   const activeElementRef = useRef<HTMLElement | null>(null);
 
@@ -95,6 +96,17 @@ export default function CustomCursor() {
       }, 2000);
     };
 
+    const getPaddingOffset = (el: HTMLElement | null) => {
+      if (!el) return 8;
+      const isArtifactOrCard = Boolean(
+        el.closest(".artifact-card, [data-artifact-card='true'], [data-product-card='true'], .specimen-card, .featured-product, [data-featured-object], [data-preview-canvas]") ||
+        el.classList.contains("artifact-card") ||
+        el.hasAttribute("data-artifact-card")
+      );
+      // Increased distance on artifact hover: +12px (6px breathing space on each corner)
+      return isArtifactOrCard ? 12 : 8;
+    };
+
     const updateHoverAtPoint = (clientX: number, clientY: number) => {
       lastPointRef.current = { x: clientX, y: clientY };
       if (clientX < 0 || clientY < 0) return;
@@ -123,11 +135,19 @@ export default function CustomCursor() {
         activeElementRef.current = elementToExpand;
         const rect = elementToExpand.getBoundingClientRect();
         if (rect.width > 8 && rect.height > 8) {
+          const isArtifact = Boolean(
+            cardEl ||
+            elementToExpand.classList.contains("artifact-card") ||
+            elementToExpand.hasAttribute("data-artifact-card")
+          );
+          const paddingOffset = getPaddingOffset(elementToExpand);
+          const targetX = rect.left + rect.width / 2;
+          const targetY = rect.top + rect.height / 2;
           setBoundaryTarget({
-            x: rect.left + rect.width / 2,
-            y: rect.top + rect.height / 2,
-            width: Math.round(rect.width + 12),
-            height: Math.round(rect.height + 12),
+            x: targetX,
+            y: targetY,
+            width: Math.round(rect.width + paddingOffset),
+            height: Math.round(rect.height + paddingOffset),
           });
           return;
         }
@@ -146,15 +166,29 @@ export default function CustomCursor() {
     const onScrollOrShift = () => {
       if (activeElementRef.current && activeElementRef.current.isConnected) {
         const rect = activeElementRef.current.getBoundingClientRect();
+        const isArtifact = Boolean(
+          activeElementRef.current.closest(".artifact-card, [data-artifact-card='true'], [data-product-card='true'], .specimen-card") ||
+          activeElementRef.current.classList.contains("artifact-card") ||
+          activeElementRef.current.hasAttribute("data-artifact-card")
+        );
+        const paddingOffset = getPaddingOffset(activeElementRef.current);
+        const targetX = rect.left + rect.width / 2;
+        const targetY = rect.top + rect.height / 2;
         setBoundaryTarget({
-          x: rect.left + rect.width / 2,
-          y: rect.top + rect.height / 2,
-          width: Math.round(rect.width + 12),
-          height: Math.round(rect.height + 12),
+          x: targetX,
+          y: targetY,
+          width: Math.round(rect.width + paddingOffset),
+          height: Math.round(rect.height + paddingOffset),
         });
-      } else {
-        updateHoverAtPoint(lastPointRef.current.x, lastPointRef.current.y);
       }
+
+      // Automatically refresh hover state immediately when scroll finishes without waiting for cursor to move
+      if (scrollDebounceTimerRef.current) {
+        clearTimeout(scrollDebounceTimerRef.current);
+      }
+      scrollDebounceTimerRef.current = setTimeout(() => {
+        updateHoverAtPoint(lastPointRef.current.x, lastPointRef.current.y);
+      }, 50);
     };
 
     const onMouseDown = (e: MouseEvent) => {
@@ -207,6 +241,7 @@ export default function CustomCursor() {
       document.removeEventListener("mouseleave", onMouseLeave);
       document.removeEventListener("mouseenter", onMouseEnter);
       if (idleTimerRef.current) clearTimeout(idleTimerRef.current);
+      if (scrollDebounceTimerRef.current) clearTimeout(scrollDebounceTimerRef.current);
     };
   }, []);
 
@@ -220,8 +255,8 @@ export default function CustomCursor() {
 
   if (!isVisible) return null;
 
-  const cornerColorClass = isOverOrange ? "border-white text-white" : "border-[#ff4500] text-[#ff4500]";
-  const dashedColorClass = isOverOrange ? "border-white/60 outline-white/30" : "border-[#ff4500]/60 outline-[#ff4500]/30";
+  // Bounding corners are permanently brand orange (no white color shift)
+  const cornerColorClass = "border-[#ff4500]";
 
   return (
     <div className="fixed inset-0 pointer-events-none z-[9999] overflow-hidden select-none">
@@ -264,40 +299,21 @@ export default function CustomCursor() {
         }}
         className="fixed -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[9998]"
       >
-        {/* Outer dashed border frame with outline offset around the entire element */}
-        <div
-          className={`absolute inset-0 border border-dashed outline outline-1 outline-offset-1 pointer-events-none ${dashedColorClass}`}
-        />
-
-        {/* 4 Precise Corner Outline Borders (brackets) at the element's boundaries */}
-        <div className={`absolute -top-1 -left-1 w-3.5 h-3.5 border-t-2 border-l-2 pointer-events-none ${cornerColorClass}`} />
-        <div className={`absolute -top-1 -right-1 w-3.5 h-3.5 border-t-2 border-r-2 pointer-events-none ${cornerColorClass}`} />
-        <div className={`absolute -bottom-1 -left-1 w-3.5 h-3.5 border-b-2 border-l-2 pointer-events-none ${cornerColorClass}`} />
-        <div className={`absolute -bottom-1 -right-1 w-3.5 h-3.5 border-b-2 border-r-2 pointer-events-none ${cornerColorClass}`} />
-
-        {/* 4 Technical Corner Crosshair Reticles (+) at the element's boundaries */}
-        <span className={`absolute -top-3.5 -left-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
-          +
-        </span>
-        <span className={`absolute -top-3.5 -right-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
-          +
-        </span>
-        <span className={`absolute -bottom-3.5 -left-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
-          +
-        </span>
-        <span className={`absolute -bottom-3.5 -right-3.5 font-mono text-[10px] font-black leading-none pointer-events-none select-none ${cornerColorClass}`}>
-          +
-        </span>
+        {/* 4 Corner Outline Borders only - comfortably spaced outside the artifact and permanent brand orange */}
+        <div className={`absolute top-0 left-0 w-3.5 h-3.5 border-t-2 border-l-2 pointer-events-none ${cornerColorClass}`} />
+        <div className={`absolute top-0 right-0 w-3.5 h-3.5 border-t-2 border-r-2 pointer-events-none ${cornerColorClass}`} />
+        <div className={`absolute bottom-0 left-0 w-3.5 h-3.5 border-b-2 border-l-2 pointer-events-none ${cornerColorClass}`} />
+        <div className={`absolute bottom-0 right-0 w-3.5 h-3.5 border-b-2 border-r-2 pointer-events-none ${cornerColorClass}`} />
       </motion.div>
 
-      {/* MOUSE POINTER CORE DOT: Always tracks cursor position accurately with zero lag */}
+      {/* MOUSE POINTER CORE DOT: 100% strictly follows mouse position with zero snapping */}
       <motion.div
         style={{
           left: position.x,
           top: position.y,
         }}
         animate={{
-          scale: isClicked ? 0.75 : boundaryTarget ? 0.8 : isIdle ? [0.85, 1.15, 0.85] : 1,
+          scale: isClicked ? 0.75 : boundaryTarget ? 0.9 : isIdle ? [0.85, 1.15, 0.85] : 1,
           borderRadius: isOverOrange ? "50%" : "0px",
           backgroundColor: isOverOrange ? "#ffffff" : "#ff4500",
         }}
