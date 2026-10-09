@@ -19,7 +19,7 @@ interface ProductRouteHandlerProps {
   onOpenLedger: () => void;
   onEditProduct?: (id: string) => void;
   onProductDeleted?: () => void;
-  onTryOnClick?: (artifactId?: string, specimenId?: string) => void;
+  onOpen3D?: (artifactId?: string) => void;
 }
 
 export default function ProductRouteHandler({
@@ -28,7 +28,7 @@ export default function ProductRouteHandler({
   onOpenLedger,
   onEditProduct,
   onProductDeleted,
-  onTryOnClick
+  onOpen3D
 }: ProductRouteHandlerProps) {
   const { id } = useParams<{ id: string }>();
   const [searchParams] = useSearchParams();
@@ -237,7 +237,7 @@ export default function ProductRouteHandler({
         onBackToSpec={() => navigate(specTargetRoute)}
         onAddToCart={onAddToCart}
         onOpenLedger={onOpenLedger}
-        onTryOnClick={onTryOnClick}
+        onOpen3D={onOpen3D}
       />
     );
   }
@@ -258,7 +258,7 @@ export default function ProductRouteHandler({
           const query = specimenId ? `?specimen=${specimenId}` : "";
           navigate(`/acquisitions/${artifact.artifactId || artifact.id}${query}`);
         }}
-        onTryOnClick={onTryOnClick}
+        onOpen3D={onOpen3D}
       />
     );
   }

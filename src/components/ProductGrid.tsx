@@ -25,6 +25,7 @@ interface ProductGridProps {
   activeCategoryId: string | null;
   onCategoryChange?: (id: string | null) => void;
   onProductClick: (productOrArtifact: any, specimenId?: string) => void;
+  onTryOnClick?: (entity: any, specimenId?: string) => void;
   refreshKey?: number;
   onCategoriesLoaded?: (categories: Category[]) => void;
 }
@@ -211,8 +212,8 @@ export default function ProductGrid({
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
-              <span className="inline-block w-2.5 h-2.5 rounded-full bg-brand-accent"></span>
-              <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 rounded-full border border-brand-accent/30">
+              <span className="inline-block w-2.5 h-2.5 rounded-none bg-brand-accent"></span>
+              <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 rounded-none border border-brand-accent/30">
                 {selectedCollection === "be-palestine" ? "COLLECTION FALASTEEN" : selectedCollection === "be-symbolic" ? "COLLECTION BE SYMBOLIC" : "PERMANENT ARCHIVE"}
               </span>
             </div>
@@ -220,14 +221,14 @@ export default function ProductGrid({
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono font-black uppercase tracking-tight text-brand-text leading-none">
                 THE COLLECTION
               </h2>
-              <span className="font-mono text-xs font-bold text-brand-text/70 uppercase tracking-widest bg-brand-surface/90 px-3 py-1 rounded-full border border-brand-text/25">
+              <span className="font-mono text-xs font-bold text-brand-text/70 uppercase tracking-widest bg-brand-surface/90 px-3 py-1 rounded-none border border-brand-text/25">
                 [{totalArtifactsCount < 10 ? `0${totalArtifactsCount}` : totalArtifactsCount} ARTIFACTS // {totalSpecimensCount} SPECIMENS]
               </span>
             </div>
           </div>
 
-          {/* Perspective View Switcher - Tactile Pill Segmented Control */}
-          <div className="inline-flex p-1 rounded-full border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] gap-1 shrink-0">
+          {/* Perspective View Switcher */}
+          <div className="inline-flex p-1 border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] gap-1 shrink-0">
             <button
               id="view-mode-exhibition-btn"
               type="button"
@@ -285,7 +286,7 @@ export default function ProductGrid({
           </div>
         </div>
 
-        <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 border-l-4 border-l-brand-accent p-4 rounded-xl shadow-[3px_3px_0px_rgba(5,5,5,0.08)] max-w-2xl">
+        <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 p-4 rounded-none shadow-[3px_3px_0px_rgba(5,5,5,0.08)] max-w-2xl">
           <p className="font-space-grotesk text-xs sm:text-sm text-brand-text/90 normal-case leading-relaxed font-normal">
             Master artworks featuring their central graphic inscription, materialized across separate physical specimens.
           </p>
@@ -299,7 +300,7 @@ export default function ProductGrid({
           <span className="font-mono text-[9px] font-black uppercase tracking-widest text-brand-text/60 mr-1">
             MEDIUMS //
           </span>
-          <div className="inline-flex flex-wrap items-center gap-1.5 p-1 rounded-full border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
+          <div className="inline-flex flex-wrap items-center gap-1.5 p-1 border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
             {mediums.map((item) => {
               const isSelected = activeMedium === item.id;
               return (
@@ -326,7 +327,7 @@ export default function ProductGrid({
         {/* Ethos Collections & Availability */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Collection switcher */}
-          <div className="inline-flex items-center gap-1 p-1 rounded-full border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
+          <div className="inline-flex items-center gap-1 p-1 border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
             {ethosCollections.map((col) => {
               const isSelected = selectedCollection === col.id;
               return (

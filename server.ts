@@ -25,177 +25,179 @@ const ai = new GoogleGenAI({
   },
 });
 
-// AI Photorealistic Virtual Try-On Endpoint: Multimodal Merging of Subject Photo + Shirt Specimen
-app.post("/api/tryon/generate", async (req, res) => {
+// Gemini 3D Parametric Geometry & Spatial Architecture Endpoint
+app.post("/api/3d/generate", async (req, res) => {
   try {
     const {
+      prompt,
+      artifactId,
       artifactName,
       medium,
       material,
-      color,
       inscription,
-      userImage,
-      specimenImage,
-      artifactGraphic,
-      modelPreset,
-      lightingPreset,
-      stylePreset,
-      customPrompt,
-    } = req.body;
+      concept
+    } = req.body || {};
 
-    const basePrompt = `High-end editorial fashion studio photograph of the subject from Image 1 wearing the exact physical shirt specimen from Image 2 (${color || "black"} ${
-      medium || "heavyweight oversized T-Shirt"
-    }, ${material || "480 GSM Cotton"}). Accurately map the central graphic artwork and typographic inscription "${
-      inscription || artifactName || "SYMBOLIC"
-    }" onto the chest. Maintain authentic fabric drape, heavyweight cotton texture, realistic drop shoulder fit, and natural body proportions. Studio atmosphere: ${
-      lightingPreset || "Atelier Concrete Studio"
-    }. High resolution, crisp textile grain, photorealistic fashion editorial.`;
-
-    let aiAnalysis: {
-      subjectPosture?: string;
-      garmentMapping?: string;
-      drapeFidelity?: string;
-      curatorialFitScore?: number;
-    } = {
-      subjectPosture: "Detected human silhouette with upright posture and ambient directional illumination.",
-      garmentMapping: `Segmented ${medium || "Garment"} in ${color || "Black"} with high-density ${material || "480 GSM Cotton"} texture.`,
-      drapeFidelity: "Contoured drop-shoulder geometry with organic textile folds and torso shadow integration.",
-      curatorialFitScore: 97,
+    // Standard Curated Archetypes fallback dictionary
+    const fallbackArchetypes: Record<string, any> = {
+      default: {
+        name: artifactName ? `${artifactName} // 3D Spatial Form` : "The Octagonal Stellation of Tawhid",
+        classification: "Sacred Geometric Polyhedron // Khatam Sulayman",
+        philosophicalMonograph: "A three-dimensional stereographic projection of the eight-pointed Islamic star (Khatam). Symmetrical interpenetration of twin cubes embodying celestial order, divine unity, and moral restraint in physical space.",
+        geometryArchetype: medium?.toLowerCase().includes("vessel") 
+          ? "stoneware_vessel" 
+          : medium?.toLowerCase().includes("wear") || medium?.toLowerCase().includes("hoodie") || medium?.toLowerCase().includes("tee")
+          ? "mannequin_torso"
+          : "octagonal_stellation",
+        mathematicalParameters: {
+          proportions: "1 : 1.618 (Divine Golden Ratio)",
+          symmetryGroup: "D8 Octagonal Dihedral Symmetries",
+          tessellationOrder: 8,
+          wireframeDensity: 24,
+          scaleVector: [1.2, 1.2, 1.2],
+          twistFactor: 0.15,
+          bevelRadius: 0.08,
+          radialSegments: 32
+        },
+        materialPhysics: {
+          baseColor: "#141416",
+          roughness: 0.65,
+          metalness: 0.25,
+          transmission: 0.05,
+          wireframeColor: "#ff4500",
+          ambientOcclusionIntensity: 0.8,
+          finishType: "brutalist_concrete"
+        },
+        orbitalSatellites: [
+          { name: "Orbital Axis Alpha", shape: "ring", distance: 2.4, speed: 0.8, size: 0.04, color: "#ff4500" },
+          { name: "Tessellation Node 01", shape: "octahedron", distance: 2.1, speed: -0.6, size: 0.14, color: "#ffffff" },
+          { name: "Tessellation Node 02", shape: "tetrahedron", distance: 2.7, speed: 0.4, size: 0.12, color: "#e2e8f0" }
+        ],
+        inscriptionEngraving: {
+          arabicText: inscription || "كن ذا رمزية",
+          transliteration: "Kun Dha Ramziyyah",
+          englishTranslation: "BE SYMBOLIC // Wear conviction, not logos",
+          coordinatePlacement: "equator"
+        },
+        lightingPreset: "atelier_neutral"
+      }
     };
 
     if (process.env.GEMINI_API_KEY) {
-      // 1. First, run fast multimodal analysis using Gemini to extract subject posture and garment metrics
       try {
-        const analysisParts: any[] = [];
-        if (userImage && typeof userImage === "string" && userImage.startsWith("data:")) {
-          const mimeType = userImage.split(";")[0].split(":")[1] || "image/jpeg";
-          const base64Data = userImage.split(",")[1];
-          analysisParts.push({ inlineData: { mimeType, data: base64Data } });
-        }
-        if (specimenImage && typeof specimenImage === "string" && specimenImage.startsWith("data:")) {
-          const mimeType = specimenImage.split(";")[0].split(":")[1] || "image/jpeg";
-          const base64Data = specimenImage.split(",")[1];
-          analysisParts.push({ inlineData: { mimeType, data: base64Data } });
-        }
+        const systemPrompt = `You are an elite 3D Computational Architect, Master of Islamic Sacred Geometry, and Industrial Designer for the SYMBOLIC atelier.
+Your task is to compute and synthesize exact 3D spatial geometry parameters, physics-based materials, and orbital coordinates for an interactive Three.js WebGL viewport.
 
-        analysisParts.push({
-          text: `You are an expert AI fashion curator and virtual try-on engine. Analyze Image 1 (the person/subject) and Image 2 (the shirt specimen: ${artifactName}, ${medium}, ${color}, inscription: ${inscription}). Provide a short JSON response with:
-- "subjectPosture": a 1-sentence analysis of the subject's pose, torso alignment, and lighting.
-- "garmentMapping": a 1-sentence analysis of how the shirt specimen, fabric weave, and inscription should drape across their torso.
-- "drapeFidelity": a 1-sentence analysis of the fabric fold shadows and drop-shoulder tailoring.
-- "curatorialFitScore": a number between 90 and 99.
-Return ONLY valid JSON matching this schema.`,
-        });
+Given an Artifact or user directive:
+- Artifact: ${artifactName || "Sacred Symbolic Object"}
+- Medium: ${medium || "Architectural Specimen"}
+- Material: ${material || "480 GSM Cotton / Stoneware Ceramic / Brutalist Granite"}
+- Inscription: ${inscription || "SYMBOLIC"}
+- Concept: ${concept || "Spiritual and moral self-representation"}
+- User Directive: ${prompt || "Synthesize authentic 3D spatial geometry"}
 
-        const analysisResp = await ai.models.generateContent({
-          model: "gemini-2.5-flash",
-          contents: analysisParts,
-          config: { responseMimeType: "application/json" },
-        });
+You must select the most fitting 'geometryArchetype' from:
+1. "octagonal_stellation": 8-point Islamic star polyhedron (Khatam Sulayman)
+2. "monolithic_prism": Heavy brutalist monolith with chamfered faces
+3. "stoneware_vessel": Lathed contemplation ceramic urn with weighted base
+4. "torus_infinity": Continuous topological knot of steadfast conviction
+5. "dodecahedron_talisman": 12-sided faceted sacred polyhedron
+6. "mannequin_torso": Sculptural drop-shoulder heavyweight garment silhouette
+7. "geodesic_polyhedron": Spherical sacred geodesic dome
 
-        if (analysisResp.text) {
-          try {
-            const parsed = JSON.parse(analysisResp.text);
-            aiAnalysis = { ...aiAnalysis, ...parsed };
-          } catch {
-            // keep default analysis
-          }
-        }
-      } catch (analErr) {
-        console.warn("Multimodal analysis note:", analErr);
-      }
+Return ONLY valid JSON matching this exact structure:
+{
+  "name": "string (Short poetic title in uppercase)",
+  "classification": "string (Architectural classification)",
+  "philosophicalMonograph": "string (1-2 sentences explaining the geometric and moral symbolism)",
+  "geometryArchetype": "octagonal_stellation | monolithic_prism | stoneware_vessel | torus_infinity | dodecahedron_talisman | mannequin_torso | geodesic_polyhedron",
+  "mathematicalParameters": {
+    "proportions": "string",
+    "symmetryGroup": "string",
+    "tessellationOrder": number (4, 6, 8, or 12),
+    "wireframeDensity": number (12 to 48),
+    "scaleVector": [number, number, number],
+    "twistFactor": number (0.0 to 1.0),
+    "bevelRadius": number (0.01 to 0.2),
+    "radialSegments": number (16 to 64)
+  },
+  "materialPhysics": {
+    "baseColor": "string hex (e.g. #121214, #27272a, #d97706, #09090b)",
+    "roughness": number (0.0 to 1.0),
+    "metalness": number (0.0 to 1.0),
+    "transmission": number (0.0 to 0.5),
+    "wireframeColor": "string hex (e.g. #ff4500, #38bdf8, #f59e0b, #ffffff)",
+    "ambientOcclusionIntensity": number (0.5 to 1.0),
+    "finishType": "brutalist_concrete | obsidian_stone | unbleached_cotton | matte_ceramic | brushed_brass"
+  },
+  "orbitalSatellites": [
+    {
+      "name": "string",
+      "shape": "sphere | tetrahedron | octahedron | ring",
+      "distance": number (1.8 to 3.5),
+      "speed": number (-1.5 to 1.5),
+      "size": number (0.08 to 0.25),
+      "color": "string hex"
+    }
+  ],
+  "inscriptionEngraving": {
+    "arabicText": "string",
+    "transliteration": "string",
+    "englishTranslation": "string",
+    "coordinatePlacement": "zenith | equator | nadir"
+  },
+  "lightingPreset": "atelier_neutral | high_contrast_noir | warm_amber_sanctuary"
+}`;
 
-      // 2. Run Gemini Image Generation / Editing Model to synthesize the merged photorealistic try-on
-      try {
-        const genParts: any[] = [];
-
-        // Add Subject Photo (Image 1)
-        if (userImage && typeof userImage === "string" && userImage.startsWith("data:")) {
-          const mimeType = userImage.split(";")[0].split(":")[1] || "image/jpeg";
-          const base64Data = userImage.split(",")[1];
-          genParts.push({
-            inlineData: {
-              mimeType,
-              data: base64Data,
-            },
-          });
-        }
-
-        // Add Shirt / Specimen Photo (Image 2)
-        if (specimenImage && typeof specimenImage === "string" && specimenImage.startsWith("data:")) {
-          const mimeType = specimenImage.split(";")[0].split(":")[1] || "image/jpeg";
-          const base64Data = specimenImage.split(",")[1];
-          genParts.push({
-            inlineData: {
-              mimeType,
-              data: base64Data,
-            },
-          });
-        }
-
-        genParts.push({
-          text: `You are an elite virtual try-on and fashion AI. Examine the two input images:
-- Input Image 1: The subject / person photo.
-- Input Image 2: The exact physical shirt specimen (${medium || "heavyweight oversized T-Shirt"}, color: ${color || "black"}, fabric: ${material || "480 GSM Cotton"}, typographic graphic / Arabic inscription: "${inscription || artifactName || "SYMBOLIC"}").
-
-Generate a brand new photorealistic fashion editorial studio photograph of the person from Image 1 wearing the exact physical shirt specimen from Image 2.
-The shirt must naturally contour to their torso, shoulders, and chest with realistic fabric draping, authentic cotton textile wrinkles, dynamic lighting matching the environment (${lightingPreset || "Atelier Studio"}), and crisp placement of the chest inscription and graphics. Photorealistic 8K fashion editorial quality. ${customPrompt || ""}`,
-        });
-
-        const genResponse = await ai.models.generateContent({
-          model: "gemini-3.1-flash-lite-image",
-          contents: genParts,
+        const response = await ai.models.generateContent({
+          model: "gemini-3.8-flash",
+          contents: prompt || `Synthesize 3D geometry for ${artifactName || "Sacred Artifact"} (${medium || "Specimen"})`,
           config: {
-            imageConfig: {
-              aspectRatio: "3:4",
-            },
+            systemInstruction: systemPrompt,
+            responseMimeType: "application/json",
+            temperature: 0.7,
           },
         });
 
-        let generatedImageUrl: string | null = null;
-        if (genResponse.candidates?.[0]?.content?.parts) {
-          for (const part of genResponse.candidates[0].content.parts) {
-            if (part.inlineData && part.inlineData.data) {
-              const mime = part.inlineData.mimeType || "image/png";
-              generatedImageUrl = `data:${mime};base64,${part.inlineData.data}`;
-              break;
-            }
-          }
-        }
-
-        if (generatedImageUrl) {
+        if (response.text) {
+          const parsed = JSON.parse(response.text);
           return res.json({
             success: true,
-            imageUrl: generatedImageUrl,
-            aiAnalysis,
-            promptUsed: basePrompt,
+            source: "gemini-3.8-flash",
+            data: parsed
           });
         }
-      } catch (genErr: any) {
-        const isQuota = genErr?.status === "RESOURCE_EXHAUSTED" || genErr?.message?.includes("quota") || genErr?.message?.includes("429");
-        return res.json({
-          success: true,
-          fallbackMode: true,
-          isQuotaExceeded: isQuota,
-          quotaMessage: isQuota
-            ? "Gemini Image Generation models require a paid API key on Google AI Studio (free tier quota limit is 0 for image models). You can link a paid API key in settings or preview the neural composite with full AI multimodal posture and textile analysis."
-            : genErr?.message,
-          aiAnalysis,
-          promptUsed: basePrompt,
-        });
+      } catch (geminiError: any) {
+        console.warn("Gemini 3D generation notice (using curated parametric fallback):", geminiError?.message);
       }
+    }
+
+    // Dynamic tailored fallback if Gemini is offline or rate-limited
+    const dynamicFallback = { ...fallbackArchetypes.default };
+    if (artifactName) dynamicFallback.name = `${artifactName.toUpperCase()} // 3D SPATIAL SPECIMEN`;
+    if (inscription) dynamicFallback.inscriptionEngraving.arabicText = inscription;
+    if (medium?.toLowerCase().includes("vessel") || artifactName?.toLowerCase().includes("vessel")) {
+      dynamicFallback.geometryArchetype = "stoneware_vessel";
+      dynamicFallback.classification = "1,280°C High-Fire Stoneware Vessel // Lathe Geometry";
+      dynamicFallback.materialPhysics.finishType = "matte_ceramic";
+      dynamicFallback.materialPhysics.baseColor = "#262626";
+      dynamicFallback.materialPhysics.roughness = 0.85;
+    } else if (medium?.toLowerCase().includes("wear") || medium?.toLowerCase().includes("hoodie") || medium?.toLowerCase().includes("tee")) {
+      dynamicFallback.geometryArchetype = "mannequin_torso";
+      dynamicFallback.classification = "480 GSM Heavyweight Garment Silhouette // Boxy Armor";
+      dynamicFallback.materialPhysics.finishType = "unbleached_cotton";
+      dynamicFallback.materialPhysics.baseColor = "#0f0f11";
+      dynamicFallback.materialPhysics.roughness = 0.95;
     }
 
     return res.json({
       success: true,
-      fallbackMode: true,
-      aiAnalysis,
-      message: "Studio neural composite ready.",
-      promptUsed: basePrompt,
+      source: "curated_parametric_engine",
+      data: dynamicFallback
     });
-  } catch (error: any) {
-    console.error("Try-on generation error:", error);
-    return res.status(500).json({ error: error?.message || "Failed to generate try-on" });
+  } catch (err: any) {
+    console.error("Error generating 3D element:", err);
+    return res.status(500).json({ error: err?.message || "Failed to generate 3D element" });
   }
 });
 

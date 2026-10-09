@@ -110,8 +110,8 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         >
           {/* Proposition Tag with Kinetic Stamp Pulse */}
           <motion.div variants={itemSlideUp} className="flex flex-wrap items-center gap-2.5">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-text text-brand-bg font-mono text-[10px] font-black uppercase tracking-widest rounded-full border-2 border-brand-text shadow-[2px_2px_0px_#ff4500]">
-              <span className="inline-block w-2 h-2 rounded-full bg-[#ff4500] animate-pulse"></span>
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-text text-brand-bg font-mono text-[10px] font-black uppercase tracking-widest rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#ff4500]">
+              <span className="inline-block w-2 h-2 bg-[#ff4500] animate-pulse"></span>
               <span>POSSESSION STUDIO</span>
               <span className="text-[#ff4500]">//</span>
               <span className="text-brand-bg/80">PHYSICAL OBJECTS &amp; ARTIFACTS</span>
@@ -139,7 +139,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                   rotate: -0.8,
                   transition: { type: "spring", stiffness: 450, damping: 14 },
                 }}
-                className="inline-block bg-brand-accent text-white px-6 sm:px-8 pt-4 pb-3 text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tighter leading-[0.88] rounded-[28px] sm:rounded-[36px] border-2 border-brand-text shadow-[6px_6px_0px_#050505] cursor-default select-none transition-shadow hover:shadow-[9px_9px_0px_#050505]"
+                className="inline-block bg-brand-accent text-white px-6 sm:px-8 pt-4 pb-3 text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tighter leading-[0.88] rounded-none border-2 border-brand-text shadow-[6px_6px_0px_#050505] cursor-default select-none transition-shadow hover:shadow-[9px_9px_0px_#050505]"
               >
                 BE SYMBOLIC.
               </motion.span>
@@ -148,7 +148,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
             {/* Clear Sub-headline: Sculptural organic card */}
             <motion.div 
               variants={itemSlideUp} 
-              className="bg-brand-surface/85 backdrop-blur-md border-2 border-brand-text p-5 sm:p-6 rounded-2xl shadow-[4px_4px_0px_#050505] relative"
+              className="bg-brand-surface/85 backdrop-blur-md border-2 border-brand-text p-5 sm:p-6 rounded-none shadow-[4px_4px_0px_#050505] relative"
             >
               <div className="overflow-hidden">
                 <motion.h2
@@ -164,7 +164,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
           {/* Clear Product Statement: What SYMBOLIC Muslims creates */}
           <motion.div 
             variants={itemSlideUp} 
-            className="relative max-w-2xl bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 pl-5 pr-4 py-3.5 rounded-xl shadow-[3px_3px_0px_rgba(5,5,5,0.08)] overflow-hidden"
+            className="relative max-w-2xl bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 pl-5 pr-4 py-3.5 rounded-none shadow-[3px_3px_0px_rgba(5,5,5,0.08)] overflow-hidden"
           >
             <motion.div
               initial={{ scaleY: 0 }}
@@ -235,7 +235,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               <motion.div 
                 animate={{ rotate: 360 }}
                 transition={{ repeat: Infinity, duration: 28, ease: "linear" }}
-                className="absolute -top-5 -right-5 sm:-right-8 w-20 h-20 sm:w-24 sm:h-24 rounded-full border-2 border-brand-text bg-brand-bg shadow-[3px_3px_0px_#050505] flex items-center justify-center select-none pointer-events-none z-30"
+                className="absolute -top-5 -right-5 sm:-right-8 w-20 h-20 sm:w-24 sm:h-24 rounded-none border-2 border-brand-text bg-brand-bg shadow-[3px_3px_0px_#050505] flex items-center justify-center select-none pointer-events-none z-30"
               >
                 <svg className="w-full h-full p-1" viewBox="0 0 100 100">
                   <path id="circlePathHero" d="M 50, 50 m -36, 0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0" fill="none" />
@@ -246,18 +246,18 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                   </text>
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-6 h-6 rounded-full bg-brand-accent text-white font-mono text-[8px] font-black flex items-center justify-center border border-brand-text">
+                  <div className="w-6 h-6 rounded-none bg-brand-accent text-white font-mono text-[8px] font-black flex items-center justify-center border border-brand-text">
                     +01
                   </div>
                 </div>
               </motion.div>
 
-              {/* Architectural Arch Mihrab Frame */}
-              <div className="relative p-3 sm:p-4 rounded-t-[100px] sm:rounded-t-[130px] rounded-b-3xl border-3 sm:border-4 border-brand-text bg-brand-surface shadow-[7px_7px_0px_#050505] hover:shadow-[11px_11px_0px_#050505] transition-all">
-                {/* Concentric Arch Guide Line */}
-                <div className="rounded-t-[86px] sm:rounded-t-[114px] rounded-b-2xl border-2 border-dashed border-brand-text/30 p-2 sm:p-3">
+              {/* Architectural Frame */}
+              <div className="relative p-3 sm:p-4 rounded-none border-3 sm:border-4 border-brand-text bg-brand-surface shadow-[7px_7px_0px_#050505] hover:shadow-[11px_11px_0px_#050505] transition-all">
+                {/* Concentric Guide Line */}
+                <div className="rounded-none border-2 border-dashed border-brand-text/30 p-2 sm:p-3">
                   <div
-                    className="w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-60 lg:h-60 rounded-2xl border-2 border-black overflow-hidden bg-brand-surface select-none shadow-[4px_4px_0px_#050505] relative"
+                    className="w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-60 lg:h-60 rounded-none border-2 border-black overflow-hidden bg-brand-surface select-none shadow-[4px_4px_0px_#050505] relative"
                   >
                     <img 
                       src="/Logo_NoName.jpg" 
@@ -278,18 +278,18 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               </div>
             </motion.div>
 
-            {/* Emblem Specifications Callout with Curved Pill Badges */}
+            {/* Emblem Specifications Callout */}
             <motion.div 
               initial={{ opacity: 0, scale: 0.6, y: 25 }}
               animate={{ opacity: 1, scale: 1, y: 0 }}
               transition={{ type: "spring", stiffness: 350, damping: 18, delay: 0.42 }}
               className="mt-8 sm:mt-9 space-y-3 max-w-sm"
             >
-              <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-brand-text text-brand-bg font-mono text-xs sm:text-sm font-black uppercase tracking-widest rounded-full border-2 border-brand-text shadow-[3px_3px_0px_#ff4500]">
-                <span className="w-2 h-2 rounded-full bg-[#ff4500] inline-block animate-pulse"></span>
+              <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-brand-text text-brand-bg font-mono text-xs sm:text-sm font-black uppercase tracking-widest rounded-none border-2 border-brand-text shadow-[3px_3px_0px_#ff4500]">
+                <span className="w-2 h-2 rounded-none bg-[#ff4500] inline-block animate-pulse"></span>
                 MONOLITHIC IDENTITY EMBLEM
               </div>
-              <div className="font-mono text-xs sm:text-[12.5px] text-brand-text/85 uppercase tracking-wider font-bold flex items-center justify-center gap-2 pt-0.5 bg-brand-surface/85 backdrop-blur-sm border border-brand-text/25 py-2 px-4 rounded-full shadow-[2px_2px_0px_rgba(5,5,5,0.06)]">
+              <div className="font-mono text-xs sm:text-[12.5px] text-brand-text/85 uppercase tracking-wider font-bold flex items-center justify-center gap-2 pt-0.5 bg-brand-surface/85 backdrop-blur-sm border border-brand-text/25 py-2 px-4 rounded-none shadow-[2px_2px_0px_rgba(5,5,5,0.06)]">
                 <span>ORANGE: CONFORMITY</span>
                 <span className="text-[#ff4500]">•</span>
                 <span className="text-[#ff4500] font-black">WHITE DISC: STAND APART</span>
@@ -299,7 +299,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         </div>
       </div>
 
-      {/* The 4-Step Core Journey Protocol with Arched Stelae Tablets & Circular Coin Seals */}
+      {/* The 4-Step Core Journey Protocol */}
       <motion.div
         variants={itemSlideUp}
         initial="hidden"
@@ -308,7 +308,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         className="relative z-10 mt-14 space-y-4"
       >
         <div className="flex items-center gap-2.5 text-[10px] sm:text-[11px] font-mono font-black uppercase tracking-widest text-brand-text/75">
-          <span className="w-2.5 h-2.5 rounded-full bg-brand-accent inline-block border border-brand-text" />
+          <span className="w-2.5 h-2.5 rounded-none bg-brand-accent inline-block border border-brand-text" />
           <span>THE ARTIFACT ENCOUNTER // 4-STAGE PROTOCOL</span>
         </div>
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
@@ -325,13 +325,13 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                   soundManager.playClick(0.12);
                   setActiveStep(isSelected ? null : s.step);
                 }}
-                className={`border-2 border-brand-text p-5 rounded-t-3xl rounded-b-xl shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-all flex flex-col justify-between min-h-[130px] cursor-pointer select-none backdrop-blur-md ${
+                className={`border-2 border-brand-text p-5 rounded-none shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-all flex flex-col justify-between min-h-[130px] cursor-pointer select-none backdrop-blur-md ${
                   isSelected ? "bg-brand-text text-brand-bg shadow-[6px_6px_0px_#ff4500]" : "bg-brand-surface/85 text-brand-text"
                 }`}
               >
                 <div className={`flex items-center justify-between text-xs font-black pb-2.5 border-b-2 ${isSelected ? "border-brand-bg/20 text-brand-accent" : "border-brand-text/15 text-brand-accent"}`}>
                   <div className="flex items-center gap-2">
-                    <span className={`w-7 h-7 rounded-full border-2 flex items-center justify-center text-[10px] font-black ${isSelected ? "border-brand-accent bg-brand-accent text-white" : "border-brand-text/40 bg-brand-bg text-brand-text"}`}>
+                    <span className={`w-7 h-7 rounded-none border-2 flex items-center justify-center text-[10px] font-black ${isSelected ? "border-brand-accent bg-brand-accent text-white" : "border-brand-text/40 bg-brand-bg text-brand-text"}`}>
                       {s.step}
                     </span>
                     <span>STAGE {s.step}</span>
@@ -358,23 +358,23 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
         </div>
       </motion.div>
 
-      {/* Repositioned Benchmark 04 Criteria with Sculptural Curved Pavilion */}
+      {/* Repositioned Benchmark 04 Criteria */}
       <motion.div
         initial={{ opacity: 0, y: 24 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.65, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 mt-16 pt-8 bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text p-6 sm:p-8 rounded-3xl shadow-[6px_6px_0px_#050505]"
+        className="relative z-10 mt-16 pt-8 bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text p-6 sm:p-8 rounded-none shadow-[6px_6px_0px_#050505]"
       >
         <div className="flex flex-wrap items-center justify-between border-b-2 border-brand-text pb-4 mb-6 gap-3">
           <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-full bg-[#ff4500] inline-block"></span>
+            <span className="w-3 h-3 rounded-none bg-[#ff4500] inline-block"></span>
             <span className="font-mono text-sm font-black uppercase tracking-widest text-brand-text">
               THE BENCHMARK // 04 CRITERIA
             </span>
           </div>
           <div className="flex items-center gap-3 text-[10px] font-mono tracking-widest uppercase text-brand-text/70 font-bold">
             <span className="hidden sm:inline">[ CHOICE • SYMBOL • IDENTITY ]</span>
-            <span className="bg-brand-text text-brand-bg px-3 py-1 rounded-full font-black">
+            <span className="bg-brand-text text-brand-bg px-3 py-1 rounded-none font-black">
               STANDARD SPEC
             </span>
           </div>
@@ -391,10 +391,10 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               key={item.num}
               whileHover={{ y: -3 }}
               transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              className="p-5 bg-brand-surface/85 backdrop-blur-sm border-2 border-brand-text/40 hover:border-brand-text rounded-t-2xl rounded-b-xl hover:shadow-[4px_4px_0px_#ff4500] transition-all cursor-default group"
+              className="p-5 bg-brand-surface/85 backdrop-blur-sm border-2 border-brand-text/40 hover:border-brand-text rounded-none hover:shadow-[4px_4px_0px_#ff4500] transition-all cursor-default group"
             >
               <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-full bg-brand-accent text-white font-black text-[10px] flex items-center justify-center shadow-sm">
+                <span className="w-6 h-6 rounded-none bg-brand-accent text-white font-black text-[10px] flex items-center justify-center shadow-sm">
                   {item.num}
                 </span>
                 <span className="text-[#ff4500] font-black text-[11px] group-hover:underline uppercase">

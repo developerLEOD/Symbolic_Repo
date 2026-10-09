@@ -982,17 +982,17 @@ export default function ArtifactOverlappingCollection({
                   idx !== 0 ? "sm:-ml-[140px] md:-ml-[165px] lg:-ml-[190px]" : ""
                 }`}
               >
-                {/* PHYSICAL 3:4 ARTIFACT FRAME - Architectural Arch Vitrine */}
+                {/* PHYSICAL 3:4 ARTIFACT FRAME */}
                 <div
                   data-preview-canvas={isCentered ? "true" : undefined}
-                  className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text rounded-t-[40px] sm:rounded-t-[48px] rounded-b-2xl transition-all duration-300 ${
+                  className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text rounded-none transition-all duration-300 ${
                     isCentered
                       ? "shadow-[10px_10px_0px_#050505,0_0_0_1.5px_#ff4500] opacity-100"
                       : "shadow-[5px_5px_0px_#050505] opacity-100"
                   }`}
                 >
                   {/* Central Graphic Canvas */}
-                  <div className="w-full h-full relative flex items-center justify-center bg-brand-bg rounded-t-[36px] sm:rounded-t-[44px] rounded-b-xl overflow-hidden">
+                  <div className="w-full h-full relative flex items-center justify-center bg-brand-bg rounded-none overflow-hidden">
                     <motion.img
                       key={currentImg}
                       src={currentImg}
@@ -1025,14 +1025,14 @@ export default function ArtifactOverlappingCollection({
 
                     {/* Top Accession & Collection Badge */}
                     <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 font-mono">
-                      <span className="text-[8px] font-black uppercase bg-brand-surface text-brand-text px-2 py-0.5 rounded-full border border-brand-text shadow-[1px_1px_0px_#050505]">
+                      <span className="text-[8px] font-black uppercase bg-brand-surface text-brand-text px-2 py-0.5 rounded-none border border-brand-text shadow-[1px_1px_0px_#050505]">
                         {item.artifactId}
                       </span>
-                      <span className="text-[7.5px] font-black uppercase bg-brand-text text-brand-bg px-2 py-0.5 rounded-full">
+                      <span className="text-[7.5px] font-black uppercase bg-brand-text text-brand-bg px-2.5 py-0.5 rounded-none">
                         {item.collectionName?.toUpperCase() || "CANONICAL"}
                       </span>
                       {activeSpecimen && (
-                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-accent text-white px-2 py-0.5 rounded-full border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-accent text-white px-2 py-0.5 rounded-none border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
                           {activeSpecimen.medium}
                         </span>
                       )}
@@ -1041,14 +1041,14 @@ export default function ArtifactOverlappingCollection({
                     {/* Top Right Specimen & Angle Tag */}
                     <div className="absolute top-3 right-3 z-20 flex items-center gap-1 font-mono">
                       {currentAngleItem ? (
-                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-2.5 py-0.5 rounded-full border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-2.5 py-0.5 rounded-none border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
                           <Camera size={9} className="text-brand-accent" />
                           <span>
                             {currentAngleItem.medium} (ANG 0{currentAngleItem.angleIndex + 1}/0{currentAngleItem.totalAnglesForSpecimen})
                           </span>
                         </span>
                       ) : (
-                        <span className={`text-[7.5px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full border shadow-[1px_1px_0px_#050505] transition-colors ${
+                        <span className={`text-[7.5px] font-mono font-black uppercase px-2.5 py-0.5 rounded-none border shadow-[1px_1px_0px_#050505] transition-colors ${
                           activeSpecimen
                             ? "bg-brand-accent text-white border-brand-text"
                             : "bg-brand-surface/95 text-brand-text/80 border-brand-text"
@@ -1061,7 +1061,7 @@ export default function ArtifactOverlappingCollection({
                     {/* Clean segment dots on auto-cycling */}
                     {isAutoCycling && itemAngleSeq.length > 1 && (
                       <div className="absolute bottom-3 inset-x-4 z-20 flex items-center justify-center gap-1">
-                        <div className="bg-brand-surface/90 border border-brand-text px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
+                        <div className="bg-brand-surface/90 border border-brand-text px-2.5 py-1 rounded-none flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
                           {itemAngleSeq.map((it, aIdx) => {
                             const isActive = aIdx === (desktopHoverCycleIndex % itemAngleSeq.length);
                             return (

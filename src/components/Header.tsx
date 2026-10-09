@@ -14,6 +14,7 @@ interface HeaderProps {
   onOwnerClick?: () => void;
   onAuthClick: () => void;
   onReferralClick?: () => void;
+  onTryOnClick?: () => void;
 }
 
 export default function Header({ 
@@ -309,7 +310,7 @@ export default function Header({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-2xl shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
+                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-none shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
                   >
                     <div className="px-3.5 py-2 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
                       <span>// MEDIUMS</span>
@@ -363,7 +364,7 @@ export default function Header({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-2xl shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
+                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-none shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
                   >
                     <div className="px-3.5 py-2 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
                       <span>// ETHOS LINES</span>

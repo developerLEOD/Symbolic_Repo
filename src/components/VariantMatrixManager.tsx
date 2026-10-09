@@ -466,7 +466,7 @@ export default function VariantMatrixManager({
                   }`}
                 >
                   <div 
-                    className="w-5 h-5 rounded-full border border-black/30 shrink-0 shadow-inner flex items-center justify-center"
+                    className="w-5 h-5 rounded-none border border-black/30 shrink-0 shadow-inner flex items-center justify-center"
                     style={{ backgroundColor: preset.hex }}
                   >
                     {isSelected && (
@@ -525,7 +525,7 @@ export default function VariantMatrixManager({
                 className="flex items-center gap-2 px-2.5 py-1 bg-brand-surface border-2 border-brand-text shadow-[1px_1px_0px_#050505]"
               >
                 <div 
-                  className="w-3.5 h-3.5 rounded-full border border-black/30"
+                  className="w-3.5 h-3.5 rounded-none border border-black/30"
                   style={{ backgroundColor: col.hex }}
                 />
                 <span className="text-[10px] font-black uppercase">{col.name}</span>
@@ -739,7 +739,7 @@ export default function VariantMatrixManager({
                       <td className="py-2.5 px-3">
                         <div className="flex items-center gap-2">
                           <div 
-                            className="w-3.5 h-3.5 rounded-full border border-black/30 shrink-0 shadow-inner"
+                            className="w-3.5 h-3.5 rounded-none border border-black/30 shrink-0 shadow-inner"
                             style={{ backgroundColor: v.colorHex || colors.find(c => c.name === (v.color || v.option2Value))?.hex || "#222" }}
                           />
                           <span className="font-bold uppercase text-[11px]">

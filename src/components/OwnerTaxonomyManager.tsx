@@ -1086,7 +1086,7 @@ export default function OwnerTaxonomyManager({ onCatalogUpdated }: OwnerTaxonomy
                     <div>
                       <div className="flex items-center gap-2">
                         <span 
-                          className="w-3 h-3 rounded-full border border-brand-text shrink-0" 
+                          className="w-3 h-3 rounded-none border border-brand-text shrink-0" 
                           style={{ backgroundColor: tag.color || "#0c0c0c" }} 
                         />
                         <span className="font-mono font-black text-xs uppercase tracking-wider text-brand-text">

@@ -57,20 +57,20 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
     >
       <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 mb-10 gap-4">
         <div>
-          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest bg-brand-accent/10 px-3 py-1 rounded-full border border-brand-accent/30 inline-block">
+          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest bg-brand-accent/10 px-3 py-1 rounded-none border border-brand-accent/30 inline-block">
             [ 02 // FOCAL SPECIMEN ]
           </span>
           <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-2 text-brand-text">
             THE ANCHOR SPECIMEN
           </h2>
         </div>
-        <div className="font-mono text-xs uppercase font-bold text-brand-text/70 bg-brand-surface/90 px-3 py-1.5 rounded-full border border-brand-text/25">
+        <div className="font-mono text-xs uppercase font-bold text-brand-text/70 bg-brand-surface/90 px-3 py-1.5 rounded-none border border-brand-text/25">
           EDITION RUN // {product.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS"}
         </div>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-center">
-        {/* Product Visual Framing - Architectural Arch Vitrine */}
+        {/* Product Visual Framing */}
         <div className="lg:col-span-6 space-y-4">
           <div className="relative">
             <div 
@@ -81,7 +81,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
               onMouseEnter={() => soundManager.playHover(0.065)}
               data-product-card="true"
               data-preview-element="true"
-              className="group product-card cursor-pointer aspect-[4/5] bg-brand-surface border-[2.5px] border-brand-text rounded-t-[60px] sm:rounded-t-[84px] rounded-b-2xl relative overflow-hidden shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#050505] active:translate-x-1 active:translate-y-1 active:shadow-[3px_3px_0px_#050505] transition-all duration-150"
+              className="group product-card cursor-pointer aspect-[4/5] bg-brand-surface border-[2.5px] border-brand-text rounded-none relative overflow-hidden shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#050505] active:translate-x-1 active:translate-y-1 active:shadow-[3px_3px_0px_#050505] transition-all duration-150"
             >
               <img 
                 key={activeImageIndex}
@@ -99,16 +99,16 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
 
               {/* Blueprint Reticle Marker */}
               <div className="absolute top-4 right-4 z-10 pointer-events-none select-none">
-                <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-bg text-brand-text px-2.5 py-1 rounded-full border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+                <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-bg text-brand-text px-2.5 py-1 rounded-none border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
                   ⌖ HERO // angles [0{activeImageIndex + 1}]
                 </span>
               </div>
 
               <div className="absolute top-4 left-4 z-10 flex flex-col gap-1.5 items-start">
-                <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-text text-brand-bg px-3 py-1 rounded-full border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+                <span className="font-mono text-[9px] font-black uppercase tracking-widest bg-brand-text text-brand-bg px-3 py-1 rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
                   [ {medium} ]
                 </span>
-                <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-accent text-white px-2.5 py-0.5 rounded-full border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
+                <span className="font-mono text-[8px] font-black uppercase tracking-widest bg-brand-accent text-white px-2.5 py-0.5 rounded-none border border-brand-text shadow-[1.5px_1.5px_0px_#050505]">
                   {collectionTag}
                 </span>
               </div>
@@ -134,7 +134,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                 </>
               )}
 
-              <div className="absolute bottom-4 right-4 bg-brand-bg text-brand-text font-mono text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-full border-2 border-brand-text shadow-[2px_2px_0px_#050505] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 z-10">
+              <div className="absolute bottom-4 right-4 bg-brand-bg text-brand-text font-mono text-[10px] font-black uppercase tracking-widest px-3.5 py-1.5 rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#050505] opacity-0 group-hover:opacity-100 transition-opacity flex items-center gap-1.5 z-10">
                 <FileText size={12} />
                 <span>INSPECT ARTIFACT DETAILS →</span>
               </div>
@@ -152,7 +152,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                     soundManager.playToggle(0.09);
                     setActiveImageIndex(idx);
                   }}
-                  className={`w-14 h-16 border-2 rounded-xl relative cursor-pointer overflow-hidden transition-all ${
+                  className={`w-14 h-16 border-2 rounded-none relative cursor-pointer overflow-hidden transition-all ${
                     activeImageIndex === idx 
                       ? 'border-brand-accent shadow-[3px_3px_0px_#050505] -translate-y-0.5' 
                       : 'border-brand-text opacity-70 hover:opacity-100 shadow-[1px_1px_0px_#050505]'
@@ -170,7 +170,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                     }}
                     className="w-full h-full object-cover" 
                   />
-                  <span className={`absolute bottom-0.5 right-0.5 font-mono text-[7px] font-black px-1 rounded-sm leading-none ${
+                  <span className={`absolute bottom-0.5 right-0.5 font-mono text-[7px] font-black px-1 rounded-none leading-none ${
                     activeImageIndex === idx ? 'bg-brand-accent text-white' : 'bg-brand-text text-brand-bg'
                   }`}>
                     0{idx + 1}
@@ -186,7 +186,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
           <div className="space-y-3">
             <div className="flex items-center gap-3">
               <div className="flex items-center gap-2 flex-wrap">
-                <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-text bg-brand-surface px-3 py-1 rounded-full border border-brand-text">
+                <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-text bg-brand-surface px-3 py-1 rounded-none border border-brand-text">
                   [ {medium} ]
                 </span>
                 <span className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent">
@@ -201,19 +201,19 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             <h3 className="text-4xl sm:text-5xl font-mono font-black uppercase tracking-tight text-brand-text">
               {product.name}
             </h3>
-            <div className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3.5 py-1.5 rounded-full border border-brand-accent/30 inline-block">
+            <div className="font-mono text-xs font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3.5 py-1.5 rounded-none border border-brand-accent/30 inline-block">
               EDITION: {product.edition?.replace(/ARTIFACTS/gi, "SPECIMENS") || "050 SPECIMENS // FIRST RUN"}
             </div>
           </div>
 
-          <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 border-l-4 border-l-brand-accent p-4 rounded-xl shadow-[3px_3px_0px_#050505]">
+          <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 p-4 rounded-none shadow-[3px_3px_0px_#050505]">
             <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/90 leading-relaxed">
               {product.description}
             </p>
           </div>
 
           {/* Statement & Specification Grid */}
-          <div className="bg-brand-surface border-2 border-brand-text p-6 rounded-2xl shadow-[4px_4px_0px_#050505] font-mono text-xs space-y-2.5">
+          <div className="bg-brand-surface border-2 border-brand-text p-6 rounded-none shadow-[4px_4px_0px_#050505] font-mono text-xs space-y-2.5">
             <div className="flex justify-between border-b border-brand-text/15 pb-2">
               <span className="opacity-60">PRIMARY SYMBOL:</span>
               <span className="font-black text-brand-accent">{product.inscription || "THE ALIF / CONVICTION"}</span>

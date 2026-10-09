@@ -925,7 +925,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                       <div className="p-4 border-2 border-[#25D366] bg-[#25D366]/5 relative space-y-3">
                         <div className="flex items-start justify-between">
                           <div className="flex items-center gap-2.5">
-                            <div className="w-6 h-6 rounded-full bg-[#25D366] text-white flex items-center justify-center shrink-0">
+                            <div className="w-6 h-6 rounded-none bg-[#25D366] text-white flex items-center justify-center shrink-0">
                               <MessageCircle size={14} />
                             </div>
                             <div>

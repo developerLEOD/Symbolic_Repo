@@ -40,7 +40,7 @@ export default function Footer({ categories, onCategoryClick, onOwnerClick, onCa
         <div className="grid grid-cols-1 md:grid-cols-12 gap-10 mb-12 pb-12 border-b-2 border-brand-text">
           <div className="md:col-span-6 space-y-6">
             <div className="flex items-center gap-3">
-              <div className="w-9 h-9 shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center rounded-full border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
+              <div className="w-9 h-9 shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
                 <img 
                   src="/Logo_NoName.jpg" 
                   alt="SYMBOLIC" 

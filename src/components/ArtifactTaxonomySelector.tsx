@@ -316,7 +316,7 @@ export default function ArtifactTaxonomySelector({
                 >
                   {tagConfig?.color && (
                     <span 
-                      className="w-2 h-2 rounded-full shrink-0 border border-brand-bg" 
+                      className="w-2 h-2 rounded-none shrink-0 border border-brand-bg" 
                       style={{ backgroundColor: tagConfig.color }} 
                     />
                   )}
@@ -351,7 +351,7 @@ export default function ArtifactTaxonomySelector({
                 }`}
               >
                 <span 
-                  className="w-2 h-2 rounded-full shrink-0 border border-brand-text/50" 
+                  className="w-2 h-2 rounded-none shrink-0 border border-brand-text/50" 
                   style={{ backgroundColor: tag.color || "#0c0c0c" }} 
                 />
                 <span>{tag.name}</span>
