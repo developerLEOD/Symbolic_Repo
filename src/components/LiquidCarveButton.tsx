@@ -5,6 +5,7 @@ import { soundManager } from "../lib/soundEffects";
 interface LiquidCarveButtonProps extends HTMLMotionProps<"button"> {
   children: React.ReactNode;
   variant?: "primary" | "secondary" | "dark" | "outline";
+  shape?: "pill" | "chamfer" | "rounded" | "box";
   className?: string;
   disableSound?: boolean;
 }
@@ -12,6 +13,7 @@ interface LiquidCarveButtonProps extends HTMLMotionProps<"button"> {
 export default function LiquidCarveButton({
   children,
   variant = "primary",
+  shape = "pill",
   className = "",
   onClick,
   onMouseEnter,
@@ -24,10 +26,17 @@ export default function LiquidCarveButton({
 
   // Brutalist tactile variants with stark borders, hard offset shadows, crisp hover/press
   const variantStyles = {
-    primary: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
-    dark: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
-    secondary: "bg-brand-surface text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
-    outline: "bg-transparent text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[6px_6px_0px_#050505] active:shadow-[1px_1px_0px_#050505]"
+    primary: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
+    dark: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
+    secondary: "bg-brand-surface text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
+    outline: "bg-transparent text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]"
+  };
+
+  const shapeStyles = {
+    pill: "rounded-full",
+    chamfer: "rounded-none [clip-path:polygon(10px_0,calc(100%-10px)_0,100%_10px,100%_calc(100%-10px),calc(100%-10px)_100%,10px_100%,0_calc(100%-10px),0_10px)]",
+    rounded: "rounded-2xl",
+    box: "rounded-none"
   };
 
   const handleClick = (e: React.MouseEvent<HTMLButtonElement>) => {
@@ -58,45 +67,29 @@ export default function LiquidCarveButton({
       onMouseLeave={() => setIsHovered(false)}
       whileHover={{ y: -2.5, transition: { type: "spring", stiffness: 500, damping: 17 } }}
       whileTap={{ scale: 0.965, y: 0.5, transition: { type: "spring", stiffness: 650, damping: 14 } }}
-      className={`relative px-7 py-3.5 rounded-none font-mono text-[11px] uppercase tracking-widest font-black transition-colors duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none overflow-hidden group ${variantStyles[variant]} ${className}`}
+      className={`relative px-7 py-3.5 font-mono text-[11px] uppercase tracking-widest font-black transition-all duration-150 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed select-none overflow-hidden group ${shapeStyles[shape]} ${variantStyles[variant]} ${className}`}
       data-cursor-snap="true"
       {...props}
     >
-      {/* Corner outline borders effect */}
-      <span className="absolute top-0 left-0 w-2 h-2 border-t-2 border-l-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
-      <span className="absolute top-0 right-0 w-2 h-2 border-t-2 border-r-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
-      <span className="absolute bottom-0 left-0 w-2 h-2 border-b-2 border-l-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
-      <span className="absolute bottom-0 right-0 w-2 h-2 border-b-2 border-r-2 border-current opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none" />
-
-      {/* Corner crosshairs micro-interaction */}
-      <motion.span 
-        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.25 : 1 }}
-        transition={{ type: "spring", stiffness: 520, damping: 18 }}
-        className="absolute top-0.5 left-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
-      >
-        +
-      </motion.span>
-      <motion.span 
-        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.25 : 1 }}
-        transition={{ type: "spring", stiffness: 520, damping: 18 }}
-        className="absolute top-0.5 right-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
-      >
-        +
-      </motion.span>
-      <motion.span 
-        animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.25 : 1 }}
-        transition={{ type: "spring", stiffness: 520, damping: 18 }}
-        className="absolute bottom-0.5 left-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
-      >
-        +
-      </motion.span>
-      <motion.span 
-        animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.25 : 1 }}
-        transition={{ type: "spring", stiffness: 520, damping: 18 }}
-        className="absolute bottom-0.5 right-1 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
-      >
-        +
-      </motion.span>
+      {/* Subtle corner crosshairs micro-interaction for non-pill */}
+      {shape !== "pill" && (
+        <>
+          <motion.span 
+            animate={{ rotate: isHovered ? 90 : 0, scale: isHovered ? 1.25 : 1 }}
+            transition={{ type: "spring", stiffness: 520, damping: 18 }}
+            className="absolute top-0.5 left-1.5 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
+          >
+            +
+          </motion.span>
+          <motion.span 
+            animate={{ rotate: isHovered ? -90 : 0, scale: isHovered ? 1.25 : 1 }}
+            transition={{ type: "spring", stiffness: 520, damping: 18 }}
+            className="absolute top-0.5 right-1.5 text-[8px] font-mono select-none opacity-40 group-hover:opacity-100 transition-opacity pointer-events-none"
+          >
+            +
+          </motion.span>
+        </>
+      )}
 
       {/* Diagonal scanline glint sweep on hover */}
       <motion.span

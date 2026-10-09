@@ -85,7 +85,7 @@ export default function SpecimenCard({
         transition: { type: "spring", stiffness: 600, damping: 18 }
       }}
       ref={cardRef}
-      className={`group specimen-card cursor-pointer rounded-none border-2 transition-all duration-200 flex flex-col justify-between relative p-3.5 sm:p-4 transform-gpu will-change-transform ${
+      className={`group specimen-card cursor-pointer rounded-2xl border-2 transition-all duration-200 flex flex-col justify-between relative p-4 transform-gpu will-change-transform ${
         isHovered
           ? "border-brand-accent outline outline-2 outline-offset-3 outline-brand-accent bg-brand-bg shadow-[10px_10px_0px_#050505]"
           : "border-brand-text bg-brand-surface hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
@@ -123,15 +123,15 @@ export default function SpecimenCard({
       {/* Identification Header */}
       <div className="flex items-center justify-between border-b-2 border-brand-text pb-2.5 mb-3">
         <div className="flex items-center gap-1.5">
-          <span className="font-mono text-[9px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
+          <span className="font-mono text-[9px] font-black uppercase bg-brand-text text-brand-bg px-2.5 py-0.5 rounded-full">
             {specimen.medium}
           </span>
-          <span className="font-mono text-[9px] font-black uppercase text-brand-text/70 bg-brand-text/10 px-1.5 py-0.5 border border-brand-text/30">
+          <span className="font-mono text-[9px] font-black uppercase text-brand-text/70 bg-brand-text/10 px-2 py-0.5 rounded-full border border-brand-text/30">
             {specimen.sku}
           </span>
         </div>
 
-        <div className={`font-mono text-[9px] font-black uppercase px-2 py-0.5 border ${
+        <div className={`font-mono text-[9px] font-black uppercase px-2.5 py-0.5 rounded-full border ${
           isSoldOut 
             ? "bg-red-50 text-red-600 border-red-300" 
             : "bg-emerald-50 text-emerald-700 border-emerald-300"
@@ -140,8 +140,8 @@ export default function SpecimenCard({
         </div>
       </div>
 
-      {/* Central Visual Specimen Canvas */}
-      <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
+      {/* Central Visual Specimen Canvas — Architectural Arch Vitrine */}
+      <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-t-[32px] rounded-b-xl bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
         <motion.img 
           key={activeImageIndex}
           src={images[activeImageIndex] || specimen.thumbnailImage} 

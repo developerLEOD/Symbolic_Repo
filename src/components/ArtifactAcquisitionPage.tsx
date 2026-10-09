@@ -32,6 +32,7 @@ interface ArtifactAcquisitionPageProps {
   onBackToSpec: () => void;
   onAddToCart: (item: CartItem) => void;
   onOpenLedger?: () => void;
+  onTryOnClick?: (artifactId?: string, specimenId?: string) => void;
 }
 
 export default function ArtifactAcquisitionPage({
@@ -41,7 +42,8 @@ export default function ArtifactAcquisitionPage({
   initialSpecimenId,
   onBackToSpec,
   onAddToCart,
-  onOpenLedger
+  onOpenLedger,
+  onTryOnClick
 }: ArtifactAcquisitionPageProps) {
   const [searchParams] = useSearchParams();
   const queryMode = searchParams.get("mode");
@@ -832,6 +834,20 @@ export default function ArtifactAcquisitionPage({
                             </>
                           )}
                         </button>
+
+                        {onTryOnClick && (
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundManager.playClick(0.12);
+                              onTryOnClick(artifact.id, activeSpecimen?.id);
+                            }}
+                            className="w-full mt-2 py-3 px-4 font-mono text-xs font-black uppercase tracking-wider bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] transition-all flex items-center justify-center gap-2 cursor-pointer text-center"
+                          >
+                            <Sparkles size={15} className="text-brand-accent animate-pulse" />
+                            <span>AI VIRTUAL TRY-ON (PHOTO + SHIRT MERGE)</span>
+                          </button>
+                        )}
 
                         <a
                           href={getWhatsAppUrl(buildWhatsAppProductInquiry({

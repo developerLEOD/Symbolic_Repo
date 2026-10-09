@@ -33,8 +33,10 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
       <div className="max-w-7xl mx-auto space-y-12">
         <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 gap-4">
           <div>
-            <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 04 // CORE TENETS ]</span>
-            <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-1 text-brand-text">
+            <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest bg-brand-accent/10 px-3 py-1 rounded-full border border-brand-accent/30 inline-block">
+              [ 04 // CORE TENETS ]
+            </span>
+            <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-2 text-brand-text">
               WHY WE WEAR WHAT WE WEAR
             </h2>
           </div>
@@ -43,6 +45,7 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
               <LiquidCarveButton 
                 onClick={onReadAbout}
                 variant="outline"
+                shape="pill"
                 className="py-3 text-xs font-mono font-black"
               >
                 <span>ABOUT THE MARK &amp; MISSION →</span>
@@ -52,6 +55,7 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
               <LiquidCarveButton 
                 onClick={onReadManifesto}
                 variant="secondary"
+                shape="pill"
                 className="py-3 text-xs font-mono font-black"
               >
                 <span>READ FULL MANIFESTO →</span>
@@ -69,25 +73,25 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
               viewport={{ once: true }}
               transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.09 }}
               whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-              className="p-6 bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text space-y-4 shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 flex flex-col justify-between cursor-default"
+              className="p-7 sm:p-8 bg-brand-surface/85 backdrop-blur-md border-2 border-brand-text rounded-t-[44px] rounded-b-2xl space-y-5 shadow-[6px_6px_0px_#050505] hover:shadow-[9px_9px_0px_#050505] transition-all flex flex-col justify-between cursor-default group"
             >
-              <div className="space-y-3">
-                <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">
-                  <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent">
+              <div className="space-y-4">
+                <div className="flex items-center justify-between border-b border-brand-text/20 pb-3">
+                  <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 rounded-full border border-brand-accent/30">
                     PRINCIPLE // {item.id}
                   </span>
-                  <span className="font-mono text-[10px] font-bold bg-brand-text text-brand-bg px-1.5 py-0.5">
-                    [ {item.id} ]
+                  <span className="w-9 h-9 rounded-full border-2 border-brand-text bg-brand-bg text-brand-accent flex items-center justify-center font-mono text-xs font-black shadow-[2px_2px_0px_#050505] group-hover:scale-105 transition-transform">
+                    {item.id}
                   </span>
                 </div>
-                <h3 className="text-base font-mono font-black uppercase tracking-tight text-brand-text">
+                <h3 className="text-base sm:text-lg font-mono font-black uppercase tracking-tight text-brand-text leading-snug">
                   {item.title}
                 </h3>
                 <p className="font-space-grotesk text-xs sm:text-[13px] normal-case text-brand-text/80 leading-relaxed font-normal">
                   {item.description}
                 </p>
               </div>
-              <div className="pt-3 border-t border-brand-text/20 font-mono text-[9px] font-bold uppercase text-brand-accent">
+              <div className="pt-3 border-t border-brand-text/20 font-mono text-[9px] font-bold uppercase text-brand-accent bg-brand-bg/90 px-3.5 py-1.5 rounded-full border border-brand-text/25 inline-block text-center">
                 {item.mandate}
               </div>
             </motion.div>

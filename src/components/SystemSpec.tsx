@@ -36,12 +36,14 @@ export default function SystemSpec() {
     <section className="py-20 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text">
       <div className="flex flex-col md:flex-row md:items-end justify-between border-b-2 border-brand-text pb-4 mb-10 gap-4">
         <div>
-          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest">[ 03 // PRODUCTION CRITERIA ]</span>
-          <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-1 text-brand-text">
+          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest bg-brand-accent/10 px-3 py-1 rounded-full border border-brand-accent/30 inline-block">
+            [ 03 // PRODUCTION CRITERIA ]
+          </span>
+          <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight mt-2 text-brand-text">
             STANDARDS & INTEGRITY
           </h2>
         </div>
-        <div className="font-mono text-xs uppercase font-bold text-brand-text/70">
+        <div className="font-mono text-xs uppercase font-bold text-brand-text/70 bg-brand-surface/90 px-3 py-1.5 rounded-full border border-brand-text/25">
           SYMBOLIC // STANDARDS
         </div>
       </div>
@@ -55,15 +57,15 @@ export default function SystemSpec() {
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.08 }}
             whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-            className="bg-brand-surface/80 backdrop-blur-md border-2 border-brand-text p-6 flex flex-col justify-between shadow-[4px_4px_0px_#050505] hover:shadow-[7px_7px_0px_#050505] transition-shadow duration-200 space-y-6 cursor-default"
+            className="bg-brand-surface/85 backdrop-blur-md border-2 border-brand-text rounded-t-[36px] rounded-b-2xl p-6 sm:p-7 flex flex-col justify-between shadow-[5px_5px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] transition-all space-y-6 cursor-default group"
           >
             <div className="space-y-4">
-              <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">
-                <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent">
+              <div className="flex items-center justify-between border-b border-brand-text/20 pb-3">
+                <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-2.5 py-0.5 rounded-full border border-brand-accent/30">
                   {item.category}
                 </span>
-                <span className="font-mono text-[10px] font-bold bg-brand-text text-brand-bg px-1.5 py-0.5">
-                  [ {item.id} ]
+                <span className="w-8 h-8 rounded-full border-2 border-brand-text bg-brand-text text-brand-bg flex items-center justify-center font-mono text-xs font-black shadow-[2px_2px_0px_#ff4500] group-hover:scale-105 transition-transform">
+                  {item.id}
                 </span>
               </div>
               <h3 className="font-mono text-base font-black uppercase tracking-tight text-brand-text">
@@ -74,7 +76,7 @@ export default function SystemSpec() {
               </p>
             </div>
 
-            <div className="pt-3 border-t border-brand-text/20 font-mono text-[9px] font-black uppercase tracking-widest text-brand-accent">
+            <div className="pt-3 border-t border-brand-text/20 font-mono text-[9px] font-black uppercase tracking-widest text-brand-accent bg-brand-bg/80 px-3 py-1.5 rounded-full border border-brand-text/25 inline-block text-center">
               {item.mandate}
             </div>
           </motion.div>

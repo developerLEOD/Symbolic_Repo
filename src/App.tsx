@@ -29,14 +29,18 @@ import ScrollToTop from "./components/ScrollToTop";
 import Breadcrumbs from "./components/Breadcrumbs";
 import StudioBackground from "./components/StudioBackground";
 import CustomCursor from "./components/CustomCursor";
+import TryOnStudioModal from "./components/TryOnStudioModal";
 import { TileOverlay, formatRouteName } from "./components/TileTransition";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts, getCachedProducts } from "./lib/productService";
+import { fetchArtifacts, fetchSpecimens, getCachedArtifacts, getCachedSpecimens } from "./lib/artifactService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
+import { Artifact, Specimen } from "./types";
 
 // Wrapper for /artifacts and /artifacts/:category views
 function ArtifactsDirectoryView({
   onProductClick,
+  onTryOnClick,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -45,6 +49,7 @@ function ArtifactsDirectoryView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
+  onTryOnClick?: (entity: any, specimenId?: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -64,6 +69,7 @@ function ArtifactsDirectoryView({
           else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
+        onTryOnClick={onTryOnClick}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -89,6 +95,7 @@ function ArtifactsDirectoryView({
 // Wrapper for /collection/:collectionId views
 function CollectionDirectoryView({
   onProductClick,
+  onTryOnClick,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -97,6 +104,7 @@ function CollectionDirectoryView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
+  onTryOnClick?: (entity: any, specimenId?: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -116,6 +124,7 @@ function CollectionDirectoryView({
           else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
+        onTryOnClick={onTryOnClick}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -141,6 +150,7 @@ function CollectionDirectoryView({
 // Home page view
 function HomeView({
   onProductClick,
+  onTryOnClick,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -149,6 +159,7 @@ function HomeView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
+  onTryOnClick?: (entity: any, specimenId?: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -175,6 +186,7 @@ function HomeView({
           else navigate("/artifacts");
         }}
         onProductClick={onProductClick} 
+        onTryOnClick={onTryOnClick}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -232,6 +244,26 @@ function StorefrontApp() {
   const [authNotice, setAuthNotice] = useState<string | null>(null);
   const [pendingOpenCheckoutAfterAuth, setPendingOpenCheckoutAfterAuth] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
+
+  // Virtual Try-On Studio State (AI Multimodal Photo + Shirt Analysis & Fusion)
+  const [isTryOnOpen, setIsTryOnOpen] = useState(false);
+  const [tryOnArtifactId, setTryOnArtifactId] = useState<string | null>(null);
+  const [tryOnSpecimenId, setTryOnSpecimenId] = useState<string | null>(null);
+  const [artifactsList, setArtifactsList] = useState<Artifact[]>(() => getCachedArtifacts());
+  const [specimensList, setSpecimensList] = useState<Specimen[]>(() => getCachedSpecimens());
+
+  const handleOpenTryOn = (entityOrId?: any, specimenId?: string) => {
+    let artId: string | null = null;
+    if (typeof entityOrId === "string") {
+      artId = entityOrId;
+    } else if (entityOrId) {
+      artId = entityOrId.artifactId || entityOrId.productId || entityOrId.id || null;
+    }
+    if (artId) setTryOnArtifactId(artId);
+    if (specimenId) setTryOnSpecimenId(specimenId);
+    setIsTryOnOpen(true);
+  };
+
   const [flagshipProduct, setFlagshipProduct] = useState<Product | null>(() => {
     const cached = getCachedProducts();
     const live = cached.filter(isProductLive);
@@ -248,13 +280,23 @@ function StorefrontApp() {
   useEffect(() => {
     const init = async () => {
       try {
-        const [loadedCats, prods] = await Promise.all([
+        const [loadedCats, prods, arts, specs] = await Promise.all([
           fetchCategories(),
-          fetchProducts()
+          fetchProducts(),
+          fetchArtifacts(),
+          fetchSpecimens()
         ]);
 
         if (loadedCats.length > 0) {
           setCategories(loadedCats);
+        }
+
+        if (arts && arts.length > 0) {
+          setArtifactsList(arts);
+        }
+
+        if (specs && specs.length > 0) {
+          setSpecimensList(specs);
         }
 
         const liveProds = prods.filter(isProductLive);
@@ -423,6 +465,7 @@ function StorefrontApp() {
         onCartClick={() => setIsCartOpen(true)} 
         cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
         onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined}
+        onTryOnClick={() => handleOpenTryOn()}
         onAuthClick={() => {
           if (user) {
             setProfileInitialTab("orders");
@@ -455,6 +498,7 @@ function StorefrontApp() {
               element={
                 <HomeView
                   onProductClick={handleProductSelect}
+                  onTryOnClick={(entity, specId) => handleOpenTryOn(entity, specId)}
                   refreshKey={refreshKey}
                   onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                   flagshipProduct={flagshipProduct}
@@ -471,6 +515,7 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
+                onTryOnClick={(entity, specId) => handleOpenTryOn(entity, specId)}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -487,6 +532,7 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
+                onTryOnClick={(entity, specId) => handleOpenTryOn(entity, specId)}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -503,6 +549,7 @@ function StorefrontApp() {
             element={
               <CollectionDirectoryView
                 onProductClick={handleProductSelect}
+                onTryOnClick={(entity, specId) => handleOpenTryOn(entity, specId)}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -523,6 +570,7 @@ function StorefrontApp() {
                 onOpenLedger={() => setIsCartOpen(true)}
                 onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
                 onProductDeleted={handleProductPublished}
+                onTryOnClick={(artId, specId) => handleOpenTryOn(artId, specId)}
               />
             }
           />
@@ -537,6 +585,7 @@ function StorefrontApp() {
                 onOpenLedger={() => setIsCartOpen(true)}
                 onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
                 onProductDeleted={handleProductPublished}
+                onTryOnClick={(artId, specId) => handleOpenTryOn(artId, specId)}
               />
             }
           />
@@ -549,6 +598,7 @@ function StorefrontApp() {
                 onOpenLedger={() => setIsCartOpen(true)}
                 onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
                 onProductDeleted={handleProductPublished}
+                onTryOnClick={(artId, specId) => handleOpenTryOn(artId, specId)}
               />
             }
           />
@@ -592,6 +642,7 @@ function StorefrontApp() {
             element={
               <HomeView
                 onProductClick={handleProductSelect}
+                onTryOnClick={(entity, specId) => handleOpenTryOn(entity, specId)}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -689,6 +740,21 @@ function StorefrontApp() {
         onClose={() => setIsProfileOpen(false)}
         onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
         initialTab={profileInitialTab}
+      />
+
+      {/* Virtual Try-On Studio (AI Multimodal Photo + Shirt Analysis & Fusion) */}
+      <TryOnStudioModal
+        isOpen={isTryOnOpen}
+        onClose={() => setIsTryOnOpen(false)}
+        artifacts={artifactsList}
+        specimens={specimensList}
+        initialArtifactId={tryOnArtifactId}
+        initialSpecimenId={tryOnSpecimenId}
+        onAddToCart={handleAddToCart}
+        onOpenLedger={() => {
+          setIsTryOnOpen(false);
+          setIsCartOpen(true);
+        }}
       />
 
       {/* Owner Product Manager Studio */}

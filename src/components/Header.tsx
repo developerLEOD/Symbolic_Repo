@@ -291,11 +291,11 @@ export default function Header({
               <button 
                 type="button"
                 onClick={() => setOpenDropdown(prev => prev === "corpus" ? null : "corpus")}
-                className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+                className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                   openDropdown === "corpus" || isMediumActive
                     ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                     : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-                } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
+                } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
                 aria-expanded={openDropdown === "corpus"}
               >
                 <span>[ MEDIUMS ]</span>
@@ -309,9 +309,9 @@ export default function Header({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
+                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-2xl shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
                   >
-                    <div className="px-3 py-1.5 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
+                    <div className="px-3.5 py-2 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
                       <span>// MEDIUMS</span>
                       <span className="text-brand-text/40">{mediumItems.length} ENTRIES</span>
                     </div>
@@ -345,11 +345,11 @@ export default function Header({
               <button 
                 type="button"
                 onClick={() => setOpenDropdown(prev => prev === "collections" ? null : "collections")}
-                className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+                className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                   openDropdown === "collections" || isCollectionActive
                     ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                     : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-                } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
+                } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
                 aria-expanded={openDropdown === "collections"}
               >
                 <span>[ COLLECTIONS ]</span>
@@ -363,9 +363,9 @@ export default function Header({
                     animate={{ opacity: 1, y: 0 }}
                     exit={{ opacity: 0, y: -4 }}
                     transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-1.5 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text shadow-[4px_4px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
+                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-2xl shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
                   >
-                    <div className="px-3 py-1.5 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
+                    <div className="px-3.5 py-2 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
                       <span>// ETHOS LINES</span>
                       <span className="text-brand-text/40">{collectionItems.length} LINES</span>
                     </div>
@@ -401,11 +401,11 @@ export default function Header({
                 setOpenDropdown(null);
                 setIsMenuOpen(false);
               }}
-              className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+              className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                 isManifestoActive
                   ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                   : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
+              } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
             >
               <span>[ MANIFESTO ]</span>
             </Link>
@@ -417,11 +417,11 @@ export default function Header({
                 setOpenDropdown(null);
                 setIsMenuOpen(false);
               }}
-              className={`whitespace-nowrap shrink-0 rounded-none text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
+              className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
                 isAboutActive
                   ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
                   : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-              } ${scrolled ? 'px-2 lg:px-2.5 py-1' : 'px-2 sm:px-2.5 lg:px-3 py-1 sm:py-1.5'}`}
+              } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
             >
               <span>[ ABOUT ]</span>
             </Link>
@@ -439,7 +439,7 @@ export default function Header({
             onMouseEnter={() => soundManager.playHover(0.03)}
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.95 }}
-            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 flex items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-2 sm:px-2.5' : 'px-2 sm:px-3'}`}
+            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 flex items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-full transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-3' : 'px-3.5 sm:px-4'}`}
             title={user ? "Inspect Identity Record & Orders" : "Authenticate Identity"}
           >
             {user ? (
@@ -466,10 +466,10 @@ export default function Header({
             onMouseEnter={() => soundManager.playHover(0.03)}
             whileHover={{ y: -1 }}
             whileTap={{ scale: 0.95 }}
-            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-none border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer ${scrolled ? 'px-2 sm:px-2.5' : 'px-2.5 sm:px-3.5'}`}
+            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-full border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer ${scrolled ? 'px-3' : 'px-3.5 sm:px-4'}`}
             title="Open Possession Ledger"
           >
-            <span className="w-2 h-2 bg-brand-accent inline-block shrink-0" />
+            <span className="w-2 h-2 rounded-full bg-brand-accent inline-block shrink-0" />
             <span className="hidden sm:inline shrink-0">POSSESSIONS // </span>
             <motion.span 
               key={formattedCartCount}
@@ -487,7 +487,7 @@ export default function Header({
               soundManager.playToggle(0.08);
               setIsMenuOpen(!isMenuOpen);
             }}
-            className="md:hidden h-8.5 w-8.5 sm:h-9 sm:w-9 shrink-0 flex items-center justify-center bg-brand-surface hover:bg-brand-text hover:text-brand-bg rounded-none transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
+            className="md:hidden h-8.5 w-8.5 sm:h-9 sm:w-9 shrink-0 flex items-center justify-center bg-brand-surface hover:bg-brand-text hover:text-brand-bg rounded-full transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
             aria-label="Toggle Navigation Menu"
           >
             {isMenuOpen ? <X size={16} /> : <Menu size={16} />}

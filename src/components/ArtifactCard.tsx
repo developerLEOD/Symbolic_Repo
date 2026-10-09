@@ -135,7 +135,7 @@ export default function ArtifactCard({
         transition: { duration: 0.12, ease: "easeOut" }
       }}
       ref={cardRef}
-      className={`group artifact-card cursor-pointer rounded-none border-2 bg-brand-surface/85 backdrop-blur-md transition-all duration-200 flex flex-col justify-between relative p-3.5 sm:p-4 transform-gpu will-change-transform ${
+      className={`group artifact-card cursor-pointer rounded-2xl border-2 bg-brand-surface/85 backdrop-blur-md transition-all duration-200 flex flex-col justify-between relative p-4 transform-gpu will-change-transform ${
         isHovered
           ? "border-brand-accent outline outline-2 outline-offset-3 outline-brand-accent bg-brand-bg/95 shadow-[10px_10px_0px_#050505]"
           : "border-brand-text hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg/90 shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
@@ -170,22 +170,22 @@ export default function ArtifactCard({
       {/* Top Identification Header */}
       <div className="flex items-center justify-between border-b-2 border-brand-text pb-2 mb-3">
         <div className="flex items-center gap-1.5">
-          <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-text bg-brand-text/10 px-1.5 py-0.5 border border-brand-text/40">
+          <span className="font-mono text-[9px] font-black uppercase tracking-wider text-brand-text bg-brand-text/10 px-2.5 py-0.5 rounded-full border border-brand-text/40">
             ARTIFACT {artifactNum}
           </span>
-          <span className="font-mono text-[8px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
+          <span className="font-mono text-[8px] font-black uppercase bg-brand-text text-brand-bg px-2.5 py-0.5 rounded-full">
             {artifact.collectionName?.toUpperCase() || "CANONICAL"}
           </span>
         </div>
 
-        <div className="flex items-center gap-1 font-mono text-[8.5px] font-black uppercase bg-brand-accent/10 text-brand-accent px-2 py-0.5 border border-brand-accent/30">
+        <div className="flex items-center gap-1 font-mono text-[8.5px] font-black uppercase bg-brand-accent/10 text-brand-accent px-2.5 py-0.5 rounded-full border border-brand-accent/30">
           <Layers size={10} />
           <span>{specimenCount} {specimenCount === 1 ? "SPECIMEN" : "SPECIMENS"}</span>
         </div>
       </div>
 
-      {/* Central Visual Graphic / Artwork — Bouncy Spring Canvas */}
-      <div data-preview-canvas="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3">
+      {/* Central Visual Graphic / Artwork — Architectural Arch Vitrine */}
+      <div data-preview-canvas="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-t-[32px] rounded-b-xl bg-brand-bg border-2 border-brand-text group/canvas mb-3">
         <motion.img 
           key={displayImage}
           src={displayImage} 

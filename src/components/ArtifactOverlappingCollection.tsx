@@ -831,19 +831,15 @@ export default function ArtifactOverlappingCollection({
             <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
             <span>SCROLL ANYWHERE TO MOVE ARTIFACTS</span>
           </span>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1.5">
             <button
               type="button"
               onClick={() => handlePan("left")}
               disabled={!canScrollLeft}
               data-cursor-snap="true"
-              className="relative p-1.5 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer group"
+              className="w-8 h-8 rounded-full border-2 border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[2px_2px_0px_#050505] flex items-center justify-center cursor-pointer"
               title="Previous Artifact"
             >
-              <span className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <span className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <span className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <ChevronLeft size={14} />
             </button>
             <button
@@ -851,13 +847,9 @@ export default function ArtifactOverlappingCollection({
               onClick={() => handlePan("right")}
               disabled={!canScrollRight}
               data-cursor-snap="true"
-              className="relative p-1.5 border border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer group"
+              className="w-8 h-8 rounded-full border-2 border-brand-text bg-brand-surface disabled:opacity-30 hover:bg-brand-text hover:text-brand-bg transition-colors shadow-[2px_2px_0px_#050505] flex items-center justify-center cursor-pointer"
               title="Next Artifact"
             >
-              <span className="absolute top-0 left-0 w-1.5 h-1.5 border-t border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <span className="absolute top-0 right-0 w-1.5 h-1.5 border-t border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <span className="absolute bottom-0 left-0 w-1.5 h-1.5 border-b border-l border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
-              <span className="absolute bottom-0 right-0 w-1.5 h-1.5 border-b border-r border-brand-accent opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none" />
               <ChevronRight size={14} />
             </button>
           </div>
@@ -990,17 +982,17 @@ export default function ArtifactOverlappingCollection({
                   idx !== 0 ? "sm:-ml-[140px] md:-ml-[165px] lg:-ml-[190px]" : ""
                 }`}
               >
-                {/* PHYSICAL 3:4 ARTIFACT FRAME */}
+                {/* PHYSICAL 3:4 ARTIFACT FRAME - Architectural Arch Vitrine */}
                 <div
                   data-preview-canvas={isCentered ? "true" : undefined}
-                  className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text transition-all duration-300 ${
+                  className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text rounded-t-[40px] sm:rounded-t-[48px] rounded-b-2xl transition-all duration-300 ${
                     isCentered
                       ? "shadow-[10px_10px_0px_#050505,0_0_0_1.5px_#ff4500] opacity-100"
                       : "shadow-[5px_5px_0px_#050505] opacity-100"
                   }`}
                 >
                   {/* Central Graphic Canvas */}
-                  <div className="w-full h-full relative flex items-center justify-center bg-brand-bg">
+                  <div className="w-full h-full relative flex items-center justify-center bg-brand-bg rounded-t-[36px] sm:rounded-t-[44px] rounded-b-xl overflow-hidden">
                     <motion.img
                       key={currentImg}
                       src={currentImg}
@@ -1032,31 +1024,31 @@ export default function ArtifactOverlappingCollection({
                     )}
 
                     {/* Top Accession & Collection Badge */}
-                    <div className="absolute top-2.5 left-2.5 z-20 flex items-center gap-1.5 font-mono">
-                      <span className="text-[8px] font-black uppercase bg-brand-surface text-brand-text px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505]">
+                    <div className="absolute top-3 left-3 z-20 flex items-center gap-1.5 font-mono">
+                      <span className="text-[8px] font-black uppercase bg-brand-surface text-brand-text px-2 py-0.5 rounded-full border border-brand-text shadow-[1px_1px_0px_#050505]">
                         {item.artifactId}
                       </span>
-                      <span className="text-[7.5px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
+                      <span className="text-[7.5px] font-black uppercase bg-brand-text text-brand-bg px-2 py-0.5 rounded-full">
                         {item.collectionName?.toUpperCase() || "CANONICAL"}
                       </span>
                       {activeSpecimen && (
-                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-accent text-white px-1.5 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-accent text-white px-2 py-0.5 rounded-full border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
                           {activeSpecimen.medium}
                         </span>
                       )}
                     </div>
 
                     {/* Top Right Specimen & Angle Tag */}
-                    <div className="absolute top-2.5 right-2.5 z-20 flex items-center gap-1 font-mono">
+                    <div className="absolute top-3 right-3 z-20 flex items-center gap-1 font-mono">
                       {currentAngleItem ? (
-                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-2 py-0.5 border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
+                        <span className="text-[7.5px] font-mono font-black uppercase bg-brand-surface/95 text-brand-text px-2.5 py-0.5 rounded-full border border-brand-text shadow-[1px_1px_0px_#050505] flex items-center gap-1">
                           <Camera size={9} className="text-brand-accent" />
                           <span>
                             {currentAngleItem.medium} (ANG 0{currentAngleItem.angleIndex + 1}/0{currentAngleItem.totalAnglesForSpecimen})
                           </span>
                         </span>
                       ) : (
-                        <span className={`text-[7.5px] font-mono font-black uppercase px-2 py-0.5 border shadow-[1px_1px_0px_#050505] transition-colors ${
+                        <span className={`text-[7.5px] font-mono font-black uppercase px-2.5 py-0.5 rounded-full border shadow-[1px_1px_0px_#050505] transition-colors ${
                           activeSpecimen
                             ? "bg-brand-accent text-white border-brand-text"
                             : "bg-brand-surface/95 text-brand-text/80 border-brand-text"
@@ -1069,7 +1061,7 @@ export default function ArtifactOverlappingCollection({
                     {/* Clean segment dots on auto-cycling */}
                     {isAutoCycling && itemAngleSeq.length > 1 && (
                       <div className="absolute bottom-3 inset-x-4 z-20 flex items-center justify-center gap-1">
-                        <div className="bg-brand-surface/90 border border-brand-text px-2 py-0.5 flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
+                        <div className="bg-brand-surface/90 border border-brand-text px-2.5 py-1 rounded-full flex items-center gap-1.5 shadow-[1px_1px_0px_#050505]">
                           {itemAngleSeq.map((it, aIdx) => {
                             const isActive = aIdx === (desktopHoverCycleIndex % itemAngleSeq.length);
                             return (
