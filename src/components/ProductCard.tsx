@@ -136,6 +136,8 @@ export default function ProductCard({
           : "border-brand-text bg-brand-surface hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
       } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
+      data-specimen-card="true"
+      data-specimen-preview="true"
       data-preview-element="true"
       onClick={handleCardClick}
       onMouseEnter={handleMouseEnter}
@@ -180,7 +182,7 @@ export default function ProductCard({
       </div>
 
       {/* ─── 2. CENTRAL VISUAL ARTIFACT CANVAS (Clean 4:5 Aspect Ratio) ─── */}
-      <div data-preview-canvas="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
+      <div data-preview-canvas="true" data-specimen-preview="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
         <motion.img 
           key={activeImageIndex}
           src={images[activeImageIndex] || product.thumbnailImage || images[0] || STUDIO_FALLBACK_IMAGE} 

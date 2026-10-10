@@ -40,11 +40,39 @@ export default function CustomCursor() {
     document.body.classList.add("custom-cursor-active");
 
     const checkOrangeBackground = (el: HTMLElement | null): boolean => {
-      let curr = el;
+      if (!el) return false;
+
+      // SPECIMEN PREVIEWS: Treat specimen previews as orange field (changes shape to circle and color to white)
+      if (
+        el.closest(
+          "[data-specimen-preview], [data-preview-canvas], [data-preview-element], [data-specimen-card], [data-artifact-card], [data-product-card], .specimen-card, .specimen-preview, .artifact-card, .product-card, .group\\/canvas, [data-preview-image], canvas"
+        )
+      ) {
+        return true;
+      }
+
+      let curr: HTMLElement | null = el;
       while (curr && curr !== document.body && curr !== document.documentElement) {
+        if (
+          curr.hasAttribute?.("data-specimen-preview") ||
+          curr.hasAttribute?.("data-preview-canvas") ||
+          curr.hasAttribute?.("data-specimen-card") ||
+          curr.hasAttribute?.("data-preview-element") ||
+          curr.hasAttribute?.("data-artifact-card") ||
+          curr.hasAttribute?.("data-product-card") ||
+          curr.classList?.contains("specimen-card") ||
+          curr.classList?.contains("specimen-preview") ||
+          curr.classList?.contains("artifact-card") ||
+          curr.classList?.contains("product-card")
+        ) {
+          return true;
+        }
+
         const classStr = curr.className || "";
         if (typeof classStr === "string") {
           if (
+            classStr.includes("specimen-card") ||
+            classStr.includes("specimen-preview") ||
             classStr.includes("bg-brand-accent") ||
             classStr.includes("bg-[#ff4500]") ||
             classStr.includes("bg-[#e04006]") ||
@@ -56,7 +84,12 @@ export default function CustomCursor() {
           }
         }
 
-        if (curr.dataset?.bg === "orange" || curr.dataset?.accent === "orange") {
+        if (
+          curr.dataset?.bg === "orange" || 
+          curr.dataset?.accent === "orange" || 
+          curr.dataset?.specimenPreview === "true" || 
+          curr.dataset?.previewCanvas === "true"
+        ) {
           return true;
         }
 
@@ -270,6 +303,7 @@ export default function CustomCursor() {
               top: b.y,
               borderColor: b.color,
               borderRadius: b.isCircle ? "50%" : "0px",
+              boxShadow: b.isCircle ? "0 0 0 1px rgba(5,5,5,0.4)" : "none",
             }}
             initial={{ opacity: 0.95, scale: 0.5, x: "-50%", y: "-50%" }}
             animate={{ opacity: 0, scale: 2.4, x: "-50%", y: "-50%" }}
@@ -316,6 +350,7 @@ export default function CustomCursor() {
           scale: isClicked ? 0.75 : boundaryTarget ? 0.9 : isIdle ? [0.85, 1.15, 0.85] : 1,
           borderRadius: isOverOrange ? "50%" : "0px",
           backgroundColor: isOverOrange ? "#ffffff" : "#ff4500",
+          boxShadow: isOverOrange ? "0 0 0 1px #050505" : "none",
         }}
         transition={{
           scale: isIdle && !boundaryTarget && !isClicked
@@ -323,6 +358,7 @@ export default function CustomCursor() {
             : { duration: 0.1 },
           borderRadius: { duration: 0.12 },
           backgroundColor: { duration: 0.1 },
+          boxShadow: { duration: 0.1 },
         }}
         className="fixed -translate-x-1/2 -translate-y-1/2 w-2.5 h-2.5 pointer-events-none z-[9999]"
       />

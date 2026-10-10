@@ -446,7 +446,7 @@ export default function Header({
           >
             {user ? (
               <>
-                <span className="w-2 h-2 rounded-full bg-green-500 ring-2 ring-brand-text/30 animate-pulse shrink-0"></span>
+                <span className="w-2 h-2 rounded-none bg-green-500 ring-2 ring-brand-text/30 animate-pulse shrink-0"></span>
                 <span className="max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline shrink-0">
                   {userProfile?.displayName ? userProfile.displayName.split(" ")[0] : (user.email?.split("@")[0] || "STATION")}
                 </span>
@@ -471,7 +471,7 @@ export default function Header({
             className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-full border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer ${scrolled ? 'px-3' : 'px-3.5 sm:px-4'}`}
             title="Open Possession Ledger"
           >
-            <span className="w-2 h-2 rounded-full bg-brand-accent inline-block shrink-0" />
+            <span className="w-2 h-2 rounded-none bg-brand-accent inline-block shrink-0" />
             <span className="hidden sm:inline shrink-0">POSSESSIONS // </span>
             <motion.span 
               key={formattedCartCount}

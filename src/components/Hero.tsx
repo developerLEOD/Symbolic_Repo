@@ -238,6 +238,8 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
                 {/* Concentric Guide Line */}
                 <div className="rounded-none border-2 border-dashed border-brand-text/30 p-2 sm:p-3">
                   <div
+                    data-specimen-preview="true"
+                    data-preview-canvas="true"
                     className="w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-60 lg:h-60 rounded-none border-2 border-black overflow-hidden bg-brand-surface select-none shadow-[4px_4px_0px_#050505] relative"
                   >
                     <img 

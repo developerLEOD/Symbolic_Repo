@@ -92,6 +92,8 @@ export default function SpecimenCard({
       } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
       data-artifact-card="true"
+      data-specimen-card="true"
+      data-specimen-preview="true"
       onClick={() => {
         soundManager.playClick();
         onClick();
@@ -141,7 +143,7 @@ export default function SpecimenCard({
       </div>
 
       {/* Central Visual Specimen Canvas */}
-      <div className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
+      <div data-preview-canvas="true" data-specimen-preview="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3.5">
         <motion.img 
           key={activeImageIndex}
           src={images[activeImageIndex] || specimen.thumbnailImage} 

@@ -142,6 +142,8 @@ export default function ArtifactCard({
       } active:shadow-[2px_2px_0px_#050505]`}
       data-product-card="true"
       data-artifact-card="true"
+      data-specimen-card="true"
+      data-specimen-preview="true"
       data-preview-element="true"
       onClick={handleCardClick}
       onMouseEnter={() => {
@@ -185,7 +187,7 @@ export default function ArtifactCard({
       </div>
 
       {/* Central Visual Graphic / Artwork */}
-      <div data-preview-canvas="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3">
+      <div data-preview-canvas="true" data-specimen-preview="true" className="relative aspect-[4/5] flex items-center justify-center overflow-hidden rounded-none bg-brand-bg border-2 border-brand-text group/canvas mb-3">
         <motion.img 
           key={displayImage}
           src={displayImage} 

@@ -576,6 +576,8 @@ export default function ProductDetail({
               <div className="lg:col-span-6 xl:col-span-6 flex flex-col items-center justify-center">
                 <div 
                   data-artifact-card="true"
+                  data-specimen-card="true"
+                  data-specimen-preview="true"
                   data-preview-canvas="true"
                   className="w-full max-w-[480px] aspect-[3/4] max-h-[620px] relative bg-brand-bg border-2 border-brand-text overflow-hidden group shadow-[4px_4px_0px_#050505]"
                 >

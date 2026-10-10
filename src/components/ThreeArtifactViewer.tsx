@@ -607,10 +607,14 @@ export default function ThreeArtifactViewer({
   return (
     <div
       ref={containerRef}
+      data-specimen-preview="true"
+      data-preview-canvas="true"
       className={`relative w-full h-full overflow-hidden select-none bg-neutral-950/90 ${className}`}
     >
       <canvas
         ref={canvasRef}
+        data-specimen-preview="true"
+        data-preview-canvas="true"
         className="w-full h-full block cursor-grab active:cursor-grabbing outline-none"
       />
 

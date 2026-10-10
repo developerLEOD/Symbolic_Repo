@@ -2,6 +2,7 @@ import React, { useEffect, useState, useCallback, useMemo } from "react";
 import { Product, Category, Artifact, Specimen } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
 import ArtifactCard from "./ArtifactCard";
+import OrangeTriangleBoundary from "./OrangeTriangleBoundary";
 import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, Box } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
@@ -206,10 +207,25 @@ export default function ProductGrid({
       id="catalog-section" 
       aria-label="The Collection" 
       data-collection-section="true" 
-      className="w-full max-w-7xl mx-auto px-4 sm:px-8 lg:px-10 py-12 space-y-8 bg-transparent"
+      className="w-full max-w-7xl mx-auto my-8 sm:my-14 relative bg-brand-surface/25 border-x-2 border-brand-accent/50 shadow-[6px_6px_0px_#050505]"
     >
-      {/* 1. CLEAN ARCHITECTURAL HEADER */}
-      <div className="border-b-2 border-brand-text pb-6 space-y-4">
+      {/* 4 Corner Orange Triangle Accents */}
+      <div className="absolute top-0 left-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(0_0,100%_0,0_100%)] pointer-events-none z-20" />
+      <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(0_0,100%_0,100%_100%)] pointer-events-none z-20" />
+      <div className="absolute bottom-0 left-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(0_0,0_100%,100%_100%)] pointer-events-none z-20" />
+      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(100%_0,0_100%,100%_100%)] pointer-events-none z-20" />
+
+      {/* TOP ORANGE TRIANGLE BOUNDARY STRIP */}
+      <OrangeTriangleBoundary 
+        position="top" 
+        label="SECTION BOUNDARY // THE COLLECTION REGISTER"
+        sublabel="CANONICAL ARTIFACT CATALOGUE"
+        code="ZONE:01-CATALOGUE"
+      />
+
+      <div className="px-4 sm:px-8 lg:px-10 py-8 sm:py-12 space-y-8">
+        {/* 1. CLEAN ARCHITECTURAL HEADER */}
+        <div className="border-b-2 border-brand-text pb-6 space-y-4">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
             <div className="flex items-center gap-2">
@@ -368,7 +384,7 @@ export default function ProductGrid({
             aria-pressed={inStockOnly}
             aria-label="Filter artifacts in stock only"
           >
-            <span className={`w-2 h-2 rounded-full border border-black/30 transition-colors ${inStockOnly ? "bg-white animate-pulse" : "bg-brand-accent"}`} />
+            <span className={`w-2 h-2 rounded-none border border-black/30 transition-colors ${inStockOnly ? "bg-white animate-pulse" : "bg-brand-accent"}`} />
             <span>AVAILABLE ONLY</span>
             {inStockOnly && (
               <span className="text-[8.5px] opacity-80 border-l border-white/40 pl-1.5 font-bold">
@@ -384,7 +400,7 @@ export default function ProductGrid({
         /* Empty / In Fabrication State */
         <div className="py-20 px-6 text-center space-y-6 border-2 border-dashed border-brand-text/40 bg-brand-surface/50 p-8 sm:p-14 shadow-[4px_4px_0px_#050505] max-w-2xl mx-auto my-8 font-mono">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 bg-brand-accent text-white text-[10px] font-black uppercase tracking-widest border border-brand-text shadow-[2px_2px_0px_#050505]">
-            <span className="w-2 h-2 rounded-full bg-white animate-pulse" />
+            <span className="w-2 h-2 rounded-none bg-white animate-pulse" />
             <span>[ STATUS: IN FABRICATION // ATELIER PROTOCOL ACTIVE ]</span>
           </div>
           
@@ -417,7 +433,7 @@ export default function ProductGrid({
             >
               {reverifying ? (
                 <>
-                  <span className="w-2 h-2 rounded-full bg-brand-accent animate-ping" />
+                  <span className="w-2 h-2 rounded-none bg-brand-accent animate-ping" />
                   <span>VERIFYING ARCHIVE...</span>
                 </>
               ) : (
@@ -628,6 +644,15 @@ export default function ProductGrid({
       )}
     </AnimatePresence>
   )}
-</section>
+      </div>
+
+      {/* BOTTOM ORANGE TRIANGLE BOUNDARY STRIP */}
+      <OrangeTriangleBoundary 
+        position="bottom" 
+        label="EXIT BOUNDARY // THE COLLECTION REGISTER"
+        sublabel="INVENTORY PROTOCOL SECURED"
+        code="ZONE:01-TERMINUS"
+      />
+    </section>
   );
 }

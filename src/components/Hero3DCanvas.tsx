@@ -143,6 +143,8 @@ export default function Hero3DCanvas({ onOpenStudio, className = "w-full h-full"
     <div
       ref={containerRef}
       onClick={onOpenStudio}
+      data-specimen-preview="true"
+      data-preview-canvas="true"
       className={`relative cursor-pointer select-none group ${className}`}
       title="Open 3D Spatial Geometry Atelier"
     >
@@ -150,7 +152,7 @@ export default function Hero3DCanvas({ onOpenStudio, className = "w-full h-full"
       
       {/* Floating 3D Badge Indicator */}
       <div className="absolute bottom-2 right-2 px-2 py-1 bg-black/80 backdrop-blur-sm border border-white/20 font-mono text-[8px] font-black uppercase text-white/90 tracking-widest flex items-center gap-1 group-hover:bg-brand-accent group-hover:border-brand-accent transition-colors">
-        <span className="w-1.5 h-1.5 bg-brand-accent group-hover:bg-white rounded-full animate-pulse" />
+        <span className="w-1.5 h-1.5 bg-brand-accent group-hover:bg-white rounded-none animate-pulse" />
         <span>3D SPATIAL // GEMINI</span>
       </div>
     </div>

@@ -409,7 +409,7 @@ export default function ArtifactDetail({
             
             {/* Left Column: Visual Gallery Canvas (7 Cols) */}
             <div className="lg:col-span-7 space-y-4">
-              <div className="relative aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[6px_6px_0px_#050505] flex items-center justify-center overflow-hidden">
+              <div data-preview-canvas="true" data-specimen-preview="true" className="relative aspect-[4/5] bg-brand-surface border-2 border-brand-text shadow-[6px_6px_0px_#050505] flex items-center justify-center overflow-hidden">
                 <motion.img 
                   key={isViewingArtwork ? "artwork_graphic" : `${activeSpecimen?.id || "spec"}_${activeImageIndex}`}
                   src={displayImages[activeImageIndex] || artifact.graphic || "/Logo_NoName.jpg"} 

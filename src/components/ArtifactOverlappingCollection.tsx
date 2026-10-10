@@ -828,7 +828,7 @@ export default function ArtifactOverlappingCollection({
         </div>
         <div className="flex items-center gap-3">
           <span className="hidden md:inline-flex items-center gap-1.5 text-[8.5px] font-mono font-bold text-brand-text/65 uppercase tracking-widest border border-brand-text/20 bg-brand-surface/80 px-2 py-0.5 shadow-[1px_1px_0px_#050505]">
-            <span className="w-1.5 h-1.5 rounded-full bg-brand-accent animate-pulse" />
+            <span className="w-1.5 h-1.5 rounded-none bg-brand-accent animate-pulse" />
             <span>SCROLL ANYWHERE TO MOVE ARTIFACTS</span>
           </span>
           <div className="flex items-center gap-1.5">
@@ -978,13 +978,16 @@ export default function ArtifactOverlappingCollection({
                 data-artifact-card={isCentered ? "true" : undefined}
                 data-active-artifact={isCentered ? "true" : undefined}
                 data-artifact-index={idx}
+                data-specimen-card="true"
+                data-specimen-preview="true"
                 className={`product-card artifact-card relative shrink-0 w-[280px] sm:w-[330px] md:w-[370px] lg:w-[410px] aspect-[3/4] cursor-pointer ${
                   idx !== 0 ? "sm:-ml-[140px] md:-ml-[165px] lg:-ml-[190px]" : ""
                 }`}
               >
                 {/* PHYSICAL 3:4 ARTIFACT FRAME */}
                 <div
-                  data-preview-canvas={isCentered ? "true" : undefined}
+                  data-preview-canvas="true"
+                  data-specimen-preview="true"
                   className={`w-full h-full relative overflow-hidden flex items-center justify-center bg-brand-bg border-2 border-brand-text rounded-none transition-all duration-300 ${
                     isCentered
                       ? "shadow-[10px_10px_0px_#050505,0_0_0_1.5px_#ff4500] opacity-100"
@@ -992,7 +995,7 @@ export default function ArtifactOverlappingCollection({
                   }`}
                 >
                   {/* Central Graphic Canvas */}
-                  <div className="w-full h-full relative flex items-center justify-center bg-brand-bg rounded-none overflow-hidden">
+                  <div data-preview-canvas="true" data-specimen-preview="true" className="w-full h-full relative flex items-center justify-center bg-brand-bg rounded-none overflow-hidden">
                     <motion.img
                       key={currentImg}
                       src={currentImg}
@@ -1235,6 +1238,8 @@ export default function ArtifactOverlappingCollection({
                               pointerEvents: isTransitioningRef.current ? "none" : "auto",
                             }}
                             data-product-card="true"
+                            data-specimen-card="true"
+                            data-specimen-preview="true"
                             className={`product-card specimen-card w-38 sm:w-44 h-52 sm:h-56 z-40 bg-brand-surface border-2 transition-colors p-2 flex flex-col justify-between shadow-[4px_4px_0px_#050505] cursor-pointer text-left ${
                               isSelected
                                 ? "border-brand-accent ring-2 ring-brand-accent bg-brand-surface shadow-[6px_6px_0px_#ff4500]"
@@ -1243,7 +1248,7 @@ export default function ArtifactOverlappingCollection({
                             title={`Hover or click to preview ${spec.medium}`}
                           >
                             {/* Product Mockup Image Container */}
-                            <div className="w-full h-30 sm:h-34 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30 relative">
+                            <div data-preview-canvas="true" data-specimen-preview="true" className="w-full h-30 sm:h-34 bg-brand-bg overflow-hidden flex items-center justify-center border border-brand-text/30 relative">
                               <img
                                 src={specImg}
                                 alt={spec.medium}
