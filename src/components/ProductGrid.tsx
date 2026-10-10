@@ -26,6 +26,7 @@ interface ProductGridProps {
   onCategoryChange?: (id: string | null) => void;
   onProductClick: (productOrArtifact: any, specimenId?: string) => void;
   onTryOnClick?: (entity: any, specimenId?: string) => void;
+  onOpen3D?: (artifactId?: string) => void;
   refreshKey?: number;
   onCategoriesLoaded?: (categories: Category[]) => void;
 }

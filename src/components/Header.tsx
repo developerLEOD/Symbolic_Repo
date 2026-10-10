@@ -15,6 +15,7 @@ interface HeaderProps {
   onAuthClick: () => void;
   onReferralClick?: () => void;
   onTryOnClick?: () => void;
+  onOpen3D?: () => void;
 }
 
 export default function Header({ 

@@ -15,6 +15,8 @@ import { soundManager } from "../lib/soundEffects";
 interface HeroProps {
   onExplore: () => void;
   onWhy: () => void;
+  onOpen3D?: (artifactId?: string) => void;
+  onProductClick?: (p: any) => void;
 }
 
 // Animated count-up component for live telemetry numbers
@@ -231,27 +233,6 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
               onMouseEnter={() => soundManager.playHover(0.04)}
               className="relative cursor-pointer select-none"
             >
-              {/* Rotating Astrolabe / Studio Coordinate Seal Medallion */}
-              <motion.div 
-                animate={{ rotate: 360 }}
-                transition={{ repeat: Infinity, duration: 28, ease: "linear" }}
-                className="absolute -top-5 -right-5 sm:-right-8 w-20 h-20 sm:w-24 sm:h-24 rounded-none border-2 border-brand-text bg-brand-bg shadow-[3px_3px_0px_#050505] flex items-center justify-center select-none pointer-events-none z-30"
-              >
-                <svg className="w-full h-full p-1" viewBox="0 0 100 100">
-                  <path id="circlePathHero" d="M 50, 50 m -36, 0 a 36,36 0 1,1 72,0 a 36,36 0 1,1 -72,0" fill="none" />
-                  <text className="text-[7.5px] font-mono font-black uppercase tracking-[0.2em] fill-brand-text">
-                    <textPath href="#circlePathHero" startOffset="0%">
-                      ISLAMABAD STUDIO • 33.68° N • 73.04° E •
-                    </textPath>
-                  </text>
-                </svg>
-                <div className="absolute inset-0 flex items-center justify-center">
-                  <div className="w-6 h-6 rounded-none bg-brand-accent text-white font-mono text-[8px] font-black flex items-center justify-center border border-brand-text">
-                    +01
-                  </div>
-                </div>
-              </motion.div>
-
               {/* Architectural Frame */}
               <div className="relative p-3 sm:p-4 rounded-none border-3 sm:border-4 border-brand-text bg-brand-surface shadow-[7px_7px_0px_#050505] hover:shadow-[11px_11px_0px_#050505] transition-all">
                 {/* Concentric Guide Line */}
