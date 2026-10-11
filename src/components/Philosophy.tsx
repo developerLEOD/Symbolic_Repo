@@ -72,15 +72,17 @@ export default function Philosophy({ onReadManifesto, onReadAbout }: PhilosophyP
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.09 }}
-              whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-              className="p-7 sm:p-8 bg-brand-surface/85 backdrop-blur-md border-2 border-brand-text rounded-none space-y-5 shadow-[6px_6px_0px_#050505] hover:shadow-[9px_9px_0px_#050505] transition-all flex flex-col justify-between cursor-default group"
+              whileHover={{ y: -4, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+              className="p-7 sm:p-8 bg-brand-surface/90 backdrop-blur-md border-[2.5px] border-brand-text rounded-none space-y-5 shadow-[6px_6px_0px_#050505] hover:shadow-[10px_10px_0px_#050505] transition-all flex flex-col justify-between cursor-default group relative"
             >
+              <span className="absolute -top-1.5 -left-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
+              <span className="absolute -top-1.5 -right-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
               <div className="space-y-4">
                 <div className="flex items-center justify-between border-b border-brand-text/20 pb-3">
-                  <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 rounded-none border border-brand-accent/30">
+                  <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-0.5 rounded-none border border-brand-accent/30">
                     PRINCIPLE // {item.id}
                   </span>
-                  <span className="w-9 h-9 rounded-none border-2 border-brand-text bg-brand-bg text-brand-accent flex items-center justify-center font-mono text-xs font-black shadow-[2px_2px_0px_#050505] group-hover:scale-105 transition-transform">
+                  <span className="w-9 h-9 rounded-none border-2 border-brand-text bg-brand-text text-brand-bg flex items-center justify-center font-mono text-xs font-black shadow-[2px_2px_0px_#ff4500] group-hover:scale-105 transition-transform">
                     {item.id}
                   </span>
                 </div>

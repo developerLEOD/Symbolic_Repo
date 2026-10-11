@@ -209,14 +209,20 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
             </div>
           </div>
 
-          <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 p-4 rounded-none shadow-[3px_3px_0px_#050505]">
-            <p className="font-mono text-xs sm:text-sm uppercase text-brand-text/90 leading-relaxed">
+          <div className="bg-brand-surface/90 backdrop-blur-md border-2 border-brand-text p-4 rounded-none shadow-[4px_4px_0px_#050505] relative">
+            <span className="absolute -top-1.5 -left-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
+            <span className="absolute -top-1.5 -right-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
+            <p className="font-mono text-xs sm:text-sm uppercase text-brand-text leading-relaxed font-bold">
               {product.description}
             </p>
           </div>
 
           {/* Statement & Specification Grid */}
-          <div className="bg-brand-surface border-2 border-brand-text p-6 rounded-none shadow-[4px_4px_0px_#050505] font-mono text-xs space-y-2.5">
+          <div className="bg-brand-surface border-[2.5px] border-brand-text p-6 rounded-none shadow-[6px_6px_0px_#050505] font-mono text-xs space-y-2.5 relative">
+            <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
+            <span className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
+            <span className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
+            <span className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
             <div className="flex justify-between border-b border-brand-text/15 pb-2">
               <span className="opacity-60">PRIMARY SYMBOL:</span>
               <span className="font-black text-brand-accent">{product.inscription || "THE ALIF / CONVICTION"}</span>

@@ -24,12 +24,12 @@ export default function LiquidCarveButton({
 }: LiquidCarveButtonProps) {
   const [isHovered, setIsHovered] = useState(false);
 
-  // Brutalist tactile variants with stark borders, hard offset shadows, crisp hover/press
+  // Neo-Brutalist tactile variants with thick high-contrast borders and solid offset shadows
   const variantStyles = {
-    primary: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
-    dark: "bg-brand-text text-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
-    secondary: "bg-brand-surface text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]",
-    outline: "bg-transparent text-brand-text border-2 border-brand-text shadow-[3px_3px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[5px_5px_0px_#050505] active:shadow-[1px_1px_0px_#050505]"
+    primary: "bg-brand-text text-brand-bg border-[2.5px] border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[7px_7px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505]",
+    dark: "bg-brand-text text-brand-bg border-[2.5px] border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-accent hover:border-brand-text hover:text-white hover:shadow-[7px_7px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505]",
+    secondary: "bg-brand-surface text-brand-text border-[2.5px] border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[7px_7px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505]",
+    outline: "bg-brand-bg/95 text-brand-text border-[2.5px] border-brand-text shadow-[4px_4px_0px_#050505] hover:bg-brand-text hover:text-brand-bg hover:shadow-[7px_7px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505]"
   };
 
   const shapeStyles = {

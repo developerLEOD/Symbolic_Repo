@@ -98,4 +98,77 @@
   animation-play-state: paused;
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   NEO-BRUTALISM VISUAL DESIGN SYSTEM
+   • Heavy contrast borders, hard unblurred offset shadows
+   • Tactile mechanical press dynamics
+   • Industrial hazard patterns, registration tick-marks, technical motifs
+   • Zero font divergence: 100% Space Grotesk strictly preserved
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Hard offset neo-brutalist shadows */
+.neo-shadow-xs {
+  box-shadow: 2px 2px 0px #050505;
+}
+
+.neo-shadow-sm {
+  box-shadow: 3px 3px 0px #050505;
+}
+
+.neo-shadow {
+  box-shadow: 5px 5px 0px #050505;
+}
+
+.neo-shadow-lg {
+  box-shadow: 8px 8px 0px #050505;
+}
+
+.neo-shadow-xl {
+  box-shadow: 12px 12px 0px #050505;
+}
+
+.neo-shadow-accent {
+  box-shadow: 4px 4px 0px #ff4500;
+}
+
+.neo-shadow-accent-lg {
+  box-shadow: 8px 8px 0px #ff4500;
+}
+
+/* Tactile physical press transition */
+.neo-press {
+  transition: transform 0.12s cubic-bezier(0.16, 1, 0.3, 1), box-shadow 0.12s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.neo-press:hover {
+  transform: translate(-2px, -2px);
+  box-shadow: 6px 6px 0px #050505;
+}
+
+.neo-press:active {
+  transform: translate(2px, 2px);
+  box-shadow: 1px 1px 0px #050505;
+}
+
+/* Neo-brutalist diagonal hazard tape stripes */
+.neo-stripe-orange {
+  background: repeating-linear-gradient(-45deg, #ff4500, #ff4500 10px, #e03d00 10px, #e03d00 20px);
+}
+
+.neo-stripe-caution {
+  background: repeating-linear-gradient(-45deg, #ff4500, #ff4500 8px, #050505 8px, #050505 16px);
+}
+
+.neo-stripe-subtle {
+  background: repeating-linear-gradient(-45deg, transparent, transparent 8px, rgba(5,5,5,0.05) 8px, rgba(5,5,5,0.05) 16px);
+}
+
+/* Technical architectural grid background */
+.neo-grid-backdrop {
+  background-size: 32px 32px;
+  background-image: 
+    linear-gradient(to right, rgba(5, 5, 5, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(5, 5, 5, 0.04) 1px, transparent 1px);
+}
+
 

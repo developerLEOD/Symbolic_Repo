@@ -85,11 +85,11 @@ export default function SpecimenCard({
         transition: { type: "spring", stiffness: 600, damping: 18 }
       }}
       ref={cardRef}
-      className={`group specimen-card cursor-pointer rounded-none border-2 transition-all duration-200 flex flex-col justify-between relative p-4 transform-gpu will-change-transform ${
+      className={`group specimen-card cursor-pointer rounded-none border-[2.5px] transition-all duration-150 flex flex-col justify-between relative p-4 transform-gpu will-change-transform ${
         isHovered
-          ? "border-brand-accent outline outline-2 outline-offset-3 outline-brand-accent bg-brand-bg shadow-[10px_10px_0px_#050505]"
-          : "border-brand-text bg-brand-surface hover:border-brand-accent hover:outline hover:outline-2 hover:outline-offset-2 hover:outline-brand-accent/70 hover:bg-brand-bg shadow-[4px_4px_0px_#050505] hover:shadow-[10px_10px_0px_#050505]"
-      } active:shadow-[2px_2px_0px_#050505]`}
+          ? "border-brand-text bg-brand-bg shadow-[8px_8px_0px_#050505] -translate-x-[1px] -translate-y-[1px]"
+          : "border-brand-text bg-brand-surface shadow-[5px_5px_0px_#050505] hover:shadow-[8px_8px_0px_#050505]"
+      } active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505]`}
       data-product-card="true"
       data-artifact-card="true"
       data-specimen-card="true"

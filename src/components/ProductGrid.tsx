@@ -245,7 +245,7 @@ export default function ProductGrid({
           </div>
 
           {/* Perspective View Switcher */}
-          <div className="inline-flex p-1 border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] gap-1 shrink-0">
+          <div className="inline-flex p-1 border-[2.5px] border-brand-text bg-brand-surface shadow-[4px_4px_0px_#050505] gap-1 shrink-0">
             <button
               id="view-mode-exhibition-btn"
               type="button"
@@ -255,7 +255,7 @@ export default function ProductGrid({
               }}
               className={`px-3.5 py-1.5 rounded-full font-mono text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer select-none ${
                 viewMode === "exhibition"
-                  ? "bg-brand-text text-brand-bg shadow-sm"
+                  ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
                   : "bg-transparent text-brand-text hover:bg-brand-text/10"
               }`}
               title="Exhibition View: Curated interactive overlapping artifacts showcase"
@@ -273,7 +273,7 @@ export default function ProductGrid({
               }}
               className={`px-3.5 py-1.5 rounded-full font-mono text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer select-none ${
                 viewMode === "grid"
-                  ? "bg-brand-text text-brand-bg shadow-sm"
+                  ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
                   : "bg-transparent text-brand-text hover:bg-brand-text/10"
               }`}
               title="Cards View: Clean structured catalogue grid"
@@ -291,7 +291,7 @@ export default function ProductGrid({
               }}
               className={`px-3.5 py-1.5 rounded-full font-mono text-[10px] font-black uppercase tracking-wider flex items-center gap-1.5 transition-all cursor-pointer select-none ${
                 viewMode === "ledger"
-                  ? "bg-brand-text text-brand-bg shadow-sm"
+                  ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
                   : "bg-transparent text-brand-text hover:bg-brand-text/10"
               }`}
               title="Ledger View: Technical inventory specification table"
@@ -303,8 +303,10 @@ export default function ProductGrid({
           </div>
         </div>
 
-        <div className="bg-brand-surface/80 backdrop-blur-md border border-brand-text/30 p-4 rounded-none shadow-[3px_3px_0px_rgba(5,5,5,0.08)] max-w-2xl">
-          <p className="font-space-grotesk text-xs sm:text-sm text-brand-text/90 normal-case leading-relaxed font-normal">
+        <div className="bg-brand-surface/90 backdrop-blur-md border-2 border-brand-text p-4 rounded-none shadow-[4px_4px_0px_#050505] max-w-2xl relative">
+          <span className="absolute -top-1.5 -left-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
+          <span className="absolute -top-1.5 -right-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
+          <p className="font-space-grotesk text-xs sm:text-sm text-brand-text/95 normal-case leading-relaxed font-bold">
             Master artworks featuring their central graphic inscription, materialized across separate physical specimens.
           </p>
         </div>
@@ -317,7 +319,7 @@ export default function ProductGrid({
           <span className="font-mono text-[9px] font-black uppercase tracking-widest text-brand-text/60 mr-1">
             MEDIUMS //
           </span>
-          <div className="inline-flex flex-wrap items-center gap-1.5 p-1 border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
+          <div className="inline-flex flex-wrap items-center gap-1.5 p-1 border-[2.5px] border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505]">
             {mediums.map((item) => {
               const isSelected = activeMedium === item.id;
               return (
@@ -330,7 +332,7 @@ export default function ProductGrid({
                   }}
                   className={`px-3.5 sm:px-4 py-1.5 rounded-full text-[10px] font-mono font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-1.5 ${
                     isSelected
-                      ? "bg-brand-text text-brand-bg shadow-sm"
+                      ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
                       : "bg-transparent text-brand-text hover:bg-brand-text/10"
                   }`}
                 >
@@ -344,7 +346,7 @@ export default function ProductGrid({
         {/* Ethos Collections & Availability */}
         <div className="flex flex-wrap items-center gap-3">
           {/* Collection switcher */}
-          <div className="inline-flex items-center gap-1 p-1 border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
+          <div className="inline-flex items-center gap-1 p-1 border-[2.5px] border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505]">
             {ethosCollections.map((col) => {
               const isSelected = selectedCollection === col.id;
               return (
@@ -357,7 +359,7 @@ export default function ProductGrid({
                   }}
                   className={`px-3 sm:px-3.5 py-1.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black uppercase tracking-wider transition-all cursor-pointer ${
                     isSelected
-                      ? "bg-brand-text text-brand-bg shadow-sm"
+                      ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
                       : "bg-transparent text-brand-text hover:bg-brand-text/10"
                   }`}
                 >
@@ -375,9 +377,9 @@ export default function ProductGrid({
               soundManager.playToggle(0.06);
               setInStockOnly(!inStockOnly);
             }}
-            className={`px-3.5 py-1.5 rounded-full border-2 border-brand-text font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] select-none ${
+            className={`px-3.5 py-1.5 rounded-full border-2 border-brand-text font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-[3px_3px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505] select-none ${
               inStockOnly 
-                ? "bg-brand-accent text-white shadow-inner" 
+                ? "bg-brand-accent text-white shadow-[2px_2px_0px_#050505]" 
                 : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
             }`}
             title="Filter by availability: toggle between showing all items or only artifacts currently in stock"

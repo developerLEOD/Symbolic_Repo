@@ -242,8 +242,8 @@ export default function Header({
       style={{
         pointerEvents: isHidden ? "none" : "auto",
       }}
-      className={`fixed top-0 left-0 w-full z-50 bg-brand-bg/85 backdrop-blur-md border-b-2 border-brand-text origin-top ${
-        scrolled ? 'shadow-[0_4px_0px_#050505]' : ''
+      className={`fixed top-0 left-0 w-full z-50 bg-brand-bg/90 backdrop-blur-md border-b-[2.5px] border-brand-text origin-top ${
+        scrolled ? 'shadow-[0_4px_0px_#050505]' : 'shadow-[0_2px_0px_#050505]'
       }`}
     >
       <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 transition-all duration-300 ${scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
@@ -257,7 +257,7 @@ export default function Header({
             }}
             className="group flex items-center gap-2.5 sm:gap-3.5 text-left focus:outline-none cursor-pointer shrink-0 select-none"
           >
-            <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 sm:border-3 border-brand-text group-hover:border-brand-accent group-hover:shadow-[3px_3px_0px_#050505] transition-all duration-200 ${scrolled ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14'}`}>
+            <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 sm:border-[2.5px] border-brand-text shadow-[3px_3px_0px_#050505] group-hover:border-brand-accent group-hover:shadow-[5px_5px_0px_#050505] transition-all duration-200 ${scrolled ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14'}`}>
               <img 
                 src="/Logo_NoName.jpg" 
                 alt="SYMBOLIC" 

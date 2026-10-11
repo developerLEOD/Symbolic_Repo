@@ -56,9 +56,11 @@ export default function SystemSpec() {
             whileInView={{ opacity: 1, y: 0 }}
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.08 }}
-            whileHover={{ y: -5, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-            className="bg-brand-surface/85 backdrop-blur-md border-2 border-brand-text rounded-none p-6 sm:p-7 flex flex-col justify-between shadow-[5px_5px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] transition-all space-y-6 cursor-default group"
+            whileHover={{ y: -4, transition: { type: "spring", stiffness: 400, damping: 25 } }}
+            className="bg-brand-surface/90 backdrop-blur-md border-[2.5px] border-brand-text rounded-none p-6 sm:p-7 flex flex-col justify-between shadow-[6px_6px_0px_#050505] hover:shadow-[9px_9px_0px_#050505] transition-all space-y-6 cursor-default group relative"
           >
+            <span className="absolute -top-1.5 -left-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
+            <span className="absolute -top-1.5 -right-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
             <div className="space-y-4">
               <div className="flex items-center justify-between border-b border-brand-text/20 pb-3">
                 <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-2.5 py-0.5 rounded-none border border-brand-accent/30">
