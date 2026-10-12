@@ -15,7 +15,6 @@ import { soundManager } from "../lib/soundEffects";
 interface HeroProps {
   onExplore: () => void;
   onWhy: () => void;
-  onOpen3D?: (artifactId?: string) => void;
   onProductClick?: (p: any) => void;
 }
 

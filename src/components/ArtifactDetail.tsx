@@ -10,7 +10,6 @@ import {
   ChevronRight, 
   ShieldCheck, 
   Layers, 
-  Box, 
   Share2, 
   Maximize2, 
   Ruler, 
@@ -35,7 +34,6 @@ interface ArtifactDetailProps {
   onAddSpecimen?: (artifactId: string) => void;
   onDeleteArtifact?: (artifactId: string, artifactName: string) => Promise<void> | void;
   onAcquireClick?: (specimenId?: string) => void;
-  onOpen3D?: (artifactId?: string) => void;
 }
 
 export default function ArtifactDetail({
@@ -48,8 +46,7 @@ export default function ArtifactDetail({
   onEditArtifact,
   onAddSpecimen,
   onDeleteArtifact,
-  onAcquireClick,
-  onOpen3D
+  onAcquireClick
 }: ArtifactDetailProps) {
   const { isOwner } = useAuth();
   const navigate = useNavigate();
@@ -677,20 +674,6 @@ export default function ArtifactDetail({
 
                     {/* ONLY THE ACQUIRE! BUTTON ON THE SPECIFICATION PAGE */}
                     <div className="pt-3 border-t-2 border-brand-text space-y-2.5">
-                      {onOpen3D && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            soundManager.playClick(0.12);
-                            onOpen3D(artifact.id);
-                          }}
-                          className="w-full py-3 px-4 font-mono text-xs font-black uppercase tracking-wider bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-all flex items-center justify-center gap-2 cursor-pointer group"
-                        >
-                          <Box size={14} className="text-brand-accent group-hover:text-white" />
-                          <span>INSPECT 3D SPATIAL GEOMETRY (GEMINI)</span>
-                        </button>
-                      )}
-
                       <button
                         type="button"
                         onClick={() => handleProceedToAcquire(activeSpecimen?.id)}

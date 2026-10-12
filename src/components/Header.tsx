@@ -15,7 +15,6 @@ interface HeaderProps {
   onAuthClick: () => void;
   onReferralClick?: () => void;
   onTryOnClick?: () => void;
-  onOpen3D?: () => void;
 }
 
 export default function Header({ 
@@ -223,7 +222,7 @@ export default function Header({
     navigate(path);
   };
 
-  const isHidden = (isInCollectionSection || isProductHovered) && !isMenuOpen && !openDropdown;
+  const isHidden = location.pathname === "/" && (isInCollectionSection || isProductHovered) && !isMenuOpen && !openDropdown;
 
   return (
     <motion.header 

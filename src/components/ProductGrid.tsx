@@ -1,9 +1,10 @@
 import React, { useEffect, useState, useCallback, useMemo } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { Product, Category, Artifact, Specimen } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
 import ArtifactCard from "./ArtifactCard";
 import OrangeTriangleBoundary from "./OrangeTriangleBoundary";
-import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, Box } from "lucide-react";
+import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, Box, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   normalizeProductCategory, 
@@ -27,7 +28,6 @@ interface ProductGridProps {
   onCategoryChange?: (id: string | null) => void;
   onProductClick: (productOrArtifact: any, specimenId?: string) => void;
   onTryOnClick?: (entity: any, specimenId?: string) => void;
-  onOpen3D?: (artifactId?: string) => void;
   refreshKey?: number;
   onCategoriesLoaded?: (categories: Category[]) => void;
 }
@@ -50,6 +50,19 @@ export default function ProductGrid({
   const [viewMode, setViewMode] = useState<"exhibition" | "grid" | "ledger">("exhibition");
   const [inStockOnly, setInStockOnly] = useState(false);
   const [expandedLedgerArtifactIds, setExpandedLedgerArtifactIds] = useState<Record<string, boolean>>({});
+
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const handleBackToHome = useCallback(() => {
+    soundManager.playClick(0.08);
+    if (location.pathname === "/") {
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      navigate("/");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+  }, [location.pathname, navigate]);
 
   // Sync collection if activeCategoryId points to a collection from header
   useEffect(() => {
@@ -221,6 +234,8 @@ export default function ProductGrid({
         label="SECTION BOUNDARY // THE COLLECTION REGISTER"
         sublabel="CANONICAL ARTIFACT CATALOGUE"
         code="ZONE:01-CATALOGUE"
+        showBackToHome={true}
+        onBackToHome={handleBackToHome}
       />
 
       <div className="px-4 sm:px-8 lg:px-10 py-8 sm:py-12 space-y-8">
@@ -228,11 +243,23 @@ export default function ProductGrid({
         <div className="border-b-2 border-brand-text pb-6 space-y-4">
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
           <div className="space-y-2">
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2.5 flex-wrap">
               <span className="inline-block w-2.5 h-2.5 rounded-none bg-brand-accent"></span>
               <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 rounded-none border border-brand-accent/30">
                 {selectedCollection === "be-palestine" ? "COLLECTION FALASTEEN" : selectedCollection === "be-symbolic" ? "COLLECTION BE SYMBOLIC" : "PERMANENT ARCHIVE"}
               </span>
+
+              {/* Back to Homepage Button */}
+              <button
+                type="button"
+                onClick={handleBackToHome}
+                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none font-mono text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer group select-none ml-1"
+                title="Return to Symbolic Homepage"
+                aria-label="Back to Homepage"
+              >
+                <ArrowLeft size={12} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-0.5 transition-transform" />
+                <span>BACK TO HOMEPAGE</span>
+              </button>
             </div>
             <div className="flex items-baseline gap-3 flex-wrap">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono font-black uppercase tracking-tight text-brand-text leading-none">
@@ -344,55 +371,69 @@ export default function ProductGrid({
         </div>
 
         {/* Ethos Collections & Availability */}
-        <div className="flex flex-wrap items-center gap-3">
-          {/* Collection switcher */}
-          <div className="inline-flex items-center gap-1 p-1 border-[2.5px] border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505]">
-            {ethosCollections.map((col) => {
-              const isSelected = selectedCollection === col.id;
-              return (
-                <button
-                  key={col.id}
-                  type="button"
-                  onClick={() => {
-                    soundManager.playClick(0.08);
-                    setSelectedCollection(col.id);
-                  }}
-                  className={`px-3 sm:px-3.5 py-1.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black uppercase tracking-wider transition-all cursor-pointer ${
-                    isSelected
-                      ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
-                      : "bg-transparent text-brand-text hover:bg-brand-text/10"
-                  }`}
-                >
-                  {col.label}
-                </button>
-              );
-            })}
+        <div className="flex flex-wrap items-center justify-between gap-3">
+          <div className="flex flex-wrap items-center gap-3">
+            {/* Collection switcher */}
+            <div className="inline-flex items-center gap-1 p-1 border-[2.5px] border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505]">
+              {ethosCollections.map((col) => {
+                const isSelected = selectedCollection === col.id;
+                return (
+                  <button
+                    key={col.id}
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick(0.08);
+                      setSelectedCollection(col.id);
+                    }}
+                    className={`px-3 sm:px-3.5 py-1.5 rounded-full text-[9px] sm:text-[10px] font-mono font-black uppercase tracking-wider transition-all cursor-pointer ${
+                      isSelected
+                        ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#050505]"
+                        : "bg-transparent text-brand-text hover:bg-brand-text/10"
+                    }`}
+                  >
+                    {col.label}
+                  </button>
+                );
+              })}
+            </div>
+
+            {/* In-Stock Filter */}
+            <button
+              id="filter-available-only-btn"
+              type="button"
+              onClick={() => {
+                soundManager.playToggle(0.06);
+                setInStockOnly(!inStockOnly);
+              }}
+              className={`px-3.5 py-1.5 rounded-full border-2 border-brand-text font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-[3px_3px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505] select-none ${
+                inStockOnly 
+                  ? "bg-brand-accent text-white shadow-[2px_2px_0px_#050505]" 
+                  : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
+              }`}
+              title="Filter by availability: toggle between showing all items or only artifacts currently in stock"
+              aria-pressed={inStockOnly}
+              aria-label="Filter artifacts in stock only"
+            >
+              <span className={`w-2 h-2 rounded-none border border-black/30 transition-colors ${inStockOnly ? "bg-white animate-pulse" : "bg-brand-accent"}`} />
+              <span>AVAILABLE ONLY</span>
+              {inStockOnly && (
+                <span className="text-[8.5px] opacity-80 border-l border-white/40 pl-1.5 font-bold">
+                  [ACTIVE]
+                </span>
+              )}
+            </button>
           </div>
 
-          {/* In-Stock Filter */}
+          {/* Quick Return to Homepage Button */}
           <button
-            id="filter-available-only-btn"
             type="button"
-            onClick={() => {
-              soundManager.playToggle(0.06);
-              setInStockOnly(!inStockOnly);
-            }}
-            className={`px-3.5 py-1.5 rounded-full border-2 border-brand-text font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer flex items-center gap-2 shadow-[3px_3px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505] select-none ${
-              inStockOnly 
-                ? "bg-brand-accent text-white shadow-[2px_2px_0px_#050505]" 
-                : "bg-brand-surface text-brand-text hover:bg-brand-text/10"
-            }`}
-            title="Filter by availability: toggle between showing all items or only artifacts currently in stock"
-            aria-pressed={inStockOnly}
-            aria-label="Filter artifacts in stock only"
+            onClick={handleBackToHome}
+            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full border-2 border-brand-text bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer group select-none"
+            title="Return to Symbolic Homepage"
+            aria-label="Back to Homepage"
           >
-            <span className={`w-2 h-2 rounded-none border border-black/30 transition-colors ${inStockOnly ? "bg-white animate-pulse" : "bg-brand-accent"}`} />
-            <span>AVAILABLE ONLY</span>
-            {inStockOnly && (
-              <span className="text-[8.5px] opacity-80 border-l border-white/40 pl-1.5 font-bold">
-                [ACTIVE]
-              </span>
-            )}
+            <ArrowLeft size={12} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-0.5 transition-transform" />
+            <span>BACK TO HOMEPAGE</span>
           </button>
         </div>
       </div>

@@ -29,18 +29,18 @@ import ScrollToTop from "./components/ScrollToTop";
 import Breadcrumbs from "./components/Breadcrumbs";
 import StudioBackground from "./components/StudioBackground";
 import CustomCursor from "./components/CustomCursor";
-import ThreeSpatialStudioModal from "./components/ThreeSpatialStudioModal";
 import { TileOverlay, formatRouteName } from "./components/TileTransition";
 import { AuthProvider, useAuth } from "./lib/AuthContext";
 import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts, getCachedProducts } from "./lib/productService";
-import { fetchArtifacts, fetchSpecimens, getCachedArtifacts, getCachedSpecimens } from "./lib/artifactService";
+import { fetchArtifacts, fetchSpecimens } from "./lib/artifactService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
+import { soundManager } from "./lib/soundEffects";
+import { ArrowLeft } from "lucide-react";
 import { Artifact, Specimen } from "./types";
 
 // Wrapper for /artifacts and /artifacts/:category views
 function ArtifactsDirectoryView({
   onProductClick,
-  onOpen3D,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -49,7 +49,6 @@ function ArtifactsDirectoryView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
-  onOpen3D?: (artifactId: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -61,7 +60,34 @@ function ArtifactsDirectoryView({
   const navigate = useNavigate();
 
   return (
-    <div className="pt-4 sm:pt-6">
+    <div className="pt-2 sm:pt-4">
+      {/* Top Breadcrumb & Back to Homepage Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-2 sm:mb-4">
+        <div className="flex items-center justify-between py-2 sm:py-2.5 px-3 sm:px-4 bg-brand-surface border-2 border-brand-text shadow-[3px_3px_0px_#050505]">
+          <button
+            type="button"
+            onClick={() => {
+              soundManager.playClick(0.08);
+              navigate("/");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] font-mono text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer group select-none"
+            title="Return to Symbolic Homepage"
+            aria-label="Back to Homepage"
+          >
+            <ArrowLeft size={14} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-1 transition-transform" />
+            <span>BACK TO HOMEPAGE</span>
+          </button>
+
+          <div className="flex items-center gap-2 font-mono text-[9.5px] sm:text-[10px] font-black uppercase tracking-widest text-brand-text/75">
+            <span className="hidden sm:inline">COLLECTION REGISTER //</span>
+            <span className="text-brand-accent bg-brand-accent/10 border border-brand-accent/30 px-2 py-0.5">
+              {categoryId ? categoryId.toUpperCase() : "ALL COLLECTIONS"}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <ProductGrid 
         activeCategoryId={categoryId || null} 
         onCategoryChange={(catId) => {
@@ -69,7 +95,6 @@ function ArtifactsDirectoryView({
           else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
-        onOpen3D={onOpen3D}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -95,7 +120,6 @@ function ArtifactsDirectoryView({
 // Wrapper for /collection/:collectionId views
 function CollectionDirectoryView({
   onProductClick,
-  onOpen3D,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -104,7 +128,6 @@ function CollectionDirectoryView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
-  onOpen3D?: (artifactId: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -116,7 +139,34 @@ function CollectionDirectoryView({
   const navigate = useNavigate();
 
   return (
-    <div className="pt-4 sm:pt-6">
+    <div className="pt-2 sm:pt-4">
+      {/* Top Breadcrumb & Back to Homepage Bar */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-8 mb-2 sm:mb-4">
+        <div className="flex items-center justify-between py-2 sm:py-2.5 px-3 sm:px-4 bg-brand-surface border-2 border-brand-text shadow-[3px_3px_0px_#050505]">
+          <button
+            type="button"
+            onClick={() => {
+              soundManager.playClick(0.08);
+              navigate("/");
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="inline-flex items-center gap-2 px-3 sm:px-4 py-1.5 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] font-mono text-[11px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer group select-none"
+            title="Return to Symbolic Homepage"
+            aria-label="Back to Homepage"
+          >
+            <ArrowLeft size={14} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-1 transition-transform" />
+            <span>BACK TO HOMEPAGE</span>
+          </button>
+
+          <div className="flex items-center gap-2 font-mono text-[9.5px] sm:text-[10px] font-black uppercase tracking-widest text-brand-text/75">
+            <span className="hidden sm:inline">LINEAGE //</span>
+            <span className="text-brand-accent bg-brand-accent/10 border border-brand-accent/30 px-2 py-0.5">
+              {collectionId ? collectionId.replace(/-/g, " ").toUpperCase() : "ALL COLLECTIONS"}
+            </span>
+          </div>
+        </div>
+      </div>
+
       <ProductGrid 
         activeCategoryId={collectionId || null} 
         onCategoryChange={(catId) => {
@@ -124,7 +174,6 @@ function CollectionDirectoryView({
           else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
-        onOpen3D={onOpen3D}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -150,7 +199,6 @@ function CollectionDirectoryView({
 // Home page view
 function HomeView({
   onProductClick,
-  onOpen3D,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -159,7 +207,6 @@ function HomeView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
-  onOpen3D?: (artifactId?: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -177,7 +224,6 @@ function HomeView({
           if (el) el.scrollIntoView({ behavior: "smooth" });
         }} 
         onWhy={() => navigate("/manifesto")} 
-        onOpen3D={onOpen3D}
         onProductClick={onProductClick}
       />
       
@@ -188,7 +234,6 @@ function HomeView({
           else navigate("/artifacts");
         }}
         onProductClick={onProductClick} 
-        onOpen3D={onOpen3D}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -247,17 +292,6 @@ function StorefrontApp() {
   const [pendingOpenCheckoutAfterAuth, setPendingOpenCheckoutAfterAuth] = useState(false);
   const [refreshKey, setRefreshKey] = useState(0);
 
-  // 3D Spatial Geometry Atelier State (Powered by Gemini)
-  const [isThreeStudioOpen, setIsThreeStudioOpen] = useState(false);
-  const [threeStudioArtifactId, setThreeStudioArtifactId] = useState<string | null>(null);
-  const [artifactsList, setArtifactsList] = useState<Artifact[]>(() => getCachedArtifacts());
-  const [specimensList, setSpecimensList] = useState<Specimen[]>(() => getCachedSpecimens());
-
-  const handleOpenThreeStudio = (artifactId?: string) => {
-    if (artifactId) setThreeStudioArtifactId(artifactId);
-    setIsThreeStudioOpen(true);
-  };
-
   const [flagshipProduct, setFlagshipProduct] = useState<Product | null>(() => {
     const cached = getCachedProducts();
     const live = cached.filter(isProductLive);
@@ -274,23 +308,13 @@ function StorefrontApp() {
   useEffect(() => {
     const init = async () => {
       try {
-        const [loadedCats, prods, arts, specs] = await Promise.all([
+        const [loadedCats, prods] = await Promise.all([
           fetchCategories(),
-          fetchProducts(),
-          fetchArtifacts(),
-          fetchSpecimens()
+          fetchProducts()
         ]);
 
         if (loadedCats.length > 0) {
           setCategories(loadedCats);
-        }
-
-        if (arts && arts.length > 0) {
-          setArtifactsList(arts);
-        }
-
-        if (specs && specs.length > 0) {
-          setSpecimensList(specs);
         }
 
         const liveProds = prods.filter(isProductLive);
@@ -459,7 +483,6 @@ function StorefrontApp() {
         onCartClick={() => setIsCartOpen(true)} 
         cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
         onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined}
-        onOpen3D={() => handleOpenThreeStudio()}
         onAuthClick={() => {
           if (user) {
             setProfileInitialTab("orders");
@@ -492,7 +515,6 @@ function StorefrontApp() {
               element={
                 <HomeView
                   onProductClick={handleProductSelect}
-                  onOpen3D={handleOpenThreeStudio}
                   refreshKey={refreshKey}
                   onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                   flagshipProduct={flagshipProduct}
@@ -509,7 +531,6 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
-                onOpen3D={handleOpenThreeStudio}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -526,7 +547,6 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
-                onOpen3D={handleOpenThreeStudio}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -543,7 +563,6 @@ function StorefrontApp() {
             element={
               <CollectionDirectoryView
                 onProductClick={handleProductSelect}
-                onOpen3D={handleOpenThreeStudio}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -564,7 +583,6 @@ function StorefrontApp() {
                 onOpenLedger={() => setIsCartOpen(true)}
                 onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
                 onProductDeleted={handleProductPublished}
-                onOpen3D={handleOpenThreeStudio}
               />
             }
           />
@@ -579,7 +597,6 @@ function StorefrontApp() {
                 onOpenLedger={() => setIsCartOpen(true)}
                 onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
                 onProductDeleted={handleProductPublished}
-                onOpen3D={handleOpenThreeStudio}
               />
             }
           />
@@ -592,7 +609,6 @@ function StorefrontApp() {
                 onOpenLedger={() => setIsCartOpen(true)}
                 onEditProduct={isOwner ? handleEditProductFromDetail : undefined}
                 onProductDeleted={handleProductPublished}
-                onOpen3D={handleOpenThreeStudio}
               />
             }
           />
@@ -636,7 +652,6 @@ function StorefrontApp() {
             element={
               <HomeView
                 onProductClick={handleProductSelect}
-                onOpen3D={handleOpenThreeStudio}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -734,20 +749,6 @@ function StorefrontApp() {
         onClose={() => setIsProfileOpen(false)}
         onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
         initialTab={profileInitialTab}
-      />
-
-      {/* 3D Spatial Geometry Atelier Modal (Powered by Gemini) */}
-      <ThreeSpatialStudioModal
-        isOpen={isThreeStudioOpen}
-        onClose={() => setIsThreeStudioOpen(false)}
-        artifacts={artifactsList}
-        specimens={specimensList}
-        initialArtifactId={threeStudioArtifactId}
-        onSelectArtifactToAcquire={(artId, specId) => {
-          setIsThreeStudioOpen(false);
-          const query = specId ? `?specimen=${specId}` : "";
-          navigate(`/acquisitions/${artId}${query}`);
-        }}
       />
 
       {/* Owner Product Manager Studio */}
