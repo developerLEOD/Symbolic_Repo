@@ -3,7 +3,7 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useEffect } from "react";
 import { motion } from "motion/react";
 import { useLocation } from "react-router-dom";
 
@@ -206,6 +206,22 @@ export default function StudioBackground({
     };
   }, [currentView, location.pathname, selectedProductTitle]);
 
+  // Mobile thermal & battery optimization: completely unmount massive 340vw infinite animation on mobile screens
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth < 768;
+    }
+    return false;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    window.addEventListener("resize", handleResize, { passive: true });
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
   // Repetition array to guarantee seamless horizontal coverage across displays
   const repeatLong = Array.from({ length: 8 });
 
@@ -241,12 +257,24 @@ export default function StudioBackground({
         {theme.cornerBottomRight}
       </div>
 
-      {/* ─── Full Screen Diagonal Stage (Rotated -18° across the entire viewport) ─── */}
-      <div className="absolute inset-0 flex items-center justify-center opacity-70">
-        <div 
-          style={spaceGroteskStyle}
-          className="relative w-[340vw] h-[340vh] -rotate-[18deg] flex flex-col justify-center gap-4 sm:gap-6 lg:gap-8 font-space-grotesk"
-        >
+      {/* ─── Mobile Lightweight Static Backdrop vs Desktop Animated Ribbons ─── */}
+      {isMobile ? (
+        <div className="absolute inset-0 flex items-center justify-center opacity-30 pointer-events-none select-none">
+          <div className="text-center font-mono space-y-2">
+            <div className="text-5xl font-black tracking-tighter text-brand-text/10 lowercase">
+              {theme.primaryWord}
+            </div>
+            <div className="text-[9px] tracking-[0.25em] font-bold text-brand-text/15 uppercase">
+              {theme.tagline}
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div className="hidden md:flex absolute inset-0 items-center justify-center opacity-70">
+          <div 
+            style={spaceGroteskStyle}
+            className="relative w-[340vw] h-[340vh] -rotate-[18deg] flex flex-col justify-center gap-4 sm:gap-6 lg:gap-8 font-space-grotesk"
+          >
 
           {/* ROW 1: Spaced Micro-Spec Track */}
           <motion.div
@@ -571,6 +599,7 @@ export default function StudioBackground({
 
         </div>
       </div>
+      )}
     </div>
   );
 }

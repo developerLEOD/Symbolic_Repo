@@ -12,6 +12,7 @@ import {
   isReferrerRewardUnlocked 
 } from "../lib/referralService";
 import LiquidCarveButton from "./LiquidCarveButton";
+import { soundManager } from "../lib/soundEffects";
 
 interface UserProfileModalProps {
   isOpen: boolean;
@@ -153,6 +154,29 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
     }
   };
 
+  // Keyboard accessibility: dismiss on Escape
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === "Escape") {
+        soundManager.playClick(0.08);
+        onClose();
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [isOpen, onClose]);
+
+  // Lock body scroll while modal is active
+  useEffect(() => {
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = "";
+      };
+    }
+  }, [isOpen]);
+
   const handleSignOut = async () => {
     await signOutUser();
     onClose();
@@ -162,15 +186,22 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-[140] flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm">
+      <div 
+        className="fixed inset-0 z-[140] overflow-y-auto p-3 sm:p-4 md:p-6 flex min-h-full items-center justify-center bg-black/80 backdrop-blur-sm"
+        onClick={() => {
+          soundManager.playClick(0.08);
+          onClose();
+        }}
+      >
         <motion.div 
           initial={{ opacity: 0, scale: 0.96, y: 15 }}
           animate={{ opacity: 1, scale: 1, y: 0 }}
           exit={{ opacity: 0, scale: 0.96, y: 15 }}
-          className="relative w-full max-w-2xl bg-brand-bg border-2 border-brand-text shadow-[8px_8px_0px_#050505] p-6 sm:p-8 max-h-[90vh] flex flex-col"
+          onClick={(e) => e.stopPropagation()}
+          className="relative w-full max-w-2xl bg-brand-bg border-2 border-brand-text shadow-[8px_8px_0px_#050505] p-5 sm:p-7 max-h-[min(90vh,820px)] flex flex-col my-auto overflow-hidden"
         >
           {/* Header Bar */}
-          <div className="flex items-center justify-between border-b-2 border-brand-text pb-4 mb-6">
+          <div className="shrink-0 flex items-center justify-between border-b-2 border-brand-text pb-4 mb-5">
             <div className="flex items-center gap-3">
               <div className="w-10 h-10 bg-brand-text text-brand-bg flex items-center justify-center font-mono font-black text-base border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
                 {initialLetter}
@@ -193,7 +224,9 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
             <div className="flex items-center gap-2">
               {isOwner && onOpenOwnerManager && (
                 <button
+                  type="button"
                   onClick={() => {
+                    soundManager.playClick(0.08);
                     onClose();
                     onOpenOwnerManager();
                   }}
@@ -205,6 +238,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                 </button>
               )}
               <button
+                type="button"
                 onClick={handleSignOut}
                 className="flex items-center gap-1.5 font-mono text-[10px] font-black uppercase tracking-wider px-3 py-1.5 bg-brand-surface border-2 border-brand-text text-brand-text hover:bg-red-600 hover:text-white transition-colors cursor-pointer"
                 title="Sign out of account"
@@ -213,10 +247,17 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                 <span>SIGN OUT</span>
               </button>
               <button 
-                onClick={onClose}
-                className="p-1.5 text-brand-text hover:bg-brand-surface border border-brand-text/30 transition-colors cursor-pointer"
+                type="button"
+                onClick={() => {
+                  soundManager.playClick(0.1);
+                  onClose();
+                }}
+                className="inline-flex items-center gap-1.5 px-2.5 py-1 text-brand-text hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer font-mono text-[10px] font-black uppercase select-none group"
+                title="Close Profile (Esc)"
+                aria-label="Close"
               >
-                <X size={16} />
+                <span className="hidden sm:inline">CLOSE</span>
+                <X size={15} className="group-hover:rotate-90 transition-transform" />
               </button>
             </div>
           </div>

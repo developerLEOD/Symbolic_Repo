@@ -62,9 +62,9 @@ export default function ArtifactCard({
     return buildSpecimenAngleSequence(childSpecimens, artifact.graphic);
   }, [childSpecimens, artifact.graphic]);
 
-  // Interval-driven clean cycling on hover through all specimen angles
+  // Interval-driven clean cycling on hover through all specimen angles (desktop only)
   useEffect(() => {
-    if (!isHovered || angleSequence.length === 0 || selectedSpecimenId !== null) {
+    if (!isHovered || angleSequence.length === 0 || selectedSpecimenId !== null || (typeof window !== "undefined" && window.innerWidth < 768)) {
       setHoverCycleIndex(0);
       return;
     }

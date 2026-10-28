@@ -557,7 +557,35 @@ function StorefrontApp() {
             }
           />
 
-          {/* Collections routes (/collection/be-symbolic, /collection/be-palestine) */}
+          {/* Collections routes (/collection/be-symbolic, /collection/be-palestine, and /collections) */}
+          <Route
+            path="/collections"
+            element={
+              <ArtifactsDirectoryView
+                onProductClick={handleProductSelect}
+                refreshKey={refreshKey}
+                onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
+                flagshipProduct={flagshipProduct}
+                onAddToCart={handleAddToCart}
+                onNavigateManifesto={() => navigate("/manifesto")}
+                onNavigateAbout={() => navigate("/about")}
+              />
+            }
+          />
+          <Route
+            path="/collection"
+            element={
+              <ArtifactsDirectoryView
+                onProductClick={handleProductSelect}
+                refreshKey={refreshKey}
+                onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
+                flagshipProduct={flagshipProduct}
+                onAddToCart={handleAddToCart}
+                onNavigateManifesto={() => navigate("/manifesto")}
+                onNavigateAbout={() => navigate("/about")}
+              />
+            }
+          />
           <Route
             path="/collection/:collectionId"
             element={

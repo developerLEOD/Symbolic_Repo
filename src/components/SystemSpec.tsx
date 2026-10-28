@@ -1,3 +1,4 @@
+import React from "react";
 import { motion } from "motion/react";
 
 export default function SystemSpec() {
@@ -7,28 +8,28 @@ export default function SystemSpec() {
       category: "WEAR MEDIUM",
       standard: "400 GSM COMBED ORGANIC COTTON",
       detail: "Dense, preshrunk heavyweight jersey with zero synthetic blending. Minimal exterior branding leaves the canvas for symbols of personal conviction.",
-      mandate: "WEARER-FIRST CANVAS"
+      mandate: "WEARER-FIRST CANVAS",
     },
     {
       id: "02",
       category: "HEADWEAR MEDIUM",
       standard: "280 GSM STRUCTURED COTTON TWILL",
       detail: "Clean 6-panel crown with matte steel tension clasp. Free from corporate logos, communicating focus and composure through clean form.",
-      mandate: "ZERO BILLBOARDS"
+      mandate: "ZERO BILLBOARDS",
     },
     {
       id: "03",
       category: "VESSELS MEDIUM",
       standard: "1,280°C HIGH-FIRE STONEWARE",
       detail: "High-density mineral ceramic with weighted thermal base. Engineered for daily routines of reflection, focus, and purposeful gathering.",
-      mandate: "PERMANENT SUBSTANCE"
+      mandate: "PERMANENT SUBSTANCE",
     },
     {
       id: "04",
       category: "PRODUCTION ETHIC",
       standard: "INTENTIONAL LIMITED RUNS",
       detail: "Strict batch limits without artificial hype or fast-fashion drop cycles. Artifacts intended to be owned, maintained, and worn for years.",
-      mandate: "OWN LESS, STAND FOR MORE"
+      mandate: "OWN LESS, STAND FOR MORE",
     }
   ];
 
@@ -43,8 +44,10 @@ export default function SystemSpec() {
             STANDARDS & INTEGRITY
           </h2>
         </div>
-        <div className="font-mono text-xs uppercase font-bold text-brand-text/70 bg-brand-surface/90 px-3 py-1.5 rounded-none border border-brand-text/25">
-          SYMBOLIC // STANDARDS
+        <div className="flex items-center gap-3 font-mono text-xs">
+          <div className="font-bold text-brand-text/70 bg-brand-surface/90 px-3 py-1.5 rounded-none border border-brand-text/25">
+            SYMBOLIC // STANDARDS
+          </div>
         </div>
       </div>
 
@@ -57,11 +60,12 @@ export default function SystemSpec() {
             viewport={{ once: true }}
             transition={{ type: "spring", stiffness: 350, damping: 25, delay: idx * 0.08 }}
             whileHover={{ y: -4, transition: { type: "spring", stiffness: 400, damping: 25 } }}
-            className="bg-brand-surface/90 backdrop-blur-md border-[2.5px] border-brand-text rounded-none p-6 sm:p-7 flex flex-col justify-between shadow-[6px_6px_0px_#050505] hover:shadow-[9px_9px_0px_#050505] transition-all space-y-6 cursor-default group relative"
+            className="bg-brand-surface/90 backdrop-blur-md border-[2.5px] border-brand-text rounded-none p-5 sm:p-6 flex flex-col justify-between shadow-[6px_6px_0px_#050505] hover:shadow-[9px_9px_0px_#050505] transition-all space-y-4 cursor-default group relative"
           >
             <span className="absolute -top-1.5 -left-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
             <span className="absolute -top-1.5 -right-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
-            <div className="space-y-4">
+            
+            <div className="space-y-3">
               <div className="flex items-center justify-between border-b border-brand-text/20 pb-3">
                 <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-2.5 py-0.5 rounded-none border border-brand-accent/30">
                   {item.category}

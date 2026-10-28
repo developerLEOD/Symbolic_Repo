@@ -4,7 +4,7 @@ import { Product, Category, Artifact, Specimen } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
 import ArtifactCard from "./ArtifactCard";
 import OrangeTriangleBoundary from "./OrangeTriangleBoundary";
-import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, Box, ArrowLeft } from "lucide-react";
+import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, ArrowLeft } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   normalizeProductCategory, 
@@ -371,7 +371,7 @@ export default function ProductGrid({
         </div>
 
         {/* Ethos Collections & Availability */}
-        <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-4">
           <div className="flex flex-wrap items-center gap-3">
             {/* Collection switcher */}
             <div className="inline-flex items-center gap-1 p-1 border-[2.5px] border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505]">
@@ -396,6 +396,18 @@ export default function ProductGrid({
                 );
               })}
             </div>
+
+            {/* Direct Back to Homepage Button attached to the Collections Tab */}
+            <button
+              type="button"
+              onClick={handleBackToHome}
+              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 border-brand-text bg-brand-accent text-white hover:bg-brand-text font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer group select-none"
+              title="Return to Symbolic Homepage from Collections"
+              aria-label="Back to Homepage"
+            >
+              <ArrowLeft size={12} className="text-white group-hover:-translate-x-0.5 transition-transform" />
+              <span>BACK TO HOMEPAGE</span>
+            </button>
 
             {/* In-Stock Filter */}
             <button
@@ -423,19 +435,28 @@ export default function ProductGrid({
               )}
             </button>
           </div>
-
-          {/* Quick Return to Homepage Button */}
-          <button
-            type="button"
-            onClick={handleBackToHome}
-            className="inline-flex items-center gap-1.5 px-3 sm:px-3.5 py-1.5 rounded-full border-2 border-brand-text bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer group select-none"
-            title="Return to Symbolic Homepage"
-            aria-label="Back to Homepage"
-          >
-            <ArrowLeft size={12} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-0.5 transition-transform" />
-            <span>BACK TO HOMEPAGE</span>
-          </button>
         </div>
+
+        {/* Dedicated All Collections Active Banner with Return to Homepage Action */}
+        {selectedCollection === "all" && (
+          <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-3.5 bg-brand-surface/90 border-2 border-brand-text shadow-[3px_3px_0px_#050505] font-mono">
+            <div className="flex items-center gap-2.5">
+              <span className="text-brand-accent font-black text-xs font-mono select-none">[+▲+]</span>
+              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-brand-text">
+                ALL COLLECTIONS ACTIVE // UNIFIED CANONICAL REPOSITORY ({totalArtifactsCount} ARTIFACTS)
+              </span>
+            </div>
+            <button
+              type="button"
+              onClick={handleBackToHome}
+              className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border border-brand-text shadow-[1.5px_1.5px_0px_#050505] text-[9.5px] font-black uppercase tracking-wider transition-colors cursor-pointer select-none"
+              title="Return to Symbolic Homepage"
+            >
+              <ArrowLeft size={11} className="text-brand-accent" />
+              <span>BACK TO HOMEPAGE</span>
+            </button>
+          </div>
+        )}
       </div>
 
       {/* 3. ARTIFACTS DISPLAY: EXHIBITION, CARDS, OR ARCHIVAL LEDGER */}
@@ -687,6 +708,34 @@ export default function ProductGrid({
       )}
     </AnimatePresence>
   )}
+
+        {/* Persistent Bottom Collection Navigation Bar */}
+        <div className="pt-8 mt-6 border-t-2 border-brand-text flex flex-wrap items-center justify-between gap-4 font-mono select-none">
+          <div className="flex items-center gap-2 text-[9.5px] sm:text-[10px] font-black uppercase tracking-widest text-brand-text/75">
+            <span className="w-2.5 h-2.5 bg-brand-accent inline-block" />
+            <span>COLLECTION REGISTER TERMINUS // {totalArtifactsCount} ARTIFACTS LOADED</span>
+          </div>
+          <div className="flex items-center gap-2.5">
+            <button
+              type="button"
+              onClick={handleBackToHome}
+              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer group"
+              title="Return to Symbolic Homepage"
+              aria-label="Back to Homepage"
+            >
+              <ArrowLeft size={13} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-1 transition-transform" />
+              <span>BACK TO HOMEPAGE</span>
+            </button>
+            <button
+              type="button"
+              onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+              className="inline-flex items-center gap-1.5 px-3 py-2 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer"
+              title="Return to top of Collection"
+            >
+              <span>↑ TOP OF ARCHIVE</span>
+            </button>
+          </div>
+        </div>
       </div>
 
       {/* BOTTOM ORANGE TRIANGLE BOUNDARY STRIP */}

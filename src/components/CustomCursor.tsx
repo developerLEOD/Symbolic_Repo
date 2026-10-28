@@ -31,9 +31,13 @@ export default function CustomCursor() {
   const activeElementRef = useRef<HTMLElement | null>(null);
 
   useEffect(() => {
-    // Enable custom cursor on desktop / fine pointer devices
-    const mediaQuery = window.matchMedia("(hover: hover) and (pointer: fine)");
-    if (!mediaQuery.matches) return;
+    // Only bypass if strictly a mobile phone with touch-only interface (no mouse/pointer)
+    const isStrictMobilePhone =
+      typeof window !== "undefined" &&
+      /Android|iPhone|iPod/i.test(navigator.userAgent) &&
+      window.matchMedia("(pointer: coarse) and (hover: none)").matches;
+
+    if (isStrictMobilePhone) return;
 
     setIsVisible(true);
     document.documentElement.classList.add("custom-cursor-active");
@@ -191,6 +195,7 @@ export default function CustomCursor() {
     };
 
     const onMouseMove = (e: MouseEvent) => {
+      setIsVisible(true);
       setPosition({ x: e.clientX, y: e.clientY });
       resetIdleTimer();
       updateHoverAtPoint(e.clientX, e.clientY);
@@ -329,7 +334,7 @@ export default function CustomCursor() {
           top: { type: "spring", stiffness: 480, damping: 28, mass: 0.12 },
           width: { type: "spring", stiffness: 440, damping: 26, mass: 0.14 },
           height: { type: "spring", stiffness: 440, damping: 26, mass: 0.14 },
-          opacity: { duration: 0.14 },
+          opacity: { duration: boundaryTarget ? 0.12 : 0.04 },
         }}
         className="fixed -translate-x-1/2 -translate-y-1/2 pointer-events-none z-[9998]"
       >

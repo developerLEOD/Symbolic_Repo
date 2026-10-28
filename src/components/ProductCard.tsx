@@ -41,9 +41,9 @@ export default function ProductCard({
   const collectionTag = collectionName.toUpperCase();
   const images = resolveProductImages(product);
 
-  // Interval-driven clean cycling on hover through available specimen photos/angles
+  // Interval-driven clean cycling on hover through available specimen photos/angles (desktop only)
   useEffect(() => {
-    if (!isHovered || images.length <= 1) {
+    if (!isHovered || images.length <= 1 || (typeof window !== "undefined" && window.innerWidth < 768)) {
       return;
     }
 

@@ -34,9 +34,9 @@ export default function SpecimenCard({
     ? specimen.images 
     : (parentArtifact?.images || [specimen.thumbnailImage || ""]);
 
-  // Clean interval cycling on hover through available specimen images/angles
+  // Clean interval cycling on hover through available specimen images/angles (desktop only)
   useEffect(() => {
-    if (!isHovered || images.length <= 1) {
+    if (!isHovered || images.length <= 1 || (typeof window !== "undefined" && window.innerWidth < 768)) {
       return;
     }
 

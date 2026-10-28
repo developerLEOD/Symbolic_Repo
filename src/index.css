@@ -36,13 +36,33 @@
   }
 }
 
-/* Custom Cursor: Forcefully hide native cursor on all elements for fine pointer devices */
-@media (hover: hover) and (pointer: fine) {
-  html.custom-cursor-active,
-  html.custom-cursor-active *,
-  body.custom-cursor-active,
-  body.custom-cursor-active * {
-    cursor: none !important;
+/* Custom Cursor: Forcefully hide native cursor on all elements when custom cursor is active */
+html.custom-cursor-active,
+html.custom-cursor-active *,
+body.custom-cursor-active,
+body.custom-cursor-active * {
+  cursor: none !important;
+}
+
+/* Mobile Thermal & GPU Performance Optimizations:
+   Eliminates expensive offscreen Gaussian blur passes on mobile GPUs and optimizes scrolling */
+@media (max-width: 768px) {
+  .backdrop-blur-md,
+  .backdrop-blur-sm,
+  .backdrop-blur-lg,
+  .backdrop-blur-xl,
+  .backdrop-blur-xs,
+  .backdrop-blur {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+
+  * {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .animate-marquee {
+    animation-duration: 48s;
   }
 }
 

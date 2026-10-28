@@ -13,7 +13,7 @@ import {
   Share2, 
   Maximize2, 
   Ruler, 
-  Clock 
+  Clock
 } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Artifact, Specimen, CartItem } from "../types";
