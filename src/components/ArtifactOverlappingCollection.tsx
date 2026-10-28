@@ -965,12 +965,13 @@ export default function ArtifactOverlappingCollection({
                 }}
                 onMouseLeave={(e) => {
                   // Do not revert if cursor moved to a descendant (e.g. dossier, satellites)
-                  const related = e.relatedTarget as HTMLElement | null;
-                  if (related && e.currentTarget.contains(related)) {
+                  const related = e.relatedTarget as Node | null;
+                  if (related && related instanceof Node && e.currentTarget.contains(related)) {
                     return;
                   }
                   // If moving directly into another artifact card or specimen card, let that handle it
-                  if (related && (related.closest(".artifact-card") || related.closest(".specimen-card"))) {
+                  const relatedEl = e.relatedTarget as HTMLElement | null;
+                  if (relatedEl && relatedEl instanceof Element && (relatedEl.closest(".artifact-card") || relatedEl.closest(".specimen-card"))) {
                     return;
                   }
                   // Immediately revert to default layout with zero delay
