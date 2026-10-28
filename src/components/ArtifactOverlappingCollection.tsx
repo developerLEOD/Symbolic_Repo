@@ -1234,10 +1234,15 @@ export default function ArtifactOverlappingCollection({
                           <motion.button
                             key={`satellite-${spec.id}`}
                             type="button"
-                            initial={{ opacity: 0, scale: 0.88 }}
-                            animate={{ opacity: 1, scale: 1, rotate: scatter.rotate }}
-                            exit={{ opacity: 0, scale: 0.88 }}
-                            transition={{ duration: 0.18, delay: specIdx * 0.02 }}
+                            initial={{ opacity: 0, scale: 0.8, y: 12, rotate: scatter.rotate - 6 }}
+                            animate={{ opacity: 1, scale: 1, y: 0, rotate: scatter.rotate }}
+                            exit={{ opacity: 0, scale: 0.8, y: 8, transition: { duration: 0.08, delay: (childSpecimens.length - 1 - specIdx) * 0.015 } }}
+                            transition={{
+                              type: "spring",
+                              stiffness: 450,
+                              damping: 24,
+                              delay: 0.04 + specIdx * 0.055,
+                            }}
                             whileHover={{ scale: 1.04, zIndex: 60, transition: { duration: 0.12 } }}
                             whileTap={{ scale: 0.98 }}
                             onMouseEnter={() => {

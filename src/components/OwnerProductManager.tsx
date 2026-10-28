@@ -2387,6 +2387,45 @@ export default function OwnerProductManager({
           </div>
         </div>
       )}
+
+      {/* Synchronizing / Loading Overlay */}
+      {isSubmitting && (
+        <div 
+          role="status" 
+          aria-live="polite" 
+          className="fixed inset-0 z-[120] flex items-center justify-center p-4 bg-brand-bg/95 backdrop-blur-md select-none"
+        >
+          <div className="w-full max-w-md bg-brand-surface border-4 border-brand-text shadow-[10px_10px_0px_#050505] p-6 space-y-4 font-mono text-brand-text">
+            <div className="flex items-center justify-between border-b-2 border-brand-text/30 pb-3">
+              <div className="flex items-center gap-2">
+                <span className="w-2.5 h-2.5 bg-brand-accent animate-pulse" />
+                <span className="text-xs font-black uppercase tracking-wider">
+                  {editingProductId ? "SPECIMEN REVISION // COMMITTING" : "SPECIMEN MANIFESTATION // COMMITTING"}
+                </span>
+              </div>
+              <RefreshCw size={12} className="animate-spin text-brand-accent" />
+            </div>
+
+            <div className="space-y-1">
+              <h3 className="text-sm font-black uppercase text-brand-text">
+                {editingProductId ? "UPDATING ARCHIVAL SPECIMEN" : "MANIFESTING PHYSICAL SPECIMEN"}
+              </h3>
+              <p className="text-[10px] font-bold text-brand-text/70 uppercase">
+                {name || "PHYSICAL SPECIMEN"} // COMMITTING TO CLOUD FIRESTORE REGISTRY
+              </p>
+            </div>
+
+            <div className="w-full bg-brand-bg border-2 border-brand-text h-3 p-0.5 overflow-hidden">
+              <div className="h-full bg-brand-accent w-3/4 animate-pulse" />
+            </div>
+
+            <div className="text-[8.5px] text-brand-text/60 uppercase flex items-center justify-between pt-1 border-t border-brand-text/20">
+              <span>STORAGE: FIRESTORE &bull; REALTIME CACHE</span>
+              <span className="font-bold text-brand-accent">PROCESSING...</span>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

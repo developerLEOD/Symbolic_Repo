@@ -66,6 +66,25 @@ export default function OwnerArtifactSpecimenStudio({
   const [specimenToDelete, setSpecimenToDelete] = useState<Specimen | null>(null);
   const [isDeleting, setIsDeleting] = useState(false);
 
+  // Specimen Manifestation & Edit Loading Screen State
+  const [specimenLoadingState, setSpecimenLoadingState] = useState<{
+    active: boolean;
+    mode: "manifest" | "edit" | "prepare_edit";
+    title: string;
+    subtitle: string;
+    specimenName: string;
+    medium: string;
+    sku: string;
+    image?: string;
+    price?: number;
+    inventory?: number;
+    material?: string;
+    edition?: string;
+    stage: string;
+    progress: number;
+  } | null>(null);
+  const [isSubmittingSpecimen, setIsSubmittingSpecimen] = useState(false);
+
   // Artifact Form State
   const [artName, setArtName] = useState("");
   const [artId, setArtId] = useState("");
@@ -267,13 +286,40 @@ export default function OwnerArtifactSpecimenStudio({
   };
 
   // Populate Specimen Form for editing
-  const startEditSpecimen = (spec: Specimen, parent: Artifact) => {
+  const startEditSpecimen = async (spec: Specimen, parent: Artifact) => {
     soundManager.playClick();
+    const thumb = spec.thumbnailImage || spec.images?.[0] || parent.graphic;
+
+    setSpecimenLoadingState({
+      active: true,
+      mode: "prepare_edit",
+      title: "ARCHIVAL RETRIEVAL // LOADING SPECIMEN RECORD",
+      subtitle: "RETRIEVING SPECIMEN ATTRIBUTES, IMAGES & STUDIO CONTROLS",
+      specimenName: `${parent.name} // ${spec.medium.toUpperCase()}`,
+      medium: `${spec.medium} — ${spec.type || spec.garmentType || "Standard"}`,
+      sku: spec.sku || "SPEC-SKU",
+      image: thumb,
+      price: spec.price,
+      inventory: spec.inventory,
+      material: spec.material || "Standard Specimen Structure",
+      edition: spec.edition || "050 SPECIMENS",
+      stage: "RETRIEVING SPECIMEN RECORD FROM FIRESTORE ARCHIVE...",
+      progress: 35,
+    });
+
+    await new Promise(r => setTimeout(r, 220));
+
+    setSpecimenLoadingState(prev => prev ? {
+      ...prev,
+      stage: "INITIALIZING STUDIO REVISION WORKBENCH...",
+      progress: 80,
+    } : null);
+
     setEditingSpecimen({ specimen: spec, parentArtifact: parent });
     setTargetArtifactForSpecimen(parent);
     setSpecParentId(parent.id);
     setSpecMedium(spec.medium);
-    setSpecType(spec.type || "");
+    setSpecType(spec.type || spec.garmentType || "");
     setSpecMaterial(spec.material || "");
     setSpecPrice(spec.price);
     setSpecInventory(spec.inventory);
@@ -282,6 +328,17 @@ export default function OwnerArtifactSpecimenStudio({
     setSpecEdition(spec.edition || "050 SPECIMENS");
     setSpecSizes(spec.availableSizes || ["S", "M", "L", "XL"]);
     setSpecImages(spec.images || [spec.thumbnailImage || ""]);
+
+    await new Promise(r => setTimeout(r, 160));
+
+    setSpecimenLoadingState(prev => prev ? {
+      ...prev,
+      stage: "SPECIMEN EDITOR READY FOR REVISIONS.",
+      progress: 100,
+    } : null);
+
+    await new Promise(r => setTimeout(r, 120));
+    setSpecimenLoadingState(null);
     setActiveTab("create_specimen");
   };
 
@@ -341,10 +398,43 @@ export default function OwnerArtifactSpecimenStudio({
       return;
     }
 
+    const isEdit = Boolean(editingSpecimen);
+    const cfg = getMediumConfig(specMedium);
+    const generatedSku = editingSpecimen?.specimen.sku || `${parent.artifactId || "SYM"}-${specMedium.substring(0, 3).toUpperCase()}-01`;
+    const thumb = specImages[0] || parent.graphic;
+
+    setIsSubmittingSpecimen(true);
+    setSpecimenLoadingState({
+      active: true,
+      mode: isEdit ? "edit" : "manifest",
+      title: isEdit ? "ARCHIVAL REVISION // COMMITTING SPECIMEN CHANGES" : "MANIFESTATION PROTOCOL // COMMITTING SPECIMEN",
+      subtitle: isEdit 
+        ? "SYNCHRONIZING REVISIONS WITH CLOUD ARCHIVE & STOREFRONT" 
+        : "REGISTERING PHYSICAL SPECIMEN UNDER MASTER ARTIFACT",
+      specimenName: `${parent.name} // ${specMedium.toUpperCase()}`,
+      medium: `${specMedium} — ${specType.trim() || cfg.defaultType || "Standard"}`,
+      sku: generatedSku,
+      image: thumb,
+      price: Number(specPrice) || cfg.defaultPrice || 2500,
+      inventory: Number(specInventory) || 50,
+      material: specMaterial.trim() || cfg.defaultMaterial || "Canonical Archive",
+      edition: specEdition.trim() || "050 SPECIMENS",
+      stage: isEdit 
+        ? "ENCODING SPECIMEN REVISIONS & UPDATING ATTRIBUTES..." 
+        : "INITIALIZING CANONICAL SPECIMEN MANIFESTATION...",
+      progress: 20,
+    });
+
     try {
       soundManager.playClick();
-      const cfg = getMediumConfig(specMedium);
-      const generatedSku = `${parent.artifactId || "SYM"}-${specMedium.substring(0, 3).toUpperCase()}-01`;
+
+      // Step 1: Processing images & metadata
+      await new Promise(r => setTimeout(r, 260));
+      setSpecimenLoadingState(prev => prev ? {
+        ...prev,
+        stage: "OPTIMIZING SPECIMEN PHOTOGRAMMETRY & MEDIA ASSETS...",
+        progress: 50,
+      } : null);
 
       const specimenRecord: Specimen = {
         id: editingSpecimen ? editingSpecimen.specimen.id : `spec_${Date.now()}_${Math.floor(Math.random()*1000)}`,
@@ -364,22 +454,47 @@ export default function OwnerArtifactSpecimenStudio({
         color: specColor.trim() || "Standard Finish",
         edition: specEdition.trim() || "050 SPECIMENS",
         availableSizes: specSizes,
-        sku: editingSpecimen?.specimen.sku || generatedSku,
-        thumbnailImage: specImages[0] || parent.graphic,
+        sku: generatedSku,
+        thumbnailImage: thumb,
         images: specImages.length > 0 ? specImages : [parent.graphic],
         createdAt: editingSpecimen?.specimen.createdAt || Date.now(),
         updatedAt: Date.now()
       };
 
+      // Step 2: Committing to Cloud & Cache
+      setSpecimenLoadingState(prev => prev ? {
+        ...prev,
+        stage: "COMMITTING RECORD TO CLOUD FIRESTORE & LOCAL REGISTRY...",
+        progress: 80,
+      } : null);
+
       await saveSpecimen(specimenRecord);
-      showNotification("success", `Specimen "${parent.name} — ${specMedium}" saved.`);
-      resetSpecimenForm();
+
+      // Step 3: Finalizing sync
+      setSpecimenLoadingState(prev => prev ? {
+        ...prev,
+        stage: "SPECIMEN PERSISTED & INDEXED IN ARCHIVE.",
+        progress: 100,
+      } : null);
+
       await loadData();
-      setActiveTab("registry");
       if (onDataChanged) onDataChanged();
+
+      await new Promise(r => setTimeout(r, 400));
+
+      soundManager.playSuccess(0.12);
+      showNotification("success", isEdit 
+        ? `Specimen "${parent.name} — ${specMedium}" updated successfully.`
+        : `Specimen "${parent.name} — ${specMedium}" manifested successfully.`
+      );
+      resetSpecimenForm();
+      setActiveTab("registry");
     } catch (err) {
       console.error("Save specimen error:", err);
       showNotification("error", "Failed to save specimen.");
+    } finally {
+      setIsSubmittingSpecimen(false);
+      setSpecimenLoadingState(null);
     }
   };
 
@@ -1493,9 +1608,17 @@ export default function OwnerArtifactSpecimenStudio({
               </button>
               <button
                 type="submit"
-                className="px-6 py-2 bg-brand-text text-brand-bg text-xs font-black uppercase border-2 border-brand-text hover:bg-brand-accent hover:text-white shadow-[2px_2px_0px_#050505] cursor-pointer"
+                disabled={isSubmittingSpecimen}
+                className="px-6 py-2 bg-brand-text text-brand-bg text-xs font-black uppercase border-2 border-brand-text hover:bg-brand-accent hover:text-white shadow-[2px_2px_0px_#050505] cursor-pointer disabled:opacity-50 flex items-center gap-2"
               >
-                {editingSpecimen ? "SAVE SPECIMEN CHANGES" : "MANIFEST SPECIMEN"}
+                {isSubmittingSpecimen ? (
+                  <>
+                    <RefreshCw size={13} className="animate-spin text-brand-accent" />
+                    <span>{editingSpecimen ? "SAVING CHANGES..." : "MANIFESTING SPECIMEN..."}</span>
+                  </>
+                ) : (
+                  <span>{editingSpecimen ? "SAVE SPECIMEN CHANGES" : "MANIFEST SPECIMEN"}</span>
+                )}
               </button>
             </div>
           </div>
@@ -1646,6 +1769,191 @@ export default function OwnerArtifactSpecimenStudio({
           </div>
         </div>
       )}
+
+      {/* ─── DEDICATED WORKING LOADING SCREEN FOR SPECIMEN MANIFESTATION & EDITS ─── */}
+      <AnimatePresence>
+        {specimenLoadingState && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.18 }}
+            className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-brand-bg/95 backdrop-blur-md overflow-y-auto select-none"
+            role="status"
+            aria-live="polite"
+          >
+            <motion.div
+              initial={{ scale: 0.95, y: 14 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.95, y: 14 }}
+              transition={{ type: "spring", stiffness: 350, damping: 25 }}
+              className="w-full max-w-lg bg-brand-surface border-4 border-brand-text shadow-[12px_12px_0px_#050505] p-5 sm:p-7 space-y-5 font-mono text-brand-text"
+              onClick={(e) => e.stopPropagation()}
+            >
+              {/* Header Bar */}
+              <div className="flex items-center justify-between border-b-2 border-brand-text/30 pb-3">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-3 h-3 bg-brand-accent shadow-[1.5px_1.5px_0px_#050505] animate-pulse" />
+                  <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-brand-text">
+                    SYMBOLIC PROTOCOL // {specimenLoadingState.mode === "manifest" ? "SPECIMEN MANIFESTATION" : specimenLoadingState.mode === "edit" ? "SPECIMEN REVISION" : "RETRIEVING RECORD"}
+                  </span>
+                </div>
+                <div className="flex items-center gap-1.5 text-[8.5px] font-mono text-brand-text/70 bg-brand-bg border border-brand-text/40 px-2 py-0.5 shadow-[1px_1px_0px_#050505]">
+                  <RefreshCw size={10} className="animate-spin text-brand-accent" />
+                  <span>ACTIVE</span>
+                </div>
+              </div>
+
+              {/* Title & Subtitle */}
+              <div className="space-y-1">
+                <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-brand-text">
+                  {specimenLoadingState.title}
+                </h3>
+                <p className="text-[9.5px] sm:text-[10.5px] font-bold text-brand-text/70 uppercase">
+                  {specimenLoadingState.subtitle}
+                </p>
+              </div>
+
+              {/* Specimen Preview Card */}
+              <div className="bg-brand-bg border-2 border-brand-text p-3 shadow-[4px_4px_0px_#050505] flex gap-3.5 items-center">
+                <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-brand-surface border-2 border-brand-text/60 overflow-hidden relative flex items-center justify-center">
+                  {specimenLoadingState.image ? (
+                    <img
+                      src={specimenLoadingState.image}
+                      alt={specimenLoadingState.specimenName}
+                      referrerPolicy="no-referrer"
+                      className="w-full h-full object-contain p-1"
+                    />
+                  ) : (
+                    <Box size={24} className="text-brand-text/40 animate-pulse" />
+                  )}
+                  <span className="absolute bottom-0 inset-x-0 bg-brand-text/90 text-brand-bg text-[6.5px] font-black uppercase text-center py-0.5">
+                    SPECIMEN
+                  </span>
+                </div>
+
+                <div className="flex-1 min-w-0 space-y-1">
+                  <div className="flex items-center gap-1.5 flex-wrap">
+                    <span className="px-1.5 py-0.5 bg-brand-accent text-white text-[7.5px] font-black uppercase tracking-wider shadow-[1px_1px_0px_#050505]">
+                      {specimenLoadingState.sku}
+                    </span>
+                    {specimenLoadingState.price !== undefined && (
+                      <span className="text-[9px] font-black text-brand-text">
+                        PKR {specimenLoadingState.price.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  <h4 className="font-black text-xs uppercase text-brand-text truncate">
+                    {specimenLoadingState.specimenName}
+                  </h4>
+
+                  <div className="text-[8.5px] text-brand-text/70 uppercase font-bold truncate">
+                    {specimenLoadingState.medium}
+                  </div>
+
+                  {specimenLoadingState.material && (
+                    <div className="text-[7.5px] text-brand-text/60 uppercase truncate">
+                      {specimenLoadingState.material}
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Live Step Checklist */}
+              <div className="border border-brand-text/30 bg-brand-surface/60 p-3 space-y-2 text-[9px] font-mono">
+                <div className="flex items-center justify-between text-brand-text font-black uppercase border-b border-brand-text/20 pb-1">
+                  <span>MANIFESTATION PIPELINE</span>
+                  <span className="text-brand-accent">
+                    STEP {specimenLoadingState.progress >= 100 ? "3/3" : specimenLoadingState.progress >= 70 ? "3/3" : specimenLoadingState.progress >= 40 ? "2/3" : "1/3"}
+                  </span>
+                </div>
+
+                <div className="space-y-1.5 pt-0.5">
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      {specimenLoadingState.progress >= 40 ? (
+                        <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                      ) : (
+                        <RefreshCw size={11} className="animate-spin text-brand-accent shrink-0" />
+                      )}
+                      <span className={specimenLoadingState.progress >= 40 ? "text-brand-text line-through opacity-70" : "text-brand-text font-bold"}>
+                        1. ENCODE SPECIMEN PARAMETERS & MEDIA
+                      </span>
+                    </span>
+                    <span className="text-[8px] uppercase text-brand-text/60">
+                      {specimenLoadingState.progress >= 40 ? "COMPLETED" : "PROCESSING"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      {specimenLoadingState.progress >= 80 ? (
+                        <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                      ) : specimenLoadingState.progress >= 40 ? (
+                        <RefreshCw size={11} className="animate-spin text-brand-accent shrink-0" />
+                      ) : (
+                        <span className="w-2.5 h-2.5 border border-brand-text/40 inline-block shrink-0" />
+                      )}
+                      <span className={specimenLoadingState.progress >= 80 ? "text-brand-text line-through opacity-70" : specimenLoadingState.progress >= 40 ? "text-brand-text font-bold" : "text-brand-text/50"}>
+                        2. SYNCHRONIZE CLOUD FIRESTORE REGISTRY
+                      </span>
+                    </span>
+                    <span className="text-[8px] uppercase text-brand-text/60">
+                      {specimenLoadingState.progress >= 80 ? "COMPLETED" : specimenLoadingState.progress >= 40 ? "SYNCING" : "QUEUED"}
+                    </span>
+                  </div>
+
+                  <div className="flex items-center justify-between">
+                    <span className="flex items-center gap-1.5">
+                      {specimenLoadingState.progress >= 100 ? (
+                        <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
+                      ) : specimenLoadingState.progress >= 80 ? (
+                        <RefreshCw size={11} className="animate-spin text-brand-accent shrink-0" />
+                      ) : (
+                        <span className="w-2.5 h-2.5 border border-brand-text/40 inline-block shrink-0" />
+                      )}
+                      <span className={specimenLoadingState.progress >= 100 ? "text-brand-text line-through opacity-70" : specimenLoadingState.progress >= 80 ? "text-brand-text font-bold" : "text-brand-text/50"}>
+                        3. COMMIT LOCAL CACHE & STOREFRONT INDEX
+                      </span>
+                    </span>
+                    <span className="text-[8px] uppercase text-brand-text/60">
+                      {specimenLoadingState.progress >= 100 ? "VERIFIED" : specimenLoadingState.progress >= 80 ? "INDEXING" : "QUEUED"}
+                    </span>
+                  </div>
+                </div>
+              </div>
+
+              {/* Progress Bar & Numeric Readout */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between text-[9px] font-black uppercase text-brand-text">
+                  <span className="truncate pr-2 text-brand-accent font-bold">
+                    &gt; {specimenLoadingState.stage}
+                  </span>
+                  <span className="font-mono bg-brand-text text-brand-bg px-1.5 py-0.5 shadow-[1px_1px_0px_#050505] shrink-0">
+                    {specimenLoadingState.progress}%
+                  </span>
+                </div>
+
+                <div className="w-full bg-brand-bg border-2 border-brand-text h-3 sm:h-3.5 p-0.5 shadow-[2px_2px_0px_#050505] overflow-hidden">
+                  <motion.div
+                    className="h-full bg-brand-accent shadow-[0_0_8px_rgba(255,69,0,0.6)]"
+                    initial={{ width: 0 }}
+                    animate={{ width: `${specimenLoadingState.progress}%` }}
+                    transition={{ ease: "easeOut", duration: 0.25 }}
+                  />
+                </div>
+              </div>
+
+              {/* Industrial Footer Status */}
+              <div className="pt-2 border-t-2 border-brand-text/20 flex items-center justify-between text-[8px] font-mono text-brand-text/60 uppercase">
+                <span>NODE: ARCHIVE-FIRESTORE // CANONICAL</span>
+                <span className="text-brand-text font-bold">DO NOT CLOSE TAB</span>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }
