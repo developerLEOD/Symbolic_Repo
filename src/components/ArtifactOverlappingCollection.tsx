@@ -225,25 +225,19 @@ export default function ArtifactOverlappingCollection({
   // Desktop target scroll & animation references for smooth LERP centering
   const targetScrollRef = useRef<number | null>(null);
   const rafIdRef = useRef<number | null>(null);
-  const isTransitioningRef = useRef(false);
-  const lastScrollTimeRef = useRef<number>(0);
-  const lastUserMouseMoveTimeRef = useRef<number>(0);
-  const lastMousePosRef = useRef({ x: -100, y: -100 });
+  const isScrollingRef = useRef(false);
+  const scrollTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const lastWheelTimeRef = useRef<number>(0);
 
-  // Track intentional user mouse movement vs stationary cursor (desktop only)
-  useEffect(() => {
-    if (isMobile) return;
-    const onGlobalMouseMove = (e: MouseEvent) => {
-      const dx = Math.abs(e.clientX - lastMousePosRef.current.x);
-      const dy = Math.abs(e.clientY - lastMousePosRef.current.y);
-      if (dx > 3 || dy > 3) {
-        lastMousePosRef.current = { x: e.clientX, y: e.clientY };
-        lastUserMouseMoveTimeRef.current = Date.now();
-      }
-    };
-    window.addEventListener("mousemove", onGlobalMouseMove, { passive: true });
-    return () => window.removeEventListener("mousemove", onGlobalMouseMove);
-  }, [isMobile]);
+  const markScrollActive = useCallback(() => {
+    isScrollingRef.current = true;
+    if (scrollTimeoutRef.current) {
+      clearTimeout(scrollTimeoutRef.current);
+    }
+    scrollTimeoutRef.current = setTimeout(() => {
+      isScrollingRef.current = false;
+    }, 150);
+  }, []);
 
   const cancelWheelAnimation = useCallback(() => {
     if (rafIdRef.current !== null) {
@@ -251,7 +245,6 @@ export default function ArtifactOverlappingCollection({
       rafIdRef.current = null;
     }
     targetScrollRef.current = null;
-    isTransitioningRef.current = false;
   }, []);
 
   // Monitor desktop scroll bounds
@@ -276,14 +269,12 @@ export default function ArtifactOverlappingCollection({
     if (Math.abs(current - clampedTarget) < 0.8) {
       desktopContainer.scrollLeft = clampedTarget;
       updateScrollBounds();
-      isTransitioningRef.current = false;
       onFrame?.();
       onComplete?.();
       return;
     }
 
     targetScrollRef.current = clampedTarget;
-    isTransitioningRef.current = true;
     const lerpSpeed = 0.12; // buttery, fluid LERP rate
     let lastTime = performance.now();
 
@@ -307,9 +298,6 @@ export default function ArtifactOverlappingCollection({
         containerRef.current.scrollLeft = clampedTarget;
         rafIdRef.current = null;
         targetScrollRef.current = null;
-        setTimeout(() => {
-          isTransitioningRef.current = false;
-        }, 80);
         updateScrollBounds();
         onFrame?.();
         onComplete?.();
@@ -322,6 +310,9 @@ export default function ArtifactOverlappingCollection({
   // Clear timers on unmount
   useEffect(() => {
     return () => {
+      if (scrollTimeoutRef.current) {
+        clearTimeout(scrollTimeoutRef.current);
+      }
       cancelWheelAnimation();
     };
   }, [cancelWheelAnimation]);
@@ -341,9 +332,7 @@ export default function ArtifactOverlappingCollection({
     if (desktopContainer) {
       const targetEl = itemRefs.current[targetIdx];
       if (targetEl) {
-        // Mark transition as active to suppress accidental mouseenter from cards scrolling underneath cursor
-        isTransitioningRef.current = true;
-        lastScrollTimeRef.current = Date.now();
+        markScrollActive();
 
         // Use immutable offsetLeft / offsetWidth for rock-solid centering
         const cardCenter = targetEl.offsetLeft + targetEl.offsetWidth / 2;
@@ -357,23 +346,14 @@ export default function ArtifactOverlappingCollection({
         lerpScrollTo(targetScroll);
       }
     }
-  }, [displayItems.length, lerpScrollTo]);
+  }, [displayItems.length, lerpScrollTo, markScrollActive]);
 
-  // Revert back to default centered layout immediately with zero delay
+  // Revert back to default layout immediately with zero delay (no forced container re-centering)
   const revertToDefault = useCallback(() => {
     if (activeIdxRef.current === null) return;
     setActiveIdx(null);
     setScatterVisibleIdx(null);
-    // Smoothly LERP container back to centering default stacked layout
-    const desktopContainer = containerRef.current;
-    const centerIdx = Math.floor(displayItems.length / 2);
-    const centerEl = itemRefs.current[centerIdx] || itemRefs.current[0];
-    if (desktopContainer && centerEl) {
-      const cardCenter = centerEl.offsetLeft + centerEl.offsetWidth / 2;
-      const targetScroll = cardCenter - desktopContainer.clientWidth / 2;
-      lerpScrollTo(targetScroll);
-    }
-  }, [displayItems.length, lerpScrollTo]);
+  }, []);
 
   // Initial mount & resize centering for default state
   useEffect(() => {
@@ -455,10 +435,11 @@ export default function ArtifactOverlappingCollection({
         e.preventDefault();
 
         const now = Date.now();
-        if (now - lastScrollTimeRef.current < 280) {
+        if (now - lastWheelTimeRef.current < 250) {
           return;
         }
-        lastScrollTimeRef.current = now;
+        lastWheelTimeRef.current = now;
+        markScrollActive();
 
         soundManager.playToggle(0.04);
         // Scroll without activating preview (preview is ONLY hover sensitive)
@@ -483,12 +464,13 @@ export default function ArtifactOverlappingCollection({
     return () => {
       window.removeEventListener("wheel", handleWheel);
     };
-  }, [displayItems.length, shiftToArtifact, activeMobileIdx]);
+  }, [displayItems.length, shiftToArtifact, activeMobileIdx, markScrollActive]);
 
   // Smooth desktop manual pan without activating preview
   const handlePan = (direction: "left" | "right") => {
     if (!containerRef.current) return;
     cancelWheelAnimation();
+    markScrollActive();
     soundManager.playToggle(0.06);
     const desktopContainer = containerRef.current;
     const containerCenter = desktopContainer.scrollLeft + desktopContainer.clientWidth / 2;
@@ -515,6 +497,7 @@ export default function ArtifactOverlappingCollection({
   const handleMouseDown = (e: React.MouseEvent) => {
     if (!containerRef.current) return;
     cancelWheelAnimation();
+    markScrollActive();
     setIsDragging(true);
     setHasMovedDuringDrag(false);
     setStartX(e.pageX - containerRef.current.offsetLeft);
@@ -523,6 +506,7 @@ export default function ArtifactOverlappingCollection({
 
   const handleMouseMove = (e: React.MouseEvent) => {
     if (!isDragging || !containerRef.current) return;
+    markScrollActive();
     e.preventDefault();
     const x = e.pageX - containerRef.current.offsetLeft;
     const walk = (x - startX) * 1.35;
@@ -969,11 +953,8 @@ export default function ArtifactOverlappingCollection({
                   itemRefs.current[idx] = el;
                 }}
                 onMouseEnter={() => {
-                  // Ignore hover events triggered by cards sliding under a stationary cursor during or right after scrolling
-                  if (isTransitioningRef.current || Date.now() - lastScrollTimeRef.current < 450) {
-                    return;
-                  }
-                  if (lastUserMouseMoveTimeRef.current < lastScrollTimeRef.current) {
+                  // If user is actively dragging or scrolling, ignore hover
+                  if (isDragging || isScrollingRef.current) {
                     return;
                   }
                   if (activeIdx !== idx) {
@@ -983,13 +964,13 @@ export default function ArtifactOverlappingCollection({
                   }
                 }}
                 onMouseLeave={(e) => {
-                  // Do not revert if cursor moved to a descendant (e.g. dossier, satellites, hit bridge)
+                  // Do not revert if cursor moved to a descendant (e.g. dossier, satellites)
                   const related = e.relatedTarget as HTMLElement | null;
                   if (related && e.currentTarget.contains(related)) {
                     return;
                   }
-                  // If moving directly into another artifact card, let that card's onMouseEnter handle it
-                  if (related && related.closest(".artifact-card")) {
+                  // If moving directly into another artifact card or specimen card, let that handle it
+                  if (related && (related.closest(".artifact-card") || related.closest(".specimen-card"))) {
                     return;
                   }
                   // Immediately revert to default layout with zero delay
@@ -1218,12 +1199,6 @@ export default function ArtifactOverlappingCollection({
                 <AnimatePresence>
                   {isCentered && childSpecimens.length > 0 && (
                     <>
-                      {/* Invisible hit bridge to prevent cursor flicker when moving between card and satellites */}
-                      <div
-                        aria-hidden="true"
-                        className="absolute -top-12 -bottom-12 -left-56 -right-56 pointer-events-auto bg-transparent z-10"
-                      />
-
                       {/* Architectural Header floating above card */}
                       <motion.div
                         initial={{ opacity: 0, y: -6 }}
@@ -1266,10 +1241,7 @@ export default function ArtifactOverlappingCollection({
                             whileHover={{ scale: 1.04, zIndex: 60, transition: { duration: 0.12 } }}
                             whileTap={{ scale: 0.98 }}
                             onMouseEnter={() => {
-                              if (isTransitioningRef.current || Date.now() - lastScrollTimeRef.current < 450) {
-                                return;
-                              }
-                              if (lastUserMouseMoveTimeRef.current < lastScrollTimeRef.current) {
+                              if (isDragging || isScrollingRef.current) {
                                 return;
                               }
                               handleSelectSpecimen(item.id, spec.id);
@@ -1283,7 +1255,7 @@ export default function ArtifactOverlappingCollection({
                               right: !scatter.x.includes("%") && !scatter.x.startsWith("-") ? scatter.x : undefined,
                               top: scatter.y,
                               marginLeft: !scatter.x.includes("%") && scatter.x.startsWith("-") ? scatter.x : undefined,
-                              pointerEvents: isTransitioningRef.current ? "none" : "auto",
+                              pointerEvents: "auto",
                             }}
                             data-product-card="true"
                             data-specimen-card="true"
