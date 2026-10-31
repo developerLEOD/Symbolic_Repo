@@ -98,9 +98,11 @@ export interface Specimen {
   availableSizes?: string[];
   material?: string;
   weight?: string;
+  fabricGsm?: string;
   fit?: string;
   printMethod?: string;
   edition?: string;
+  editionDetails?: string;
   careInstructions?: string;
   finish?: string;
   dimensions?: string;
@@ -183,6 +185,7 @@ export interface Product {
   description: string;
   price: number;
   categoryId: string;
+  category?: string;
   sku: string;
   images: string[];
   thumbnailImage?: string;

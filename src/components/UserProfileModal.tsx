@@ -1,15 +1,33 @@
 import React, { useState, useEffect } from "react";
 import { motion, AnimatePresence } from "motion/react";
-import { X, User, Package, MapPin, LogOut, Check, AlertCircle, ShoppingBag, Clock, Sliders, Users, Copy, CheckCheck, Tag, Gift, Link as LinkIcon, ExternalLink, Globe } from "lucide-react";
+import { 
+  X, 
+  Package, 
+  MapPin, 
+  LogOut, 
+  Check, 
+  AlertCircle, 
+  ShoppingBag, 
+  Clock, 
+  Sliders, 
+  Users, 
+  Copy, 
+  CheckCheck, 
+  Tag, 
+  Gift, 
+  Link as LinkIcon, 
+  ExternalLink, 
+  Globe 
+} from "lucide-react";
 import { useAuth } from "../lib/AuthContext";
-import { collection, query, where, getDocs, orderBy } from "firebase/firestore";
+import { collection, query, where, getDocs } from "firebase/firestore";
 import { db } from "../lib/firebase";
 import { Order, ReferralSettings } from "../types";
 import { 
-  getReferralSettings, 
   subscribeReferralSettings,
   getFriendDiscountPercentage, 
-  isReferrerRewardUnlocked 
+  isReferrerRewardUnlocked,
+  DEFAULT_REFERRAL_SETTINGS
 } from "../lib/referralService";
 import LiquidCarveButton from "./LiquidCarveButton";
 import { soundManager } from "../lib/soundEffects";
@@ -21,6 +39,105 @@ interface UserProfileModalProps {
   initialTab?: "profile" | "orders" | "referral";
 }
 
+/**
+ * Safely parse any timestamp representation (number, Firestore Timestamp, ISO string, etc.)
+ */
+function parseTimestampToMs(val: unknown): number {
+  if (!val) return Date.now();
+  if (typeof val === "number" && !isNaN(val)) return val;
+  if (typeof val === "object" && val !== null) {
+    const anyVal = val as Record<string, unknown>;
+    if (typeof anyVal.toMillis === "function") {
+      try {
+        const ms = (anyVal.toMillis as () => number)();
+        if (typeof ms === "number" && !isNaN(ms)) return ms;
+      } catch {}
+    }
+    if (typeof anyVal.toDate === "function") {
+      try {
+        const d = (anyVal.toDate as () => Date)();
+        if (d instanceof Date && !isNaN(d.getTime())) return d.getTime();
+      } catch {}
+    }
+    if (typeof anyVal.seconds === "number" && !isNaN(anyVal.seconds)) {
+      const nanos = typeof anyVal.nanoseconds === "number" ? anyVal.nanoseconds : 0;
+      return anyVal.seconds * 1000 + Math.floor(nanos / 1000000);
+    }
+  }
+  if (typeof val === "string") {
+    const parsed = Date.parse(val);
+    if (!isNaN(parsed)) return parsed;
+  }
+  return Date.now();
+}
+
+/**
+ * Formats order date safely without ever throwing RangeError
+ */
+function formatDateSafe(val: unknown): string {
+  try {
+    const ms = parseTimestampToMs(val);
+    const d = new Date(ms);
+    if (isNaN(d.getTime())) return "RECENT";
+    return d.toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "short",
+      day: "numeric"
+    });
+  } catch {
+    return "RECENT";
+  }
+}
+
+/**
+ * Defensive normalizer to sanitize Firestore order documents against any missing fields
+ */
+function normalizeOrder(raw: any, idFallback: string = ""): Order {
+  const safeItems = Array.isArray(raw?.items)
+    ? raw.items.map((item: any, idx: number) => ({
+        id: String(item?.id || `item-${idx}`),
+        productId: String(item?.productId || ""),
+        variantId: item?.variantId ? String(item.variantId) : undefined,
+        specimenId: item?.specimenId ? String(item.specimenId) : undefined,
+        artifactId: item?.artifactId ? String(item.artifactId) : undefined,
+        name: String(item?.name || "SPECIMEN ARTIFACT"),
+        price: typeof item?.price === "number" && !isNaN(item.price) ? item.price : 0,
+        quantity: typeof item?.quantity === "number" && !isNaN(item.quantity) && item.quantity > 0 ? item.quantity : 1,
+        image: item?.image || item?.thumbnail || "",
+        options: item?.options && typeof item.options === "object" ? item.options : undefined
+      }))
+    : [];
+
+  const rawTotal = typeof raw?.total === "number" && !isNaN(raw.total) ? raw.total : null;
+  const computedTotal = rawTotal !== null
+    ? rawTotal
+    : safeItems.reduce((acc, it) => acc + (it.price * it.quantity), 0);
+
+  const createdAt = parseTimestampToMs(raw?.createdAt);
+
+  return {
+    id: String(raw?.id || idFallback || `ORD-${Date.now()}`),
+    userId: raw?.userId ? String(raw.userId) : undefined,
+    items: safeItems,
+    subtotal: typeof raw?.subtotal === "number" && !isNaN(raw.subtotal) ? raw.subtotal : computedTotal,
+    shipping: typeof raw?.shipping === "number" && !isNaN(raw.shipping) ? raw.shipping : 0,
+    discount: typeof raw?.discount === "number" && !isNaN(raw.discount) ? raw.discount : 0,
+    total: computedTotal,
+    status: (raw?.status as any) || "processing",
+    createdAt,
+    customerInfo: {
+      firstName: String(raw?.customerInfo?.firstName || raw?.firstName || "CUSTODIAN"),
+      lastName: String(raw?.customerInfo?.lastName || raw?.lastName || ""),
+      email: String(raw?.customerInfo?.email || raw?.email || ""),
+      phone: raw?.customerInfo?.phone || raw?.phone || "",
+      address: String(raw?.customerInfo?.address || raw?.address || ""),
+      city: String(raw?.customerInfo?.city || raw?.city || "STANDARD"),
+      zip: String(raw?.customerInfo?.zip || raw?.zip || ""),
+      country: String(raw?.customerInfo?.country || raw?.country || "DOMESTIC")
+    }
+  };
+}
+
 export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, initialTab }: UserProfileModalProps) {
   const { user, userProfile, isOwner, signOutUser, updateUserProfileData, isQuotaExceeded, quotaUpgradeUrl } = useAuth();
   
@@ -29,7 +146,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
   const [loadingOrders, setLoadingOrders] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
   const [copiedLink, setCopiedLink] = useState(false);
-  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(DEFAULT_REFERRAL_SETTINGS);
 
   useEffect(() => {
     if (isOpen && initialTab) {
@@ -50,9 +167,11 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
   useEffect(() => {
     if (!isOpen) return;
     const unsubscribe = subscribeReferralSettings((settings) => {
-      setReferralSettings(settings);
-      if (!settings.isEnabled && activeTab === "referral") {
-        setActiveTab("orders");
+      if (settings) {
+        setReferralSettings(settings);
+        if (!settings.isEnabled && activeTab === "referral") {
+          setActiveTab("orders");
+        }
       }
     });
     return () => unsubscribe();
@@ -65,7 +184,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
       setAddress(userProfile.address || "");
       setCity(userProfile.city || "");
       setZip(userProfile.zip || "");
-      if (userProfile.referralCode) {
+      if (userProfile.referralCode && typeof window !== "undefined") {
         try {
           localStorage.setItem("sym_user_referral_code", userProfile.referralCode);
         } catch {
@@ -75,63 +194,80 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
     }
   }, [userProfile, user]);
 
-  // Load User Orders
+  // Load User Orders safely
   useEffect(() => {
     if (!isOpen || !user) return;
+
+    let isMounted = true;
 
     const fetchOrders = async () => {
       setLoadingOrders(true);
       try {
         const ordersRef = collection(db, "orders");
-        let userOrders: Order[] = [];
+        let rawOrders: any[] = [];
 
         // Primary Query: Fetch orders associated with the user's UID
         try {
-          const q1 = query(ordersRef, where("userId", "==", user.uid));
-          const snap1 = await getDocs(q1);
-          userOrders = snap1.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+          if (user.uid) {
+            const q1 = query(ordersRef, where("userId", "==", user.uid));
+            const snap1 = await getDocs(q1);
+            rawOrders = snap1.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+          }
         } catch (err1) {
           console.warn("Could not query orders by userId:", err1);
         }
 
         // Secondary Query: If user has an email and no orders by UID were found, check by customer email
-        if (userOrders.length === 0 && user.email) {
+        if (rawOrders.length === 0 && user.email) {
           try {
             const q2 = query(ordersRef, where("customerInfo.email", "==", user.email));
             const snap2 = await getDocs(q2);
-            userOrders = snap2.docs.map(doc => ({ id: doc.id, ...doc.data() } as Order));
+            rawOrders = snap2.docs.map(doc => ({ id: doc.id, ...doc.data() }));
           } catch (err2) {
             console.warn("Could not query orders by email:", err2);
           }
         }
 
-        // Check local cache if network/quota prevented query
+        // Check local cache if network/quota prevented query or returned empty
         const cacheKey = `sym_user_cached_orders_${user.uid}`;
-        if (userOrders.length > 0) {
+        if (rawOrders.length > 0) {
           try {
-            localStorage.setItem(cacheKey, JSON.stringify(userOrders));
+            localStorage.setItem(cacheKey, JSON.stringify(rawOrders));
           } catch (_) {}
         } else if (typeof window !== "undefined") {
           try {
             const cached = localStorage.getItem(cacheKey);
-            if (cached) userOrders = JSON.parse(cached);
+            if (cached) {
+              const parsed = JSON.parse(cached);
+              if (Array.isArray(parsed)) rawOrders = parsed;
+            }
           } catch (_) {}
         }
 
+        // Defensively normalize every single order to prevent any render-time exceptions
+        const safeOrders = rawOrders.map((raw, idx) => normalizeOrder(raw, `ord-${idx}`));
+
         // Sort by createdAt descending
-        userOrders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
-        setOrders(userOrders);
+        safeOrders.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0));
+
+        if (isMounted) {
+          setOrders(safeOrders);
+        }
       } catch (err) {
         console.warn("User orders load fallback:", err);
       } finally {
-        setLoadingOrders(false);
+        if (isMounted) {
+          setLoadingOrders(false);
+        }
       }
     };
 
     fetchOrders();
-  }, [isOpen, user]);
 
-  if (!isOpen || !user) return null;
+    return () => {
+      isMounted = false;
+    };
+  }, [isOpen, user]);
 
   const handleSaveProfile = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -182,7 +318,10 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
     onClose();
   };
 
-  const initialLetter = (userProfile?.displayName || user.displayName || user.email || "U").charAt(0).toUpperCase();
+  if (!isOpen || !user) return null;
+
+  const rawIdentity = userProfile?.displayName || user.displayName || user.email || "CUSTODIAN";
+  const initialLetter = (String(rawIdentity).charAt(0) || "U").toUpperCase();
 
   return (
     <AnimatePresence>
@@ -217,7 +356,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                     {userProfile?.role === "admin" ? "OWNER // ADMIN" : "VERIFIED MEMBER"}
                   </span>
                 </div>
-                <p className="font-mono text-xs text-brand-text/60">{user.email}</p>
+                <p className="font-mono text-xs text-brand-text/60">{user.email || "VERIFIED STATION"}</p>
               </div>
             </div>
             
@@ -346,17 +485,19 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                 ) : (
                   <div className="space-y-4">
                     {orders.map((order) => {
-                      const orderDate = new Date(order.createdAt).toLocaleDateString("en-US", {
-                        year: "numeric",
-                        month: "short",
-                        day: "numeric"
-                      });
+                      const orderDate = formatDateSafe(order.createdAt);
 
                       const statusColor = 
                         order.status === "delivered" ? "bg-green-600 text-white" :
                         order.status === "shipped" ? "bg-brand-accent text-white" :
                         order.status === "processing" ? "bg-amber-600 text-white" :
                         "bg-brand-text text-brand-bg";
+
+                      const displayOrderId = (order.id || "ORD").slice(0, 10).toUpperCase();
+                      const displayTotal = (order.total ?? 0).toLocaleString();
+                      const safeItems = order.items || [];
+                      const city = order.customerInfo?.city || "STANDARD";
+                      const country = order.customerInfo?.country || "DOMESTIC";
 
                       return (
                         <div 
@@ -366,7 +507,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                           <div className="flex flex-wrap items-center justify-between border-b border-brand-text/20 pb-2.5 gap-2">
                             <div>
                               <span className="font-black uppercase text-brand-accent">
-                                ORDER #{order.id.slice(0, 10).toUpperCase()}
+                                ORDER #{displayOrderId}
                               </span>
                               <div className="flex items-center gap-1.5 text-[10px] text-brand-text/60 mt-0.5">
                                 <Clock size={11} />
@@ -375,42 +516,45 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                             </div>
                             <div className="flex items-center gap-3">
                               <span className={`px-2.5 py-0.5 text-[9px] font-black uppercase border border-brand-text ${statusColor}`}>
-                                {order.status}
+                                {order.status || "processing"}
                               </span>
                               <span className="font-black text-sm text-brand-text">
-                                Rs. {order.total.toLocaleString()}
+                                Rs. {displayTotal}
                               </span>
                             </div>
                           </div>
 
                           {/* Order Items */}
                           <div className="space-y-2 pt-1">
-                            {order.items.map((item, idx) => (
-                              <div key={idx} className="flex items-center justify-between text-[11px]">
-                                <div className="flex items-center gap-2.5">
-                                  {item.image && (
-                                    <img 
-                                      src={item.image} 
-                                      alt={item.name}
-                                      className="w-9 h-9 object-cover border border-brand-text bg-white shrink-0" 
-                                    />
-                                  )}
-                                  <div>
-                                    <p className="font-black uppercase truncate max-w-[200px] sm:max-w-[280px]">{item.name}</p>
-                                    <p className="text-[10px] text-brand-text/60 uppercase">
-                                      QTY: {item.quantity} {item.options?.Size ? `• SIZE: ${item.options.Size}` : ''}
-                                    </p>
+                            {safeItems.map((item, idx) => {
+                              const itemTotal = ((item.price || 0) * (item.quantity || 1)).toLocaleString();
+                              return (
+                                <div key={item.id || idx} className="flex items-center justify-between text-[11px]">
+                                  <div className="flex items-center gap-2.5">
+                                    {item.image && (
+                                      <img 
+                                        src={item.image} 
+                                        alt={item.name}
+                                        className="w-9 h-9 object-cover border border-brand-text bg-white shrink-0" 
+                                      />
+                                    )}
+                                    <div>
+                                      <p className="font-black uppercase truncate max-w-[200px] sm:max-w-[280px]">{item.name}</p>
+                                      <p className="text-[10px] text-brand-text/60 uppercase">
+                                        QTY: {item.quantity || 1} {item.options?.Size ? `• SIZE: ${item.options.Size}` : ''}
+                                      </p>
+                                    </div>
                                   </div>
+                                  <span className="font-bold">Rs. {itemTotal}</span>
                                 </div>
-                                <span className="font-bold">Rs. {(item.price * item.quantity).toLocaleString()}</span>
-                              </div>
-                            ))}
+                              );
+                            })}
                           </div>
 
                           {/* Shipping destination */}
                           <div className="pt-2 border-t border-brand-text/15 text-[10px] text-brand-text/70 uppercase flex justify-between">
-                            <span>DESTINATION: {order.customerInfo.city}, {order.customerInfo.country}</span>
-                            <span>{order.items.length} ITEM{order.items.length > 1 ? 'S' : ''}</span>
+                            <span>DESTINATION: {city}, {country}</span>
+                            <span>{safeItems.length} ITEM{safeItems.length === 1 ? '' : 'S'}</span>
                           </div>
                         </div>
                       );
@@ -438,7 +582,8 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
 
                 {/* Shareable Link & Code Display Card */}
                 {(() => {
-                  const userCode = userProfile?.referralCode || ("SYM-" + user.uid.substring(0, 8).toUpperCase());
+                  const fallbackSuffix = (user?.uid ? user.uid.substring(0, 8) : "MEMBER").toUpperCase();
+                  const userCode = userProfile?.referralCode || ("SYM-" + fallbackSuffix);
                   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://symbolic.store";
                   const shareableUrl = `${baseUrl}?ref=${userCode}`;
 
@@ -503,8 +648,8 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                 {(() => {
                   const currentOrders = userProfile?.referralsCount ?? 0;
                   const currentVisits = userProfile?.referralVisitsCount ?? 0;
-                  const targetOrders = referralSettings?.minimumReferrals ?? 2;
-                  const targetVisits = referralSettings?.minimumVisits ?? 35;
+                  const targetOrders = Math.max(1, referralSettings?.minimumReferrals ?? 2);
+                  const targetVisits = Math.max(1, referralSettings?.minimumVisits ?? 35);
                   const rewardPercent = referralSettings?.referrerRewardPercentage ?? 20;
                   const friendDiscount = referralSettings ? getFriendDiscountPercentage(referralSettings) : 10;
 
@@ -572,7 +717,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                           <p className="text-[10px] text-brand-text/75 font-sans leading-snug">
                             {currentOrders >= targetOrders 
                               ? "Goal achieved! Your referral orders qualify you for reward."
-                              : `Need ${targetOrders - currentOrders} more friend checkout order${targetOrders - currentOrders > 1 ? "s" : ""}.`}
+                              : `Need ${Math.max(1, targetOrders - currentOrders)} more friend checkout order${(targetOrders - currentOrders) > 1 ? "s" : ""}.`}
                           </p>
                         </div>
 
@@ -610,7 +755,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                           <p className="text-[10px] text-brand-text/75 font-sans leading-snug">
                             {currentVisits >= targetVisits
                               ? "Goal achieved! Your referral link traffic qualifies you for reward."
-                              : `Need ${targetVisits - currentVisits} more website visitor${targetVisits - currentVisits > 1 ? "s" : ""}.`}
+                              : `Need ${Math.max(1, targetVisits - currentVisits)} more website visitor${(targetVisits - currentVisits) > 1 ? "s" : ""}.`}
                           </p>
                         </div>
                       </div>

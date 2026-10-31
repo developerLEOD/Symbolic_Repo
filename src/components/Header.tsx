@@ -447,7 +447,7 @@ export default function Header({
               <>
                 <span className="w-2 h-2 rounded-none bg-green-500 ring-2 ring-brand-text/30 animate-pulse shrink-0"></span>
                 <span className="max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline shrink-0">
-                  {userProfile?.displayName ? userProfile.displayName.split(" ")[0] : (user.email?.split("@")[0] || "STATION")}
+                  {userProfile?.displayName ? String(userProfile.displayName).trim().split(" ")[0] : (user?.email ? user.email.split("@")[0] : "STATION")}
                 </span>
                 <span className="sm:hidden shrink-0 text-[8.5px]">ID</span>
               </>

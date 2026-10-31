@@ -51,15 +51,17 @@ export function getFriendDiscountPercentage(settings: ReferralSettings): number 
  * OR (referralVisitsCount >= minimumVisits)
  */
 export function isReferrerRewardUnlocked(
-  referralsCount: number,
-  referralVisitsCount: number,
-  settings: ReferralSettings
+  referralsCount: number = 0,
+  referralVisitsCount: number = 0,
+  settings?: ReferralSettings | null
 ): { unlocked: boolean; reason?: "orders" | "visits"; progressText: string } {
-  const minOrders = settings.minimumReferrals || 2;
-  const minVisits = settings.minimumVisits || 35;
+  const safeCount = typeof referralsCount === "number" && !isNaN(referralsCount) ? Math.max(0, referralsCount) : 0;
+  const safeVisits = typeof referralVisitsCount === "number" && !isNaN(referralVisitsCount) ? Math.max(0, referralVisitsCount) : 0;
+  const minOrders = settings?.minimumReferrals || DEFAULT_REFERRAL_SETTINGS.minimumReferrals || 2;
+  const minVisits = settings?.minimumVisits || DEFAULT_REFERRAL_SETTINGS.minimumVisits || 35;
 
-  const ordersMet = referralsCount >= minOrders;
-  const visitsMet = referralVisitsCount >= minVisits;
+  const ordersMet = safeCount >= minOrders;
+  const visitsMet = safeVisits >= minVisits;
 
   if (ordersMet || visitsMet) {
     return {

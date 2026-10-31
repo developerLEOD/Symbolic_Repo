@@ -24,6 +24,7 @@ import OwnerProductManager from "./components/OwnerProductManager";
 import CheckoutModal from "./components/CheckoutModal";
 import AuthModal from "./components/AuthModal";
 import UserProfileModal from "./components/UserProfileModal";
+import ErrorBoundary from "./components/ErrorBoundary";
 import LoadingScreen from "./components/LoadingScreen";
 import ScrollToTop from "./components/ScrollToTop";
 import Breadcrumbs from "./components/Breadcrumbs";
@@ -36,7 +37,8 @@ import { fetchArtifacts, fetchSpecimens } from "./lib/artifactService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 import { soundManager } from "./lib/soundEffects";
 import { ArrowLeft } from "lucide-react";
-import { Artifact, Specimen } from "./types";
+import { Artifact, Specimen, ReferralSettings } from "./types";
+import ReferralNotification from "./components/ReferralNotification";
 
 // Wrapper for /artifacts and /artifacts/:category views
 function ArtifactsDirectoryView({
@@ -298,6 +300,7 @@ function StorefrontApp() {
     return live.find(p => p.productId === "SYM-01" || p.productId === "SYM-TSH-001" || p.sku === "SYM-TSH-001") || live[0] || null;
   });
   const [referralWelcomeBanner, setReferralWelcomeBanner] = useState<{ code: string; referrerName?: string } | null>(null);
+  const [referralSettings, setReferralSettings] = useState<ReferralSettings | null>(null);
   const [categories, setCategories] = useState<Category[]>([
     { id: "wear", name: "Wear", description: "Daily armor of modesty and dignified public posture", label: "WEAR", order: 1 },
     { id: "carry", name: "Carry", description: "Instruments of transit and stewardship", label: "CARRY", order: 2 },
@@ -345,6 +348,7 @@ function StorefrontApp() {
   // Track inbound visits via referral link (?ref=CODE or ?referral=CODE) and monitor referral status
   useEffect(() => {
     const unsubscribe = subscribeReferralSettings((settings) => {
+      setReferralSettings(settings);
       if (!settings.isEnabled) {
         setReferralWelcomeBanner(null);
       }
@@ -438,6 +442,17 @@ function StorefrontApp() {
     }
   };
 
+  const handleOpenReferral = () => {
+    if (user) {
+      setProfileInitialTab("referral");
+      setIsProfileOpen(true);
+    } else {
+      setAuthDefaultTab("signup");
+      setAuthNotice("SIGN UP TO UNLOCK YOUR AFFILIATION NETWORK // Share symbolic transmission codes and earn 20% discount privileges.");
+      setIsAuthOpen(true);
+    }
+  };
+
   if (isLoading) {
     return <LoadingScreen />;
   }
@@ -492,16 +507,7 @@ function StorefrontApp() {
             setIsAuthOpen(true);
           }
         }}
-        onReferralClick={() => {
-          if (user) {
-            setProfileInitialTab("referral");
-            setIsProfileOpen(true);
-          } else {
-            setAuthDefaultTab("signup");
-            setAuthNotice("SIGN UP TO UNLOCK YOUR AFFILIATION NETWORK // Share symbolic transmission codes and earn commission on every acquired artifact.");
-            setIsAuthOpen(true);
-          }
-        }}
+        onReferralClick={handleOpenReferral}
       />
 
       <div className="pt-16 sm:pt-20 relative z-10">
@@ -772,11 +778,20 @@ function StorefrontApp() {
       />
 
       {/* User Profile & Past Orders Modal */}
-      <UserProfileModal
-        isOpen={isProfileOpen}
-        onClose={() => setIsProfileOpen(false)}
-        onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
-        initialTab={profileInitialTab}
+      <ErrorBoundary onReset={() => setIsProfileOpen(false)}>
+        <UserProfileModal
+          isOpen={isProfileOpen}
+          onClose={() => setIsProfileOpen(false)}
+          onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
+          initialTab={profileInitialTab}
+        />
+      </ErrorBoundary>
+
+      {/* Floating Refer A Friend Notification (Shown when homepage is opened in a new tab) */}
+      <ReferralNotification
+        settings={referralSettings}
+        onOpenReferral={handleOpenReferral}
+        isHomepage={location.pathname === "/"}
       />
 
       {/* Owner Product Manager Studio */}
@@ -803,8 +818,10 @@ function StorefrontApp() {
 
 export default function App() {
   return (
-    <AuthProvider>
-      <StorefrontApp />
-    </AuthProvider>
+    <ErrorBoundary>
+      <AuthProvider>
+        <StorefrontApp />
+      </AuthProvider>
+    </ErrorBoundary>
   );
 }

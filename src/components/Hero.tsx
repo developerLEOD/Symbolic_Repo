@@ -74,7 +74,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
       y: 0,
       transition: {
         duration: 0.6,
-        ease: [0.16, 1, 0.3, 1],
+        ease: [0.16, 1, 0.3, 1] as const,
       },
     },
   };
@@ -86,7 +86,7 @@ export default function Hero({ onExplore, onWhy }: HeroProps) {
       opacity: 1,
       transition: {
         duration: 0.75,
-        ease: [0.16, 1, 0.3, 1],
+        ease: [0.16, 1, 0.3, 1] as const,
       },
     },
   };
