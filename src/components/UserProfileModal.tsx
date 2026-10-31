@@ -576,7 +576,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                     REFER A FRIEND!
                   </div>
                   <p className="text-[11px] text-brand-text/80 font-sans leading-relaxed">
-                    Share your personal referral link or code. Unlock <span className="font-bold text-[#ff5500]">{referralSettings?.referrerRewardPercentage ?? 20}% OFF</span> your next purchase when <span className="font-bold text-brand-text font-mono underline decoration-[#ff5500] decoration-2">{referralSettings?.minimumReferrals ?? 2} friends</span> place an order <span className="font-bold text-[#ff5500]">OR</span> when <span className="font-bold text-brand-text font-mono underline decoration-[#ff5500] decoration-2">{referralSettings?.minimumVisits ?? 35} unique visitors</span> browse the website through your link! Referred friends also get <span className="font-bold text-[#ff5500] font-mono">{referralSettings ? getFriendDiscountPercentage(referralSettings) : 10}% OFF</span> immediately.
+                    Share your personal referral link or code. Unlock <span className="font-bold text-[#ff5500]">{referralSettings?.referrerRewardPercentage ?? 20}% OFF</span> your next purchase when <span className="font-bold text-brand-text font-mono underline decoration-[#ff5500] decoration-2">{referralSettings?.minimumReferrals ?? 2} friends</span> place an order <span className="font-bold text-[#ff5500]">OR</span> when <span className="font-bold text-brand-text font-mono underline decoration-[#ff5500] decoration-2">{referralSettings?.minimumVisits ?? 35} unique visitors</span> browse the studio through your link! Referred friends also get <span className="font-bold text-[#ff5500] font-mono">{referralSettings ? getFriendDiscountPercentage(referralSettings) : 10}% OFF</span> immediately.
                   </p>
                 </div>
 
@@ -733,7 +733,7 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
                         }`}>
                           <div>
                             <div className="flex items-center justify-between text-[9px] font-mono font-black uppercase text-brand-text/70 mb-1">
-                              <span>GOAL B: WEBSITE VISITS</span>
+                              <span>GOAL B: STUDIO VISITS</span>
                               <span className={currentVisits >= targetVisits ? "text-emerald-700 font-bold" : ""}>
                                 {currentVisits >= targetVisits ? "✓ COMPLETED" : "IN PROGRESS"}
                               </span>

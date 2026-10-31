@@ -423,7 +423,7 @@ export default function OwnerReferralManager({ onNotify }: OwnerReferralManagerP
                 <div className="flex justify-between items-baseline">
                   <label className="text-xs font-black uppercase tracking-wider flex items-center gap-1.5">
                     <Globe size={13} className="text-brand-accent" />
-                    <span>Goal B: Minimum Website Unique Visits</span>
+                    <span>Goal B: Minimum Studio Unique Visits</span>
                   </label>
                   <span className="text-xs font-black text-brand-accent">{settings.minimumVisits ?? 35} VISIT(S)</span>
                 </div>

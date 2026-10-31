@@ -27,7 +27,7 @@ export const DEFAULT_REFERRAL_SETTINGS: ReferralSettings = {
   referrerRewardPercentage: 20, // 20% discount for referrer once threshold is reached
   discountPercentage: 10, // Friends get half the referrer reward (10% OFF)!
   minimumReferrals: 2, // Condition A: X friend orders completed (e.g. 2 orders)
-  minimumVisits: 35, // Condition B: Y unique website visits (e.g. 30 to 40 visits)
+  minimumVisits: 35, // Condition B: Y unique studio visits (e.g. 30 to 40 visits)
   minimumOrderAmount: 1000, // min Rs. 1,000 subtotal to qualify
   maxDiscountCap: 3000, // max Rs. 3,000 discount cap
   referralCodePrefix: "SYM",

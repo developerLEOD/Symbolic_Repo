@@ -1115,7 +1115,7 @@ export default function CheckoutModal({ isOpen, onClose, items, onClearCart, onO
                             )}
 
                             <p className="text-[9px] text-brand-text/70 font-sans leading-relaxed">
-                              Friends receive {getFriendDiscountPercentage(referralSettings)}% OFF immediately. Referrers unlock {referralSettings.referrerRewardPercentage}% OFF when they reach EITHER {referralSettings.minimumReferrals} friend orders OR {referralSettings.minimumVisits ?? 35} website visits!
+                              Friends receive {getFriendDiscountPercentage(referralSettings)}% OFF immediately. Referrers unlock {referralSettings.referrerRewardPercentage}% OFF when they reach EITHER {referralSettings.minimumReferrals} friend orders OR {referralSettings.minimumVisits ?? 35} studio visits!
                             </p>
                           </div>
                         )}
