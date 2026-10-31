@@ -27,9 +27,9 @@ export default function ReferralNotification({
       return;
     }
 
-    // Check if dismissed in this specific browser tab session
-    const isDismissedInThisTab = typeof window !== "undefined" && sessionStorage.getItem(STORAGE_KEY) === "true";
-    if (isDismissedInThisTab) {
+    // Check if already shown or dismissed in this specific browser tab session
+    const hasShownInThisTab = typeof window !== "undefined" && sessionStorage.getItem(STORAGE_KEY) === "true";
+    if (hasShownInThisTab) {
       setIsVisible(false);
       return;
     }
@@ -37,6 +37,11 @@ export default function ReferralNotification({
     // Smooth delay before popping in on the homepage in a new tab
     const timer = setTimeout(() => {
       setIsVisible(true);
+      if (typeof window !== "undefined") {
+        try {
+          sessionStorage.setItem(STORAGE_KEY, "true");
+        } catch {}
+      }
       try {
         soundManager.playToggle(0.04);
       } catch {
