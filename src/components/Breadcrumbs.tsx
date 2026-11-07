@@ -277,6 +277,21 @@ export default function Breadcrumbs({
     }, 400);
   };
 
+  const [isScrolledPastHero, setIsScrolledPastHero] = useState(false);
+
+  useEffect(() => {
+    const handleScroll = () => {
+      const threshold = window.innerHeight * 0.65;
+      setIsScrolledPastHero(window.scrollY > threshold);
+    };
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const isHome = pathname === "/";
+  const shouldHideInHero = isHome && !isScrolledPastHero;
+
   return (
     <nav
       id="corner-square-nav-trail"
@@ -284,7 +299,9 @@ export default function Breadcrumbs({
       ref={containerRef}
       onMouseEnter={handleMouseEnter}
       onMouseLeave={handleMouseLeave}
-      className={`fixed left-0 bottom-0 z-40 font-mono select-none ${className}`}
+      className={`fixed left-0 bottom-0 z-40 font-mono select-none transition-all duration-300 ease-out ${
+        shouldHideInHero ? "opacity-0 translate-y-8 pointer-events-none scale-90" : "opacity-100 translate-y-0 pointer-events-auto scale-100"
+      } ${className}`}
     >
       <div className="relative">
         {/* Equal 1:1 Square Brutalist Block Anchored Right in the Extreme Bottom-Left Corner */}

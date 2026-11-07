@@ -222,7 +222,7 @@ function LayerGraphicItem({
         finalStickToBottom
           ? {
               left: `${finalPosX}%`,
-              bottom: 0,
+              bottom: isMobile ? "16px" : "0",
               top: "auto",
               transform: `translateX(-50%) rotate(${finalRotation}deg)`,
               transformOrigin: "bottom center",
@@ -654,8 +654,8 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
             : "bg-transparent border-0 shadow-none"
         } ${config.canvasOverflowVisible !== false ? "overflow-visible" : "overflow-hidden"}`}
         style={{
-          minHeight: "100dvh",
-          height: "100dvh",
+          minHeight: isMobile ? "100svh" : "100dvh",
+          height: isMobile ? "100svh" : "100dvh",
           ...(config.showCanvasBoundingBox !== false ? {
             backgroundImage: "radial-gradient(#050505 1px, transparent 1px)",
             backgroundSize: "28px 28px",
