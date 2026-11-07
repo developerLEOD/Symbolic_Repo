@@ -1,409 +1,813 @@
 import React, { useState, useEffect, useRef } from "react";
-import { motion } from "motion/react";
-import { 
-  ShieldCheck, 
-  Activity, 
-  Layers, 
-  Fingerprint, 
-  Sparkles,
-  ArrowUpRight,
-  MoveRight
-} from "lucide-react";
-import LiquidCarveButton from "./LiquidCarveButton";
+import { useNavigate } from "react-router-dom";
+import { motion, AnimatePresence } from "motion/react";
+import { Sliders, Sparkles, Move, Compass, ChevronDown, ArrowRight, BookOpen } from "lucide-react";
+import HeroArchived, { HeroProps as ArchivedHeroProps, CountUpNumber } from "./HeroArchived";
+import { CustomHeroConfig, HeroLayerConfig, HeroTransitionDirection, HeroTransitionSpeed, HeroHoverEffect } from "../types";
+import { DEFAULT_HERO_CONFIG, subscribeHeroConfig, getCachedHeroConfig, calculateAdaptiveStageHeight } from "../lib/heroService";
+import { useAuth } from "../lib/AuthContext";
 import { soundManager } from "../lib/soundEffects";
 
-interface HeroProps {
-  onExplore: () => void;
-  onWhy: () => void;
+// Re-export all archived items and components for backend preservation
+export { HeroArchived, CountUpNumber };
+
+export interface HeroProps {
+  onExplore?: () => void;
+  onAbout?: () => void;
+  onWhy?: () => void;
   onProductClick?: (p: any) => void;
+  onOpenOwnerManager?: () => void;
 }
 
-// Animated count-up component for live telemetry numbers
-function CountUpNumber({ end, duration = 1.2, suffix = "", delay = 0.2 }: { end: number; duration?: number; suffix?: string; delay?: number }) {
-  const [count, setCount] = useState(0);
+/**
+ * Calculates initial entrance position for the avatar graphic
+ * based on the admin's chosen transition direction.
+ */
+function getEntranceInitial(dir: HeroTransitionDirection) {
+  switch (dir) {
+    case "bottom":
+      return { y: "40vh", opacity: 0, scale: 0.96 };
+    case "top":
+      return { y: "-40vh", opacity: 0, scale: 0.96 };
+    case "left":
+      return { x: "-40vw", opacity: 0, scale: 0.96 };
+    case "right":
+      return { x: "40vw", opacity: 0, scale: 0.96 };
+    case "scale":
+      return { scale: 0.8, opacity: 0 };
+    case "fade":
+    default:
+      return { opacity: 0, scale: 0.98 };
+  }
+}
 
-  useEffect(() => {
-    let startTimestamp: number | null = null;
-    let timer: NodeJS.Timeout;
+function getExitInitial(dir: HeroTransitionDirection) {
+  switch (dir) {
+    case "bottom":
+      return { y: "40vh", opacity: 0, scale: 0.96 };
+    case "top":
+      return { y: "-40vh", opacity: 0, scale: 0.96 };
+    case "left":
+      return { x: "40vw", opacity: 0, scale: 0.96 };
+    case "right":
+      return { x: "-40vw", opacity: 0, scale: 0.96 };
+    case "scale":
+      return { scale: 0.8, opacity: 0 };
+    case "fade":
+    default:
+      return { opacity: 0, scale: 0.98 };
+  }
+}
 
-    timer = setTimeout(() => {
-      const step = (timestamp: number) => {
-        if (!startTimestamp) startTimestamp = timestamp;
-        const progress = Math.min((timestamp - startTimestamp) / (duration * 1000), 1);
-        const easeOutQuad = 1 - (1 - progress) * (1 - progress);
-        setCount(Math.floor(easeOutQuad * end));
-        if (progress < 1) {
-          window.requestAnimationFrame(step);
-        } else {
-          setCount(end);
-        }
+function getSlideshowTransitionSettings(mode?: "fade" | "slide-horizontal" | "slide-vertical" | "zoom") {
+  switch (mode) {
+    case "slide-horizontal":
+      return {
+        initial: { x: "25vw", opacity: 0, scale: 0.98 },
+        exit: { x: "-25vw", opacity: 0, scale: 0.98 },
+        transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
       };
-      window.requestAnimationFrame(step);
-    }, delay * 1000);
+    case "slide-vertical":
+      return {
+        initial: { y: "25vh", opacity: 0, scale: 0.98 },
+        exit: { y: "-25vh", opacity: 0, scale: 0.98 },
+        transition: { duration: 0.8, ease: [0.16, 1, 0.3, 1] as const },
+      };
+    case "zoom":
+      return {
+        initial: { scale: 0.88, opacity: 0 },
+        exit: { scale: 1.08, opacity: 0 },
+        transition: { duration: 0.75, ease: [0.16, 1, 0.3, 1] as const },
+      };
+    case "fade":
+    default:
+      return {
+        initial: { opacity: 0, scale: 0.98 },
+        exit: { opacity: 0, scale: 0.98 },
+        transition: { duration: 0.65, ease: "easeInOut" as const },
+      };
+  }
+}
 
-    return () => clearTimeout(timer);
-  }, [end, duration, delay]);
+/**
+ * Calculates transition timing and easing based on the selected speed mode
+ */
+function getTransitionSettings(speed: HeroTransitionSpeed, delay: number = 0.15) {
+  switch (speed) {
+    case "snappy":
+      return { duration: 0.5, ease: [0.16, 1, 0.3, 1] as const, delay };
+    case "smooth":
+      return { duration: 0.95, ease: [0.25, 0.1, 0.25, 1] as const, delay };
+    case "dramatic":
+      return { duration: 1.45, ease: [0.16, 1, 0.3, 1] as const, delay };
+    case "spring":
+    default:
+      return { type: "spring" as const, stiffness: 300, damping: 22, delay };
+  }
+}
 
+/**
+ * Renders the backdrop layer (full width behind everything)
+ */
+function renderBackdrop(backdrop?: CustomHeroConfig["backdrop"]) {
+  if (!backdrop || !backdrop.isEnabled || !backdrop.imageUrl) return null;
   return (
-    <span>
-      {count}
-      {suffix}
-    </span>
+    <div 
+      className="absolute inset-0 z-0 pointer-events-none overflow-hidden"
+      style={{ opacity: backdrop.opacity ?? 1 }}
+    >
+      <img 
+        src={backdrop.imageUrl} 
+        alt="Hero Backdrop" 
+        className="w-full h-full object-cover select-none"
+        referrerPolicy="no-referrer"
+      />
+    </div>
   );
 }
 
-export default function Hero({ onExplore, onWhy }: HeroProps) {
-  const [activeStep, setActiveStep] = useState<string | null>(null);
-
-  // Container animation variants
-  const containerVariants = {
-    hidden: { opacity: 0 },
-    visible: {
-      opacity: 1,
-      transition: {
-        staggerChildren: 0.08,
-        delayChildren: 0.04,
-      },
-    },
+/**
+ * Layer Graphic Renderer with slideshow animation support and responsive mobile transforms
+ */
+interface LayerGraphicSlideProps {
+  item: {
+    id: string;
+    avatarUrl: string;
+    avatarAlt?: string;
+    posX: number;
+    posY: number;
+    size: number;
+    rotation?: number;
+    opacity?: number;
+    transitionDirection?: HeroTransitionDirection;
+    transitionSpeed?: HeroTransitionSpeed;
+    transitionDelay?: number;
+    hoverEffect?: HeroHoverEffect;
+    disableIdleAnimation?: boolean;
+    shadow?: boolean;
+    border?: boolean;
+    captionTitle?: string;
+    captionSubtitle?: string;
+    deviceTarget?: "both" | "desktop" | "mobile";
+    mobileEnabled?: boolean;
+    mobilePosX?: number;
+    mobilePosY?: number;
+    mobileSize?: number;
+    mobileRotation?: number;
+    mobileStickToBottom?: boolean;
   };
+  zIndex: number;
+  showCoordinates?: boolean;
+  elementRef?: React.Ref<HTMLDivElement>;
+  isSlideshow?: boolean;
+  slideshowTransition?: "fade" | "slide-horizontal" | "slide-vertical" | "zoom";
+  stickToBottom?: boolean;
+  isMobile?: boolean;
+}
 
-  const itemSlideUp = {
-    hidden: { opacity: 0, y: 22 },
-    visible: {
-      opacity: 1,
-      y: 0,
-      transition: {
-        duration: 0.6,
-        ease: [0.16, 1, 0.3, 1] as const,
-      },
-    },
-  };
+function LayerGraphicItem({ 
+  item, 
+  zIndex, 
+  showCoordinates, 
+  elementRef, 
+  isSlideshow, 
+  slideshowTransition, 
+  stickToBottom,
+  isMobile 
+}: LayerGraphicSlideProps) {
+  // Check device target visibility
+  const target = item.deviceTarget || "both";
+  if (target === "desktop" && isMobile) return null;
+  if (target === "mobile" && !isMobile) return null;
 
-  const lineMaskVariant = {
-    hidden: { y: "110%", opacity: 0 },
-    visible: {
-      y: "0%",
-      opacity: 1,
-      transition: {
-        duration: 0.75,
-        ease: [0.16, 1, 0.3, 1] as const,
-      },
-    },
-  };
+  // Resolve responsive coordinates & size
+  const useMobile = Boolean(isMobile && item.mobileEnabled);
+  const finalPosX = useMobile ? (item.mobilePosX ?? item.posX) : item.posX;
+  const finalPosY = useMobile ? (item.mobilePosY ?? item.posY) : item.posY;
+  const finalSize = useMobile ? (item.mobileSize ?? item.size) : item.size;
+  const finalRotation = useMobile ? (item.mobileRotation ?? item.rotation ?? 0) : (item.rotation ?? 0);
+  const finalStickToBottom = useMobile 
+    ? (item.mobileStickToBottom ?? stickToBottom) 
+    : stickToBottom;
 
-  const coreJourneySteps = [
-    { step: "01", name: "DISCOVER", detail: "Curated collection of symbolic artifacts" },
-    { step: "02", name: "EXAMINE", detail: "Multi-perspective structural documentation" },
-    { step: "03", name: "DECIPHER", detail: "The symbol, inscription & ethos" },
-    { step: "04", name: "EMBODY", detail: "Carry the conviction into the world" }
-  ];
+  const slideSettings = isSlideshow ? getSlideshowTransitionSettings(slideshowTransition) : null;
+  
+  const initialAnim = slideSettings 
+    ? slideSettings.initial 
+    : getEntranceInitial(item.transitionDirection || "bottom");
+
+  const exitAnim = slideSettings 
+    ? slideSettings.exit 
+    : getExitInitial(item.transitionDirection || "bottom");
+
+  const animTransition = slideSettings 
+    ? slideSettings.transition 
+    : getTransitionSettings(item.transitionSpeed || "spring", item.transitionDelay || 0.15);
 
   return (
-    <section className="relative pt-10 sm:pt-14 pb-20 sm:pb-24 px-6 sm:px-10 max-w-7xl mx-auto border-b-2 border-brand-text overflow-hidden">
-      {/* Main Hero Split Grid */}
-      <div className="relative z-10 grid grid-cols-1 lg:grid-cols-12 gap-10 lg:gap-12 items-start">
-        {/* Left Core Display Section */}
-        <motion.div
-          variants={containerVariants}
-          initial="hidden"
-          animate="visible"
-          className="lg:col-span-7 space-y-7"
+    <motion.div
+      ref={elementRef}
+      key={item.id}
+      initial={initialAnim}
+      animate={{
+        x: 0,
+        y: 0,
+        scale: 1,
+        opacity: item.opacity ?? 1,
+      }}
+      exit={exitAnim}
+      transition={animTransition}
+      className="absolute flex flex-col items-center select-none"
+      style={
+        finalStickToBottom
+          ? {
+              left: `${finalPosX}%`,
+              bottom: 0,
+              top: "auto",
+              transform: `translateX(-50%) rotate(${finalRotation}deg)`,
+              transformOrigin: "bottom center",
+              zIndex: zIndex,
+            }
+          : {
+              left: `${finalPosX}%`,
+              top: `${finalPosY}%`,
+              transform: `translate(-50%, -50%) rotate(${finalRotation}deg)`,
+              transformOrigin: "center",
+              zIndex: zIndex,
+            }
+      }
+    >
+      <motion.div
+        animate={
+          !item.disableIdleAnimation && item.hoverEffect === "float"
+            ? { y: [0, -10, 0] }
+            : !item.disableIdleAnimation && item.hoverEffect === "pulse"
+            ? { scale: [1, 1.025, 1] }
+            : {}
+        }
+        transition={{
+          repeat: !item.disableIdleAnimation ? Infinity : 0,
+          duration: item.hoverEffect === "float" ? 3.5 : 2.5,
+          ease: "easeInOut",
+        }}
+        whileHover={
+          item.hoverEffect === "tilt"
+            ? { scale: 1.04, rotate: finalRotation + 5 }
+            : { scale: 1.02 }
+        }
+        onMouseEnter={() => soundManager.playHover(0.04)}
+        className="flex flex-col items-center"
+      >
+        <div
+          className={`relative select-none transition-all duration-300 ${
+            item.border ? "border-3 sm:border-4 border-brand-text bg-brand-surface" : "bg-transparent border-0"
+          } ${
+            item.shadow ? "shadow-[8px_8px_0px_#050505] hover:shadow-[12px_12px_0px_#050505]" : "shadow-none"
+          }`}
+          style={{
+            width: item.border || item.shadow ? `clamp(30px, ${finalSize}px, 92vw)` : "auto",
+            height: item.border || item.shadow ? `clamp(30px, ${finalSize}px, 92vw)` : "auto",
+            overflow: "visible",
+          }}
         >
-          {/* Proposition Tag with Kinetic Stamp Pulse */}
-          <motion.div variants={itemSlideUp} className="flex flex-wrap items-center gap-2.5">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-brand-text text-brand-bg font-mono text-[10px] font-black uppercase tracking-widest rounded-none border-2 border-brand-text shadow-[2px_2px_0px_#ff4500]">
-              <span className="inline-block w-2 h-2 bg-[#ff4500] animate-pulse"></span>
-              <span>POSSESSION STUDIO</span>
-              <span className="text-[#ff4500]">//</span>
-              <span className="text-brand-bg/80">PHYSICAL OBJECTS &amp; ARTIFACTS</span>
-            </div>
-          </motion.div>
+          <img 
+            src={item.avatarUrl} 
+            alt={item.avatarAlt || "SYMBOLIC Hero Graphic"} 
+            referrerPolicy="no-referrer"
+            style={{
+              width: `clamp(30px, ${finalSize}px, 92vw)`,
+              height: "auto",
+            }}
+            className={`${item.border || item.shadow ? "w-full h-full object-cover" : "object-contain"} select-none pointer-events-none drop-shadow-lg`}
+          />
 
-          {/* Core Hierarchy: BE SYMBOLIC + Clear Explanation */}
-          <div className="space-y-4">
-            {/* Primary Headline: BE SYMBOLIC with Architectural Sculpted Monument Silhouette */}
-            <motion.div
-              variants={itemSlideUp}
-              className="inline-block"
-            >
-              <motion.span
-                initial={{ scale: 0.88, rotate: -2.5, opacity: 0 }}
-                animate={{ scale: 1, rotate: 0, opacity: 1 }}
-                transition={{
-                  type: "spring",
-                  stiffness: 420,
-                  damping: 18,
-                  delay: 0.12,
-                }}
-                whileHover={{
-                  scale: 1.025,
-                  rotate: -0.6,
-                  transition: { type: "spring", stiffness: 450, damping: 14 },
-                }}
-                className="inline-block bg-brand-accent text-white px-6 sm:px-8 pt-4 pb-3 text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tighter leading-[0.88] rounded-none border-[3px] border-brand-text shadow-[8px_8px_0px_#050505] cursor-default select-none transition-all hover:shadow-[12px_12px_0px_#050505]"
-              >
-                BE SYMBOLIC.
-              </motion.span>
-            </motion.div>
-
-            {/* Clear Sub-headline: Sculptural organic card */}
-            <motion.div 
-              variants={itemSlideUp} 
-              className="bg-brand-surface/90 backdrop-blur-md border-[2.5px] border-brand-text p-5 sm:p-6 rounded-none shadow-[5px_5px_0px_#050505] relative"
-            >
-              <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-              <span className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-              <span className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-              <span className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-              <div className="overflow-hidden">
-                <motion.h2
-                  variants={lineMaskVariant}
-                  className="text-xl sm:text-3xl lg:text-4xl font-mono font-black uppercase tracking-tight text-brand-text leading-[1.12]"
-                >
-                  Objects that carry what you believe, value, and choose to represent.
-                </motion.h2>
+          {showCoordinates && (
+            <>
+              <div className="absolute top-1 left-1.5 font-mono text-[7px] sm:text-[8px] font-black text-black/70 bg-white/75 px-1 pointer-events-none">
+                +{finalPosX}X
               </div>
-            </motion.div>
-          </div>
+              <div className="absolute bottom-1 right-1.5 font-mono text-[7px] sm:text-[8px] font-black text-black/70 bg-white/75 px-1 pointer-events-none">
+                +{finalPosY}Y
+              </div>
+            </>
+          )}
+        </div>
 
-          {/* Clear Product Statement: What SYMBOLIC Muslims creates */}
-          <motion.div 
-            variants={itemSlideUp} 
-            className="relative max-w-2xl bg-brand-surface/90 backdrop-blur-md border-2 border-brand-text pl-5 pr-4 py-3.5 rounded-none shadow-[4px_4px_0px_#050505] overflow-hidden"
-          >
-            <motion.div
-              initial={{ scaleY: 0 }}
-              animate={{ scaleY: 1 }}
-              transition={{ duration: 0.7, delay: 0.35, ease: [0.16, 1, 0.3, 1] }}
-              className="absolute left-0 top-0 bottom-0 w-2 bg-[#ff4500] origin-top"
+        {(item.captionTitle || item.captionSubtitle) && (
+          <div className="mt-3 text-center pointer-events-none select-none max-w-xs space-y-1">
+            {item.captionTitle && (
+              <div className="inline-block px-3 py-1 bg-brand-text text-brand-bg font-mono text-[10px] sm:text-[11px] font-black uppercase tracking-wider border-2 border-brand-text shadow-[2.5px_2.5px_0px_#ff4500]">
+                {item.captionTitle}
+              </div>
+            )}
+            {item.captionSubtitle && (
+              <div className="font-mono text-[8.5px] sm:text-[9.5px] font-bold uppercase tracking-widest text-brand-text/75 bg-brand-surface/90 px-2.5 py-0.5 border border-brand-text/40 shadow-sm">
+                {item.captionSubtitle}
+              </div>
+            )}
+          </div>
+        )}
+      </motion.div>
+    </motion.div>
+  );
+}
+
+/**
+ * Renders an individual hero layer (Background, Middle, or Foreground)
+ * Automatically supports Slideshow Cycling when layer.slideshowEnabled is true
+ * and respects deviceTarget (PC/Mobile/Both) and separate mobile transforms.
+ */
+function SingleLayerRenderer({
+  layer, 
+  zIndex = 20, 
+  showCoordinates,
+  elementRef,
+  isMobile
+}: {
+  layer?: HeroLayerConfig;
+  zIndex?: number;
+  showCoordinates?: boolean;
+  elementRef?: React.Ref<HTMLDivElement>;
+  isMobile?: boolean;
+}) {
+  const [slideIndex, setSlideIndex] = useState(0);
+
+  // Gather all graphics available in this layer
+  const allGraphics: Array<{
+    id: string;
+    avatarUrl: string;
+    avatarAlt?: string;
+    posX: number;
+    posY: number;
+    size: number;
+    rotation?: number;
+    opacity?: number;
+    transitionDirection?: HeroTransitionDirection;
+    transitionSpeed?: HeroTransitionSpeed;
+    transitionDelay?: number;
+    hoverEffect?: HeroHoverEffect;
+    disableIdleAnimation?: boolean;
+    shadow?: boolean;
+    border?: boolean;
+    captionTitle?: string;
+    captionSubtitle?: string;
+    deviceTarget?: "both" | "desktop" | "mobile";
+    mobileEnabled?: boolean;
+    mobilePosX?: number;
+    mobilePosY?: number;
+    mobileSize?: number;
+    mobileRotation?: number;
+    mobileStickToBottom?: boolean;
+  }> = [];
+
+  if (layer?.avatarUrl) {
+    allGraphics.push({
+      id: `${layer.id}-main`,
+      avatarUrl: layer.avatarUrl,
+      avatarAlt: layer.avatarAlt,
+      posX: layer.posX,
+      posY: layer.posY,
+      size: layer.size,
+      rotation: layer.rotation,
+      opacity: layer.opacity,
+      transitionDirection: layer.transitionDirection,
+      transitionSpeed: layer.transitionSpeed,
+      transitionDelay: layer.transitionDelay,
+      hoverEffect: layer.hoverEffect,
+      disableIdleAnimation: layer.disableIdleAnimation,
+      shadow: layer.shadow,
+      border: layer.border,
+      captionTitle: layer.captionTitle,
+      captionSubtitle: layer.captionSubtitle,
+      deviceTarget: layer.deviceTarget || "both",
+      mobileEnabled: layer.mobileEnabled,
+      mobilePosX: layer.mobilePosX,
+      mobilePosY: layer.mobilePosY,
+      mobileSize: layer.mobileSize,
+      mobileRotation: layer.mobileRotation,
+      mobileStickToBottom: layer.mobileStickToBottom,
+    });
+  }
+
+  if (layer?.graphicObjects && layer.graphicObjects.length > 0) {
+    layer.graphicObjects.forEach(g => {
+      allGraphics.push({
+        id: g.id,
+        avatarUrl: g.avatarUrl,
+        avatarAlt: g.avatarAlt,
+        posX: g.posX,
+        posY: g.posY,
+        size: g.size,
+        rotation: g.rotation,
+        opacity: g.opacity,
+        transitionDirection: g.transitionDirection,
+        transitionSpeed: g.transitionSpeed,
+        transitionDelay: g.transitionDelay,
+        hoverEffect: g.hoverEffect,
+        disableIdleAnimation: g.disableIdleAnimation,
+        shadow: g.shadow,
+        border: g.border,
+        captionTitle: g.captionTitle,
+        captionSubtitle: g.captionSubtitle,
+        deviceTarget: g.deviceTarget || "both",
+        mobileEnabled: g.mobileEnabled,
+        mobilePosX: g.mobilePosX,
+        mobilePosY: g.mobilePosY,
+        mobileSize: g.mobileSize,
+        mobileRotation: g.mobileRotation,
+        mobileStickToBottom: g.mobileStickToBottom,
+      });
+    });
+  }
+
+  // Filter graphics by screen visibility (desktop vs mobile)
+  const visibleGraphics = allGraphics.filter(g => {
+    const target = g.deviceTarget || "both";
+    if (target === "desktop" && isMobile) return false;
+    if (target === "mobile" && !isMobile) return false;
+    return true;
+  });
+
+  const isSlideshowActive = Boolean(layer?.slideshowEnabled !== false && visibleGraphics.length > 1);
+  const intervalSeconds = Math.max(1, layer?.slideshowInterval || 4);
+
+  const graphicsLenRef = useRef(visibleGraphics.length);
+  graphicsLenRef.current = visibleGraphics.length;
+
+  // Auto-cycle through visible graphics if slideshow is enabled
+  useEffect(() => {
+    if (!isSlideshowActive || graphicsLenRef.current <= 1) return;
+    const timer = setInterval(() => {
+      setSlideIndex((prev) => (prev + 1) % graphicsLenRef.current);
+    }, intervalSeconds * 1000);
+    return () => clearInterval(timer);
+  }, [isSlideshowActive, intervalSeconds]);
+
+  // Keep slideIndex within bounds
+  const safeSlideIndex = slideIndex % (visibleGraphics.length || 1);
+
+  // Filter text objects by screen visibility
+  const visibleTextObjects = (layer?.textObjects || []).filter(textObj => {
+    const target = textObj.deviceTarget || "both";
+    if (target === "desktop" && isMobile) return false;
+    if (target === "mobile" && !isMobile) return false;
+    return true;
+  });
+
+  const hasContent = visibleGraphics.length > 0 || visibleTextObjects.length > 0;
+  if (!layer || !layer.isEnabled || !hasContent) return null;
+
+  return (
+    <React.Fragment key={layer.id}>
+      {/* Graphic Elements: Either Slideshow Cycling or Static Array */}
+      {isSlideshowActive ? (
+        <>
+          <AnimatePresence mode="wait">
+            {visibleGraphics[safeSlideIndex] && (
+              <LayerGraphicItem
+                key={visibleGraphics[safeSlideIndex].id}
+                item={visibleGraphics[safeSlideIndex]}
+                zIndex={zIndex}
+                showCoordinates={showCoordinates}
+                elementRef={elementRef}
+                isSlideshow={true}
+                slideshowTransition={layer.slideshowTransition || "fade"}
+                stickToBottom={layer.stickToBottom ?? (layer.id === "mid")}
+                isMobile={isMobile}
+              />
+            )}
+          </AnimatePresence>
+
+          {/* Minimal Brutalist Slide Counter / Dots Indicator */}
+          <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30 pointer-events-auto">
+            {visibleGraphics.map((item, idx) => (
+              <button
+                key={item.id}
+                type="button"
+                onClick={() => setSlideIndex(idx)}
+                className={`transition-all cursor-pointer ${
+                  safeSlideIndex === idx
+                    ? "w-6 h-1.5 bg-brand-accent shadow-[1px_1px_0px_#050505]"
+                    : "w-2 h-1.5 bg-brand-text/30 hover:bg-brand-text/60"
+                }`}
+                title={`Slide ${idx + 1}`}
+              />
+            ))}
+          </div>
+        </>
+      ) : (
+        <>
+          {visibleGraphics.map((item, idx) => (
+            <LayerGraphicItem
+              key={item.id}
+              item={item}
+              zIndex={zIndex}
+              showCoordinates={showCoordinates}
+              elementRef={idx === 0 ? elementRef : undefined}
+              isSlideshow={false}
+              slideshowTransition={layer.slideshowTransition || "fade"}
+              stickToBottom={layer.stickToBottom ?? (layer.id === "mid")}
+              isMobile={isMobile}
             />
-            <div>
-              <p className="text-sm sm:text-base font-mono uppercase tracking-wide text-brand-text font-black leading-relaxed">
-                What you carry says something. Make it worth saying.
-              </p>
-            </div>
-          </motion.div>
+          ))}
+        </>
+      )}
 
-          {/* Interactive CTA Action Row */}
+      {/* Independent Text Objects with responsive mobile transforms */}
+      {visibleTextObjects.map(textObj => {
+        const useMobile = Boolean(isMobile && textObj.mobileEnabled);
+        const finalPosX = useMobile ? (textObj.mobilePosX ?? textObj.posX) : textObj.posX;
+        const finalPosY = useMobile ? (textObj.mobilePosY ?? textObj.posY) : textObj.posY;
+        const finalFontSize = useMobile ? (textObj.mobileFontSize ?? textObj.fontSize) : textObj.fontSize;
+        const finalRotation = useMobile ? (textObj.mobileRotation ?? textObj.rotation ?? 0) : (textObj.rotation ?? 0);
+        const finalLineHeight = useMobile ? (textObj.mobileLineHeight ?? textObj.lineHeight ?? 1.1) : (textObj.lineHeight ?? 1.1);
+        const finalLetterSpacing = useMobile ? (textObj.mobileLetterSpacing ?? textObj.letterSpacing ?? 0) : (textObj.letterSpacing ?? 0);
+
+        return (
           <motion.div
-            variants={itemSlideUp}
-            className="flex flex-col sm:flex-row items-stretch sm:items-center gap-4 pt-3"
+            key={textObj.id}
+            initial={getEntranceInitial(textObj.transitionDirection || "fade")}
+            animate={{
+              x: 0,
+              y: 0,
+              scale: 1,
+              opacity: textObj.opacity ?? 1,
+            }}
+            transition={getTransitionSettings(textObj.transitionSpeed || "smooth", textObj.transitionDelay || 0.2)}
+            className="absolute flex flex-col items-center select-none"
+            style={{
+              left: `${finalPosX}%`,
+              top: `${finalPosY}%`,
+              transform: `translate(-50%, -50%) rotate(${finalRotation}deg)`,
+              transformOrigin: "center",
+              zIndex: zIndex + 1,
+            }}
           >
-            <LiquidCarveButton
-              onClick={onExplore}
-              variant="primary"
-              shape="pill"
-              className="px-8 py-4 text-xs font-mono font-black group"
-            >
-              <span className="flex items-center gap-2">
-                ENTER THE COLLECTION
-                <MoveRight size={14} className="group-hover:translate-x-1 transition-transform" />
-              </span>
-            </LiquidCarveButton>
-
-            <LiquidCarveButton
-              onClick={onWhy}
-              variant="secondary"
-              shape="pill"
-              className="px-8 py-4 text-xs font-mono font-black group"
-            >
-              <span className="flex items-center gap-2">
-                MANIFESTO
-                <ArrowUpRight size={14} className="group-hover:translate-x-0.5 group-hover:-translate-y-0.5 transition-transform" />
-              </span>
-            </LiquidCarveButton>
-          </motion.div>
-        </motion.div>
-
-        {/* Right Prominent Official Emblem Display framed in Architectural Arch Niche with Astrolabe Seal */}
-        <div className="lg:col-span-5 flex flex-col items-center justify-start pt-6 lg:pt-10">
-          <div className="flex flex-col items-center justify-center text-center px-2 pb-2 sm:px-4 sm:pb-4 w-full relative">
-            {/* The Actual Official SYMBOLIC Logo Emblem - Framed in an Architectural Arch Portal (Mihrab Vitrine) */}
             <motion.div
-              initial={{ scale: 0.88, rotate: -2, opacity: 0 }}
-              animate={{ scale: 1, rotate: -2, opacity: 1 }}
+              animate={
+                !textObj.disableIdleAnimation && textObj.hoverEffect === "float"
+                  ? { y: [0, -8, 0] }
+                  : !textObj.disableIdleAnimation && textObj.hoverEffect === "pulse"
+                  ? { scale: [1, 1.05, 1] }
+                  : {}
+              }
               transition={{
-                type: "spring",
-                stiffness: 420,
-                damping: 18,
-                delay: 0.12,
+                repeat: !textObj.disableIdleAnimation ? Infinity : 0,
+                duration: textObj.hoverEffect === "float" ? 3.6 : 2.4,
+                ease: "easeInOut",
               }}
-              whileHover={{
-                scale: 1.03,
-                rotate: -5,
-                transition: { type: "spring", stiffness: 450, damping: 14 },
+              className="whitespace-pre-line font-mono pointer-events-auto cursor-default"
+              style={{
+                fontSize: `${finalFontSize || (isMobile ? 36 : 64)}px`,
+                color: textObj.color || "#050505",
+                textAlign: textObj.textAlign || "center",
+                lineHeight: finalLineHeight,
+                letterSpacing: `${finalLetterSpacing}px`,
+                fontWeight: textObj.fontWeight || 900,
+                textTransform: textObj.textTransform || "none",
+                fontStyle: textObj.italic ? "italic" : "normal",
               }}
-              onMouseEnter={() => soundManager.playHover(0.04)}
-              className="relative cursor-pointer select-none"
             >
-              {/* Architectural Frame */}
-              <div className="relative p-3 sm:p-4 rounded-none border-3 sm:border-4 border-brand-text bg-brand-surface shadow-[7px_7px_0px_#050505] hover:shadow-[11px_11px_0px_#050505] transition-all">
-                {/* Concentric Guide Line */}
-                <div className="rounded-none border-2 border-dashed border-brand-text/30 p-2 sm:p-3">
-                  <div
-                    data-specimen-preview="true"
-                    data-preview-canvas="true"
-                    className="w-44 h-44 sm:w-52 sm:h-52 md:w-56 md:h-56 lg:w-60 lg:h-60 rounded-none border-2 border-black overflow-hidden bg-brand-surface select-none shadow-[4px_4px_0px_#050505] relative"
-                  >
-                    <img 
-                      src="/Logo_NoName.jpg" 
-                      alt="SYMBOLIC Official Emblem" 
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-cover select-none pointer-events-none"
-                    />
-
-                    {/* Corner Architectural Coordinate Markers */}
-                    <div className="absolute top-1.5 left-2 font-mono text-[7px] font-black text-black/50 pointer-events-none">
-                      +01
-                    </div>
-                    <div className="absolute bottom-1.5 right-2 font-mono text-[7px] font-black text-black/50 pointer-events-none">
-                      SPEC:SYM-00
-                    </div>
-                  </div>
-                </div>
-              </div>
+              {textObj.text}
             </motion.div>
+          </motion.div>
+        );
+      })}
+    </React.Fragment>
+  );
+}
 
-            {/* Emblem Specifications Callout */}
-            <motion.div 
-              initial={{ opacity: 0, scale: 0.6, y: 25 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              transition={{ type: "spring", stiffness: 350, damping: 18, delay: 0.42 }}
-              className="mt-8 sm:mt-9 space-y-3 max-w-sm"
-            >
-              <div className="inline-flex items-center gap-2.5 px-5 py-2 bg-brand-text text-brand-bg font-mono text-xs sm:text-sm font-black uppercase tracking-widest rounded-none border-2 border-brand-text shadow-[4px_4px_0px_#ff4500]">
-                <span className="w-2 h-2 rounded-none bg-[#ff4500] inline-block animate-pulse"></span>
-                MONOLITHIC IDENTITY EMBLEM
-              </div>
-              <div className="font-mono text-xs sm:text-[12.5px] text-brand-text uppercase tracking-wider font-bold flex items-center justify-center gap-2 pt-0.5 bg-brand-surface/95 backdrop-blur-sm border-2 border-brand-text py-2 px-4 rounded-none shadow-[3px_3px_0px_#050505]">
-                <span>ORANGE: CONFORMITY</span>
-                <span className="text-[#ff4500] font-black">•</span>
-                <span className="text-[#ff4500] font-black">WHITE DISC: STAND APART</span>
-              </div>
-            </motion.div>
+export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpenOwnerManager }: HeroProps) {
+  const navigate = useNavigate();
+  const { isOwner, user } = useAuth();
+  const [config, setConfig] = useState<CustomHeroConfig>(() => getCachedHeroConfig());
+  
+  // Real-time responsive device detector (mobile vs desktop)
+  const [isMobile, setIsMobile] = useState<boolean>(() => {
+    if (typeof window === "undefined") return false;
+    return window.innerWidth < 768;
+  });
+
+  useEffect(() => {
+    const handleResize = () => {
+      setIsMobile(window.innerWidth < 768);
+    };
+    handleResize();
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
+
+  const heroStageRef = useRef<HTMLDivElement>(null);
+  const mainGraphicRef = useRef<HTMLDivElement>(null);
+  const [measuredLowestHeight, setMeasuredLowestHeight] = useState<number | null>(null);
+
+  // Subscribe to live Firestore hero configuration
+  useEffect(() => {
+    const unsubscribe = subscribeHeroConfig((updated) => {
+      setConfig(updated);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Measure DOM lowest pixel of the MAIN graphic
+  useEffect(() => {
+    const measureLowestPixel = () => {
+      if (!heroStageRef.current || !mainGraphicRef.current) return;
+      const stageTop = heroStageRef.current.getBoundingClientRect().top;
+      const graphicBottom = mainGraphicRef.current.getBoundingClientRect().bottom;
+      const measuredHeight = graphicBottom - stageTop + 0; // 0px bottom architectural padding
+      if (measuredHeight > 0) {
+        setMeasuredLowestHeight(Math.ceil(measuredHeight));
+      }
+    };
+
+    measureLowestPixel();
+    const timer = setTimeout(measureLowestPixel, 300);
+
+    window.addEventListener("resize", measureLowestPixel);
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener("resize", measureLowestPixel);
+    };
+  }, [config, isMobile]);
+
+  // Calculated adaptive stage height from formula (with mobile-awareness)
+  const calculatedHeight = calculateAdaptiveStageHeight(config, isMobile);
+  
+  // Final stage height adapts automatically to the lowest pixel of the MAIN graphic
+  const finalCanvasHeight = measuredLowestHeight || calculatedHeight;
+
+  return (
+    <section 
+      id="hero-canvas" 
+      aria-label="Symbolic Adaptive Hero Section"
+      className={`relative pt-0 px-0 w-full max-w-none border-b-2 border-brand-text select-none ${
+        config.canvasOverflowVisible !== false ? "overflow-visible" : "overflow-hidden"
+      }`}
+    >
+      {/* The Adaptive Hero Canvas Stage */}
+      <div 
+        ref={heroStageRef}
+        className={`relative w-full transition-all duration-300 ${
+          config.showCanvasBoundingBox !== false 
+            ? "bg-brand-surface/75 border-b-2 border-brand-text shadow-[0_4px_0px_#050505]" 
+            : "bg-transparent border-0 shadow-none"
+        } ${config.canvasOverflowVisible !== false ? "overflow-visible" : "overflow-hidden"}`}
+        style={{
+          minHeight: "100dvh",
+          height: "100dvh",
+          ...(config.showCanvasBoundingBox !== false ? {
+            backgroundImage: "radial-gradient(#050505 1px, transparent 1px)",
+            backgroundSize: "28px 28px",
+            backgroundPosition: "center center",
+          } : {})
+        }}
+      >
+        {/* Subtle Architectural Grid Coordinates & Origin Tags */}
+        {config.showCoordinates && (
+          <div className="absolute inset-0 pointer-events-none select-none z-10">
+            <span className="absolute top-2.5 left-3 font-mono text-[8.5px] sm:text-[9px] font-black tracking-widest text-brand-text/30">
+              + CANVAS_ORIGIN [0, 0]
+            </span>
+            <span className="absolute top-2.5 right-3 font-mono text-[8.5px] sm:text-[9px] font-black tracking-widest text-brand-text/30">
+              // STAGE: ACTIVE
+            </span>
+            <span className="absolute bottom-2.5 left-3 font-mono text-[8.5px] sm:text-[9px] font-black tracking-widest text-brand-text/30">
+              + [X:{config.posX}%, Y:{config.posY}%]
+            </span>
+            <span className="absolute bottom-2.5 right-3 font-mono text-[8.5px] sm:text-[9px] font-black tracking-widest text-brand-text/30">
+              SYMBOLIC // MONOLITH
+            </span>
+
+            {/* Center Reticle Guideline */}
+            <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 opacity-15 flex items-center justify-center">
+              <div className="w-full h-[1px] bg-brand-text" />
+              <div className="h-full w-[1px] bg-brand-text absolute" />
+            </div>
           </div>
+        )}
+
+        {/* The Backdrop Layer (Z-0) */}
+        {renderBackdrop(config.backdrop)}
+
+        {/* Admin Quick Controller Jump Button (Visible to Authenticated Owners) */}
+        {isOwner && onOpenOwnerManager && (
+          <div className="absolute bottom-3 right-3 z-30">
+            <button
+              type="button"
+              onClick={() => {
+                soundManager.playClick(0.1);
+                onOpenOwnerManager();
+              }}
+              className="flex items-center gap-1.5 px-3 py-1.5 bg-brand-surface hover:bg-brand-text hover:text-brand-bg text-brand-text border-2 border-brand-text shadow-[2px_2px_0px_#ff4500] text-[9.5px] font-mono font-black uppercase tracking-wider transition-all cursor-pointer active:translate-x-0.5 active:translate-y-0.5"
+              title="Open Hero Studio Controller"
+            >
+              <Compass size={12} className="text-brand-accent animate-spin-slow" />
+              <span>CUSTOMIZE HERO // STUDIO</span>
+            </button>
+          </div>
+        )}
+
+        {/* 3-Layer Hero System: Background, Middle, Foreground */}
+        {config.isEnabled && (
+          <>
+            {/* Background Layer (Z-10) */}
+            <SingleLayerRenderer 
+              layer={config.bgLayer} 
+              zIndex={10} 
+              showCoordinates={config.showCoordinates} 
+              isMobile={isMobile}
+            />
+
+            {/* Avatar Layer (Z-20, Avatar Graphic Slideshow) */}
+            <SingleLayerRenderer 
+              layer={config.midLayer} 
+              zIndex={20} 
+              showCoordinates={config.showCoordinates} 
+              elementRef={mainGraphicRef} 
+              isMobile={isMobile}
+            />
+
+            {/* Foreground Layer (Z-30) */}
+            <SingleLayerRenderer 
+              layer={config.fgLayer} 
+              zIndex={30} 
+              showCoordinates={config.showCoordinates} 
+              isMobile={isMobile}
+            />
+          </>
+        )}
+
+        {/* Hero Navigation Action Buttons (with deviceTarget and mobile transforms) */}
+        {(() => {
+          if (config.heroButtons?.showButtons === false) return null;
+          const btnTarget = config.heroButtons?.deviceTarget || "both";
+          if (btnTarget === "desktop" && isMobile) return null;
+          if (btnTarget === "mobile" && !isMobile) return null;
+
+          const btnUseMobile = Boolean(isMobile && config.heroButtons?.mobileEnabled);
+          const btnX = btnUseMobile ? (config.heroButtons?.mobilePosX ?? config.heroButtons?.posX ?? 50) : (config.heroButtons?.posX ?? 50);
+          const btnY = btnUseMobile ? (config.heroButtons?.mobilePosY ?? config.heroButtons?.posY ?? 85) : (config.heroButtons?.posY ?? 85);
+
+          return (
+            <div 
+              className="absolute z-40 flex flex-col sm:flex-row items-center gap-3 sm:gap-4 pointer-events-auto select-none"
+              style={{
+                left: `${btnX}%`,
+                top: `${btnY}%`,
+                transform: "translate(-50%, -50%)"
+              }}
+            >
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                soundManager.playClick(0.14);
+                if (onAbout) {
+                  onAbout();
+                } else {
+                  navigate(config.heroButtons?.button1Link || "/about");
+                }
+              }}
+              className="px-6 sm:px-8 py-3 bg-brand-accent hover:bg-brand-text text-white font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center gap-2.5 cursor-pointer group whitespace-nowrap"
+            >
+              <span>{config.heroButtons?.button1Label || "ABOUT THE MARK"}</span>
+              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+            </motion.button>
+
+            <motion.button
+              type="button"
+              whileHover={{ scale: 1.03 }}
+              whileTap={{ scale: 0.98 }}
+              onClick={() => {
+                soundManager.playClick(0.12);
+                if (onWhy) {
+                  onWhy();
+                } else {
+                  navigate(config.heroButtons?.button2Link || "/manifesto");
+                }
+              }}
+              className="px-6 sm:px-8 py-3 bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center gap-2.5 cursor-pointer group whitespace-nowrap"
+            >
+              <BookOpen size={16} className="text-brand-accent group-hover:text-brand-bg transition-colors" />
+              <span>{config.heroButtons?.button2Label || "MANIFESTO"}</span>
+            </motion.button>
+          </div>
+        );
+      })()}
+
+        {/* Scroll Indicator */}
+        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-20 pointer-events-none opacity-60">
+          <motion.div
+            animate={{ y: [0, 6, 0] }}
+            transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}
+            className="text-brand-text/50"
+          >
+            <ChevronDown size={18} />
+          </motion.div>
         </div>
       </div>
-
-      {/* The 4-Step Core Journey Protocol */}
-      <motion.div
-        variants={itemSlideUp}
-        initial="hidden"
-        whileInView="visible"
-        viewport={{ once: true }}
-        className="relative z-10 mt-14 space-y-4"
-      >
-        <div className="flex items-center gap-2.5 text-[10px] sm:text-[11px] font-mono font-black uppercase tracking-widest text-brand-text/75">
-          <span className="w-2.5 h-2.5 rounded-none bg-brand-accent inline-block border border-brand-text shadow-[1.5px_1.5px_0px_#050505]" />
-          <span>THE ARTIFACT ENCOUNTER // 4-STAGE PROTOCOL</span>
-        </div>
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 font-mono">
-          {coreJourneySteps.map((s, idx) => {
-            const isSelected = activeStep === s.step;
-            return (
-              <motion.div 
-                key={s.step}
-                whileHover={{ y: -3 }}
-                whileTap={{ scale: 0.98 }}
-                transition={{ type: "spring", stiffness: 450, damping: 20 }}
-                onMouseEnter={() => soundManager.playHover(0.03)}
-                onClick={() => {
-                  soundManager.playClick(0.12);
-                  setActiveStep(isSelected ? null : s.step);
-                }}
-                className={`border-[2.5px] border-brand-text p-5 rounded-none shadow-[5px_5px_0px_#050505] hover:shadow-[8px_8px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] active:shadow-[1px_1px_0px_#050505] transition-all flex flex-col justify-between min-h-[135px] cursor-pointer select-none backdrop-blur-md relative ${
-                  isSelected ? "bg-brand-text text-brand-bg shadow-[6px_6px_0px_#ff4500]" : "bg-brand-surface/90 text-brand-text"
-                }`}
-              >
-                <span className="absolute -top-1.5 -left-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
-                <span className="absolute -top-1.5 -right-1.5 font-mono text-[9px] font-black text-brand-text select-none pointer-events-none">+</span>
-                <div className={`flex items-center justify-between text-xs font-black pb-2.5 border-b-2 ${isSelected ? "border-brand-bg/20 text-brand-accent" : "border-brand-text/20 text-brand-accent"}`}>
-                  <div className="flex items-center gap-2">
-                    <span className={`w-7 h-7 rounded-none border-2 border-brand-text flex items-center justify-center text-[10px] font-black shadow-[2px_2px_0px_#050505] ${isSelected ? "bg-brand-accent text-white" : "bg-brand-bg text-brand-text"}`}>
-                      {s.step}
-                    </span>
-                    <span>STAGE {s.step}</span>
-                  </div>
-                  <motion.span 
-                    animate={{ x: isSelected ? [0, 3, 0] : 0 }}
-                    transition={{ repeat: isSelected ? Infinity : 0, duration: 1 }}
-                    className={`text-[10px] uppercase font-black ${isSelected ? "text-brand-bg" : "text-brand-text/50"}`}
-                  >
-                    {idx < 4 ? '→' : '■'}
-                  </motion.span>
-                </div>
-                <div className="pt-2.5 flex-1 flex flex-col justify-start">
-                  <div className={`text-sm sm:text-[15px] font-black tracking-wide uppercase leading-tight ${isSelected ? "text-brand-bg" : "text-brand-text"}`}>
-                    {s.name}
-                  </div>
-                  <div className={`text-[10px] sm:text-[11px] font-bold uppercase leading-snug mt-1.5 ${isSelected ? "text-brand-bg/80" : "text-brand-text/80"}`}>
-                    {s.detail}
-                  </div>
-                </div>
-              </motion.div>
-            );
-          })}
-        </div>
-      </motion.div>
-
-      {/* Repositioned Benchmark 04 Criteria */}
-      <motion.div
-        initial={{ opacity: 0, y: 24 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.65, delay: 0.4, ease: [0.16, 1, 0.3, 1] }}
-        className="relative z-10 mt-16 pt-8 bg-brand-surface/90 backdrop-blur-md border-[2.5px] border-brand-text p-6 sm:p-8 rounded-none shadow-[7px_7px_0px_#050505]"
-      >
-        <span className="absolute -top-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-        <span className="absolute -top-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-        <span className="absolute -bottom-1.5 -left-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-        <span className="absolute -bottom-1.5 -right-1.5 font-mono text-[10px] font-black text-brand-text select-none pointer-events-none">+</span>
-        <div className="flex flex-wrap items-center justify-between border-b-2 border-brand-text pb-4 mb-6 gap-3">
-          <div className="flex items-center gap-3">
-            <span className="w-3 h-3 rounded-none bg-[#ff4500] inline-block"></span>
-            <span className="font-mono text-sm font-black uppercase tracking-widest text-brand-text">
-              THE BENCHMARK // 04 CRITERIA
-            </span>
-          </div>
-          <div className="flex items-center gap-3 text-[10px] font-mono tracking-widest uppercase text-brand-text/70 font-bold">
-            <span className="hidden sm:inline">[ CHOICE • SYMBOL • IDENTITY ]</span>
-            <span className="bg-brand-text text-brand-bg px-3 py-1 rounded-none font-black">
-              STANDARD SPEC
-            </span>
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 font-mono text-xs">
-          {[
-            { num: "01", title: "SYMBOL OVER LOGO", desc: "The graphic carries personal meaning, not a corporation's status symbol." },
-            { num: "02", title: "SECONDARY BRANDING", desc: "Brand identifiers are kept to discreet interior labels." },
-            { num: "03", title: "DENSE SUBSTANCE", desc: "400 GSM combed cotton and high-fire ceramic built for years of daily use." },
-            { num: "04", title: "INTENTIONAL OWNERSHIP", desc: "Fewer, deliberate artifacts that reflect genuine conviction." }
-          ].map((item) => (
-            <motion.div
-              key={item.num}
-              whileHover={{ y: -3 }}
-              transition={{ type: "spring", stiffness: 400, damping: 20 }}
-              className="p-5 bg-brand-surface/85 backdrop-blur-sm border-2 border-brand-text/40 hover:border-brand-text rounded-none hover:shadow-[4px_4px_0px_#ff4500] transition-all cursor-default group"
-            >
-              <div className="flex items-center gap-2 mb-2">
-                <span className="w-6 h-6 rounded-none bg-brand-accent text-white font-black text-[10px] flex items-center justify-center shadow-sm">
-                  {item.num}
-                </span>
-                <span className="text-[#ff4500] font-black text-[11px] group-hover:underline uppercase">
-                  {item.title}
-                </span>
-              </div>
-              <p className="font-space-grotesk text-[12.5px] text-brand-text/85 normal-case font-normal leading-relaxed mt-1">
-                {item.desc}
-              </p>
-            </motion.div>
-          ))}
-        </div>
-      </motion.div>
     </section>
   );
 }
-
-
-
-

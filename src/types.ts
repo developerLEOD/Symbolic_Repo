@@ -349,3 +349,167 @@ export interface ReferralVisitRecord {
   createdAt: number;
 }
 
+export type HeroTransitionDirection = "left" | "right" | "top" | "bottom" | "scale" | "fade";
+export type HeroTransitionSpeed = "snappy" | "smooth" | "spring" | "dramatic";
+export type HeroHoverEffect = "float" | "tilt" | "pulse" | "none";
+
+export type HeroLayerId = "bg" | "mid" | "fg" | "backdrop";
+export type DeviceTarget = "both" | "desktop" | "mobile";
+
+export interface TextObject {
+  id: string;
+  text: string;
+  posX: number;
+  posY: number;
+  fontSize: number;
+  color: string;
+  rotation?: number;
+  opacity?: number;
+  transitionDirection?: HeroTransitionDirection;
+  transitionSpeed?: HeroTransitionSpeed;
+  transitionDelay?: number;
+  hoverEffect?: HeroHoverEffect;
+  disableIdleAnimation?: boolean;
+  textAlign?: "left" | "center" | "right";
+  lineHeight?: number;
+  letterSpacing?: number;
+  fontWeight?: string | number;
+  textTransform?: "none" | "uppercase" | "lowercase" | "capitalize";
+  italic?: boolean;
+
+  // Responsive device visibility & custom mobile transforms
+  deviceTarget?: DeviceTarget; // "both" | "desktop" | "mobile"
+  mobileEnabled?: boolean; // When true, separate mobile transforms are used on mobile screens
+  mobilePosX?: number;
+  mobilePosY?: number;
+  mobileFontSize?: number;
+  mobileRotation?: number;
+  mobileLineHeight?: number;
+  mobileLetterSpacing?: number;
+}
+
+export interface GraphicObject {
+  id: string;
+  avatarUrl: string;
+  avatarAlt?: string;
+  posX: number;
+  posY: number;
+  size: number;
+  rotation?: number;
+  opacity?: number;
+  transitionDirection?: HeroTransitionDirection;
+  transitionSpeed?: HeroTransitionSpeed;
+  transitionDelay?: number;
+  hoverEffect?: HeroHoverEffect;
+  disableIdleAnimation?: boolean;
+  shadow?: boolean;
+  border?: boolean;
+  captionTitle?: string;
+  captionSubtitle?: string;
+
+  // Responsive device visibility & custom mobile transforms
+  deviceTarget?: DeviceTarget; // "both" | "desktop" | "mobile"
+  mobileEnabled?: boolean; // When true, separate mobile transforms are used on mobile screens
+  mobilePosX?: number;
+  mobilePosY?: number;
+  mobileSize?: number;
+  mobileRotation?: number;
+  mobileStickToBottom?: boolean;
+}
+
+export interface HeroLayerConfig {
+  id: HeroLayerId;
+  name: string;
+  isEnabled: boolean;
+  avatarUrl: string;
+  avatarAlt?: string;
+  posX: number;
+  posY: number;
+  size: number;
+  rotation: number;
+  opacity: number; // 0 to 1
+  transitionDirection: HeroTransitionDirection;
+  transitionSpeed: HeroTransitionSpeed;
+  transitionDelay?: number;
+  hoverEffect: HeroHoverEffect;
+  shadow: boolean;
+  border: boolean;
+  disableIdleAnimation?: boolean;
+  captionTitle?: string;
+  captionSubtitle?: string;
+  textObjects?: TextObject[];
+  graphicObjects?: GraphicObject[];
+
+  // Slideshow configuration for cycling through specimens / avatar graphics
+  slideshowEnabled?: boolean;
+  slideshowInterval?: number; // duration in seconds per slide (default e.g. 4s)
+  slideshowTransition?: "fade" | "slide-horizontal" | "slide-vertical" | "zoom";
+  slideshowMode?: "all-graphics" | "secondary-only";
+  stickToBottom?: boolean; // When true, sticks graphic's bottom directly to stage bottom (like backdrop)
+
+  // Responsive device visibility & custom mobile transforms for layer's primary graphic
+  deviceTarget?: DeviceTarget; // "both" | "desktop" | "mobile"
+  mobileEnabled?: boolean; // When true, separate mobile transforms are used on mobile screens
+  mobilePosX?: number;
+  mobilePosY?: number;
+  mobileSize?: number;
+  mobileRotation?: number;
+  mobileStickToBottom?: boolean;
+}
+
+export interface BackdropConfig {
+  isEnabled: boolean;
+  imageUrl: string;
+  opacity: number;
+}
+
+export interface HeroButtonsConfig {
+  showButtons?: boolean;
+  button1Label?: string;
+  button1Link?: string;
+  button2Label?: string;
+  button2Link?: string;
+  posX?: number;
+  posY?: number;
+  deviceTarget?: DeviceTarget;
+  mobileEnabled?: boolean;
+  mobilePosX?: number;
+  mobilePosY?: number;
+}
+
+export interface CustomHeroConfig {
+  id?: string;
+  isEnabled: boolean;
+  // Legacy single-layer fields
+  avatarUrl: string;
+  avatarAlt?: string;
+  posX: number;
+  posY: number;
+  size: number;
+  rotation: number;
+  transitionDirection: HeroTransitionDirection;
+  transitionSpeed: HeroTransitionSpeed;
+  transitionDelay?: number;
+  hoverEffect: HeroHoverEffect;
+  shadow: boolean;
+  border: boolean;
+  captionTitle?: string;
+  captionSubtitle?: string;
+
+  // Multi-Layer System: Background, Middle, Foreground
+  activeEditingLayer?: HeroLayerId;
+  bgLayer?: HeroLayerConfig;
+  midLayer?: HeroLayerConfig;
+  fgLayer?: HeroLayerConfig;
+  backdrop?: BackdropConfig;
+  heroButtons?: HeroButtonsConfig;
+
+  showCoordinates?: boolean;
+  canvasHeight?: number;
+  showCanvasBoundingBox?: boolean;
+  canvasOverflowVisible?: boolean;
+  updatedAt?: number;
+  updatedBy?: string;
+}
+
+

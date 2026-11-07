@@ -32,6 +32,11 @@ import {
 } from "../types";
 import { sanitizeArtifactForFirestore, sanitizeSpecimenForFirestore } from "./imageOptimization";
 import { PRESET_SYMBOL_KNOWLEDGE } from "./symbolKnowledge";
+import { 
+  isFirestoreQuotaExceeded, 
+  markFirestoreQuotaExceeded, 
+  isQuotaError 
+} from "./firestoreCircuitBreaker";
 import capImage from "../assets/images/structured_twill_cap_1789233572064.jpg";
 import vesselImage from "../assets/images/ceramic_stoneware_vessel_1789233585625.jpg";
 import hoodieImage from "../assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg";
@@ -39,10 +44,14 @@ import bagImage from "../assets/images/canvas_field_bag_1789233558525.jpg";
 import heroImage from "../assets/images/store_hero_editorial_1788008309317.jpg";
 import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
 import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
-import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+import mugWisdomImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
 
 export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
 export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+
+let lastArtifactsFetchTime = 0;
+let lastSpecimensFetchTime = 0;
+const ARTIFACTS_TTL_MS = 5 * 60 * 1000; // 5 minutes TTL in-memory cache
 
 // Configurable & extensible specimen mediums
 export const CANONICAL_SPECIMEN_MEDIUMS: SpecimenMediumConfig[] = [
@@ -941,32 +950,64 @@ export function normalizeSpecimen(rawSpec: any): Specimen {
 
 /**
  * Fetch all Artifacts from Firestore, falling back to cache & seeds
+ * Employs an in-memory TTL cache (5 min) to prevent redundant Firestore read bursts.
  */
 export async function fetchArtifacts(): Promise<Artifact[]> {
+  const cached = getCachedArtifacts();
+  const now = Date.now();
+
+  // If in-memory cache is valid within TTL, return immediately without network call
+  if (cached.length > 0 && now - lastArtifactsFetchTime < ARTIFACTS_TTL_MS) {
+    return cached;
+  }
+
+  // If circuit breaker tripped, return cached data without attempting Firestore read
+  if (isFirestoreQuotaExceeded()) {
+    return cached;
+  }
+
   try {
     const snap = await getDocs(collection(db, "artifacts"));
+    lastArtifactsFetchTime = now;
     if (!snap.empty && snap.docs.length > 0) {
       const live = snap.docs.map(d => normalizeArtifact({ id: d.id, ...d.data() }));
       live.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
       saveArtifactsToCache(live);
       return live;
     } else if (snap.empty) {
-      // Valid empty collection from Firestore
-      saveArtifactsToCache([]);
-      return [];
+      // If collection is empty, retain seed cache
+      return cached.length > 0 ? cached : SEED_ARTIFACTS;
     }
   } catch (err) {
-    console.warn("Could not fetch artifacts from Firestore:", err);
+    if (isQuotaError(err)) {
+      markFirestoreQuotaExceeded();
+    }
+    console.warn("Could not fetch artifacts from Firestore (using local cache):", err);
   }
 
   // Fallback to cache or seeds if offline / network error
-  return getCachedArtifacts();
+  return cached;
 }
 
 /**
  * Fetch all Specimens from Firestore, falling back to cache & seeds
+ * Employs an in-memory TTL cache (5 min) to prevent redundant Firestore read bursts.
  */
 export async function fetchSpecimens(parentArtifactId?: string): Promise<Specimen[]> {
+  const allCached = getCachedSpecimens();
+  const now = Date.now();
+
+  if (allCached.length > 0 && !parentArtifactId && now - lastSpecimensFetchTime < ARTIFACTS_TTL_MS) {
+    return allCached;
+  }
+
+  if (isFirestoreQuotaExceeded()) {
+    if (parentArtifactId) {
+      return allCached.filter(s => s.parentArtifactId === parentArtifactId);
+    }
+    return allCached;
+  }
+
   try {
     let snap;
     if (parentArtifactId) {
@@ -974,6 +1015,7 @@ export async function fetchSpecimens(parentArtifactId?: string): Promise<Specime
       snap = await getDocs(q);
     } else {
       snap = await getDocs(collection(db, "specimens"));
+      lastSpecimensFetchTime = now;
     }
 
     if (!snap.empty && snap.docs.length > 0) {
@@ -983,20 +1025,19 @@ export async function fetchSpecimens(parentArtifactId?: string): Promise<Specime
       }
       return live;
     } else if (snap.empty) {
-      if (!parentArtifactId) {
-        saveSpecimensToCache([]);
-      }
-      return [];
+      return allCached.length > 0 ? (parentArtifactId ? allCached.filter(s => s.parentArtifactId === parentArtifactId) : allCached) : (parentArtifactId ? SEED_SPECIMENS.filter(s => s.parentArtifactId === parentArtifactId) : SEED_SPECIMENS);
     }
   } catch (err) {
-    console.warn("Could not fetch specimens from Firestore:", err);
+    if (isQuotaError(err)) {
+      markFirestoreQuotaExceeded();
+    }
+    console.warn("Could not fetch specimens from Firestore (using local cache):", err);
   }
 
-  const all = getCachedSpecimens();
   if (parentArtifactId) {
-    return all.filter(s => s.parentArtifactId === parentArtifactId);
+    return allCached.filter(s => s.parentArtifactId === parentArtifactId);
   }
-  return all;
+  return allCached;
 }
 
 /**
@@ -1035,13 +1076,24 @@ export async function saveArtifact(artifact: Artifact): Promise<Artifact> {
     : [...current, normalized];
   saveArtifactsToCache(updated);
 
+  // If quota is exceeded, update local cache and skip remote Firestore write
+  if (isFirestoreQuotaExceeded()) {
+    console.warn("Firestore daily write quota reached. Artifact saved in local browser storage.");
+    return normalized;
+  }
+
   try {
     // Sanitize and compress any large Base64 images to prevent Firestore 1MB document limit overflow
     const sanitized = await sanitizeArtifactForFirestore(normalized);
     const cleaned = cleanUndefined(sanitized);
     await setDoc(doc(db, "artifacts", normalized.id), cleaned, { merge: true });
   } catch (err) {
-    console.error("Error saving artifact to Firestore:", err);
+    if (isQuotaError(err)) {
+      markFirestoreQuotaExceeded();
+      console.warn("Firestore daily write quota reached during artifact save. Saved locally.");
+    } else {
+      console.error("Error saving artifact to Firestore:", err);
+    }
   }
 
   return normalized;
@@ -1096,22 +1148,31 @@ export async function saveSpecimen(specimen: Specimen): Promise<Specimen> {
     : [...currentSpecimens, normalized];
   saveSpecimensToCache(updatedSpecimens);
 
-  try {
-    const sanitized = await sanitizeSpecimenForFirestore(normalized);
-    const cleaned = cleanUndefined(sanitized);
+  if (isFirestoreQuotaExceeded()) {
+    console.warn("Firestore daily write quota reached. Specimen saved in local browser storage.");
+  } else {
+    try {
+      const sanitized = await sanitizeSpecimenForFirestore(normalized);
+      const cleaned = cleanUndefined(sanitized);
 
-    await setDoc(doc(db, "specimens", normalized.id), cleaned, { merge: true });
-    
-    // Also save under nested subcollection /artifacts/{artifactId}/specimens/{specimenId}
-    if (normalized.parentArtifactId) {
-      await setDoc(
-        doc(db, "artifacts", normalized.parentArtifactId, "specimens", normalized.id),
-        cleaned,
-        { merge: true }
-      ).catch(() => {});
+      await setDoc(doc(db, "specimens", normalized.id), cleaned, { merge: true });
+      
+      // Also save under nested subcollection /artifacts/{artifactId}/specimens/{specimenId}
+      if (normalized.parentArtifactId) {
+        await setDoc(
+          doc(db, "artifacts", normalized.parentArtifactId, "specimens", normalized.id),
+          cleaned,
+          { merge: true }
+        ).catch(() => {});
+      }
+    } catch (err) {
+      if (isQuotaError(err)) {
+        markFirestoreQuotaExceeded();
+        console.warn("Firestore daily write quota reached during specimen save. Saved locally.");
+      } else {
+        console.error("Error saving specimen to Firestore:", err);
+      }
     }
-  } catch (err) {
-    console.error("Error saving specimen to Firestore:", err);
   }
 
   // Update parent Artifact's specimenIds list if not present
@@ -1325,46 +1386,42 @@ export async function initializeAndMigrateArtifacts(): Promise<{
   artifacts: Artifact[];
   specimens: Specimen[];
 }> {
+  const cachedArts = getCachedArtifacts();
+  const cachedSpecs = getCachedSpecimens();
+
   try {
     const existingArtifactsSnap = await getDocs(collection(db, "artifacts"));
     
     if (existingArtifactsSnap.empty || existingArtifactsSnap.docs.length === 0) {
-      console.log("Seeding canonical artifacts & specimens to Firestore...");
-      // Seed default artifacts
-      for (const art of SEED_ARTIFACTS) {
-        await setDoc(doc(db, "artifacts", art.id), cleanUndefined(art), { merge: true }).catch(() => {});
-      }
-      // Seed default specimens
-      for (const spec of SEED_SPECIMENS) {
-        await setDoc(doc(db, "specimens", spec.id), cleanUndefined(spec), { merge: true }).catch(() => {});
-      }
       saveArtifactsToCache(SEED_ARTIFACTS);
       saveSpecimensToCache(SEED_SPECIMENS);
+      // Do NOT trigger runaway background setDoc write loops to Firestore!
       return { artifacts: SEED_ARTIFACTS, specimens: SEED_SPECIMENS };
     }
 
     // Load from Firestore
     const artifacts = existingArtifactsSnap.docs.map(d => normalizeArtifact({ id: d.id, ...d.data() }));
-    const specimensSnap = await getDocs(collection(db, "specimens"));
     let specimens: Specimen[] = [];
-    if (!specimensSnap.empty) {
-      specimens = specimensSnap.docs.map(d => normalizeSpecimen({ id: d.id, ...d.data() }));
-    } else {
-      // Seed specimens if missing
-      for (const spec of SEED_SPECIMENS) {
-        await setDoc(doc(db, "specimens", spec.id), cleanUndefined(spec), { merge: true }).catch(() => {});
+
+    try {
+      const specimensSnap = await getDocs(collection(db, "specimens"));
+      if (!specimensSnap.empty) {
+        specimens = specimensSnap.docs.map(d => normalizeSpecimen({ id: d.id, ...d.data() }));
+      } else {
+        specimens = SEED_SPECIMENS;
       }
-      specimens = SEED_SPECIMENS;
+    } catch {
+      specimens = cachedSpecs.length > 0 ? cachedSpecs : SEED_SPECIMENS;
     }
 
     saveArtifactsToCache(artifacts);
     saveSpecimensToCache(specimens);
     return { artifacts, specimens };
-  } catch (err) {
-    console.warn("Using cached/seed artifacts and specimens due to connection state:", err);
+  } catch (err: any) {
+    console.warn("Using local cached/seed artifacts and specimens:", err?.message || err);
     return {
-      artifacts: getCachedArtifacts(),
-      specimens: getCachedSpecimens()
+      artifacts: cachedArts.length > 0 ? cachedArts : SEED_ARTIFACTS,
+      specimens: cachedSpecs.length > 0 ? cachedSpecs : SEED_SPECIMENS
     };
   }
 }

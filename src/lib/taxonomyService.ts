@@ -2,6 +2,11 @@ import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
 import { TaxonomyCatalog, Medium, ArtifactClassification, CustomArtifactTag } from "../types";
 import { handleFirestoreError, OperationType } from "./firestoreErrors";
+import { 
+  isFirestoreQuotaExceeded, 
+  markFirestoreQuotaExceeded, 
+  isQuotaError 
+} from "./firestoreCircuitBreaker";
 
 export const DEFAULT_CLASSIFICATIONS: Medium[] = [
   {
@@ -100,14 +105,21 @@ function cleanUndefined<T>(obj: T): T {
 }
 
 export async function fetchTaxonomyCatalog(): Promise<TaxonomyCatalog> {
+  if (cachedTaxonomyCatalog) {
+    return cachedTaxonomyCatalog;
+  }
+
   const path = "settings/taxonomy";
   try {
+    if (isFirestoreQuotaExceeded()) {
+      return cachedTaxonomyCatalog || INITIAL_TAXONOMY_CATALOG;
+    }
+
     const docRef = doc(db, "settings", "taxonomy");
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const data = docSnap.data() as TaxonomyCatalog;
-      // Ensure arrays exist
       const catalog: TaxonomyCatalog = {
         classifications: Array.isArray(data.classifications) && data.classifications.length > 0
           ? data.classifications
@@ -121,31 +133,43 @@ export async function fetchTaxonomyCatalog(): Promise<TaxonomyCatalog> {
       cachedTaxonomyCatalog = catalog;
       return catalog;
     } else {
-      // Initialize with defaults in Firestore
-      await setDoc(docRef, cleanUndefined(INITIAL_TAXONOMY_CATALOG), { merge: true });
+      // Do NOT write to Firestore on fetch! Just cache locally
       cachedTaxonomyCatalog = INITIAL_TAXONOMY_CATALOG;
       return INITIAL_TAXONOMY_CATALOG;
     }
   } catch (error) {
-    handleFirestoreError(error, OperationType.GET, path);
+    if (isQuotaError(error)) {
+      markFirestoreQuotaExceeded();
+    }
     return cachedTaxonomyCatalog || INITIAL_TAXONOMY_CATALOG;
   }
 }
 
 export async function saveTaxonomyCatalog(catalog: TaxonomyCatalog): Promise<TaxonomyCatalog> {
   const path = "settings/taxonomy";
+  const updated: TaxonomyCatalog = {
+    ...catalog,
+    updatedAt: Date.now(),
+    updatedBy: "owner"
+  };
+  cachedTaxonomyCatalog = updated;
+
+  if (isFirestoreQuotaExceeded()) {
+    console.warn("Firestore daily write quota reached. Taxonomy settings saved in local memory.");
+    return updated;
+  }
+
   try {
-    const updated: TaxonomyCatalog = {
-      ...catalog,
-      updatedAt: Date.now(),
-      updatedBy: "owner"
-    };
     const cleaned = cleanUndefined(updated);
     const docRef = doc(db, "settings", "taxonomy");
     await setDoc(docRef, cleaned, { merge: true });
-    cachedTaxonomyCatalog = updated;
     return updated;
-  } catch (error) {
+  } catch (error: any) {
+    if (isQuotaError(error)) {
+      markFirestoreQuotaExceeded();
+      console.warn("Firestore daily write quota reached during taxonomy save. Saved locally.");
+      return updated;
+    }
     handleFirestoreError(error, OperationType.WRITE, path);
     throw error;
   }

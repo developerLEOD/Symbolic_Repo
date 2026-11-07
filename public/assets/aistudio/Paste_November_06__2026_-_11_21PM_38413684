@@ -1,0 +1,533 @@
+ Pre-warming completed.
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./components/SystemSpec" from "src/App.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/App.tsx:13:23
+    10 |  import Hero from "./components/Hero";
+    11 |  import FeaturedObject from "./components/FeaturedObject";
+    12 |  import SystemSpec from "./components/SystemSpec";
+       |                          ^
+    13 |  import Philosophy from "./components/Philosophy";
+    14 |  import ProductGrid from "./components/ProductGrid";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/Header.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/Header.tsx:7:32
+    4  |  import { motion } from "motion/react";
+    5  |  import { useAuth } from "../lib/AuthContext";
+    6  |  import { fetchCategories } from "../lib/productService";
+       |                                   ^
+    7  |  import { soundManager } from "../lib/soundEffects";
+    8  |  export default function Header({
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductGrid.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductGrid.tsx:17:7
+    12 |    getCachedProducts,
+    13 |    CANONICAL_CATEGORIES
+    14 |  } from "../lib/productService";
+       |          ^
+    15 |  import {
+    16 |    fetchArtifacts,
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/FeaturedObject.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/FeaturedObject.tsx:5:138
+    3  |  import { Check, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+    4  |  import LiquidCarveButton from "./LiquidCarveButton";
+    5  |  import { normalizeProductCategory, normalizeProductCollection, isProductDraftOrHidden, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                                                                             ^
+    6  |  import { soundManager } from "../lib/soundEffects";
+    7  |  export default function FeaturedObject({ product, onViewProduct, onAddToCart }) {
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/UserProfileModal.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/UserProfileModal.tsx:31:7
+    29 |    isReferrerRewardUnlocked,
+    30 |    DEFAULT_REFERRAL_SETTINGS
+    31 |  } from "../lib/referralService";
+       |          ^
+    32 |  import LiquidCarveButton from "./LiquidCarveButton";
+    33 |  import { soundManager } from "../lib/soundEffects";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductDetail.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductDetail.tsx:30:114
+    23 |  import { collection, getDocs } from "firebase/firestore";
+    24 |  import { db } from "../lib/firebase";
+    25 |  import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                                                     ^
+    26 |  import { soundManager } from "../lib/soundEffects";
+    27 |  import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/Cart.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/Cart.tsx:8:38
+    6  |  import { db } from "../lib/firebase";
+    7  |  import { soundManager } from "../lib/soundEffects";
+    8  |  import { STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                         ^
+    9  |  import { calculateFinancialValuation } from "../lib/financialValuation";
+    10 |  import { subscribeReferralSettings, validateReferralCode } from "../lib/referralService";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/Breadcrumbs.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/Breadcrumbs.tsx:6:103
+    4  |  import { motion, AnimatePresence } from "motion/react";
+    5  |  import { ChevronRight, Compass, X, MapPin, ArrowUpLeft } from "lucide-react";
+    6  |  import { CANONICAL_CATEGORIES, CANONICAL_COLLECTIONS, fetchProductBySlugOrId, getCachedProducts } from "../lib/productService";
+       |                                                                                                          ^
+    7  |  import { soundManager } from "../lib/soundEffects";
+    8  |  export default function Breadcrumbs({
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/ReferralNotification.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ReferralNotification.tsx:5:44
+    3  |  import { motion, AnimatePresence } from "motion/react";
+    4  |  import { Gift, X, ArrowRight, Users } from "lucide-react";
+    5  |  import { getFriendDiscountPercentage } from "../lib/referralService";
+       |                                               ^
+    6  |  import { soundManager } from "../lib/soundEffects";
+    7  |  const STORAGE_KEY = "sym_referral_notif_dismissed";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ArtifactOverlappingCollection.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ArtifactOverlappingCollection.tsx:5:86
+    3  |  import { motion, AnimatePresence } from "motion/react";
+    4  |  import { ChevronLeft, ChevronRight, MoveRight, Layers, Box, Check, Camera } from "lucide-react";
+    5  |  import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                         ^
+    6  |  import { calculateArtifactSetPrice } from "../lib/artifactService";
+    7  |  import { buildSpecimenAngleSequence } from "../lib/specimenAngles";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/CheckoutModal.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/CheckoutModal.tsx:35:7
+    27 |    getFriendDiscountPercentage,
+    28 |    isReferrerRewardUnlocked
+    29 |  } from "../lib/referralService";
+       |          ^
+    30 |  import { calculateFinancialValuation } from "../lib/financialValuation";
+    31 |  import {
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductRouteHandler.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductRouteHandler.tsx:7:65
+    5  |  import ArtifactDetail from "./ArtifactDetail";
+    6  |  import ArtifactAcquisitionPage from "./ArtifactAcquisitionPage";
+    7  |  import { fetchProductBySlugOrId, deleteProductAndVariants } from "../lib/productService";
+       |                                                                    ^
+    8  |  import {
+    9  |    fetchArtifactById,
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/OwnerProductManager.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/OwnerProductManager.tsx:58:7
+    46 |    deleteProductAndVariants,
+    47 |    toggleProductAvailability
+    48 |  } from "../lib/productService";
+       |          ^
+    49 |  const PRESET_IMAGES = [
+    50 |    { name: "Be Symbolic Mug", url: "/src/assets/images/mug_be_symbolic_1788008321905.jpg", category: "mugs" },
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/OwnerReferralManager.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/OwnerReferralManager.tsx:34:7
+    24 |    DEFAULT_REFERRAL_SETTINGS,
+    25 |    getFriendDiscountPercentage
+    26 |  } from "../lib/referralService";
+       |          ^
+    27 |  import { useAuth } from "../lib/AuthContext";
+    28 |  export default function OwnerReferralManager({ onNotify }) {
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductDetail.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductDetail.tsx:30:114
+    23 |  import { collection, getDocs } from "firebase/firestore";
+    24 |  import { db } from "../lib/firebase";
+    25 |  import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                                                     ^
+    26 |  import { soundManager } from "../lib/soundEffects";
+    27 |  import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:34 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:50 PM [vite] Internal server error: Failed to resolve import "./components/SystemSpec" from "src/App.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/App.tsx:13:23
+    10 |  import Hero from "./components/Hero";
+    11 |  import FeaturedObject from "./components/FeaturedObject";
+    12 |  import SystemSpec from "./components/SystemSpec";
+       |                          ^
+    13 |  import Philosophy from "./components/Philosophy";
+    14 |  import ProductGrid from "./components/ProductGrid";
+        at TransformPluginContext._formatLog (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42658:41)
+        at TransformPluginContext.error (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42655:16)
+        at normalizeUrl (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40634:23)
+        at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+        at async <anonymous> (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40753:37)
+        at async Promise.all (index 7)
+        at async TransformPluginContext.transform (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:40680:7)
+        at async EnvironmentPluginContainer.transform (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:42453:18)
+        at async loadAndTransform (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:35845:27)
+        at async viteTransformMiddleware (/app/applet/node_modules/vite/dist/node/chunks/dep-Dm0c1Wj2.js:37369:24)
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/Header.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/Header.tsx:7:32
+    4  |  import { motion } from "motion/react";
+    5  |  import { useAuth } from "../lib/AuthContext";
+    6  |  import { fetchCategories } from "../lib/productService";
+       |                                   ^
+    7  |  import { soundManager } from "../lib/soundEffects";
+    8  |  export default function Header({
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductGrid.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductGrid.tsx:17:7
+    12 |    getCachedProducts,
+    13 |    CANONICAL_CATEGORIES
+    14 |  } from "../lib/productService";
+       |          ^
+    15 |  import {
+    16 |    fetchArtifacts,
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/FeaturedObject.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/FeaturedObject.tsx:5:138
+    3  |  import { Check, FileText, ChevronLeft, ChevronRight } from "lucide-react";
+    4  |  import LiquidCarveButton from "./LiquidCarveButton";
+    5  |  import { normalizeProductCategory, normalizeProductCollection, isProductDraftOrHidden, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                                                                             ^
+    6  |  import { soundManager } from "../lib/soundEffects";
+    7  |  export default function FeaturedObject({ product, onViewProduct, onAddToCart }) {
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/UserProfileModal.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/UserProfileModal.tsx:31:7
+    29 |    isReferrerRewardUnlocked,
+    30 |    DEFAULT_REFERRAL_SETTINGS
+    31 |  } from "../lib/referralService";
+       |          ^
+    32 |  import LiquidCarveButton from "./LiquidCarveButton";
+    33 |  import { soundManager } from "../lib/soundEffects";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductDetail.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductDetail.tsx:30:114
+    23 |  import { collection, getDocs } from "firebase/firestore";
+    24 |  import { db } from "../lib/firebase";
+    25 |  import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                                                     ^
+    26 |  import { soundManager } from "../lib/soundEffects";
+    27 |  import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/Cart.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/Cart.tsx:8:38
+    6  |  import { db } from "../lib/firebase";
+    7  |  import { soundManager } from "../lib/soundEffects";
+    8  |  import { STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                         ^
+    9  |  import { calculateFinancialValuation } from "../lib/financialValuation";
+    10 |  import { subscribeReferralSettings, validateReferralCode } from "../lib/referralService";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/CheckoutModal.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/CheckoutModal.tsx:35:7
+    27 |    getFriendDiscountPercentage,
+    28 |    isReferrerRewardUnlocked
+    29 |  } from "../lib/referralService";
+       |          ^
+    30 |  import { calculateFinancialValuation } from "../lib/financialValuation";
+    31 |  import {
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductRouteHandler.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductRouteHandler.tsx:7:65
+    5  |  import ArtifactDetail from "./ArtifactDetail";
+    6  |  import ArtifactAcquisitionPage from "./ArtifactAcquisitionPage";
+    7  |  import { fetchProductBySlugOrId, deleteProductAndVariants } from "../lib/productService";
+       |                                                                    ^
+    8  |  import {
+    9  |    fetchArtifactById,
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/ReferralNotification.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ReferralNotification.tsx:5:44
+    3  |  import { motion, AnimatePresence } from "motion/react";
+    4  |  import { Gift, X, ArrowRight, Users } from "lucide-react";
+    5  |  import { getFriendDiscountPercentage } from "../lib/referralService";
+       |                                               ^
+    6  |  import { soundManager } from "../lib/soundEffects";
+    7  |  const STORAGE_KEY = "sym_referral_notif_dismissed";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/Breadcrumbs.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/Breadcrumbs.tsx:6:103
+    4  |  import { motion, AnimatePresence } from "motion/react";
+    5  |  import { ChevronRight, Compass, X, MapPin, ArrowUpLeft } from "lucide-react";
+    6  |  import { CANONICAL_CATEGORIES, CANONICAL_COLLECTIONS, fetchProductBySlugOrId, getCachedProducts } from "../lib/productService";
+       |                                                                                                          ^
+    7  |  import { soundManager } from "../lib/soundEffects";
+    8  |  export default function Breadcrumbs({
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/OwnerProductManager.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/OwnerProductManager.tsx:58:7
+    46 |    deleteProductAndVariants,
+    47 |    toggleProductAvailability
+    48 |  } from "../lib/productService";
+       |          ^
+    49 |  const PRESET_IMAGES = [
+    50 |    { name: "Be Symbolic Mug", url: "/src/assets/images/mug_be_symbolic_1788008321905.jpg", category: "mugs" },
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ArtifactOverlappingCollection.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ArtifactOverlappingCollection.tsx:5:86
+    3  |  import { motion, AnimatePresence } from "motion/react";
+    4  |  import { ChevronLeft, ChevronRight, MoveRight, Layers, Box, Check, Camera } from "lucide-react";
+    5  |  import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                         ^
+    6  |  import { calculateArtifactSetPrice } from "../lib/artifactService";
+    7  |  import { buildSpecimenAngleSequence } from "../lib/specimenAngles";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/productService" from "src/components/ProductDetail.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/ProductDetail.tsx:30:114
+    23 |  import { collection, getDocs } from "firebase/firestore";
+    24 |  import { db } from "../lib/firebase";
+    25 |  import { normalizeProductCategory, normalizeProductCollection, resolveProductImages, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
+       |                                                                                                                     ^
+    26 |  import { soundManager } from "../lib/soundEffects";
+    27 |  import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../assets/images/mug_seek_wisdom_1788008333595.jpg" from "src/lib/artifactService.ts". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/artifactService.ts:42:27
+    29 |  import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+    30 |  import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
+    31 |  import mugWisdomImage from "../assets/images/mug_seek_wisdom_1788008333595.jpg";
+       |                              ^
+    32 |  export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
+    33 |  export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "../lib/referralService" from "src/components/OwnerReferralManager.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/components/OwnerReferralManager.tsx:34:7
+    24 |    DEFAULT_REFERRAL_SETTINGS,
+    25 |    getFriendDiscountPercentage
+    26 |  } from "../lib/referralService";
+       |          ^
+    27 |  import { useAuth } from "../lib/AuthContext";
+    28 |  export default function OwnerReferralManager({ onNotify }) {
+  6:00:50 PM [vite] (client) Pre-transform error: Failed to resolve import "./referralService" from "src/lib/AuthContext.tsx". Does the file exist?
+    Plugin: vite:import-analysis
+    File: /app/applet/src/lib/AuthContext.tsx:16:41
+    13 |  import { doc, getDoc, setDoc, updateDoc, onSnapshot } from "firebase/firestore";
+    14 |  import { auth, db } from "./firebase";
+    15 |  import { generateUserReferralCode } from "./referralService";
+       |                                            ^
+    16 |  import firebaseConfig from "../../firebase-applet-config.json";
+    17 |  const OWNER_EMAILS = [ 

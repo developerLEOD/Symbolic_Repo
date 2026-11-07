@@ -207,6 +207,7 @@ function HomeView({
   onAddToCart,
   onNavigateManifesto,
   onNavigateAbout,
+  onOpenOwnerManager,
 }: {
   onProductClick: (p: Product) => void;
   refreshKey: number;
@@ -215,6 +216,7 @@ function HomeView({
   onAddToCart: (item: CartItem) => void;
   onNavigateManifesto: () => void;
   onNavigateAbout: () => void;
+  onOpenOwnerManager?: () => void;
 }) {
   const navigate = useNavigate();
 
@@ -225,8 +227,10 @@ function HomeView({
           const el = document.getElementById("catalog-section");
           if (el) el.scrollIntoView({ behavior: "smooth" });
         }} 
+        onAbout={() => navigate("/about")}
         onWhy={() => navigate("/manifesto")} 
         onProductClick={onProductClick}
+        onOpenOwnerManager={onOpenOwnerManager}
       />
       
       <ProductGrid 
@@ -510,7 +514,7 @@ function StorefrontApp() {
         onReferralClick={handleOpenReferral}
       />
 
-      <div className="pt-16 sm:pt-20 relative z-10">
+      <div className={`${location.pathname === "/" ? "pt-0" : "pt-2 sm:pt-4"} relative z-10`}>
         <Breadcrumbs categories={categories} />
         
         <main className="min-h-screen bg-transparent relative">
@@ -527,6 +531,7 @@ function StorefrontApp() {
                   onAddToCart={handleAddToCart}
                   onNavigateManifesto={() => navigate("/manifesto")}
                   onNavigateAbout={() => navigate("/about")}
+                  onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
                 />
               }
             />
@@ -692,6 +697,7 @@ function StorefrontApp() {
                 onAddToCart={handleAddToCart}
                 onNavigateManifesto={() => navigate("/manifesto")}
                 onNavigateAbout={() => navigate("/about")}
+                onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
               />
             }
           />

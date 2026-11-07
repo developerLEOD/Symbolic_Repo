@@ -15,6 +15,11 @@ import { auth, db } from "./firebase";
 import { UserProfile } from "../types";
 import { generateUserReferralCode } from "./referralService";
 import firebaseConfig from "../../firebase-applet-config.json";
+import { 
+  isFirestoreQuotaExceeded, 
+  markFirestoreQuotaExceeded, 
+  isQuotaError 
+} from "./firestoreCircuitBreaker";
 
 const OWNER_EMAILS = [
   "araizhasan60@gmail.com",
@@ -131,7 +136,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastLoginAt: Date.now(),
           ...additionalData
         };
-        await setDoc(userDocRef, newProfile);
+        if (!isFirestoreQuotaExceeded()) {
+          try {
+            await setDoc(userDocRef, newProfile);
+          } catch (e) {
+            if (isQuotaError(e)) {
+              markFirestoreQuotaExceeded();
+            }
+            console.warn("Firestore write quota reached during profile creation; cached locally.");
+          }
+        }
         setUserProfile(newProfile);
         saveCachedProfile(newProfile);
         if (typeof window !== "undefined") {
@@ -154,12 +168,26 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           lastLoginAt: Date.now(),
           ...(additionalData || {})
         };
-        await updateDoc(userDocRef, {
-          role: userRole,
-          referralCode: userReferralCode,
-          lastLoginAt: Date.now(),
-          ...(additionalData || {})
-        });
+
+        // Only write to remote Firestore if last recorded login was over 4 hours ago or explicit profile update
+        const lastLoginTime = existingData.lastLoginAt || 0;
+        const shouldWriteRemote = (Date.now() - lastLoginTime > 4 * 60 * 60 * 1000) || Boolean(additionalData);
+
+        if (shouldWriteRemote && !isFirestoreQuotaExceeded()) {
+          try {
+            await updateDoc(userDocRef, {
+              role: userRole,
+              referralCode: userReferralCode,
+              lastLoginAt: Date.now(),
+              ...(additionalData || {})
+            });
+          } catch (e) {
+            if (isQuotaError(e)) {
+              markFirestoreQuotaExceeded();
+            }
+            console.warn("Firestore write quota reached during profile sync; cached locally.");
+          }
+        }
         setUserProfile(updatedData);
         saveCachedProfile(updatedData);
         if (typeof window !== "undefined" && userReferralCode) {
@@ -167,7 +195,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
       }
     } catch (err) {
-      if (isFirestoreQuotaExceededError(err)) {
+      if (isFirestoreQuotaExceededError(err) || isQuotaError(err)) {
+        markFirestoreQuotaExceeded();
         setIsQuotaExceeded(true);
         quotaExceededRef.current = true;
         console.warn("Firestore daily free read quota reached. Operating seamlessly in offline profile mode.");
@@ -306,16 +335,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const updateUserProfileData = async (data: Partial<UserProfile>) => {
     if (!user) throw new Error("No authenticated user found");
-    try {
-      const userDocRef = doc(db, "users", user.uid);
-      await updateDoc(userDocRef, data);
-    } catch (err) {
-      if (isFirestoreQuotaExceededError(err)) {
-        setIsQuotaExceeded(true);
-        quotaExceededRef.current = true;
-        console.warn("Firestore write quota exceeded; updating local profile state.");
-      } else {
-        throw err;
+    if (isFirestoreQuotaExceeded()) {
+      console.warn("Firestore write quota exceeded; updating local profile state.");
+    } else {
+      try {
+        const userDocRef = doc(db, "users", user.uid);
+        await updateDoc(userDocRef, data);
+      } catch (err) {
+        if (isFirestoreQuotaExceededError(err) || isQuotaError(err)) {
+          markFirestoreQuotaExceeded();
+          setIsQuotaExceeded(true);
+          quotaExceededRef.current = true;
+          console.warn("Firestore write quota exceeded; updating local profile state.");
+        } else {
+          throw err;
+        }
       }
     }
     setUserProfile(prev => {

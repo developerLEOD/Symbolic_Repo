@@ -13,62 +13,45 @@ interface OrangeTriangleBoundaryProps {
 export default function OrangeTriangleBoundary({
   position,
   label,
-  sublabel,
-  code = "SPEC:COL-01",
   showBackToHome = false,
   onBackToHome
 }: OrangeTriangleBoundaryProps) {
   const isTop = position === "top";
   const defaultLabel = isTop 
-    ? "SECTION BOUNDARY // THE COLLECTION REGISTER" 
-    : "EXIT BOUNDARY // THE COLLECTION REGISTER";
-  const defaultSublabel = isTop 
-    ? "CANONICAL ARTIFACT CATALOGUE" 
-    : "ALLOTMENTS VALIDATED // ARCHIVE DISPATCH";
+    ? "THE COLLECTION" 
+    : "THE COLLECTION // END OF CATALOGUE";
 
   return (
     <div className="w-full select-none">
       {isTop ? (
         <>
           {/* Top dark border rule */}
-          <div className="h-[2.5px] bg-brand-text w-full" />
+          <div className="h-[2px] bg-brand-text w-full" />
 
           {/* High-visibility industrial orange ribbon */}
-          <div className="bg-brand-accent text-white px-3 sm:px-6 py-2 flex items-center justify-between font-mono text-[9px] sm:text-[10.5px] font-black uppercase tracking-widest overflow-hidden shadow-[inset_0_-1px_0_rgba(0,0,0,0.15)]">
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <span className="tracking-[0.3em] text-white font-black" aria-hidden="true">▲▲▲▲▲</span>
+          <div className="bg-brand-accent text-white px-4 sm:px-8 py-1.5 flex items-center justify-between font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest overflow-hidden">
+            <div className="flex items-center gap-3">
               <span className="font-black text-white">{label || defaultLabel}</span>
             </div>
-            <div className="hidden md:flex items-center gap-3 text-[9.5px] font-bold opacity-95">
-              <span>{sublabel || defaultSublabel}</span>
-              <span>•</span>
-              <span>PRIMARY ARCHIVE ZONE</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              {showBackToHome && onBackToHome && (
-                <button
-                  type="button"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    onBackToHome();
-                  }}
-                  className="bg-black text-white hover:bg-white hover:text-black border border-white/40 px-2 sm:px-2.5 py-0.5 text-[8px] sm:text-[9.5px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_rgba(0,0,0,0.4)] transition-all select-none group"
-                  title="Return to Symbolic Homepage"
-                  aria-label="Back to Homepage"
-                >
-                  <ArrowLeft size={11} className="group-hover:-translate-x-0.5 transition-transform text-[#ff4500] group-hover:text-black" />
-                  <span>BACK TO HOMEPAGE</span>
-                </button>
-              )}
-              <span className="hidden sm:inline bg-black/25 px-2 py-0.5 border border-white/30 text-[8.5px] font-mono font-black">
-                {code}
-              </span>
-              <span className="tracking-[0.3em] text-white font-black" aria-hidden="true">▲▲▲▲▲</span>
-            </div>
+            {showBackToHome && onBackToHome && (
+              <button
+                type="button"
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onBackToHome();
+                }}
+                className="bg-black text-white hover:bg-white hover:text-black border border-white/40 px-2.5 py-0.5 text-[8.5px] sm:text-[9.5px] font-mono font-black uppercase tracking-wider flex items-center gap-1.5 cursor-pointer shadow-[2px_2px_0px_rgba(0,0,0,0.4)] transition-all select-none group"
+                title="Return to Symbolic Homepage"
+                aria-label="Back to Homepage"
+              >
+                <ArrowLeft size={11} className="group-hover:-translate-x-0.5 transition-transform text-[#ff4500] group-hover:text-black" />
+                <span>BACK TO HOMEPAGE</span>
+              </button>
+            )}
           </div>
 
           {/* Downward-pointing orange sawtooth triangle fringe */}
-          <div className="w-full h-3.5 sm:h-4 overflow-hidden relative leading-none -mt-[1px]">
+          <div className="w-full h-3 sm:h-3.5 overflow-hidden relative leading-none -mt-[1px]">
             <svg 
               className="w-full h-full block" 
               xmlns="http://www.w3.org/2000/svg"
@@ -86,7 +69,7 @@ export default function OrangeTriangleBoundary({
       ) : (
         <>
           {/* Upward-pointing orange sawtooth triangle fringe */}
-          <div className="w-full h-3.5 sm:h-4 overflow-hidden relative leading-none -mb-[1px]">
+          <div className="w-full h-3 sm:h-3.5 overflow-hidden relative leading-none -mb-[1px]">
             <svg 
               className="w-full h-full block" 
               xmlns="http://www.w3.org/2000/svg"
@@ -102,26 +85,12 @@ export default function OrangeTriangleBoundary({
           </div>
 
           {/* High-visibility industrial orange ribbon */}
-          <div className="bg-brand-accent text-white px-3 sm:px-6 py-2 flex items-center justify-between font-mono text-[9px] sm:text-[10.5px] font-black uppercase tracking-widest overflow-hidden shadow-[inset_0_1px_0_rgba(0,0,0,0.15)]">
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <span className="tracking-[0.3em] text-white font-black">▼▼▼▼▼</span>
-              <span className="font-black text-white">{label || defaultLabel}</span>
-            </div>
-            <div className="hidden md:flex items-center gap-3 text-[9.5px] font-bold opacity-95">
-              <span>{sublabel || defaultSublabel}</span>
-              <span>•</span>
-              <span>TRANSITION TO ATELIER CRITERIA</span>
-            </div>
-            <div className="flex items-center gap-2 sm:gap-3 shrink-0">
-              <span className="hidden sm:inline bg-black/25 px-2 py-0.5 border border-white/30 text-[8.5px] font-mono font-black">
-                {code}
-              </span>
-              <span className="tracking-[0.3em] text-white font-black">▼▼▼▼▼</span>
-            </div>
+          <div className="bg-brand-accent text-white px-4 sm:px-8 py-1.5 flex items-center justify-between font-mono text-[10px] sm:text-xs font-black uppercase tracking-widest overflow-hidden">
+            <span className="font-black text-white">{label || defaultLabel}</span>
           </div>
 
           {/* Bottom dark border rule */}
-          <div className="h-[2.5px] bg-brand-text w-full" />
+          <div className="h-[2px] bg-brand-text w-full" />
         </>
       )}
     </div>

@@ -30,13 +30,15 @@ import {
   X,
   Filter,
   Users,
-  FolderTree
+  FolderTree,
+  Compass
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../lib/AuthContext";
 import { Product, ProductVariant, Category, GarmentTypeConfig, ProductColorConfig } from "../types";
 import OwnerReferralManager from "./OwnerReferralManager";
 import OwnerTaxonomyManager from "./OwnerTaxonomyManager";
+import OwnerHeroManager from "./OwnerHeroManager";
 import ArtifactTaxonomySelector from "./ArtifactTaxonomySelector";
 import OwnerArtifactSpecimenStudio from "./OwnerArtifactSpecimenStudio";
 import VariantMatrixManager, { 
@@ -84,7 +86,7 @@ export default function OwnerProductManager({
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"artifacts" | "upload" | "catalog" | "referrals" | "taxonomy">("artifacts");
+  const [activeTab, setActiveTab] = useState<"artifacts" | "upload" | "catalog" | "referrals" | "taxonomy" | "hero">("artifacts");
   const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "list">("grid");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("all");
@@ -905,6 +907,18 @@ export default function OwnerProductManager({
             <FolderTree size={12} className="shrink-0 hidden xs:inline text-brand-accent" />
             <span>CLASSIFICATIONS &amp; TAGS</span>
           </button>
+          <button
+            type="button"
+            onClick={() => setActiveTab("hero")}
+            className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
+              activeTab === "hero" 
+                ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
+                : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
+            }`}
+          >
+            <Compass size={12} className="shrink-0 hidden xs:inline text-brand-accent" />
+            <span>HERO CANVAS</span>
+          </button>
         </div>
 
         {/* Right: Action Buttons */}
@@ -1024,6 +1038,14 @@ export default function OwnerProductManager({
             onNotify={(type, message) => {
               setNotification({ type, message });
               setTimeout(() => setNotification(null), 4000);
+            }}
+          />
+        ) : activeTab === "hero" ? (
+          <OwnerHeroManager
+            userEmail={user?.email || undefined}
+            onViewStorefront={() => {
+              if (onViewProductInStore) onViewProductInStore("");
+              else onClose();
             }}
           />
         ) : activeTab === "catalog" ? (

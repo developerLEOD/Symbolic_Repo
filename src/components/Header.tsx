@@ -222,394 +222,72 @@ export default function Header({
     navigate(path);
   };
 
-  const isHidden = location.pathname === "/" && (isInCollectionSection || isProductHovered) && !isMenuOpen && !openDropdown;
-
   return (
     <motion.header 
       initial={false}
-      animate={
-        isHidden
-          ? { y: "-108%", opacity: 0, scale: 0.98 }
-          : { y: "0%", opacity: 1, scale: 1 }
-      }
-      transition={{
-        type: "spring",
-        stiffness: 480,
-        damping: isHidden ? 32 : 23,
-        mass: 0.75,
-      }}
-      style={{
-        pointerEvents: isHidden ? "none" : "auto",
-      }}
-      className={`fixed top-0 left-0 w-full z-50 bg-brand-bg/90 backdrop-blur-md border-b-[2.5px] border-brand-text origin-top ${
-        scrolled ? 'shadow-[0_4px_0px_#050505]' : 'shadow-[0_2px_0px_#050505]'
-      }`}
+      animate={{ y: "0%", opacity: 1, scale: 1 }}
+      className="fixed top-0 left-0 w-full z-50 h-16 sm:h-20 flex items-center justify-between px-3 sm:px-6 lg:px-8"
     >
-      <div className={`max-w-7xl mx-auto px-3 sm:px-6 lg:px-8 flex items-center justify-between gap-2 sm:gap-4 lg:gap-6 transition-all duration-300 ${scrolled ? 'h-14 sm:h-16' : 'h-16 sm:h-20'}`}>
-        {/* Left: Prominent Brand Identity & Large Logo */}
-        <div className="flex items-center shrink-0">
-          <Link 
-            to="/"
-            onClick={() => {
-              if (onCategoryClick) onCategoryClick(null);
-              setIsMenuOpen(false);
-            }}
-            className="group flex items-center gap-2.5 sm:gap-3.5 text-left focus:outline-none cursor-pointer shrink-0 select-none"
-          >
-            <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 sm:border-[2.5px] border-brand-text shadow-[3px_3px_0px_#050505] group-hover:border-brand-accent group-hover:shadow-[5px_5px_0px_#050505] transition-all duration-200 ${scrolled ? 'w-10 h-10 sm:w-11 sm:h-11' : 'w-11 h-11 sm:w-13 sm:h-13 md:w-14 md:h-14'}`}>
-              <img 
-                src="/Logo_NoName.jpg" 
-                alt="SYMBOLIC" 
-                referrerPolicy="no-referrer"
-                className="w-full h-full object-contain p-0.5"
-              />
-            </div>
-            <div className="flex flex-col justify-center text-left shrink-0">
-              <div className="w-fit inline-flex flex-col">
-                <span className={`block font-mono font-black tracking-tight sm:tracking-normal uppercase text-brand-text leading-none transition-all duration-200 ${scrolled ? 'text-sm sm:text-base md:text-lg' : 'text-base sm:text-xl md:text-2xl lg:text-[25px]'}`}>
-                  SYMBOLIC
-                </span>
-                <span className={`self-end font-mono font-black italic tracking-wider text-brand-accent leading-[12px] -mt-[3px] transition-all duration-200 ${scrolled ? 'text-[8px] sm:text-[9px] md:text-[9.5px]' : 'text-[9.5px] sm:text-[11px] md:text-xs lg:text-[12.5px]'}`}>
-                  MUSLIMS
-                </span>
-              </div>
-              <span className={`font-mono uppercase tracking-widest text-brand-text/50 leading-none transition-all duration-200 ${scrolled ? 'hidden' : 'hidden sm:block text-[8px] sm:text-[9px] mt-1'}`}>
-                POSSESSION &amp; IDENTITY
+      {/* Top Left: Logo */}
+      <div className="flex items-center shrink-0">
+        <Link 
+          to="/"
+          className="group flex items-center gap-2 sm:gap-2.5 focus:outline-none cursor-pointer shrink-0 select-none"
+        >
+          <div className="shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border border-brand-text shadow-[1px_1px_0px_#050505] transition-all w-7 h-7 sm:w-9 sm:h-9">
+            <img 
+              src="/Logo_NoName.jpg" 
+              alt="SYMBOLIC" 
+              referrerPolicy="no-referrer"
+              className="w-full h-full object-contain p-0.5"
+            />
+          </div>
+          <div className="flex flex-col justify-center text-left shrink-0">
+            <div className="w-fit inline-flex flex-col">
+              <span className="block font-mono font-black tracking-tight uppercase text-brand-text leading-none text-base sm:text-lg">
+                SYMBOLIC
+              </span>
+              <span className="self-end font-mono font-black italic tracking-wider text-brand-accent leading-[14px] -mt-[2px] text-[10px] sm:text-[11px]">
+                MUSLIMS
               </span>
             </div>
-          </Link>
-        </div>
-
-        {/* Center: Navigation on md+ / Brutalist Status Ticker on mobile to eliminate empty space */}
-        <div className="flex-1 flex items-center justify-center min-w-0 px-1 sm:px-2">
-          {/* Tablet & PC Navigation (Visible starting from md: 768px) */}
-          <nav 
-            ref={navRef}
-            className="hidden md:flex items-center justify-center gap-1.5 lg:gap-2 xl:gap-2.5 shrink-0 select-none font-mono"
-          >
-            {/* Dropdown 1: Mediums */}
-            <div className="relative">
-              <button 
-                type="button"
-                onClick={() => setOpenDropdown(prev => prev === "corpus" ? null : "corpus")}
-                className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                  openDropdown === "corpus" || isMediumActive
-                    ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
-                    : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-                } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
-                aria-expanded={openDropdown === "corpus"}
-              >
-                <span>[ MEDIUMS ]</span>
-                <ChevronDown size={11} className={`transition-transform duration-200 ${openDropdown === "corpus" ? "rotate-180" : ""}`} />
-              </button>
-
-              <AnimatePresence>
-                {openDropdown === "corpus" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-none shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
-                  >
-                    <div className="px-3.5 py-2 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
-                      <span>// MEDIUMS</span>
-                      <span className="text-brand-text/40">{mediumItems.length} ENTRIES</span>
-                    </div>
-                    <div className="max-h-72 overflow-y-auto divide-y divide-brand-text/10">
-                      {mediumItems.map(item => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => handleItemSelect(item.path, item.id)}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer block"
-                        >
-                          <div>
-                            <div className="font-mono text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider group-hover:text-brand-bg">
-                              [ {item.label} ]
-                            </div>
-                            <div className="font-mono text-[8.5px] text-brand-text/60 group-hover:text-brand-bg/80 mt-0.5">
-                              {item.desc}
-                            </div>
-                          </div>
-                          <ChevronRight size={12} className="text-brand-text/40 group-hover:text-brand-bg shrink-0 transition-transform group-hover:translate-x-0.5" />
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Dropdown 2: Collections */}
-            <div className="relative">
-              <button 
-                type="button"
-                onClick={() => setOpenDropdown(prev => prev === "collections" ? null : "collections")}
-                className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center gap-1.5 border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                  openDropdown === "collections" || isCollectionActive
-                    ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
-                    : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-                } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
-                aria-expanded={openDropdown === "collections"}
-              >
-                <span>[ COLLECTIONS ]</span>
-                <ChevronDown size={11} className={`transition-transform duration-200 ${openDropdown === "collections" ? "rotate-180" : ""}`} />
-              </button>
-
-              <AnimatePresence>
-                {openDropdown === "collections" && (
-                  <motion.div
-                    initial={{ opacity: 0, y: -4 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    exit={{ opacity: 0, y: -4 }}
-                    transition={{ duration: 0.12 }}
-                    className="absolute left-0 top-full mt-2 w-64 sm:w-72 bg-brand-bg/95 backdrop-blur-md border-2 border-brand-text rounded-none shadow-[5px_5px_0px_#050505] z-[60] overflow-hidden divide-y divide-brand-text/10"
-                  >
-                    <div className="px-3.5 py-2 bg-brand-surface border-b border-brand-text/20 text-[8.5px] font-mono font-black uppercase text-brand-accent tracking-widest flex items-center justify-between">
-                      <span>// ETHOS LINES</span>
-                      <span className="text-brand-text/40">{collectionItems.length} LINES</span>
-                    </div>
-                    <div className="divide-y divide-brand-text/10">
-                      {collectionItems.map(item => (
-                        <Link
-                          key={item.path}
-                          to={item.path}
-                          onClick={() => handleItemSelect(item.path, item.id)}
-                          className="w-full text-left px-3.5 py-2.5 hover:bg-brand-text hover:text-brand-bg group transition-colors flex items-center justify-between cursor-pointer block"
-                        >
-                          <div>
-                            <div className={`font-mono text-[10px] sm:text-[10.5px] font-black uppercase tracking-wider group-hover:text-brand-bg ${item.id ? 'text-brand-accent' : ''}`}>
-                              [ {item.label} ]
-                            </div>
-                            <div className="font-mono text-[8.5px] text-brand-text/60 group-hover:text-brand-bg/80 mt-0.5">
-                              {item.desc}
-                            </div>
-                          </div>
-                          <ChevronRight size={12} className="text-brand-text/40 group-hover:text-brand-bg shrink-0 transition-transform group-hover:translate-x-0.5" />
-                        </Link>
-                      ))}
-                    </div>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
-
-            {/* Link 3: Manifesto */}
-            <Link
-              to="/manifesto"
-              onClick={() => {
-                setOpenDropdown(null);
-                setIsMenuOpen(false);
-              }}
-              className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                isManifestoActive
-                  ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
-                  : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-              } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
-            >
-              <span>[ MANIFESTO ]</span>
-            </Link>
-
-            {/* Link 4: About */}
-            <Link
-              to="/about"
-              onClick={() => {
-                setOpenDropdown(null);
-                setIsMenuOpen(false);
-              }}
-              className={`whitespace-nowrap shrink-0 rounded-full text-[9px] lg:text-[10px] font-mono font-black tracking-wider lg:tracking-widest uppercase transition-all flex items-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer ${
-                isAboutActive
-                  ? "bg-brand-text text-brand-bg shadow-[3px_3px_0px_#050505]" 
-                  : "bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
-              } ${scrolled ? 'px-2.5 lg:px-3 py-1' : 'px-3 sm:px-3.5 lg:px-4 py-1.5'}`}
-            >
-              <span>[ ABOUT ]</span>
-            </Link>
-          </nav>
-        </div>
-
-        {/* Right: Actions (Auth, Possessions, Drawer Toggle) */}
-        <div className="flex items-center gap-1.5 sm:gap-2.5 shrink-0">
-          {/* User Account / Identity Authentication */}
-          <motion.button
-            onClick={() => {
-              soundManager.playClick(0.12);
-              onAuthClick();
-            }}
-            onMouseEnter={() => soundManager.playHover(0.03)}
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.95 }}
-            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 flex items-center justify-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-full transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg ${scrolled ? 'px-3' : 'px-3.5 sm:px-4'}`}
-            title={user ? "Inspect Identity Record & Orders" : "Authenticate Identity"}
-          >
-            {user ? (
-              <>
-                <span className="w-2 h-2 rounded-none bg-green-500 ring-2 ring-brand-text/30 animate-pulse shrink-0"></span>
-                <span className="max-w-[70px] sm:max-w-[100px] truncate hidden sm:inline shrink-0">
-                  {userProfile?.displayName ? String(userProfile.displayName).trim().split(" ")[0] : (user?.email ? user.email.split("@")[0] : "STATION")}
-                </span>
-                <span className="sm:hidden shrink-0 text-[8.5px]">ID</span>
-              </>
-            ) : (
-              <>
-                <UserIcon size={13} className="text-brand-accent shrink-0" />
-                <span className="hidden sm:inline shrink-0">AUTHENTICATE</span>
-              </>
-            )}
-          </motion.button>
-
-          <motion.button 
-            onClick={() => {
-              soundManager.playClick(0.14);
-              onCartClick();
-            }}
-            onMouseEnter={() => soundManager.playHover(0.03)}
-            whileHover={{ y: -1 }}
-            whileTap={{ scale: 0.95 }}
-            className={`whitespace-nowrap shrink-0 h-8.5 sm:h-9 relative flex items-center gap-1.5 sm:gap-2 text-[9px] sm:text-[10px] font-mono uppercase font-black tracking-wider sm:tracking-widest bg-brand-text text-brand-bg rounded-full border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer ${scrolled ? 'px-3' : 'px-3.5 sm:px-4'}`}
-            title="Open Possession Ledger"
-          >
-            <span className="w-2 h-2 rounded-none bg-brand-accent inline-block shrink-0" />
-            <span className="hidden sm:inline shrink-0">POSSESSIONS // </span>
-            <motion.span 
-              key={formattedCartCount}
-              initial={{ scale: 1.4, color: "#ff4500" }}
-              animate={{ scale: 1, color: "inherit" }}
-              transition={{ type: "spring", stiffness: 450, damping: 15 }}
-              className="shrink-0 font-black"
-            >
-              [ {formattedCartCount} ]
-            </motion.span>
-          </motion.button>
-
-          <button 
-            onClick={() => {
-              soundManager.playToggle(0.08);
-              setIsMenuOpen(!isMenuOpen);
-            }}
-            className="md:hidden h-8.5 w-8.5 sm:h-9 sm:w-9 shrink-0 flex items-center justify-center bg-brand-surface hover:bg-brand-text hover:text-brand-bg rounded-full transition-all border-2 border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer"
-            aria-label="Toggle Navigation Menu"
-          >
-            {isMenuOpen ? <X size={16} /> : <Menu size={16} />}
-          </button>
-        </div>
+          </div>
+        </Link>
       </div>
 
-      <AnimatePresence>
-        {isMenuOpen && (
-          <motion.div
-            initial={{ opacity: 0, height: 0 }}
-            animate={{ opacity: 1, height: "auto" }}
-            exit={{ opacity: 0, height: 0 }}
-            className="bg-brand-bg/95 backdrop-blur-md border-b-2 border-brand-text lg:hidden overflow-hidden shadow-2xl"
-          >
-            <div className="px-6 py-8 flex flex-col gap-3 font-mono">
-              {/* User Bar in Mobile Menu */}
-              <button
-                onClick={() => { onAuthClick(); setIsMenuOpen(false); }}
-                className="flex items-center justify-between text-xs font-black uppercase tracking-widest py-3 px-4 bg-brand-surface border-2 border-brand-text text-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer mb-2"
-              >
-                <span className="flex items-center gap-2">
-                  <UserIcon size={14} className="text-brand-accent" />
-                  {user ? `[ ${userProfile?.displayName || user.email} ]` : "[ AUTHENTICATE CLIENT ]"}
-                </span>
-                <span className="text-[9px] font-bold text-brand-accent">
-                  {user ? "PROFILE" : "LOGIN / REGISTER"}
-                </span>
-              </button>
+      {/* Top Right: Actions (Auth, Cart) */}
+      <div className="flex items-center gap-1 shrink-0">
+        {/* User Account */}
+        <motion.button
+          onClick={() => {
+            soundManager.playClick(0.12);
+            onAuthClick();
+          }}
+          className="h-10 flex items-center justify-center px-4 text-[10px] font-mono uppercase font-black tracking-widest rounded-full transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer border border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
+          title={user ? "Profile" : "Authenticate"}
+        >
+          {user ? (
+            <span className="truncate">{userProfile?.displayName || "PROFILE"}</span>
+          ) : (
+            <span className="shrink-0">AUTHENTICATE</span>
+          )}
+        </motion.button>
 
-              {/* Mobile Navigation Sections */}
-              <div className="space-y-4 pt-1">
-                {/* Section 1: Mediums */}
-                <div>
-                  <div className="text-[9px] font-mono font-black uppercase tracking-widest text-brand-text/50 mb-1.5 px-1">
-                    // MEDIUMS
-                  </div>
-                  <div className="space-y-1">
-                    {mediumItems.map(item => (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => handleItemSelect(item.path, item.id)}
-                        className="w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors block"
-                      >
-                        <span>[ {item.label} ]</span>
-                        <ChevronRight size={13} className="text-brand-accent" />
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Section 2: Collections */}
-                <div>
-                  <div className="text-[9px] font-mono font-black uppercase tracking-widest text-brand-text/50 mb-1.5 px-1">
-                    // COLLECTIONS
-                  </div>
-                  <div className="space-y-1">
-                    {collectionItems.map(item => (
-                      <Link
-                        key={item.path}
-                        to={item.path}
-                        onClick={() => handleItemSelect(item.path, item.id)}
-                        className={`w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg border border-brand-text/15 cursor-pointer transition-colors block ${item.id ? 'text-brand-accent font-black' : ''}`}
-                      >
-                        <span>[ {item.label} ]</span>
-                        <ChevronRight size={13} className="text-brand-accent" />
-                      </Link>
-                    ))}
-                  </div>
-                </div>
-
-                {/* Section 3: About & Manifestoes */}
-                <div>
-                  <div className="text-[9px] font-mono font-black uppercase tracking-widest text-brand-text/50 mb-1.5 px-1">
-                    // SEPARATE FOLIOS &amp; ARCHIVES
-                  </div>
-                  <div className="space-y-1">
-                    <Link
-                      to="/manifesto"
-                      onClick={() => handleItemSelect("/manifesto", "manifesto")}
-                      className={`w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 border border-brand-text/15 cursor-pointer transition-colors block ${
-                        isManifestoActive 
-                          ? 'bg-brand-text text-brand-bg font-black' 
-                          : 'bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg text-brand-accent font-black'
-                      }`}
-                    >
-                      <span>[ MANIFESTO // WHY MERCHANDISE ]</span>
-                      <ChevronRight size={13} className={isManifestoActive ? 'text-brand-bg' : 'text-brand-accent'} />
-                    </Link>
-                    <Link
-                      to="/about"
-                      onClick={() => handleItemSelect("/about", "about")}
-                      className={`w-full flex items-center justify-between text-xs font-bold uppercase tracking-widest py-2 px-2.5 border border-brand-text/15 cursor-pointer transition-colors block ${
-                        isAboutActive 
-                          ? 'bg-brand-text text-brand-bg font-black' 
-                          : 'bg-brand-surface/40 hover:bg-brand-text hover:text-brand-bg text-brand-accent font-black'
-                      }`}
-                    >
-                      <span>[ ABOUT SYMBOLIC // PROVENANCE ]</span>
-                      <ChevronRight size={13} className={isAboutActive ? 'text-brand-bg' : 'text-brand-accent'} />
-                    </Link>
-                  </div>
-                </div>
-              </div>
-              {isOwner && onOwnerClick && (
-                <button 
-                  onClick={() => { onOwnerClick(); setIsMenuOpen(false); }}
-                  className="flex items-center justify-between text-xs font-bold uppercase tracking-widest py-3 px-4 bg-brand-surface border-2 border-brand-text text-brand-text shadow-[2px_2px_0px_#050505] mt-2 cursor-pointer"
-                >
-                  <span className="flex items-center gap-2">
-                    <Sliders size={14} className="text-brand-accent" /> 
-                    <span>[ STUDIO MANAGER ]</span>
-                  </span>
-                  <span className="text-[9px] font-black bg-brand-accent text-white px-2 py-0.5">OWNER</span>
-                </button>
-              )}
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+        {/* Cart */}
+        <motion.button 
+          onClick={() => {
+            soundManager.playClick(0.14);
+            onCartClick();
+          }}
+          className="h-10 relative flex items-center px-4 text-[10px] font-mono uppercase font-black tracking-widest bg-brand-text text-brand-bg rounded-full border border-brand-text hover:bg-brand-accent hover:text-white transition-colors shadow-[1px_1px_0px_#050505] cursor-pointer"
+          title="Possessions"
+        >
+          <span className="hidden sm:inline shrink-0">POSSESSIONS // </span>
+          <span className="shrink-0 font-black">
+            [ {formattedCartCount} ]
+          </span>
+        </motion.button>
+      </div>
     </motion.header>
   );
 }

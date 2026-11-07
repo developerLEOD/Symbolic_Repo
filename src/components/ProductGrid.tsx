@@ -4,7 +4,7 @@ import { Product, Category, Artifact, Specimen } from "../types";
 import ArtifactOverlappingCollection from "./ArtifactOverlappingCollection";
 import ArtifactCard from "./ArtifactCard";
 import OrangeTriangleBoundary from "./OrangeTriangleBoundary";
-import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers, ArrowLeft } from "lucide-react";
+import { LayoutGrid, Grid, List, ArrowUpRight, Compass, ShieldCheck, ChevronDown, ChevronRight, Layers } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { 
   normalizeProductCategory, 
@@ -220,20 +220,12 @@ export default function ProductGrid({
       id="catalog-section" 
       aria-label="The Collection" 
       data-collection-section="true" 
-      className="w-full max-w-7xl mx-auto my-8 sm:my-14 relative bg-brand-surface/25 border-x-2 border-brand-accent/50 shadow-[6px_6px_0px_#050505]"
+      className="w-full max-w-none mt-0 mb-8 sm:mb-14 relative bg-brand-surface/25 border-x-0 border-b-2 border-brand-text shadow-none"
     >
-      {/* 4 Corner Orange Triangle Accents */}
-      <div className="absolute top-0 left-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(0_0,100%_0,0_100%)] pointer-events-none z-20" />
-      <div className="absolute top-0 right-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(0_0,100%_0,100%_100%)] pointer-events-none z-20" />
-      <div className="absolute bottom-0 left-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(0_0,0_100%,100%_100%)] pointer-events-none z-20" />
-      <div className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-brand-accent [clip-path:polygon(100%_0,0_100%,100%_100%)] pointer-events-none z-20" />
-
       {/* TOP ORANGE TRIANGLE BOUNDARY STRIP */}
       <OrangeTriangleBoundary 
         position="top" 
-        label="SECTION BOUNDARY // THE COLLECTION REGISTER"
-        sublabel="CANONICAL ARTIFACT CATALOGUE"
-        code="ZONE:01-CATALOGUE"
+        label="THE COLLECTION"
         showBackToHome={true}
         onBackToHome={handleBackToHome}
       />
@@ -248,18 +240,6 @@ export default function ProductGrid({
               <span className="font-mono text-[9.5px] font-black uppercase tracking-widest text-brand-accent bg-brand-accent/10 px-3 py-1 rounded-none border border-brand-accent/30">
                 {selectedCollection === "be-palestine" ? "COLLECTION FALASTEEN" : selectedCollection === "be-symbolic" ? "COLLECTION BE SYMBOLIC" : "PERMANENT ARCHIVE"}
               </span>
-
-              {/* Back to Homepage Button */}
-              <button
-                type="button"
-                onClick={handleBackToHome}
-                className="inline-flex items-center gap-1.5 px-3 py-1 rounded-none font-mono text-[9.5px] sm:text-[10px] font-black uppercase tracking-wider bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer group select-none ml-1"
-                title="Return to Symbolic Homepage"
-                aria-label="Back to Homepage"
-              >
-                <ArrowLeft size={12} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-0.5 transition-transform" />
-                <span>BACK TO HOMEPAGE</span>
-              </button>
             </div>
             <div className="flex items-baseline gap-3 flex-wrap">
               <h2 className="text-3xl sm:text-4xl lg:text-5xl font-mono font-black uppercase tracking-tight text-brand-text leading-none">
@@ -397,18 +377,6 @@ export default function ProductGrid({
               })}
             </div>
 
-            {/* Direct Back to Homepage Button attached to the Collections Tab */}
-            <button
-              type="button"
-              onClick={handleBackToHome}
-              className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-full border-2 border-brand-text bg-brand-accent text-white hover:bg-brand-text font-mono text-[9px] sm:text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] hover:shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer group select-none"
-              title="Return to Symbolic Homepage from Collections"
-              aria-label="Back to Homepage"
-            >
-              <ArrowLeft size={12} className="text-white group-hover:-translate-x-0.5 transition-transform" />
-              <span>BACK TO HOMEPAGE</span>
-            </button>
-
             {/* In-Stock Filter */}
             <button
               id="filter-available-only-btn"
@@ -437,26 +405,7 @@ export default function ProductGrid({
           </div>
         </div>
 
-        {/* Dedicated All Collections Active Banner with Return to Homepage Action */}
-        {selectedCollection === "all" && (
-          <div className="flex flex-wrap items-center justify-between gap-3 p-3 sm:p-3.5 bg-brand-surface/90 border-2 border-brand-text shadow-[3px_3px_0px_#050505] font-mono">
-            <div className="flex items-center gap-2.5">
-              <span className="text-brand-accent font-black text-xs font-mono select-none">[+▲+]</span>
-              <span className="text-[10px] sm:text-[11px] font-black uppercase tracking-wider text-brand-text">
-                ALL COLLECTIONS ACTIVE // UNIFIED CANONICAL REPOSITORY ({totalArtifactsCount} ARTIFACTS)
-              </span>
-            </div>
-            <button
-              type="button"
-              onClick={handleBackToHome}
-              className="inline-flex items-center gap-1.5 px-3 py-1 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border border-brand-text shadow-[1.5px_1.5px_0px_#050505] text-[9.5px] font-black uppercase tracking-wider transition-colors cursor-pointer select-none"
-              title="Return to Symbolic Homepage"
-            >
-              <ArrowLeft size={11} className="text-brand-accent" />
-              <span>BACK TO HOMEPAGE</span>
-            </button>
-          </div>
-        )}
+
       </div>
 
       {/* 3. ARTIFACTS DISPLAY: EXHIBITION, CARDS, OR ARCHIVAL LEDGER */}
@@ -718,16 +667,6 @@ export default function ProductGrid({
           <div className="flex items-center gap-2.5">
             <button
               type="button"
-              onClick={handleBackToHome}
-              className="inline-flex items-center gap-2 px-4 py-2 bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] text-[10px] sm:text-xs font-black uppercase tracking-wider transition-all cursor-pointer group"
-              title="Return to Symbolic Homepage"
-              aria-label="Back to Homepage"
-            >
-              <ArrowLeft size={13} className="text-brand-accent group-hover:text-brand-bg group-hover:-translate-x-1 transition-transform" />
-              <span>BACK TO HOMEPAGE</span>
-            </button>
-            <button
-              type="button"
               onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
               className="inline-flex items-center gap-1.5 px-3 py-2 bg-brand-bg hover:bg-brand-text text-brand-text hover:text-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] text-[10px] font-black uppercase tracking-wider transition-colors cursor-pointer"
               title="Return to top of Collection"
@@ -741,9 +680,7 @@ export default function ProductGrid({
       {/* BOTTOM ORANGE TRIANGLE BOUNDARY STRIP */}
       <OrangeTriangleBoundary 
         position="bottom" 
-        label="EXIT BOUNDARY // THE COLLECTION REGISTER"
-        sublabel="INVENTORY PROTOCOL SECURED"
-        code="ZONE:01-TERMINUS"
+        label="THE COLLECTION // END OF CATALOGUE"
       />
     </section>
   );

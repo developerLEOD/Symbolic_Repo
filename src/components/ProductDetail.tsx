@@ -503,7 +503,7 @@ export default function ProductDetail({
             )}
 
             {/* Artifact Title */}
-            <h1 className="text-4xl sm:text-6xl lg:text-7xl font-mono font-black uppercase tracking-tight text-brand-text leading-[0.95]">
+            <h1 className="text-5xl sm:text-7xl lg:text-8xl font-mono font-black uppercase tracking-tight text-brand-text leading-[0.95]">
               {artifactTitle}
             </h1>
 
@@ -549,7 +549,7 @@ export default function ProductDetail({
               <span className="font-mono text-[10px] font-black uppercase tracking-widest text-brand-accent block">
                 [ SECTION 02 // ARCHIVAL PLATES ]
               </span>
-              <h2 className="text-2xl sm:text-4xl font-mono font-black uppercase tracking-tight">
+              <h2 className="text-3xl sm:text-5xl font-mono font-black uppercase tracking-tight">
                 VISUAL DOCUMENTATION
               </h2>
             </div>
