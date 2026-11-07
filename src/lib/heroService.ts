@@ -471,28 +471,39 @@ export async function saveHeroConfig(
   // Immediate local cache update for snappy optimistic UI & instant preview
   setCachedHeroConfig(payload);
 
-  // If not an explicit deploy request, return local cache and DO NOT fire remote writes
-  if (!immediate) {
-    return payload;
-  }
-
-  // Check circuit breaker before attempting remote write
   if (isFirestoreQuotaExceeded()) {
-    console.warn("Firestore daily write quota reached. Hero settings deployed locally to browser storage.");
     return payload;
   }
 
-  try {
-    const docRef = doc(db, HERO_SETTINGS_DOC_PATH, HERO_SETTINGS_DOC_ID);
-    const cleanedPayload = cleanUndefined(payload);
-    await setDoc(docRef, cleanedPayload, { merge: true });
-  } catch (error: any) {
-    if (isQuotaError(error)) {
-      markFirestoreQuotaExceeded();
-      console.warn("Firestore daily write quota reached during save. Saved safely in local storage.");
-    } else {
-      console.warn("Firestore hero config save note (stored locally in session):", error?.message || error);
+  const executeRemoteSave = async () => {
+    try {
+      const docRef = doc(db, HERO_SETTINGS_DOC_PATH, HERO_SETTINGS_DOC_ID);
+      const cleanedPayload = cleanUndefined(payload);
+      await setDoc(docRef, cleanedPayload, { merge: true });
+    } catch (error: any) {
+      if (isQuotaError(error)) {
+        markFirestoreQuotaExceeded();
+        console.warn("Firestore daily write quota reached during save. Saved safely in local storage.");
+      } else {
+        console.warn("Firestore hero config save note:", error?.message || error);
+      }
     }
+  };
+
+  if (immediate) {
+    if (saveDebounceTimer) {
+      clearTimeout(saveDebounceTimer);
+      saveDebounceTimer = null;
+    }
+    await executeRemoteSave();
+  } else {
+    if (saveDebounceTimer) {
+      clearTimeout(saveDebounceTimer);
+    }
+    saveDebounceTimer = setTimeout(() => {
+      saveDebounceTimer = null;
+      executeRemoteSave();
+    }, 1000);
   }
 
   return payload;
