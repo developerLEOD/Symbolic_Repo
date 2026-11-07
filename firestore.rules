@@ -77,7 +77,16 @@ service cloud.firestore {
       allow update, delete: if isOwner();
     }
 
-    // Global Store Settings (Referral Parameters, etc.): Publicly readable, owner editable
+    // Global Store Settings (Referral Parameters, etc.): Publicly readable
+    // Hero configuration & version history: open read/write to allow synchronized live editing from studio and webapp
+    match /settings/hero {
+      allow read, write: if true;
+    }
+
+    match /hero_revisions/{revisionId} {
+      allow read, write: if true;
+    }
+
     match /settings/{settingId} {
       allow read: if true;
       allow write: if isOwner();

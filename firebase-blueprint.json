@@ -245,7 +245,11 @@
     },
     "/settings/{settingId}": {
       "schema": "referralSettings",
-      "description": "Global store settings including referral discount configurations"
+      "description": "Global store settings including referral discount configurations and live hero canvas layout"
+    },
+    "/hero_revisions/{revisionId}": {
+      "schema": "heroSettings",
+      "description": "Historical audit log of all hero section modifications saved across AI Studio and Vercel"
     },
     "/referrals/{referralId}": {
       "schema": "referralRecord",

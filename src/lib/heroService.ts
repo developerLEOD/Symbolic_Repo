@@ -346,6 +346,22 @@ export function calculateAdaptiveStageHeight(config: CustomHeroConfig, isMobile:
 }
 
 /**
+/**
+ * Detects the runtime origin to carefully tag whether edits came from Google AI Studio or Vercel Webapp
+ */
+export function getSourceAppIdentifier(): "google_ai_studio" | "vercel_webapp" | "web" {
+  if (typeof window === "undefined") return "web";
+  const host = window.location.hostname || "";
+  if (host.includes("ais-dev") || host.includes("ais-pre") || host.includes("google") || host.includes("run.app")) {
+    return "google_ai_studio";
+  }
+  if (host.includes("vercel") || host.includes("vercel.app")) {
+    return "vercel_webapp";
+  }
+  return "web";
+}
+
+/**
  * Retrieves the cached hero configuration from localStorage synchronously
  */
 export function getCachedHeroConfig(): CustomHeroConfig {
@@ -399,6 +415,7 @@ export async function getHeroConfig(): Promise<CustomHeroConfig> {
 /**
  * Real-time listener for the hero configuration so storefront updates live
  * whenever an admin tweaks avatar position, image, or transitions in the studio.
+ * Automatically seeds default config to Firestore if non-existent.
  */
 export function subscribeHeroConfig(
   onUpdate: (config: CustomHeroConfig) => void
@@ -417,7 +434,10 @@ export function subscribeHeroConfig(
           setCachedHeroConfig(config);
           onUpdate(config);
         } else {
-          onUpdate(getCachedHeroConfig());
+          // Auto-seed default clean state to Firestore so all clients (Studio + Vercel) share the same initial document
+          const cached = getCachedHeroConfig();
+          onUpdate(cached);
+          saveHeroConfig(cached, "system_autoseed", true).catch(() => {});
         }
       },
       (error) => {
@@ -433,6 +453,7 @@ export function subscribeHeroConfig(
 }
 
 let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null;
+let pendingSavePayload: CustomHeroConfig | null = null;
 
 function cleanUndefined<T>(obj: T): T {
   if (obj === null || typeof obj !== "object") {
@@ -451,10 +472,10 @@ function cleanUndefined<T>(obj: T): T {
 }
 
 /**
- * Saves updated hero configuration to Firestore and local cache (Admin only).
- * Local cache is ALWAYS updated immediately for responsive real-time editing.
- * Remote Firestore write ONLY executes when 'immediate === true' (e.g. clicking 'SAVE & DEPLOY'),
- * completely preventing runaway write consumption during live dragging/slider adjustments.
+ * Saves updated hero configuration to Firestore and local cache.
+ * Every edit creates a systematic live document write in `settings/hero` AND
+ * an archived audit revision log in `hero_revisions/{revisionId}` tagged with the source app
+ * (Google AI Studio or Vercel Webapp).
  */
 export async function saveHeroConfig(
   updates: Partial<CustomHeroConfig>,
@@ -462,12 +483,17 @@ export async function saveHeroConfig(
   immediate: boolean = false
 ): Promise<CustomHeroConfig> {
   const current = getCachedHeroConfig();
+  const sourceApp = getSourceAppIdentifier();
+  
   const payload: CustomHeroConfig = {
     ...current,
     ...updates,
     updatedAt: Date.now(),
     updatedBy: updatedByEmail || "owner",
+    sourceApp,
   };
+
+  pendingSavePayload = payload;
 
   // Immediate local cache update for snappy optimistic UI & instant preview
   setCachedHeroConfig(payload);
@@ -476,12 +502,34 @@ export async function saveHeroConfig(
     return payload;
   }
 
-  const executeRemoteSave = async () => {
+  const executeRemoteSave = async (targetPayload: CustomHeroConfig) => {
     try {
       const docRef = doc(db, HERO_SETTINGS_DOC_PATH, HERO_SETTINGS_DOC_ID);
-      const cleanedPayload = cleanUndefined(payload);
+      const cleanedPayload = cleanUndefined(targetPayload);
       const sanitizedPayload = await sanitizeHeroConfigForFirestore(cleanedPayload);
-      await setDoc(docRef, sanitizedPayload, { merge: true });
+      
+      const firestoreDoc = {
+        ...sanitizedPayload,
+        version: 2,
+        sourceApp,
+        updatedAt: Date.now(),
+      };
+
+      // 1. Write live active document
+      await setDoc(docRef, firestoreDoc, { merge: true });
+
+      // 2. Write structured historical revision record for audit and cross-app tracking
+      const revId = `rev_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
+      const revRef = doc(db, "hero_revisions", revId);
+      await setDoc(revRef, {
+        revisionId: revId,
+        sourceApp,
+        updatedBy: updatedByEmail || "owner",
+        timestamp: Date.now(),
+        config: firestoreDoc,
+      }, { merge: true }).catch(() => {});
+
+      pendingSavePayload = null;
     } catch (error: any) {
       if (isQuotaError(error)) {
         markFirestoreQuotaExceeded();
@@ -500,15 +548,17 @@ export async function saveHeroConfig(
       clearTimeout(saveDebounceTimer);
       saveDebounceTimer = null;
     }
-    await executeRemoteSave();
+    await executeRemoteSave(payload);
   } else {
     if (saveDebounceTimer) {
       clearTimeout(saveDebounceTimer);
     }
     saveDebounceTimer = setTimeout(() => {
       saveDebounceTimer = null;
-      executeRemoteSave();
-    }, 1000);
+      if (pendingSavePayload) {
+        executeRemoteSave(pendingSavePayload);
+      }
+    }, 800);
   }
 
   return payload;

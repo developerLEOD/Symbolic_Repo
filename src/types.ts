@@ -510,6 +510,8 @@ export interface CustomHeroConfig {
   canvasOverflowVisible?: boolean;
   updatedAt?: number;
   updatedBy?: string;
+  version?: number;
+  sourceApp?: string;
 }
 
 
