@@ -322,7 +322,7 @@ export default function HeroSidePanel({
     setIsUploading(true);
     soundManager.playClick(0.1);
     try {
-      const compressedDataUrl = await processFileToCompressedDataUrl(file, 1600, 0.9);
+      const compressedDataUrl = await processFileToCompressedDataUrl(file, 1000, 0.82);
       if (activeLayerId === "backdrop") {
         updateTopProp("backdrop", { ...(config.backdrop || DEFAULT_BACKDROP), imageUrl: compressedDataUrl, isEnabled: true });
       } else if (isMainGraphic) {

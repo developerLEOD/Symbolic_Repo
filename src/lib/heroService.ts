@@ -15,6 +15,7 @@ import {
   markFirestoreQuotaExceeded, 
   isQuotaError 
 } from "./firestoreCircuitBreaker";
+import { sanitizeHeroConfigForFirestore } from "./imageOptimization";
 
 export const HERO_SETTINGS_DOC_PATH = "settings";
 export const HERO_SETTINGS_DOC_ID = "hero";
@@ -479,7 +480,8 @@ export async function saveHeroConfig(
     try {
       const docRef = doc(db, HERO_SETTINGS_DOC_PATH, HERO_SETTINGS_DOC_ID);
       const cleanedPayload = cleanUndefined(payload);
-      await setDoc(docRef, cleanedPayload, { merge: true });
+      const sanitizedPayload = await sanitizeHeroConfigForFirestore(cleanedPayload);
+      await setDoc(docRef, sanitizedPayload, { merge: true });
     } catch (error: any) {
       if (isQuotaError(error)) {
         markFirestoreQuotaExceeded();

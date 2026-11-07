@@ -315,7 +315,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail }: OwnerH
     setIsUploading(true);
     soundManager.playClick(0.1);
     try {
-      const compressedDataUrl = await processFileToCompressedDataUrl(file, 1600, 0.9);
+      const compressedDataUrl = await processFileToCompressedDataUrl(file, 1000, 0.82);
       updateLayerProps({
         avatarUrl: compressedDataUrl,
         avatarAlt: file.name.replace(/\.[^/.]+$/, ""),

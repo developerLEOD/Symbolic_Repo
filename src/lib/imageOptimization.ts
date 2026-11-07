@@ -8,7 +8,7 @@
  * are cleanly compressed and bounded to prevent Firestore document size overflow (> 1MB limit).
  */
 
-import { Artifact, Specimen, Product } from "../types";
+import { Artifact, Specimen, Product, CustomHeroConfig, HeroLayerConfig, GraphicObject } from "../types";
 
 /**
  * Resizes and optimizes an image data URL using an offscreen canvas with high visual fidelity.
@@ -16,8 +16,8 @@ import { Artifact, Specimen, Product } from "../types";
  */
 export async function compressDataUrl(
   dataUrl: string,
-  maxDimension = 1600,
-  quality = 0.88
+  maxDimension = 1000,
+  quality = 0.82
 ): Promise<string> {
   if (!dataUrl || typeof dataUrl !== "string") return dataUrl;
   
@@ -47,7 +47,7 @@ export async function compressDataUrl(
         }
 
         // If image already fits comfortably within dimensions and is not gigantic in bytes, keep pristine
-        if (width <= maxDimension && height <= maxDimension && dataUrl.length < 350000) {
+        if (width <= maxDimension && height <= maxDimension && dataUrl.length < 120000) {
           resolve(dataUrl);
           return;
         }
@@ -98,11 +98,11 @@ export async function compressDataUrl(
           optimized = canvas.toDataURL("image/jpeg", quality);
         }
 
-        // Only apply a secondary pass if image exceeds safe single-field budget (> 450KB)
-        if (optimized.length > 450000) {
+        // Only apply a secondary pass if image exceeds safe single-field budget (> 250KB)
+        if (optimized.length > 250000) {
           const secondaryCanvas = document.createElement("canvas");
-          const sWidth = Math.round(width * 0.85);
-          const sHeight = Math.round(height * 0.85);
+          const sWidth = Math.round(width * 0.8);
+          const sHeight = Math.round(height * 0.8);
           secondaryCanvas.width = sWidth;
           secondaryCanvas.height = sHeight;
           const sCtx = secondaryCanvas.getContext("2d");
@@ -114,7 +114,7 @@ export async function compressDataUrl(
               sCtx.fillRect(0, 0, sWidth, sHeight);
             }
             sCtx.drawImage(img, 0, 0, sWidth, sHeight);
-            optimized = secondaryCanvas.toDataURL("image/jpeg", 0.82);
+            optimized = secondaryCanvas.toDataURL("image/jpeg", 0.78);
           }
         }
 
@@ -139,8 +139,8 @@ export async function compressDataUrl(
  */
 export async function processFileToCompressedDataUrl(
   file: File,
-  maxDimension = 1600,
-  quality = 0.88
+  maxDimension = 1000,
+  quality = 0.82
 ): Promise<string> {
   if (!file || !file.type.startsWith("image/")) {
     throw new Error("Provided file is not a valid image");
@@ -421,6 +421,67 @@ export async function sanitizeProductForFirestore(product: Product): Promise<Pro
     }
     result.images = Array.from(new Set(optimizedImages));
   }
+
+  return result;
+}
+
+/**
+ * Sanitizes and optimizes a CustomHeroConfig payload before writing to Firestore.
+ * Ensures base64 images across all 3 layers and graphic objects fit comfortably
+ * inside the 1MB Firestore single-document limit.
+ */
+export async function sanitizeHeroConfigForFirestore(config: CustomHeroConfig): Promise<CustomHeroConfig> {
+  if (!config) return config;
+
+  const sanitizeLayer = async (layer?: HeroLayerConfig): Promise<HeroLayerConfig | undefined> => {
+    if (!layer) return layer;
+    const copy: HeroLayerConfig = { ...layer };
+
+    if (copy.avatarUrl && copy.avatarUrl.startsWith("data:image/")) {
+      copy.avatarUrl = await compressDataUrl(copy.avatarUrl, 1000, 0.82);
+    }
+
+    if (Array.isArray(copy.graphicObjects) && copy.graphicObjects.length > 0) {
+      const sanitizedGraphics: GraphicObject[] = [];
+      for (const g of copy.graphicObjects) {
+        if (!g) continue;
+        const gCopy = { ...g };
+        if (gCopy.avatarUrl && gCopy.avatarUrl.startsWith("data:image/")) {
+          gCopy.avatarUrl = await compressDataUrl(gCopy.avatarUrl, 1000, 0.82);
+        }
+        sanitizedGraphics.push(gCopy);
+      }
+      copy.graphicObjects = sanitizedGraphics;
+    }
+
+    return copy;
+  };
+
+  const sanitizedBg = await sanitizeLayer(config.bgLayer);
+  const sanitizedMid = await sanitizeLayer(config.midLayer);
+  const sanitizedFg = await sanitizeLayer(config.fgLayer);
+
+  let sanitizedBackdrop = config.backdrop;
+  if (config.backdrop?.imageUrl && config.backdrop.imageUrl.startsWith("data:image/")) {
+    sanitizedBackdrop = {
+      ...config.backdrop,
+      imageUrl: await compressDataUrl(config.backdrop.imageUrl, 1000, 0.82),
+    };
+  }
+
+  let singleAvatarUrl = config.avatarUrl;
+  if (singleAvatarUrl && singleAvatarUrl.startsWith("data:image/")) {
+    singleAvatarUrl = await compressDataUrl(singleAvatarUrl, 1000, 0.82);
+  }
+
+  const result: CustomHeroConfig = {
+    ...config,
+    avatarUrl: singleAvatarUrl,
+    bgLayer: sanitizedBg || config.bgLayer,
+    midLayer: sanitizedMid || config.midLayer,
+    fgLayer: sanitizedFg || config.fgLayer,
+    backdrop: sanitizedBackdrop,
+  };
 
   return result;
 }
