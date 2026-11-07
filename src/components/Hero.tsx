@@ -222,7 +222,7 @@ function LayerGraphicItem({
         finalStickToBottom
           ? {
               left: `${finalPosX}%`,
-              bottom: isMobile ? "16px" : "0",
+              bottom: isMobile ? "5px" : "0",
               top: "auto",
               transform: `translateX(-50%) rotate(${finalRotation}deg)`,
               transformOrigin: "bottom center",
