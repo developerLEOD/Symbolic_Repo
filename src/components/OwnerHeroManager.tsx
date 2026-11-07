@@ -512,42 +512,6 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail }: OwnerH
           mobileStickToBottom: g.mobileStickToBottom,
         });
       });
-    } else if (layer.slideshowEnabled !== false && layerGraphics.length === 1) {
-      const fallbackAvatars = [
-        { url: "/src/assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg", alt: "Falasteen Kuffiyeh Hoodie", title: "FALASTEEN // HOODIE", subtitle: "HEAVYWEIGHT ARMOR" },
-        { url: "/src/assets/images/canvas_field_bag_1789233558525.jpg", alt: "Canvas Field Bag", title: "FIELD BAG // CARRY", subtitle: "INSTRUMENT OF TRANSIT" },
-        { url: "/src/assets/images/structured_twill_cap_1789233572064.jpg", alt: "Structured Twill Cap", title: "TWILL CAP // HEADWEAR", subtitle: "CROWN OF FOCUS" },
-        { url: "/src/assets/images/ceramic_stoneware_vessel_1789233585625.jpg", alt: "Ceramic Stoneware Vessel", title: "STONEWARE // VESSEL", subtitle: "RITUAL OF SUSTENANCE" },
-        { url: "/src/assets/images/mug_seek_wisdom_1788008333595.jpg", alt: "Seek Wisdom Archival Mug", title: "SEEK WISDOM // MUG", subtitle: "CONTEMPLATIVE VESSEL" }
-      ];
-      fallbackAvatars.forEach((fb, idx) => {
-        layerGraphics.push({
-          id: `${layer.id}-fallback-${idx}`,
-          isMain: false,
-          avatarUrl: fb.url,
-          avatarAlt: fb.alt,
-          posX: layer.posX,
-          posY: layer.posY,
-          size: layer.size,
-          rotation: layer.rotation,
-          opacity: layer.opacity,
-          transitionDirection: layer.transitionDirection,
-          transitionSpeed: layer.transitionSpeed,
-          hoverEffect: layer.hoverEffect,
-          disableIdleAnimation: layer.disableIdleAnimation,
-          shadow: layer.shadow,
-          border: layer.border,
-          captionTitle: fb.title,
-          captionSubtitle: fb.subtitle,
-          deviceTarget: layer.deviceTarget,
-          mobileEnabled: layer.mobileEnabled,
-          mobilePosX: layer.mobilePosX,
-          mobilePosY: layer.mobilePosY,
-          mobileSize: layer.mobileSize,
-          mobileRotation: layer.mobileRotation,
-          mobileStickToBottom: layer.mobileStickToBottom,
-        });
-      });
     }
 
     const isMobileMode = previewDeviceMode === "mobile";
