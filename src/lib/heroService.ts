@@ -487,7 +487,10 @@ export async function saveHeroConfig(
         markFirestoreQuotaExceeded();
         console.warn("Firestore daily write quota reached during save. Saved safely in local storage.");
       } else {
-        console.warn("Firestore hero config save note:", error?.message || error);
+        console.error("Firestore hero config save error:", error?.message || error);
+        if (immediate) {
+          throw error;
+        }
       }
     }
   };

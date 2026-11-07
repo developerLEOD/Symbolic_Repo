@@ -292,8 +292,9 @@ export default function HeroSidePanel({
       await saveHeroConfig(config, userEmail, true);
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
-    } catch (err) {
+    } catch (err: any) {
       console.error("Save hero error:", err);
+      alert("Firestore Save Alert: " + (err?.message || "Could not save to live database. Please check your owner sign-in."));
     } finally {
       setIsSaving(false);
     }
