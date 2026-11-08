@@ -28,7 +28,8 @@ import {
   Monitor,
   Smartphone,
   Database,
-  Plus
+  Plus,
+  Download
 } from "lucide-react";
 import { 
   CustomHeroConfig, 
@@ -54,7 +55,8 @@ import {
   normalizeHeroConfig,
   getHeroConfig, 
   saveHeroConfig, 
-  resetHeroConfig 
+  resetHeroConfig,
+  downloadHeroConfigJson
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
@@ -148,7 +150,6 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
         // If middle layer is updated, sync top-level fields for backwards compatibility
         ...(activeLayerId === "mid" ? updates : {}),
       };
-      saveHeroConfig(nextConfig, userEmail).catch(() => {});
       return nextConfig;
     });
   };
@@ -163,11 +164,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
 
   // Helper to update top-level config property
   const updateProp = <K extends keyof CustomHeroConfig>(key: K, value: CustomHeroConfig[K]) => {
-    setConfig((prev) => {
-      const nextConfig = { ...prev, [key]: value };
-      saveHeroConfig(nextConfig, userEmail).catch(() => {});
-      return nextConfig;
-    });
+    setConfig((prev) => ({ ...prev, [key]: value }));
   };
 
   // Selected object identifier logic
@@ -395,7 +392,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
       setTimeout(() => setSaveSuccess(false), 3000);
     } catch (err: any) {
       console.error("Save hero error:", err);
-      alert("Firestore Save Alert: " + (err?.message || "Could not save to live database. Please check your owner sign-in."));
+      alert("Save Config Error: " + (err?.message || "Could not save hero metadata configuration."));
     } finally {
       setIsSaving(false);
     }
@@ -918,6 +915,14 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
             title="Replay Motion Transition"
           >
             <Play size={11} className="text-[#FF4500] fill-[#FF4500]" />
+          </button>
+          <button
+            type="button"
+            onClick={() => downloadHeroConfigJson(config)}
+            className="p-1 bg-brand-surface hover:bg-[#FF4500] hover:text-white border border-brand-text text-[9px] font-black uppercase transition-colors cursor-pointer"
+            title="Export hero-config.json"
+          >
+            <Download size={11} />
           </button>
           <button
             type="button"

@@ -34,7 +34,8 @@ import {
   Eye,
   Copy,
   Database,
-  Plus
+  Plus,
+  Download
 } from "lucide-react";
 import { 
   CustomHeroConfig,
@@ -59,7 +60,8 @@ import {
   DEFAULT_HERO_BUTTONS,
   normalizeHeroConfig,
   saveHeroConfig, 
-  resetHeroConfig
+  resetHeroConfig,
+  downloadHeroConfigJson
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
@@ -212,7 +214,7 @@ export default function HeroSidePanel({
   // Active graphic object entity for display (either main layer or secondary graphic)
   const currentGraphicEntity: any = isMainGraphic ? currentLayer : selectedSecondaryGraphic;
 
-  // Helper to update properties on the active layer atomically
+  // Helper to update properties on the active layer atomically in local state
   const updateLayerProps = (updates: Partial<HeroLayerConfig>) => {
     onUpdateConfig((prev: CustomHeroConfig) => {
       const layerToUpdate = activeLayerId === "bg" ? (prev.bgLayer || DEFAULT_BG_LAYER) : activeLayerId === "fg" ? (prev.fgLayer || DEFAULT_FG_LAYER) : (prev.midLayer || DEFAULT_MID_LAYER);
@@ -223,7 +225,6 @@ export default function HeroSidePanel({
         [activeLayerKey]: updatedLayer,
         ...(activeLayerId === "mid" ? updates : {}),
       };
-      saveHeroConfig(nextConfig, userEmail).catch(() => {});
       return nextConfig;
     });
   };
@@ -306,7 +307,7 @@ export default function HeroSidePanel({
     }, 450);
   };
 
-  // Save changes to Firestore and localStorage
+  // Save changes to hero-config.json file
   const handleSave = async () => {
     setIsSaving(true);
     soundManager.playClick(0.16);
@@ -315,8 +316,8 @@ export default function HeroSidePanel({
       setSaveSuccess(true);
       setTimeout(() => setSaveSuccess(false), 2500);
     } catch (err: any) {
-      console.error("Save hero error:", err);
-      alert("Firestore Save Alert: " + (err?.message || "Could not save to live database. Please check your owner sign-in."));
+      console.error("Save hero JSON config error:", err);
+      alert("Hero Config Save Note: " + (err?.message || "Could not save to JSON file."));
     } finally {
       setIsSaving(false);
     }
@@ -526,27 +527,47 @@ export default function HeroSidePanel({
             {/* Scrollable Controls Content */}
             <div className="p-4 overflow-y-auto space-y-4 flex-1 scrollbar-thin scrollbar-thumb-brand-text">
               
-              {/* Top Quick Actions (Save & Deploy + Reset) */}
-              <div className="grid grid-cols-2 gap-2 pb-2 border-b border-brand-text/15">
-                <button
-                  type="button"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                  className="py-2 px-3 bg-brand-accent text-white hover:bg-black border-2 border-brand-text text-[9.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50"
-                >
-                  {saveSuccess ? <Check size={12} /> : <Zap size={12} />}
-                  <span>{isSaving ? "SAVING..." : saveSuccess ? "SAVED!" : "SAVE & DEPLOY"}</span>
-                </button>
+              {/* Top Quick Actions (Save to JSON & Export + Reset) */}
+              <div className="space-y-1.5 pb-2 border-b border-brand-text/15">
+                <div className="flex items-center justify-between text-[8px] font-mono text-brand-text/60 uppercase">
+                  <span>METADATA STORAGE:</span>
+                  <span className="text-emerald-600 font-bold">hero-config.json [ZERO DB USAGE]</span>
+                </div>
+                <div className="grid grid-cols-3 gap-1.5">
+                  <button
+                    type="button"
+                    onClick={handleSave}
+                    disabled={isSaving}
+                    className="py-2 px-1.5 bg-brand-accent text-white hover:bg-black border-2 border-brand-text text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50"
+                    title="Persist hero coordinates and animations into hero-config.json"
+                  >
+                    {saveSuccess ? <Check size={11} /> : <Zap size={11} />}
+                    <span>{isSaving ? "SAVING..." : saveSuccess ? "SAVED!" : "SAVE JSON"}</span>
+                  </button>
 
-                <button
-                  type="button"
-                  onClick={handleReset}
-                  disabled={isSaving}
-                  className="py-2 px-3 bg-brand-bg hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text text-[9.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50"
-                >
-                  <RefreshCw size={11} />
-                  <span>RESET DEFAULT</span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick(0.1);
+                      downloadHeroConfigJson(config);
+                    }}
+                    className="py-2 px-1.5 bg-brand-surface hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                    title="Export and download hero-config.json"
+                  >
+                    <Download size={11} />
+                    <span>EXPORT</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleReset}
+                    disabled={isSaving}
+                    className="py-2 px-1.5 bg-brand-bg hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50"
+                  >
+                    <RefreshCw size={10} />
+                    <span>RESET</span>
+                  </button>
+                </div>
               </div>
 
               {/* Target Device Mode Switcher (PC vs Mobile Phone) */}

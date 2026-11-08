@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from "motion/react";
 import { Sliders, Sparkles, Move, Compass, ChevronDown, ArrowRight, BookOpen } from "lucide-react";
 import HeroArchived, { HeroProps as ArchivedHeroProps, CountUpNumber } from "./HeroArchived";
 import { CustomHeroConfig, HeroLayerConfig, HeroTransitionDirection, HeroTransitionSpeed, HeroHoverEffect } from "../types";
-import { DEFAULT_HERO_CONFIG, subscribeHeroConfig, getCachedHeroConfig, calculateAdaptiveStageHeight } from "../lib/heroService";
+import { DEFAULT_HERO_CONFIG, getHeroConfig, getCachedHeroConfig, calculateAdaptiveStageHeight } from "../lib/heroService";
 import { useAuth } from "../lib/AuthContext";
 import { soundManager } from "../lib/soundEffects";
 
@@ -601,12 +601,17 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
   const mainGraphicRef = useRef<HTMLDivElement>(null);
   const [measuredLowestHeight, setMeasuredLowestHeight] = useState<number | null>(null);
 
-  // Subscribe to live Firestore hero configuration
+  // Load hero metadata once on mount from the canonical JSON configuration file
   useEffect(() => {
-    const unsubscribe = subscribeHeroConfig((updated) => {
-      setConfig(updated);
+    let mounted = true;
+    getHeroConfig().then((loadedConfig) => {
+      if (mounted) {
+        setConfig(loadedConfig);
+      }
     });
-    return () => unsubscribe();
+    return () => {
+      mounted = false;
+    };
   }, []);
 
   // Measure DOM lowest pixel of the MAIN graphic

@@ -2,24 +2,25 @@
  * @license
  * SPDX-License-Identifier: Apache-2.0
  * 
- * SYMBOLIC MUSLIMS — Adaptive Custom Hero Configuration Service
- * Manages custom avatar graphics, free-form placement, and entrance transitions
- * with real-time Firestore synchronization and local fallback caching.
+ * SYMBOLIC MUSLIMS — Decoupled JSON Hero Configuration Service
+ * 
+ * ARCHITECTURAL MANDATE:
+ * 1. ZERO FIRESTORE SYNC / ZERO CREDITS LEAKAGE:
+ *    There is NO live real-time Firestore synchronization between the Studio Hero
+ *    canvas and the Main Storefront Hero section.
+ * 2. JSON FILE METADATA AS SOURCE OF TRUTH:
+ *    The Studio Hero acts purely as an authoring canvas that calculates and stores
+ *    elements' metadata (coordinates, rotations, sizes, animations, layers, texts,
+ *    and buttons) into a JSON configuration file (`hero-config.json`).
+ * 3. MAIN HERO CONSUMPTION:
+ *    The Main Storefront Hero reads this JSON metadata and arranges every graphic
+ *    and text object according to the JSON specifications without any Firestore reads.
  */
 
-import { doc, getDoc, setDoc, onSnapshot } from "firebase/firestore";
-import { db } from "./firebase";
 import { CustomHeroConfig, HeroLayerConfig, BackdropConfig, HeroButtonsConfig } from "../types";
-import { 
-  isFirestoreQuotaExceeded, 
-  markFirestoreQuotaExceeded, 
-  isQuotaError 
-} from "./firestoreCircuitBreaker";
-import { sanitizeHeroConfigForFirestore } from "./imageOptimization";
+import bundledDefaultConfig from "../data/heroConfig.json";
 
-export const HERO_SETTINGS_DOC_PATH = "settings";
-export const HERO_SETTINGS_DOC_ID = "hero";
-export const HERO_STORAGE_KEY = "sym_hero_config";
+export const HERO_STORAGE_KEY = "sym_hero_json_metadata_v1";
 
 export const DEFAULT_BG_LAYER: HeroLayerConfig = {
   id: "bg",
@@ -38,6 +39,8 @@ export const DEFAULT_BG_LAYER: HeroLayerConfig = {
   hoverEffect: "none",
   shadow: false,
   border: false,
+  graphicObjects: [],
+  textObjects: [],
 };
 
 export const DEFAULT_MID_LAYER: HeroLayerConfig = {
@@ -63,6 +66,8 @@ export const DEFAULT_MID_LAYER: HeroLayerConfig = {
   slideshowInterval: 4,
   slideshowTransition: "fade",
   stickToBottom: true,
+  graphicObjects: [],
+  textObjects: [],
 };
 
 export const DEFAULT_FG_LAYER: HeroLayerConfig = {
@@ -82,6 +87,8 @@ export const DEFAULT_FG_LAYER: HeroLayerConfig = {
   hoverEffect: "float",
   shadow: false,
   border: false,
+  graphicObjects: [],
+  textObjects: [],
 };
 
 export const DEFAULT_BACKDROP: BackdropConfig = {
@@ -103,7 +110,6 @@ export const DEFAULT_HERO_BUTTONS: HeroButtonsConfig = {
 export const DEFAULT_HERO_CONFIG: CustomHeroConfig = {
   isEnabled: true,
   activeEditingLayer: "mid",
-  // Legacy single-layer fields fallback
   avatarUrl: "/Logo_NoName.jpg",
   avatarAlt: "SYMBOLIC Monolithic Emblem",
   posX: 50,
@@ -119,7 +125,6 @@ export const DEFAULT_HERO_CONFIG: CustomHeroConfig = {
   captionTitle: "SYMBOLIC // MONOLITH",
   captionSubtitle: "POSSESSION & IDENTITY",
 
-  // 3-Layer System
   bgLayer: DEFAULT_BG_LAYER,
   midLayer: DEFAULT_MID_LAYER,
   fgLayer: DEFAULT_FG_LAYER,
@@ -230,14 +235,11 @@ export function normalizeHeroConfig(input?: Partial<CustomHeroConfig>): CustomHe
 }
 
 /**
- * Calculates the exact vertical pixel height required for the hero bounding box 
- * so that its lower edge adapts automatically to the lowest pixel of the MAIN (middle) layer graphic
- * (or any active layer that extends lowest), with responsive device awareness.
+ * Calculates adaptive vertical stage height so the stage lower edge neatly frames the lowest graphic
  */
 export function calculateAdaptiveStageHeight(config: CustomHeroConfig, isMobile: boolean = false): number {
   const baseCanvasHeight = config.canvasHeight || 700;
   
-  // Identify the MAIN (middle) layer graphic
   const mainLayer = config.midLayer || {
     posX: config.posX ?? 50,
     posY: config.posY ?? 50,
@@ -251,7 +253,6 @@ export function calculateAdaptiveStageHeight(config: CustomHeroConfig, isMobile:
     border: config.border ?? false,
   };
 
-  // Collect active items to evaluate lowest point
   interface SizableItem {
     posX?: number;
     posY?: number;
@@ -295,29 +296,22 @@ export function calculateAdaptiveStageHeight(config: CustomHeroConfig, isMobile:
   let maxLowestPixelY = 0;
 
   for (const item of activeItems) {
-    // Check device target visibility
     const target = item.deviceTarget || "both";
     if (target === "desktop" && isMobile) continue;
     if (target === "mobile" && !isMobile) continue;
 
-    // Use mobile overrides if active on mobile
     const useMobile = isMobile && item.mobileEnabled;
     const itemPosY = useMobile ? (item.mobilePosY ?? item.posY ?? 50) : (item.posY ?? 50);
     const itemSize = useMobile ? (item.mobileSize ?? item.size ?? 220) : (item.size ?? 220);
     const itemRotation = useMobile ? (item.mobileRotation ?? item.rotation ?? 0) : (item.rotation ?? 0);
 
     const posYRatio = itemPosY / 100;
-    // Y-coordinate of graphic center from top of stage
     const centerY = posYRatio * baseCanvasHeight;
-    
-    // Graphic height / size
     const halfSize = itemSize / 2;
 
-    // Height offset for rotation tilt
     const rad = (Math.abs(itemRotation) * Math.PI) / 180;
     const rotationExtra = (itemSize * Math.sin(rad)) / 2;
 
-    // Height offset for caption tags
     let captionHeight = 0;
     if (item.captionTitle || item.captionSubtitle) {
       captionHeight += 16;
@@ -325,12 +319,10 @@ export function calculateAdaptiveStageHeight(config: CustomHeroConfig, isMobile:
       if (item.captionSubtitle) captionHeight += 20;
     }
 
-    // Height offset for brutalist hard shadow or solid border frame
     let frameExtra = 0;
     if (item.shadow) frameExtra += 12;
     if (item.border) frameExtra += 8;
 
-    // Lowest pixel from top of stage for this graphic
     const itemLowestPixelY = centerY + halfSize + rotationExtra + captionHeight + frameExtra;
 
     if (itemLowestPixelY > maxLowestPixelY) {
@@ -338,16 +330,12 @@ export function calculateAdaptiveStageHeight(config: CustomHeroConfig, isMobile:
     }
   }
 
-  // Add clean 0px bottom architectural padding so the lowest pixel is neatly framed
-  const adaptedHeight = Math.ceil(maxLowestPixelY + 0);
-
-  // Return adapted height (never squish below 320px)
+  const adaptedHeight = Math.ceil(maxLowestPixelY);
   return Math.max(isMobile ? 280 : 360, adaptedHeight);
 }
 
 /**
-/**
- * Detects the runtime origin to carefully tag whether edits came from Google AI Studio or Vercel Webapp
+ * Detects current app environment (Google AI Studio vs Vercel Webapp)
  */
 export function getSourceAppIdentifier(): "google_ai_studio" | "vercel_webapp" | "web" {
   if (typeof window === "undefined") return "web";
@@ -362,129 +350,86 @@ export function getSourceAppIdentifier(): "google_ai_studio" | "vercel_webapp" |
 }
 
 /**
- * Retrieves the cached hero configuration from localStorage synchronously
+ * Retrieves cached hero configuration synchronously from localStorage or bundled JSON
  */
 export function getCachedHeroConfig(): CustomHeroConfig {
-  if (typeof window === "undefined") return DEFAULT_HERO_CONFIG;
+  if (typeof window === "undefined") {
+    return normalizeHeroConfig(bundledDefaultConfig as unknown as Partial<CustomHeroConfig>);
+  }
   try {
     const raw = localStorage.getItem(HERO_STORAGE_KEY);
     if (raw) {
       const parsed = JSON.parse(raw);
       return normalizeHeroConfig(parsed);
     }
-  } catch {
-    // Ignore parse error
-  }
-  return DEFAULT_HERO_CONFIG;
+  } catch {}
+  return normalizeHeroConfig(bundledDefaultConfig as unknown as Partial<CustomHeroConfig>);
 }
 
 /**
- * Saves hero configuration to localStorage for instantaneous offline/first-render loading
+ * Saves hero configuration to local cache
  */
 export function setCachedHeroConfig(config: CustomHeroConfig): void {
   if (typeof window === "undefined") return;
   try {
     localStorage.setItem(HERO_STORAGE_KEY, JSON.stringify(config));
-  } catch {
-    // Ignore storage quota error
-  }
+  } catch {}
 }
 
 /**
- * Asynchronously loads the current hero config from Firestore with cached fallback
+ * Asynchronously loads hero configuration from the canonical JSON metadata file (/api/hero-config or /hero-config.json)
+ * with zero Firestore calls and zero Firestore credit consumption.
  */
 export async function getHeroConfig(): Promise<CustomHeroConfig> {
-  try {
-    const docRef = doc(db, HERO_SETTINGS_DOC_PATH, HERO_SETTINGS_DOC_ID);
-    const snap = await getDoc(docRef);
-    if (snap.exists()) {
-      const data = snap.data();
-      const config: CustomHeroConfig = normalizeHeroConfig({
-        ...data,
-        id: snap.id,
-      });
-      setCachedHeroConfig(config);
-      return config;
-    }
-  } catch (error) {
-    console.warn("Could not fetch remote hero config from Firestore:", error);
+  if (typeof window === "undefined") {
+    return getCachedHeroConfig();
   }
+
+  // 1. Try fetching from /api/hero-config (Express backend) or static /hero-config.json
+  try {
+    const response = await fetch("/api/hero-config", {
+      headers: { "Cache-Control": "no-cache" }
+    });
+    if (response.ok) {
+      const data = await response.json();
+      const normalized = normalizeHeroConfig(data);
+      setCachedHeroConfig(normalized);
+      return normalized;
+    }
+  } catch {}
+
+  // 2. Fallback to static public /hero-config.json
+  try {
+    const staticResp = await fetch("/hero-config.json", {
+      headers: { "Cache-Control": "no-cache" }
+    });
+    if (staticResp.ok) {
+      const data = await staticResp.json();
+      const normalized = normalizeHeroConfig(data);
+      setCachedHeroConfig(normalized);
+      return normalized;
+    }
+  } catch {}
+
+  // 3. Fallback to localStorage or bundled default JSON
   return getCachedHeroConfig();
 }
 
 /**
- * Real-time listener for the hero configuration so storefront updates live
- * whenever an admin tweaks avatar position, image, or transitions in the studio.
- * Automatically seeds default config to Firestore if non-existent.
- */
-export function subscribeHeroConfig(
-  onUpdate: (config: CustomHeroConfig) => void
-): () => void {
-  try {
-    const docRef = doc(db, HERO_SETTINGS_DOC_PATH, HERO_SETTINGS_DOC_ID);
-    return onSnapshot(
-      docRef,
-      (docSnap) => {
-        if (docSnap.exists()) {
-          const data = docSnap.data();
-          const config: CustomHeroConfig = normalizeHeroConfig({
-            ...data,
-            id: docSnap.id,
-          });
-          setCachedHeroConfig(config);
-          onUpdate(config);
-        } else {
-          // Auto-seed default clean state to Firestore so all clients (Studio + Vercel) share the same initial document
-          const cached = getCachedHeroConfig();
-          onUpdate(cached);
-          saveHeroConfig(cached, "system_autoseed", true).catch(() => {});
-        }
-      },
-      (error) => {
-        console.warn("Error subscribing to hero config, using cached fallback:", error);
-        onUpdate(getCachedHeroConfig());
-      }
-    );
-  } catch (err) {
-    console.warn("Could not establish hero subscription:", err);
-    onUpdate(getCachedHeroConfig());
-    return () => {};
-  }
-}
-
-let saveDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-let pendingSavePayload: CustomHeroConfig | null = null;
-
-function cleanUndefined<T>(obj: T): T {
-  if (obj === null || typeof obj !== "object") {
-    return obj;
-  }
-  if (Array.isArray(obj)) {
-    return obj.map(cleanUndefined) as unknown as T;
-  }
-  const cleaned: Record<string, any> = {};
-  for (const [key, value] of Object.entries(obj)) {
-    if (value !== undefined) {
-      cleaned[key] = cleanUndefined(value);
-    }
-  }
-  return cleaned as T;
-}
-
-/**
- * Saves updated hero configuration to Firestore and local cache.
- * Every edit creates a systematic live document write in `settings/hero` AND
- * an archived audit revision log in `hero_revisions/{revisionId}` tagged with the source app
- * (Google AI Studio or Vercel Webapp).
+ * Dedicated JSON File Saver:
+ * Persists the elements' coordinates, sizes, layers, animations and text metadata
+ * into the JSON file via /api/hero-config and local storage.
+ * 
+ * ZERO FIRESTORE LEAKAGE: Does NOT write to Firestore settings or revisions.
  */
 export async function saveHeroConfig(
   updates: Partial<CustomHeroConfig>,
   updatedByEmail?: string,
-  immediate: boolean = false
+  _immediate: boolean = true
 ): Promise<CustomHeroConfig> {
   const current = getCachedHeroConfig();
   const sourceApp = getSourceAppIdentifier();
-  
+
   const payload: CustomHeroConfig = {
     ...current,
     ...updates,
@@ -493,80 +438,65 @@ export async function saveHeroConfig(
     sourceApp,
   };
 
-  pendingSavePayload = payload;
-
-  // Immediate local cache update for snappy optimistic UI & instant preview
+  // 1. Update localStorage immediately for fast responsive feedback
   setCachedHeroConfig(payload);
 
-  if (isFirestoreQuotaExceeded()) {
-    return payload;
-  }
-
-  const executeRemoteSave = async (targetPayload: CustomHeroConfig) => {
+  // 2. Persist directly into the JSON file on disk via server API
+  if (typeof window !== "undefined") {
     try {
-      const docRef = doc(db, HERO_SETTINGS_DOC_PATH, HERO_SETTINGS_DOC_ID);
-      const cleanedPayload = cleanUndefined(targetPayload);
-      const sanitizedPayload = await sanitizeHeroConfigForFirestore(cleanedPayload);
-      
-      const firestoreDoc = {
-        ...sanitizedPayload,
-        version: 2,
-        sourceApp,
-        updatedAt: Date.now(),
-      };
-
-      // 1. Write live active document
-      await setDoc(docRef, firestoreDoc, { merge: true });
-
-      // 2. Write structured historical revision record for audit and cross-app tracking
-      const revId = `rev_${Date.now()}_${Math.random().toString(36).substring(2, 7)}`;
-      const revRef = doc(db, "hero_revisions", revId);
-      await setDoc(revRef, {
-        revisionId: revId,
-        sourceApp,
-        updatedBy: updatedByEmail || "owner",
-        timestamp: Date.now(),
-        config: firestoreDoc,
-      }, { merge: true }).catch(() => {});
-
-      pendingSavePayload = null;
-    } catch (error: any) {
-      if (isQuotaError(error)) {
-        markFirestoreQuotaExceeded();
-        console.warn("Firestore daily write quota reached during save. Saved safely in local storage.");
-      } else {
-        console.error("Firestore hero config save error:", error?.message || error);
-        if (immediate) {
-          throw error;
-        }
-      }
+      await fetch("/api/hero-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      });
+    } catch (err) {
+      console.warn("Could not save to /api/hero-config, saved locally:", err);
     }
-  };
-
-  if (immediate) {
-    if (saveDebounceTimer) {
-      clearTimeout(saveDebounceTimer);
-      saveDebounceTimer = null;
-    }
-    await executeRemoteSave(payload);
-  } else {
-    if (saveDebounceTimer) {
-      clearTimeout(saveDebounceTimer);
-    }
-    saveDebounceTimer = setTimeout(() => {
-      saveDebounceTimer = null;
-      if (pendingSavePayload) {
-        executeRemoteSave(pendingSavePayload);
-      }
-    }, 800);
   }
 
   return payload;
 }
 
 /**
- * Resets hero configuration back to default clean values
+ * Resets hero configuration back to default clean values and writes to JSON
  */
 export async function resetHeroConfig(updatedByEmail?: string): Promise<CustomHeroConfig> {
   return saveHeroConfig(DEFAULT_HERO_CONFIG, updatedByEmail, true);
+}
+
+/**
+ * Backwards compatibility helper for Hero component:
+ * Loads the JSON configuration once on mount. NO real-time Firestore listeners or credit leakage!
+ */
+export function subscribeHeroConfig(
+  onUpdate: (config: CustomHeroConfig) => void
+): () => void {
+  // Load initial from cache/bundled JSON immediately
+  onUpdate(getCachedHeroConfig());
+
+  // Fetch updated JSON metadata from file asynchronously once
+  getHeroConfig().then((loaded) => {
+    onUpdate(loaded);
+  }).catch(() => {});
+
+  // Clean no-op unsubscriber (no Firestore listener running)
+  return () => {};
+}
+
+/**
+ * Downloads the current hero JSON configuration to the user's computer
+ */
+export function downloadHeroConfigJson(config?: CustomHeroConfig): void {
+  if (typeof window === "undefined") return;
+  const targetConfig = config || getCachedHeroConfig();
+  const jsonString = JSON.stringify(targetConfig, null, 2);
+  const blob = new Blob([jsonString], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `hero-config-${Date.now()}.json`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }
