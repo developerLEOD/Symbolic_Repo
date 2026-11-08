@@ -137,34 +137,10 @@ export function setCachedAvatarGraphics(graphics: AvatarGraphic[]): void {
 export function subscribeAvatarGraphics(
   onUpdate: (graphics: AvatarGraphic[]) => void
 ): () => void {
-  try {
-    const q = query(collection(db, AVATAR_GRAPHICS_COLLECTION), orderBy("createdAt", "desc"));
-    return onSnapshot(
-      q,
-      (snapshot) => {
-        if (!snapshot.empty) {
-          const loaded: AvatarGraphic[] = snapshot.docs.map((docSnap) => ({
-            id: docSnap.id,
-            ...(docSnap.data() as Omit<AvatarGraphic, "id">),
-          }));
-          setCachedAvatarGraphics(loaded);
-          onUpdate(loaded);
-        } else {
-          // If Firestore is empty, return cached/defaults without triggering automatic write loops
-          const cached = getCachedAvatarGraphics();
-          onUpdate(cached);
-        }
-      },
-      (error) => {
-        console.warn("Error subscribing to avatar_graphics in Firestore:", error);
-        onUpdate(getCachedAvatarGraphics());
-      }
-    );
-  } catch (err) {
-    console.warn("Could not establish avatar_graphics subscription:", err);
-    onUpdate(getCachedAvatarGraphics());
-    return () => {};
-  }
+  // Use local cache / default graphics to guarantee zero Firestore read/write quota consumption
+  const cached = getCachedAvatarGraphics();
+  onUpdate(cached);
+  return () => {};
 }
 
 /**

@@ -26,14 +26,32 @@ function hasMidnightPacificPassed(recordedTimestamp: number): boolean {
   return nowPacific !== recordedPacific;
 }
 
-let memoryQuotaExceeded = false;
+let memoryQuotaExceeded = true; // Default to true or check session storage to protect quota limits
 
 export function isFirestoreQuotaExceeded(): boolean {
-  return false;
+  if (memoryQuotaExceeded) return true;
+  if (typeof window === "undefined") return false;
+  try {
+    const val = sessionStorage.getItem(QUOTA_KEY);
+    const ts = sessionStorage.getItem(QUOTA_TIMESTAMP_KEY);
+    if (val === "true" && ts) {
+      if (hasMidnightPacificPassed(Number(ts))) {
+        clearFirestoreQuotaExceeded();
+        return false;
+      }
+      return true;
+    }
+  } catch {}
+  return memoryQuotaExceeded;
 }
 
 export function markFirestoreQuotaExceeded(): void {
-  // Logged for diagnostic tracking without blocking future save requests
+  memoryQuotaExceeded = true;
+  if (typeof window === "undefined") return;
+  try {
+    sessionStorage.setItem(QUOTA_KEY, "true");
+    sessionStorage.setItem(QUOTA_TIMESTAMP_KEY, String(Date.now()));
+  } catch {}
 }
 
 export function clearFirestoreQuotaExceeded(): void {
