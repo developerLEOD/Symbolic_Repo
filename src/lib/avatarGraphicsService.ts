@@ -150,10 +150,9 @@ export function subscribeAvatarGraphics(
           setCachedAvatarGraphics(loaded);
           onUpdate(loaded);
         } else {
-          // If Firestore is empty, return cached/defaults and trigger seed
+          // If Firestore is empty, return cached/defaults without triggering automatic write loops
           const cached = getCachedAvatarGraphics();
           onUpdate(cached);
-          seedDefaultAvatarGraphics().catch(() => {});
         }
       },
       (error) => {
