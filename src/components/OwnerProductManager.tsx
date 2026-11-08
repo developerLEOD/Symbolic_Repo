@@ -799,8 +799,9 @@ export default function OwnerProductManager({
 
   return (
     <div className="fixed inset-0 z-[100] bg-brand-bg text-brand-text flex flex-col overflow-hidden font-mono selection:bg-brand-text selection:text-brand-bg">
-      {/* Top Bar */}
-      <header className="h-16 border-b-2 border-brand-text bg-brand-bg/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-20 select-none">
+      {/* Top Bar (Hidden when in Studio Hero full-viewport view) */}
+      {activeTab !== "hero" && (
+        <header className="h-16 border-b-2 border-brand-text bg-brand-bg/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-20 select-none">
         {/* Left: Merged Symbolic Brand & Exit Button */}
         <div className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0">
           <button 
@@ -911,7 +912,7 @@ export default function OwnerProductManager({
             type="button"
             onClick={() => setActiveTab("hero")}
             className={`px-3 sm:px-4 py-1 sm:py-1.5 text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider whitespace-nowrap transition-all flex items-center gap-1.5 cursor-pointer ${
-              activeTab === "hero" 
+              (activeTab as string) === "hero" 
                 ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#050505]" 
                 : "text-brand-text/70 hover:text-brand-text hover:bg-brand-text/5"
             }`}
@@ -997,6 +998,7 @@ export default function OwnerProductManager({
           )}
         </div>
       </header>
+      )}
 
       {/* Notifications */}
       <AnimatePresence>
@@ -1043,6 +1045,8 @@ export default function OwnerProductManager({
         ) : activeTab === "hero" ? (
           <OwnerHeroManager
             userEmail={user?.email || undefined}
+            onTabChange={(tab) => setActiveTab(tab as any)}
+            onClose={onClose}
             onViewStorefront={() => {
               if (onViewProductInStore) onViewProductInStore("");
               else onClose();

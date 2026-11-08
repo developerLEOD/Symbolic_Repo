@@ -32,7 +32,9 @@ import {
   Monitor,
   Smartphone,
   Eye,
-  Copy
+  Copy,
+  Database,
+  Plus
 } from "lucide-react";
 import { 
   CustomHeroConfig,
@@ -45,7 +47,8 @@ import {
   GraphicObject,
   BackdropConfig,
   HeroButtonsConfig,
-  DeviceTarget
+  DeviceTarget,
+  AvatarGraphic
 } from "../types";
 import { 
   DEFAULT_HERO_CONFIG, 
@@ -60,6 +63,11 @@ import {
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
+import { 
+  subscribeAvatarGraphics, 
+  addAvatarGraphicToDatabase, 
+  deleteAvatarGraphicFromDatabase 
+} from "../lib/avatarGraphicsService";
 
 interface HeroSidePanelProps {
   config: CustomHeroConfig;
@@ -153,8 +161,22 @@ export default function HeroSidePanel({
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   
+  // Database Avatar Graphics catalog state & handlers
+  const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
+  const [newGraphicName, setNewGraphicName] = useState("");
+  const [isAddingGraphicToDb, setIsAddingGraphicToDb] = useState(false);
+  const dbGraphicFileInputRef = useRef<HTMLInputElement>(null);
+
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Subscribe to live Avatar Graphics database collection
+  useEffect(() => {
+    const unsub = subscribeAvatarGraphics((list) => {
+      setDbAvatarGraphics(list);
+    });
+    return () => unsub();
+  }, []);
 
   // Sync activeLayerId if parent config changes
   useEffect(() => {
@@ -345,6 +367,35 @@ export default function HeroSidePanel({
       alert("Failed to read image file: " + (err?.message || "Invalid file format"));
     } finally {
       setIsUploading(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Add custom Avatar Graphic directly to Firestore database collection (`/avatar_graphics`)
+  const handleDirectUploadToDatabase = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsAddingGraphicToDb(true);
+    soundManager.playClick(0.12);
+    try {
+      const customName = newGraphicName.trim() || file.name.replace(/\.[^/.]+$/, "").toUpperCase();
+      const added = await addAvatarGraphicToDatabase({
+        name: customName,
+        imageInput: file,
+        createdByEmail: userEmail,
+      });
+      setNewGraphicName("");
+      // Automatically assign new graphic to active layer / graphic object
+      updateActiveObjectProps({
+        avatarUrl: added.url,
+        avatarAlt: added.name,
+      });
+      soundManager.playClick(0.16);
+    } catch (err: any) {
+      alert("Failed to add avatar graphic to database: " + (err?.message || "Invalid image"));
+    } finally {
+      setIsAddingGraphicToDb(false);
       if (e.target) e.target.value = "";
     }
   };
@@ -986,29 +1037,148 @@ export default function HeroSidePanel({
                     </div>
                   </div>
                   
-                  {/* Quick Sample Presets */}
-                  <div className="grid grid-cols-2 gap-1.5 pt-1 border-t border-brand-text/10">
-                    {SAMPLE_AVATARS.map((sample) => (
-                      <button
-                        key={sample.name}
-                        type="button"
-                        onClick={() => {
-                          soundManager.playClick(0.08);
-                          updateActiveObjectProps({
-                            avatarUrl: sample.url,
-                            avatarAlt: sample.name,
-                          });
-                        }}
-                        className={`p-1.5 border border-brand-text text-left text-[8px] font-bold uppercase truncate flex items-center gap-1.5 cursor-pointer transition-all ${
-                          currentGraphicEntity?.avatarUrl === sample.url
-                            ? "bg-brand-text text-brand-bg shadow-[1px_1px_0px_#ff4500]"
-                            : "bg-brand-surface hover:bg-brand-bg"
-                        }`}
-                      >
-                        <img src={sample.url} alt="" className="w-4 h-4 object-cover border border-current shrink-0" />
-                        <span className="truncate">{sample.name}</span>
-                      </button>
-                    ))}
+                  {/* Firestore Database Avatar Graphics Catalog Manager & Picker */}
+                  <div className="pt-2 border-t-2 border-brand-text space-y-2">
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center gap-1.5">
+                        <Database size={13} className="text-brand-accent animate-pulse" />
+                        <span className="text-[9.5px] font-black uppercase tracking-wider">
+                          DATABASE AVATARS CATALOG ({dbAvatarGraphics.length})
+                        </span>
+                      </div>
+                      <span className="text-[7px] font-mono font-bold bg-brand-accent text-white px-1.5 py-0.2 border border-brand-text">
+                        FIRESTORE LIVE
+                      </span>
+                    </div>
+
+                    {/* Manual Add Graphic to Database Controls */}
+                    <div className="p-2 bg-brand-surface border border-brand-text space-y-1.5">
+                      <label className="text-[7.5px] font-black uppercase tracking-wider text-brand-text/70 block">
+                        + ADD NEW AVATAR GRAPHIC TO DATABASE
+                      </label>
+
+                      <input
+                        type="text"
+                        value={newGraphicName}
+                        onChange={(e) => setNewGraphicName(e.target.value)}
+                        placeholder="AVATAR GRAPHIC TITLE (e.g. EMBLEM 01)..."
+                        className="w-full bg-brand-bg border border-brand-text px-2 py-1 text-[8.5px] font-mono font-bold focus:outline-none focus:border-brand-accent"
+                      />
+
+                      <div className="flex items-center gap-1.5">
+                        <input
+                          type="file"
+                          ref={dbGraphicFileInputRef}
+                          accept="image/*"
+                          onChange={handleDirectUploadToDatabase}
+                          className="hidden"
+                        />
+                        <button
+                          type="button"
+                          onClick={() => dbGraphicFileInputRef.current?.click()}
+                          disabled={isAddingGraphicToDb}
+                          className="flex-1 py-1 px-2 bg-brand-accent text-white hover:bg-black border border-brand-text text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          <Plus size={11} />
+                          <span>{isAddingGraphicToDb ? "SAVING TO DB..." : "UPLOAD FILE TO DB"}</span>
+                        </button>
+
+                        <button
+                          type="button"
+                          onClick={async () => {
+                            const url = currentGraphicEntity?.avatarUrl;
+                            if (!url) {
+                              alert("Please enter or select an image URL first");
+                              return;
+                            }
+                            setIsAddingGraphicToDb(true);
+                            try {
+                              const name = newGraphicName.trim() || "MANUAL DB GRAPHIC";
+                              await addAvatarGraphicToDatabase({
+                                name,
+                                imageInput: url,
+                                createdByEmail: userEmail,
+                              });
+                              setNewGraphicName("");
+                              soundManager.playClick(0.16);
+                            } catch (err: any) {
+                              alert("Failed to save to database: " + err.message);
+                            } finally {
+                              setIsAddingGraphicToDb(false);
+                            }
+                          }}
+                          disabled={isAddingGraphicToDb}
+                          className="py-1 px-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text text-[8px] font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
+                        >
+                          <span>SAVE CURRENT URL TO DB</span>
+                        </button>
+                      </div>
+                    </div>
+
+                    {/* Database Avatar Cards Grid */}
+                    <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-brand-text">
+                      {dbAvatarGraphics.map((item) => {
+                        const isSelected = currentGraphicEntity?.avatarUrl === item.url;
+                        return (
+                          <div
+                            key={item.id}
+                            className={`p-1.5 border border-brand-text relative group flex flex-col gap-1 transition-all ${
+                              isSelected
+                                ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#ff4500]"
+                                : "bg-brand-surface hover:bg-brand-bg text-brand-text"
+                            }`}
+                          >
+                            <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => {
+                              soundManager.playClick(0.08);
+                              updateActiveObjectProps({
+                                avatarUrl: item.url,
+                                avatarAlt: item.name,
+                              });
+                            }}>
+                              <img src={item.url} alt={item.name} className="w-8 h-8 object-contain border border-current bg-black/10 shrink-0 p-0.5" />
+                              <div className="overflow-hidden flex-1">
+                                <p className="text-[7.5px] font-black uppercase truncate leading-tight">{item.name}</p>
+                                <span className="text-[6.5px] opacity-70 uppercase font-mono block">
+                                  {item.category || "custom"}
+                                </span>
+                              </div>
+                            </div>
+
+                            <div className="flex items-center justify-between border-t border-current/20 pt-1 mt-0.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  soundManager.playClick(0.08);
+                                  updateActiveObjectProps({
+                                    avatarUrl: item.url,
+                                    avatarAlt: item.name,
+                                  });
+                                }}
+                                className={`text-[6.5px] font-black uppercase px-1 py-0.2 border ${
+                                  isSelected ? "bg-brand-accent text-white border-brand-accent" : "bg-brand-text text-brand-bg border-brand-text"
+                                }`}
+                              >
+                                {isSelected ? "ACTIVE" : "SELECT"}
+                              </button>
+
+                              <button
+                                type="button"
+                                onClick={async (e) => {
+                                  e.stopPropagation();
+                                  if (!window.confirm(`Delete "${item.name}" permanently from the database?`)) return;
+                                  soundManager.playClick(0.12);
+                                  await deleteAvatarGraphicFromDatabase(item.id);
+                                }}
+                                className="p-0.5 text-red-600 hover:bg-red-600 hover:text-white border border-transparent hover:border-black rounded-[1px] transition-colors"
+                                title="Delete from Database"
+                              >
+                                <Trash2 size={10} />
+                              </button>
+                            </div>
+                          </div>
+                        );
+                      })}
+                    </div>
                   </div>
                 </div>
               )}

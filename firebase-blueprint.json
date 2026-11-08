@@ -208,9 +208,27 @@
         "createdAt": { "type": "number" }
       },
       "required": ["referrerCode", "refereeEmail", "discountApplied", "createdAt"]
+    "avatarGraphic": {
+      "title": "AvatarGraphic",
+      "description": "Custom Avatar graphic assets stored in the database for hero section display and slideshows",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "name": { "type": "string" },
+        "url": { "type": "string" },
+        "category": { "type": "string" },
+        "tags": { "type": "array", "items": { "type": "string" } },
+        "createdAt": { "type": "number" },
+        "createdBy": { "type": "string" }
+      },
+      "required": ["id", "name", "url", "createdAt"]
     }
   },
   "firestore": {
+    "/avatar_graphics/{graphicId}": {
+      "schema": "avatarGraphic",
+      "description": "Database collection for custom avatar graphic assets"
+    },
     "/artifacts/{artifactId}": {
       "schema": "artifact",
       "description": "Symbolic artifacts representing designs and intellectual concepts"

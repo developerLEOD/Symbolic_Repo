@@ -26,7 +26,9 @@ import {
   ExternalLink,
   Info,
   Monitor,
-  Smartphone
+  Smartphone,
+  Database,
+  Plus
 } from "lucide-react";
 import { 
   CustomHeroConfig, 
@@ -39,7 +41,8 @@ import {
   GraphicObject,
   BackdropConfig,
   HeroButtonsConfig,
-  DeviceTarget
+  DeviceTarget,
+  AvatarGraphic
 } from "../types";
 import { 
   DEFAULT_HERO_CONFIG, 
@@ -55,16 +58,23 @@ import {
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
+import { 
+  subscribeAvatarGraphics, 
+  addAvatarGraphicToDatabase, 
+  deleteAvatarGraphicFromDatabase 
+} from "../lib/avatarGraphicsService";
 import LiquidCarveButton from "./LiquidCarveButton";
 import HeroSidePanel from "./HeroSidePanel";
 
 interface OwnerHeroManagerProps {
   onViewStorefront?: () => void;
   userEmail?: string;
+  onTabChange?: (tab: string) => void;
+  onClose?: () => void;
 }
 
 
-export default function OwnerHeroManager({ onViewStorefront, userEmail }: OwnerHeroManagerProps) {
+export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabChange, onClose }: OwnerHeroManagerProps) {
   const [config, setConfig] = useState<CustomHeroConfig>(DEFAULT_HERO_CONFIG);
   const [activeLayerId, setActiveLayerId] = useState<HeroLayerId>("mid");
   const [activeObjectId, setActiveObjectId] = useState<string>("graphic");
@@ -74,6 +84,20 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail }: OwnerH
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
   const [isUploading, setIsUploading] = useState(false);
+  
+  // Database Avatar Graphics catalog state & handlers
+  const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
+  const [newGraphicName, setNewGraphicName] = useState("");
+  const [isAddingGraphicToDb, setIsAddingGraphicToDb] = useState(false);
+  const dbGraphicFileInputRef = useRef<HTMLInputElement>(null);
+
+  // Subscribe to live Avatar Graphics database collection
+  useEffect(() => {
+    const unsub = subscribeAvatarGraphics((list) => {
+      setDbAvatarGraphics(list);
+    });
+    return () => unsub();
+  }, []);
   
   // Animation replay trigger key for testing
   const [previewKey, setPreviewKey] = useState(0);
@@ -326,6 +350,36 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail }: OwnerH
       alert("Failed to read image file: " + (err?.message || "Invalid file format"));
     } finally {
       setIsUploading(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
+  // Add custom Avatar Graphic directly to Firestore database collection (`/avatar_graphics`)
+  const handleDirectUploadToDatabase = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsAddingGraphicToDb(true);
+    soundManager.playClick(0.12);
+    try {
+      const customName = newGraphicName.trim() || file.name.replace(/\.[^/.]+$/, "").toUpperCase();
+      const added = await addAvatarGraphicToDatabase({
+        name: customName,
+        imageInput: file,
+        createdByEmail: userEmail,
+      });
+      setNewGraphicName("");
+      // Automatically assign new graphic to active layer / graphic object
+      updateActiveObjectProps({
+        avatarUrl: added.url,
+        avatarAlt: added.name,
+      });
+      handleReplayAnimation();
+      soundManager.playClick(0.16);
+    } catch (err: any) {
+      alert("Failed to add avatar graphic to database: " + (err?.message || "Invalid image"));
+    } finally {
+      setIsAddingGraphicToDb(false);
       if (e.target) e.target.value = "";
     }
   };
@@ -774,305 +828,261 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail }: OwnerH
   }
 
   return (
-    <div className="flex-1 overflow-y-auto font-mono text-brand-text bg-brand-bg pb-24">
-      {/* Studio Header Bar (Minimized) */}
-      <div className="bg-brand-surface border-b-2 border-brand-text px-4 sm:px-6 py-2 flex flex-wrap items-center justify-between gap-2 sticky top-0 z-30 shadow-[0_2px_0px_#050505]">
-        <div className="flex items-center gap-2">
-          <Compass size={15} className="text-brand-accent" />
-          <h2 className="font-black text-xs sm:text-sm uppercase tracking-wider text-brand-text">
-            CUSTOM HERO CANVAS // CONTROLLER
-          </h2>
-          <span className="text-[8px] font-black uppercase px-1.5 py-0.5 bg-brand-accent text-white border border-brand-text">
-            LIVE STAGE
-          </span>
-        </div>
-
-        {/* Header Action Buttons */}
-        <div className="flex items-center gap-2.5">
-          {/* Quick PC / Mobile Viewport Toggle */}
-          <div className="flex items-center border-2 border-brand-text bg-brand-surface shadow-[2px_2px_0px_#050505]">
-            <button
-              type="button"
-              onClick={() => {
-                soundManager.playClick(0.06);
-                setPreviewDeviceMode("desktop");
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer ${
-                previewDeviceMode === "desktop"
-                  ? "bg-brand-text text-brand-bg shadow-inner"
-                  : "text-brand-text/70 hover:text-brand-text hover:bg-black/5"
-              }`}
-              title="Preview and edit desktop/PC layout"
-            >
-              <Monitor size={12} />
-              <span className="hidden sm:inline">PC STAGE</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => {
-                soundManager.playClick(0.06);
-                setPreviewDeviceMode("mobile");
-              }}
-              className={`flex items-center gap-1 px-2.5 py-1.5 text-[9px] font-black uppercase tracking-wider transition-all cursor-pointer border-l-2 border-brand-text ${
-                previewDeviceMode === "mobile"
-                  ? "bg-brand-accent text-white shadow-inner"
-                  : "text-brand-text/70 hover:text-brand-text hover:bg-black/5"
-              }`}
-              title="Preview and edit mobile phone layout"
-            >
-              <Smartphone size={12} />
-              <span className="hidden sm:inline">MOBILE PHONE</span>
-            </button>
-          </div>
-
-          {/* Quick Hover/Click Side Panel Toggle */}
+    <div className="fixed inset-0 z-[100] h-screen w-full overflow-hidden bg-brand-bg font-mono text-brand-text select-none flex flex-col">
+      {/* Floating Top-Left Architectural HUD Badge */}
+      <div className="fixed top-3 left-3 z-[120] flex items-center gap-2.5 bg-brand-surface/95 backdrop-blur-md border-2 border-brand-text px-3 py-1.5 shadow-[4px_4px_0px_#050505]">
+        {/* Back / Close button */}
+        {(onClose || onTabChange) && (
           <button
             type="button"
             onClick={() => {
               soundManager.playClick(0.08);
-              setIsSidePanelOpen((prev) => !prev);
+              if (onTabChange) onTabChange("artifacts");
+              else if (onClose) onClose();
             }}
-            className={`flex items-center gap-1.5 px-3 py-2 border-2 border-brand-text text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer ${
-              isSidePanelOpen ? "bg-brand-text text-brand-bg border-brand-accent" : "bg-brand-surface hover:bg-brand-text hover:text-brand-bg"
-            }`}
-            title="Hover right edge tab or click to toggle Side Panel Controls"
+            className="p-1 bg-brand-bg hover:bg-brand-text hover:text-brand-bg border border-brand-text transition-colors cursor-pointer"
+            title="Exit Studio / Back to Archive"
           >
-            <Sliders size={12} className="text-brand-accent" />
-            <span>{isSidePanelOpen ? "CLOSE CONTROLS" : "HOVER / CONTROLS"}</span>
+            <ArrowLeft size={13} />
           </button>
+        )}
 
+        <div className="flex items-center gap-1.5 border-r border-brand-text/20 pr-2.5">
+          <span className="w-2.5 h-2.5 bg-[#FF4500] animate-pulse rounded-none" />
+          <span className="font-black text-xs uppercase tracking-wider text-brand-text">
+            HERO CANVAS
+          </span>
+          <span className="text-[7.5px] font-black uppercase px-1.5 py-0.2 bg-[#FF4500] text-white">
+            LIVE STAGE
+          </span>
+        </div>
+
+        {/* Quick PC / Mobile Viewport Toggle */}
+        <div className="flex items-center border border-brand-text bg-brand-surface shadow-[1px_1px_0px_#050505]">
+          <button
+            type="button"
+            onClick={() => {
+              soundManager.playClick(0.06);
+              setPreviewDeviceMode("desktop");
+            }}
+            className={`flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-wider cursor-pointer ${
+              previewDeviceMode === "desktop"
+                ? "bg-brand-text text-brand-bg"
+                : "text-brand-text/60 hover:text-brand-text"
+            }`}
+            title="Desktop PC mode"
+          >
+            <Monitor size={10} />
+            <span>PC</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => {
+              soundManager.playClick(0.06);
+              setPreviewDeviceMode("mobile");
+            }}
+            className={`flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-wider cursor-pointer border-l border-brand-text ${
+              previewDeviceMode === "mobile"
+                ? "bg-[#FF4500] text-white"
+                : "text-brand-text/60 hover:text-brand-text"
+            }`}
+            title="Mobile Phone mode"
+          >
+            <Smartphone size={10} />
+            <span>MOBILE</span>
+          </button>
+        </div>
+
+        {/* Active Position Info HUD */}
+        <div className="hidden sm:flex items-center gap-2 text-[9px] font-mono text-brand-text/70 uppercase">
+          <span className="w-1.5 h-1.5 bg-brand-text rounded-full" />
+          <span>
+            {previewDeviceMode === "mobile" ? (
+              <span className="text-[#FF4500] font-black">
+                [📱 MOBILE] POS: X:{getActiveObjectValue("mobilePosX", getActiveObjectValue("posX", 50))}%, Y:{getActiveObjectValue("mobilePosY", getActiveObjectValue("posY", 50))}%
+              </span>
+            ) : (
+              <span>
+                [💻 PC] POS: X:<strong className="text-[#FF4500]">{getActiveObjectValue("posX", 50)}%</strong>, Y:<strong className="text-[#FF4500]">{getActiveObjectValue("posY", 50)}%</strong>
+              </span>
+            )}
+          </span>
+        </div>
+
+        {/* Quick Action Triggers */}
+        <div className="flex items-center gap-1 ml-1">
           <button
             type="button"
             onClick={handleReplayAnimation}
-            className="flex items-center gap-1.5 px-3 py-2 bg-brand-surface hover:bg-brand-text hover:text-brand-bg border-2 border-brand-text text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer"
-            title="Replay Entrance Transition"
+            className="p-1 bg-brand-surface hover:bg-brand-text hover:text-brand-bg border border-brand-text text-[9px] font-black uppercase transition-colors cursor-pointer"
+            title="Replay Motion Transition"
           >
-            <Play size={12} className="text-brand-accent fill-brand-accent" />
-            <span>REPLAY MOTION</span>
+            <Play size={11} className="text-[#FF4500] fill-[#FF4500]" />
           </button>
-
-          <button
-            type="button"
-            onClick={handleReset}
-            disabled={isSaving}
-            className="flex items-center gap-1.5 px-3 py-2 bg-brand-surface hover:bg-red-600 hover:text-white border-2 border-brand-text text-[10px] font-black uppercase tracking-wider transition-all cursor-pointer disabled:opacity-50"
-            title="Reset to Defaults"
-          >
-            <RotateCcw size={12} />
-            <span>RESET</span>
-          </button>
-
           <button
             type="button"
             onClick={handleSave}
             disabled={isSaving}
-            className="flex items-center gap-2 px-5 py-2 bg-brand-accent hover:bg-neutral-900 text-white border-2 border-brand-text text-xs font-black uppercase tracking-widest shadow-[3px_3px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 transition-all cursor-pointer disabled:opacity-50"
+            className="px-2 py-0.5 bg-[#FF4500] hover:bg-black text-white border border-brand-text text-[8.5px] font-black uppercase tracking-wider transition-colors cursor-pointer disabled:opacity-50"
           >
-            {isSaving ? (
-              <RefreshCw size={14} className="animate-spin" />
-            ) : saveSuccess ? (
-              <Check size={14} />
-            ) : (
-              <ShieldCheck size={14} />
-            )}
-            <span>{isSaving ? "DEPLOYING..." : saveSuccess ? "DEPLOYED!" : "SAVE & DEPLOY"}</span>
+            {isSaving ? "SAVING..." : saveSuccess ? "SAVED!" : "SAVE"}
           </button>
-
           {onViewStorefront && (
             <button
               type="button"
               onClick={onViewStorefront}
-              className="hidden lg:flex items-center gap-1.5 px-3 py-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border-2 border-brand-text text-[10px] font-black uppercase tracking-wider shadow-[2px_2px_0px_#050505] transition-all cursor-pointer"
+              className="p-1 bg-brand-text text-brand-bg hover:bg-[#FF4500] hover:text-white border border-brand-text transition-colors cursor-pointer"
+              title="View Live Storefront"
             >
-              <span>VIEW STORE</span>
-              <ExternalLink size={12} />
+              <ExternalLink size={11} />
             </button>
           )}
         </div>
       </div>
 
-      {/* Studio Content */}
-      <div className="flex flex-col">
-
-        {/* Live Interactive Hero Stage */}
-        <div className="space-y-3 pb-8">
-          <div className="px-4 sm:px-8 w-full">
-            <div className="flex flex-wrap items-center justify-between gap-2">
-              <div className="flex items-center gap-2">
-                <span className="w-2.5 h-2.5 bg-brand-accent animate-pulse" />
-                <h3 className="font-black text-xs uppercase tracking-wider text-brand-text">
-                  LIVE INTERACTIVE HERO STAGE (DRAG TO POSITION)
-                </h3>
-
-                {/* Sub-toggle for PC / Mobile */}
-                <div className="flex items-center border border-brand-text bg-brand-surface shadow-[1px_1px_0px_#050505] ml-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playClick(0.06);
-                      setPreviewDeviceMode("desktop");
-                    }}
-                    className={`flex items-center gap-1 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider cursor-pointer ${
-                      previewDeviceMode === "desktop" ? "bg-brand-text text-brand-bg" : "text-brand-text/60 hover:text-brand-text"
-                    }`}
-                  >
-                    <Monitor size={10} />
-                    <span>PC</span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      soundManager.playClick(0.06);
-                      setPreviewDeviceMode("mobile");
-                    }}
-                    className={`flex items-center gap-1 px-2 py-0.5 text-[8px] font-black uppercase tracking-wider cursor-pointer border-l border-brand-text ${
-                      previewDeviceMode === "mobile" ? "bg-brand-accent text-white" : "text-brand-text/60 hover:text-brand-text"
-                    }`}
-                  >
-                    <Smartphone size={10} />
-                    <span>MOBILE</span>
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex items-center gap-3 text-[10px] text-brand-text/60 font-bold uppercase">
-                <span>
-                  ACTIVE: <strong className="text-brand-accent">{activeLayerId.toUpperCase()}</strong> : <strong className="text-brand-accent">{isMainGraphic ? "MAIN GRAPHIC" : selectedSecondaryGraphic ? "SECONDARY GRAPHIC" : activeObjectId === "hero_buttons" ? "HERO BUTTONS" : "TEXT"}</strong>
-                </span>
-                <span>
-                  {previewDeviceMode === "mobile" ? (
-                    <span className="inline-flex items-center gap-1 text-brand-accent font-black">
-                      [📱 MOBILE] POS: X: <strong>{getActiveObjectValue("mobilePosX", getActiveObjectValue("posX", 50))}%</strong>, Y: <strong>{getActiveObjectValue("mobilePosY", getActiveObjectValue("posY", 50))}%</strong>
-                    </span>
-                  ) : (
-                    <span>
-                      [💻 PC] POS: X: <strong className="text-brand-accent">{getActiveObjectValue("posX", 50)}%</strong>, Y: <strong className="text-brand-accent">{getActiveObjectValue("posY", 50)}%</strong>
-                    </span>
-                  )}
-                </span>
-              </div>
-            </div>
-          </div>
-
-          {/* Canvas Box Simulator (Responsive PC / Smartphone frame) */}
-          <div className={previewDeviceMode === "mobile" ? "max-w-[420px] mx-auto px-4" : "w-full"}>
-            {/* Simulated Smartphone Header Notch */}
-            {previewDeviceMode === "mobile" && (
-              <div className="bg-brand-surface border-x-4 border-t-4 border-brand-text rounded-t-3xl pt-2.5 pb-1 px-4 flex items-center justify-between shadow-[6px_6px_0px_#050505]">
-                <span className="text-[7.5px] font-black uppercase tracking-widest text-brand-text/60">390 × 844</span>
-                <div className="flex items-center gap-1.5">
-                  <div className="w-14 h-2 bg-brand-text rounded-full" />
-                  <div className="w-2 h-2 rounded-full bg-brand-accent/80" />
-                </div>
-                <span className="text-[7.5px] font-black uppercase text-brand-accent font-mono">PHONE LIVE</span>
-              </div>
-            )}
-
-            <div 
-              ref={canvasRef}
-              onMouseDown={handleCanvasMouseDown}
-              onMouseMove={handleCanvasMouseMove}
-              onMouseUp={handleCanvasMouseUp}
-              className={`relative w-full transition-all duration-300 ${
-                config.showCanvasBoundingBox !== false 
-                  ? "bg-brand-surface/90 border-y-[3px] border-brand-text shadow-[0_6px_0px_#050505]" 
-                  : "bg-transparent border-0 shadow-none"
-              } ${previewDeviceMode === "mobile" ? "border-x-4 border-b-4 border-brand-text rounded-b-3xl shadow-[6px_6px_0px_#050505]" : ""} ${config.canvasOverflowVisible !== false ? "overflow-visible" : "overflow-hidden"} select-none cursor-crosshair group`}
-              style={{
-                minHeight: previewDeviceMode === "mobile" ? "560px" : `${Math.max(480, Math.min(800, config.canvasHeight || 700))}px`,
-                height: previewDeviceMode === "mobile" ? "580px" : `${config.canvasHeight || 700}px`,
-                ...(config.showCanvasBoundingBox !== false ? {
-                  backgroundImage: "radial-gradient(#050505 1px, transparent 1px)",
-                  backgroundSize: "24px 24px",
-                  backgroundPosition: "center center",
-                } : {})
-              }}
-            >
-              {/* Architectural Border */}
-              <div className="absolute inset-0 pointer-events-none">
-                {/* Center Crosshair Marker */}
-                <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none opacity-25 flex items-center justify-center">
-                  <div className="w-full h-[1px] bg-brand-text" />
-                  <div className="h-full w-[1px] bg-brand-text absolute" />
-                </div>
-              </div>
-
-              {/* 3-Layer Animated Avatar Graphic Preview (BG, MID, FG) + Backdrop */}
-              {config.isEnabled && (
-                <>
-                  {/* Backdrop Layer (Z-0) */}
-                  {renderStudioBackdrop(config.backdrop)}
-
-                  {/* Background Layer (Z-10) */}
-                  {renderStudioPreviewLayer(config.bgLayer, 10)}
-
-                  {/* Avatar Layer (Z-20) */}
-                  {renderStudioPreviewLayer(config.midLayer, 20)}
-
-                  {/* Foreground Layer (Z-30) */}
-                  {renderStudioPreviewLayer(config.fgLayer, 30)}
-
-                  {/* Hero Action Buttons Layer (Z-40) */}
-                  {config.heroButtons?.showButtons !== false && (() => {
-                    const isMobileMode = previewDeviceMode === "mobile";
-                    const target = config.heroButtons?.deviceTarget || "both";
-                    const isVisible = target === "both" || (isMobileMode ? target === "mobile" : target === "desktop");
-                    if (!isVisible) return null;
-
-                    const buttonsPosX = (isMobileMode && config.heroButtons?.mobileEnabled && config.heroButtons?.mobilePosX !== undefined)
-                      ? config.heroButtons.mobilePosX
-                      : (config.heroButtons?.posX ?? 50);
-                    const buttonsPosY = (isMobileMode && config.heroButtons?.mobileEnabled && config.heroButtons?.mobilePosY !== undefined)
-                      ? config.heroButtons.mobilePosY
-                      : (config.heroButtons?.posY ?? 85);
-
-                    return (
-                      <div
-                        key="studio-hero-buttons"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          soundManager.playClick(0.06);
-                          setActiveObjectId("hero_buttons");
-                        }}
-                        className="absolute z-40 flex flex-col sm:flex-row items-center gap-2 cursor-grab active:cursor-grabbing pointer-events-auto select-none"
-                        style={{
-                          left: `${buttonsPosX}%`,
-                          top: `${buttonsPosY}%`,
-                          transform: "translate(-50%, -50%)"
-                        }}
-                      >
-                        {activeObjectId === "hero_buttons" && (
-                          <div className="absolute -inset-3 rounded-sm border-2 border-dashed border-brand-accent pointer-events-none animate-pulse z-50">
-                            <span className="absolute -top-3.5 left-1 bg-brand-accent text-white font-mono text-[7.5px] font-black uppercase px-1">
-                              EDITING HERO BUTTONS [{isMobileMode ? "📱 MOBILE" : "💻 PC"} X:{buttonsPosX}%, Y:{buttonsPosY}%]
-                            </span>
-                          </div>
-                        )}
-                        <div className="px-4 py-2 bg-brand-accent text-white font-mono text-[10px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505]">
-                          {config.heroButtons?.button1Label || "ABOUT THE MARK"}
-                        </div>
-                        <div className="px-4 py-2 bg-brand-surface text-brand-text font-mono text-[10px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505]">
-                          {config.heroButtons?.button2Label || "MANIFESTO"}
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </>
-              )}
-
-              {/* Bottom Floating Canvas Helper Tooltip */}
-              <div className="absolute bottom-3 left-1/2 -translate-x-1/2 bg-brand-bg/95 border-2 border-brand-text px-3 py-1 text-[9px] font-black uppercase tracking-widest shadow-[2px_2px_0px_#050505] pointer-events-none flex items-center gap-1.5 whitespace-nowrap">
-                <Move size={10} className="text-brand-accent animate-pulse" />
-                <span>DRAG TO RELOCATE ({previewDeviceMode === "mobile" ? "📱 MOBILE POSITION" : "💻 PC POSITION"})</span>
-              </div>
-            </div>
-          </div>
-
+      {/* Thin Orange Strip Docked on Right Edge (#FF4500) */}
+      <div
+        onClick={() => {
+          soundManager.playClick(0.08);
+          setIsSidePanelOpen((prev) => !prev);
+        }}
+        onMouseEnter={() => {
+          if (!isSidePanelOpen) setIsSidePanelOpen(true);
+        }}
+        className="fixed right-0 top-0 bottom-0 z-[140] w-3.5 hover:w-10 bg-[#FF4500] transition-all duration-200 cursor-pointer flex flex-col items-center justify-between py-6 border-l-2 border-brand-text shadow-[-4px_0px_14px_rgba(255,69,0,0.5)] group select-none"
+        title="Hover or click thin orange strip to expand Studio Controls"
+      >
+        <div className="w-2 h-2 bg-white border border-black animate-ping" />
+        
+        <div 
+          className="font-mono text-[9px] font-black tracking-widest text-white uppercase opacity-90 group-hover:opacity-100 transition-opacity whitespace-nowrap"
+          style={{
+            writingMode: "vertical-rl",
+            textOrientation: "mixed",
+            transform: "rotate(180deg)",
+          }}
+        >
+          // STUDIO CONTROLS [CLICK TO EXPAND]
         </div>
 
+        <Sliders size={13} className="text-white group-hover:scale-125 transition-transform" />
       </div>
 
-      {/* Docked Hover-to-Expand Side Panel */}
+      {/* Main Full-Height Edge-to-Edge Hero Canvas Stage */}
+      <div className="relative w-full h-screen flex-1 overflow-hidden select-none cursor-crosshair group flex items-center justify-center top-0 bottom-0">
+        {/* Canvas Box (Responsive PC / Smartphone frame stretching top to bottom) */}
+        <div className={previewDeviceMode === "mobile" ? "h-full w-full max-w-[420px] mx-auto py-2 px-3 flex flex-col" : "h-full w-full relative"}>
+          {/* Simulated Smartphone Header Notch */}
+          {previewDeviceMode === "mobile" && (
+            <div className="bg-brand-surface border-x-4 border-t-4 border-brand-text rounded-t-3xl pt-2 pb-1 px-4 flex items-center justify-between shadow-[4px_4px_0px_#050505] shrink-0">
+              <span className="text-[7.5px] font-black uppercase tracking-widest text-brand-text/60">390 × 844</span>
+              <div className="flex items-center gap-1.5">
+                <div className="w-14 h-1.5 bg-brand-text rounded-full" />
+                <div className="w-2 h-2 rounded-full bg-[#FF4500]" />
+              </div>
+              <span className="text-[7.5px] font-black uppercase text-[#FF4500] font-mono">PHONE STAGE</span>
+            </div>
+          )}
+
+          <div 
+            ref={canvasRef}
+            onMouseDown={handleCanvasMouseDown}
+            onMouseMove={handleCanvasMouseMove}
+            onMouseUp={handleCanvasMouseUp}
+            className={`relative w-full h-full flex-1 transition-all duration-300 ${
+              config.showCanvasBoundingBox !== false 
+                ? "bg-brand-surface/90 border-brand-text shadow-[0_6px_0px_#050505]" 
+                : "bg-transparent border-0 shadow-none"
+            } ${previewDeviceMode === "mobile" ? "border-x-4 border-b-4 border-brand-text rounded-b-3xl shadow-[6px_6px_0px_#050505]" : "border-0"} ${config.canvasOverflowVisible !== false ? "overflow-visible" : "overflow-hidden"} select-none cursor-crosshair group`}
+            style={{
+              ...(config.showCanvasBoundingBox !== false ? {
+                backgroundImage: "radial-gradient(#050505 1px, transparent 1px)",
+                backgroundSize: "24px 24px",
+                backgroundPosition: "center center",
+              } : {})
+            }}
+          >
+            {/* Architectural Grid Markers */}
+            <div className="absolute inset-0 pointer-events-none">
+              <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-8 h-8 pointer-events-none opacity-25 flex items-center justify-center">
+                <div className="w-full h-[1px] bg-brand-text" />
+                <div className="h-full w-[1px] bg-brand-text absolute" />
+              </div>
+            </div>
+
+            {/* 3-Layer Animated Avatar Graphic Preview (BG, MID, FG) + Backdrop */}
+            {config.isEnabled && (
+              <>
+                {/* Backdrop Layer (Z-0) */}
+                {renderStudioBackdrop(config.backdrop)}
+
+                {/* Background Layer (Z-10) */}
+                {renderStudioPreviewLayer(config.bgLayer, 10)}
+
+                {/* Avatar Layer (Z-20) */}
+                {renderStudioPreviewLayer(config.midLayer, 20)}
+
+                {/* Foreground Layer (Z-30) */}
+                {renderStudioPreviewLayer(config.fgLayer, 30)}
+
+                {/* Hero Action Buttons Layer (Z-40) */}
+                {config.heroButtons?.showButtons !== false && (() => {
+                  const isMobileMode = previewDeviceMode === "mobile";
+                  const target = config.heroButtons?.deviceTarget || "both";
+                  const isVisible = target === "both" || (isMobileMode ? target === "mobile" : target === "desktop");
+                  if (!isVisible) return null;
+
+                  const buttonsPosX = (isMobileMode && config.heroButtons?.mobileEnabled && config.heroButtons?.mobilePosX !== undefined)
+                    ? config.heroButtons.mobilePosX
+                    : (config.heroButtons?.posX ?? 50);
+                  const buttonsPosY = (isMobileMode && config.heroButtons?.mobileEnabled && config.heroButtons?.mobilePosY !== undefined)
+                    ? config.heroButtons.mobilePosY
+                    : (config.heroButtons?.posY ?? 85);
+
+                  return (
+                    <div
+                      key="studio-hero-buttons"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        soundManager.playClick(0.06);
+                        setActiveObjectId("hero_buttons");
+                      }}
+                      className="absolute z-40 flex flex-col sm:flex-row items-center gap-2 cursor-grab active:cursor-grabbing pointer-events-auto select-none"
+                      style={{
+                        left: `${buttonsPosX}%`,
+                        top: `${buttonsPosY}%`,
+                        transform: "translate(-50%, -50%)"
+                      }}
+                    >
+                      {activeObjectId === "hero_buttons" && (
+                        <div className="absolute -inset-3 rounded-sm border-2 border-dashed border-[#FF4500] pointer-events-none animate-pulse z-50">
+                          <span className="absolute -top-3.5 left-1 bg-[#FF4500] text-white font-mono text-[7.5px] font-black uppercase px-1">
+                            EDITING HERO BUTTONS [{isMobileMode ? "📱 MOBILE" : "💻 PC"} X:{buttonsPosX}%, Y:{buttonsPosY}%]
+                          </span>
+                        </div>
+                      )}
+                      <div className="px-4 py-2 bg-[#FF4500] text-white font-mono text-[10px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505]">
+                        {config.heroButtons?.button1Label || "ABOUT THE MARK"}
+                      </div>
+                      <div className="px-4 py-2 bg-brand-surface text-brand-text font-mono text-[10px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505]">
+                        {config.heroButtons?.button2Label || "MANIFESTO"}
+                      </div>
+                    </div>
+                  );
+                })()}
+              </>
+            )}
+
+            {/* Bottom Floating Canvas Helper Tooltip */}
+            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 bg-brand-bg/95 border-2 border-brand-text px-3.5 py-1 text-[9px] font-black uppercase tracking-widest shadow-[3px_3px_0px_#050505] pointer-events-none flex items-center gap-1.5 whitespace-nowrap z-40">
+              <Move size={10} className="text-[#FF4500] animate-pulse" />
+              <span>DRAG TO RELOCATE GRAPHICS ({previewDeviceMode === "mobile" ? "📱 MOBILE POSITION" : "💻 PC POSITION"})</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Docked Hover-to-Expand Side Panel Drawer */}
       <HeroSidePanel
         config={config}
         onUpdateConfig={setConfig}

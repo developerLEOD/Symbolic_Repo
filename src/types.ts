@@ -457,6 +457,17 @@ export interface HeroLayerConfig {
   mobileStickToBottom?: boolean;
 }
 
+export interface AvatarGraphic {
+  id: string;
+  name: string;
+  url: string;
+  category?: string;
+  tags?: string[];
+  createdAt: number;
+  createdBy?: string;
+  sourceApp?: string;
+}
+
 export interface BackdropConfig {
   isEnabled: boolean;
   imageUrl: string;
