@@ -262,6 +262,38 @@ function HomeView({
   );
 }
 
+function StudioSubUrlRouteView({
+  categories,
+  onProductPublished,
+  overrideTab,
+}: {
+  categories: Category[];
+  onProductPublished: () => void;
+  overrideTab?: "artifacts" | "upload" | "catalog" | "referrals" | "taxonomy" | "hero";
+}) {
+  const { tab } = useParams<{ tab?: string }>();
+  const navigate = useNavigate();
+
+  const activeTab: any = overrideTab || tab || "hero";
+
+  return (
+    <OwnerProductManager
+      onClose={() => navigate("/")}
+      onProductPublished={onProductPublished}
+      categories={categories}
+      initialTab={activeTab}
+      onTabChange={(newTab) => {
+        if (newTab === "hero") navigate("/studio/hero");
+        else navigate(`/studio/${newTab}`);
+      }}
+      onViewProductInStore={(catId) => {
+        if (catId) navigate(`/artifacts/${catId}`);
+        else navigate("/artifacts");
+      }}
+    />
+  );
+}
+
 function StorefrontApp() {
   const { user, isOwner } = useAuth();
   const navigate = useNavigate();
@@ -501,7 +533,7 @@ function StorefrontApp() {
       <Header 
         onCartClick={() => setIsCartOpen(true)} 
         cartCount={cart.reduce((s, i) => s + i.quantity, 0)}
-        onOwnerClick={isOwner ? () => setIsOwnerOpen(true) : undefined}
+        onOwnerClick={() => navigate("/studio")}
         onAuthClick={() => {
           if (user) {
             setProfileInitialTab("orders");
@@ -519,6 +551,45 @@ function StorefrontApp() {
         
         <main className="min-h-screen bg-transparent relative">
           <Routes location={location}>
+            {/* Dedicated Sub-URL Routes for Studio & Hero Canvas */}
+            <Route
+              path="/studio"
+              element={
+                <StudioSubUrlRouteView
+                  categories={categories}
+                  onProductPublished={handleProductPublished}
+                />
+              }
+            />
+            <Route
+              path="/studio/:tab"
+              element={
+                <StudioSubUrlRouteView
+                  categories={categories}
+                  onProductPublished={handleProductPublished}
+                />
+              }
+            />
+            <Route
+              path="/avatar_graphics"
+              element={
+                <StudioSubUrlRouteView
+                  overrideTab="hero"
+                  categories={categories}
+                  onProductPublished={handleProductPublished}
+                />
+              }
+            />
+            <Route
+              path="/owner"
+              element={
+                <StudioSubUrlRouteView
+                  categories={categories}
+                  onProductPublished={handleProductPublished}
+                />
+              }
+            />
+
             {/* Home Route */}
             <Route
               path="/"
@@ -531,7 +602,7 @@ function StorefrontApp() {
                   onAddToCart={handleAddToCart}
                   onNavigateManifesto={() => navigate("/manifesto")}
                   onNavigateAbout={() => navigate("/about")}
-                  onOpenOwnerManager={isOwner ? () => setIsOwnerOpen(true) : undefined}
+                  onOpenOwnerManager={() => navigate("/studio")}
                 />
               }
             />

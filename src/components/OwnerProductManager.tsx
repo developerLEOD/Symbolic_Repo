@@ -61,8 +61,10 @@ interface OwnerProductManagerProps {
   onClose: () => void;
   onProductPublished: () => void;
   categories: Category[];
-  onViewProductInStore?: (catId: string) => void;
+  onViewProductInStore?: (catId?: string) => void;
   initialEditProductId?: string | null;
+  initialTab?: "artifacts" | "upload" | "catalog" | "referrals" | "taxonomy" | "hero";
+  onTabChange?: (tab: string) => void;
 }
 
 // Pre-curated SYMBOLIC editorial asset images for quick photo selection
@@ -78,7 +80,9 @@ export default function OwnerProductManager({
   onProductPublished, 
   categories, 
   onViewProductInStore,
-  initialEditProductId 
+  initialEditProductId,
+  initialTab,
+  onTabChange
 }: OwnerProductManagerProps) {
   const { user, isOwner, signInWithEmail, signInWithGoogle, signOutUser, formatAuthError } = useAuth();
   const [loginEmail, setLoginEmail] = useState("");
@@ -86,7 +90,20 @@ export default function OwnerProductManager({
   const [authLoading, setAuthLoading] = useState(false);
   const [authError, setAuthError] = useState<string | null>(null);
 
-  const [activeTab, setActiveTab] = useState<"artifacts" | "upload" | "catalog" | "referrals" | "taxonomy" | "hero">("artifacts");
+  const [activeTab, setActiveTabState] = useState<"artifacts" | "upload" | "catalog" | "referrals" | "taxonomy" | "hero">(initialTab || "artifacts");
+
+  useEffect(() => {
+    if (initialTab && initialTab !== activeTab) {
+      setActiveTabState(initialTab);
+    }
+  }, [initialTab]);
+
+  const setActiveTab = (tab: "artifacts" | "upload" | "catalog" | "referrals" | "taxonomy" | "hero") => {
+    setActiveTabState(tab);
+    if (onTabChange) {
+      onTabChange(tab);
+    }
+  };
   const [catalogViewMode, setCatalogViewMode] = useState<"grid" | "list">("grid");
   const [catalogSearch, setCatalogSearch] = useState("");
   const [catalogCategoryFilter, setCatalogCategoryFilter] = useState("all");
@@ -801,9 +818,9 @@ export default function OwnerProductManager({
     <div className="fixed inset-0 z-[100] bg-brand-bg text-brand-text flex flex-col overflow-hidden font-mono selection:bg-brand-text selection:text-brand-bg">
       {/* Top Bar (Hidden when in Studio Hero full-viewport view) */}
       {activeTab !== "hero" && (
-        <header className="h-16 border-b-2 border-brand-text bg-brand-bg/95 backdrop-blur-md px-3 sm:px-6 flex items-center justify-between gap-3 shrink-0 z-20 select-none">
+        <header className="min-h-16 border-b-2 border-brand-text bg-brand-bg/95 backdrop-blur-md px-2 sm:px-6 py-1.5 sm:py-2 flex flex-nowrap items-center justify-between gap-2 overflow-x-auto max-w-full scrollbar-none shrink-0 z-20 select-none">
         {/* Left: Merged Symbolic Brand & Exit Button */}
-        <div className="flex items-center gap-3 sm:gap-4 shrink-0 min-w-0">
+        <div className="flex items-center gap-2 sm:gap-4 shrink-0 min-w-0">
           <button 
             type="button"
             onClick={onClose}
@@ -838,7 +855,7 @@ export default function OwnerProductManager({
         </div>
 
         {/* Center: Clean Segmented Mode Switcher */}
-        <div className="flex items-center bg-brand-surface border-2 border-brand-text p-1 shadow-[2px_2px_0px_#050505] shrink-0">
+        <div className="flex items-center bg-brand-surface border-2 border-brand-text p-1 shadow-[2px_2px_0px_#050505] shrink-0 overflow-x-auto max-w-full flex-nowrap scrollbar-none">
           <button
             type="button"
             onClick={() => setActiveTab("artifacts")}

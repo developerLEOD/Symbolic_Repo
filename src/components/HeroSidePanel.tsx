@@ -478,7 +478,7 @@ export default function HeroSidePanel({
               damping: 28,
               mass: 0.8,
             }}
-            className="w-[340px] sm:w-[390px] max-h-[88vh] bg-brand-surface/98 backdrop-blur-md border-y-2 border-l-2 border-brand-text shadow-[-8px_8px_0px_#050505] flex flex-col font-mono text-brand-text overflow-hidden rounded-l-md"
+            className="w-[calc(100vw-1.25rem)] sm:w-[390px] max-w-[390px] max-h-[92vh] sm:max-h-[88vh] bg-brand-surface/98 backdrop-blur-md border-2 border-brand-text shadow-[-4px_4px_0px_#050505] flex flex-col font-mono text-brand-text overflow-hidden rounded-l-md"
           >
             {/* Panel Header & Control Bar */}
             <div className="p-3.5 bg-brand-bg border-b-2 border-brand-text flex items-center justify-between gap-2 shrink-0">

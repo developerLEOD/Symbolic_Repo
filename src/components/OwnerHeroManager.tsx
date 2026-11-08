@@ -830,7 +830,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
   return (
     <div className="fixed inset-0 z-[100] h-screen w-full overflow-hidden bg-brand-bg font-mono text-brand-text select-none flex flex-col">
       {/* Floating Top-Left Architectural HUD Badge */}
-      <div className="fixed top-3 left-3 z-[120] flex items-center gap-2.5 bg-brand-surface/95 backdrop-blur-md border-2 border-brand-text px-3 py-1.5 shadow-[4px_4px_0px_#050505]">
+      <div className="fixed top-2 left-2 right-12 sm:right-auto z-[120] flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 bg-brand-surface/95 backdrop-blur-md border-2 border-brand-text p-1.5 sm:px-3 sm:py-1.5 shadow-[3px_3px_0px_#050505] max-w-[calc(100vw-3.2rem)] font-mono">
         {/* Back / Close button */}
         {(onClose || onTabChange) && (
           <button
@@ -840,32 +840,32 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
               if (onTabChange) onTabChange("artifacts");
               else if (onClose) onClose();
             }}
-            className="p-1 bg-brand-bg hover:bg-brand-text hover:text-brand-bg border border-brand-text transition-colors cursor-pointer"
+            className="p-1 bg-brand-bg hover:bg-brand-text hover:text-brand-bg border border-brand-text transition-colors cursor-pointer shrink-0"
             title="Exit Studio / Back to Archive"
           >
             <ArrowLeft size={13} />
           </button>
         )}
 
-        <div className="flex items-center gap-1.5 border-r border-brand-text/20 pr-2.5">
-          <span className="w-2.5 h-2.5 bg-[#FF4500] animate-pulse rounded-none" />
-          <span className="font-black text-xs uppercase tracking-wider text-brand-text">
-            HERO CANVAS
+        <div className="flex items-center gap-1 sm:gap-1.5 border-r border-brand-text/20 pr-1.5 sm:pr-2.5 shrink-0">
+          <span className="w-2 h-2 sm:w-2.5 sm:h-2.5 bg-[#FF4500] animate-pulse rounded-none shrink-0" />
+          <span className="font-black text-[10px] sm:text-xs uppercase tracking-wider text-brand-text">
+            <span className="hidden xs:inline">HERO </span>CANVAS
           </span>
-          <span className="text-[7.5px] font-black uppercase px-1.5 py-0.2 bg-[#FF4500] text-white">
+          <span className="hidden sm:inline-block text-[7.5px] font-black uppercase px-1.5 py-0.2 bg-[#FF4500] text-white">
             LIVE STAGE
           </span>
         </div>
 
         {/* Quick PC / Mobile Viewport Toggle */}
-        <div className="flex items-center border border-brand-text bg-brand-surface shadow-[1px_1px_0px_#050505]">
+        <div className="flex items-center border border-brand-text bg-brand-surface shadow-[1px_1px_0px_#050505] shrink-0">
           <button
             type="button"
             onClick={() => {
               soundManager.playClick(0.06);
               setPreviewDeviceMode("desktop");
             }}
-            className={`flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-wider cursor-pointer ${
+            className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[8.5px] font-black uppercase tracking-wider cursor-pointer ${
               previewDeviceMode === "desktop"
                 ? "bg-brand-text text-brand-bg"
                 : "text-brand-text/60 hover:text-brand-text"
@@ -881,7 +881,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
               soundManager.playClick(0.06);
               setPreviewDeviceMode("mobile");
             }}
-            className={`flex items-center gap-1 px-2 py-0.5 text-[8.5px] font-black uppercase tracking-wider cursor-pointer border-l border-brand-text ${
+            className={`flex items-center gap-1 px-1.5 sm:px-2 py-0.5 text-[8px] sm:text-[8.5px] font-black uppercase tracking-wider cursor-pointer border-l border-brand-text ${
               previewDeviceMode === "mobile"
                 ? "bg-[#FF4500] text-white"
                 : "text-brand-text/60 hover:text-brand-text"
@@ -894,7 +894,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
         </div>
 
         {/* Active Position Info HUD */}
-        <div className="hidden sm:flex items-center gap-2 text-[9px] font-mono text-brand-text/70 uppercase">
+        <div className="hidden md:flex items-center gap-2 text-[9px] font-mono text-brand-text/70 uppercase">
           <span className="w-1.5 h-1.5 bg-brand-text rounded-full" />
           <span>
             {previewDeviceMode === "mobile" ? (
@@ -910,7 +910,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
         </div>
 
         {/* Quick Action Triggers */}
-        <div className="flex items-center gap-1 ml-1">
+        <div className="flex items-center gap-1 shrink-0">
           <button
             type="button"
             onClick={handleReplayAnimation}
