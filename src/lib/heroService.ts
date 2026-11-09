@@ -376,7 +376,7 @@ export async function getHeroConfig(): Promise<CustomHeroConfig> {
     return getCachedHeroConfig();
   }
 
-  // 1. Try fetching fresh JSON from /api/hero-config (Express backend)
+  // 1. Load strictly from canonical JSON file on disk (/api/hero-config or /hero-config.json)
   try {
     const response = await fetch("/api/hero-config", {
       headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
@@ -386,34 +386,12 @@ export async function getHeroConfig(): Promise<CustomHeroConfig> {
       const data = await response.json();
       if (data && (data.midLayer || data.bgLayer || data.canvasHeight)) {
         const normalized = normalizeHeroConfig(data);
-        setCachedHeroConfig(normalized);
         return normalized;
       }
     }
   } catch {}
 
-  // 2. Try fetching persistent document from Firestore (doc /settings/hero) — single read, 0 continuous listeners
-  try {
-    const heroDocRef = doc(db, "settings", "hero");
-    const snap = await getDoc(heroDocRef);
-    if (snap.exists()) {
-      const dbData = snap.data();
-      const heroPayload = dbData.configJson ? JSON.parse(dbData.configJson) : dbData;
-      if (heroPayload && (heroPayload.midLayer || heroPayload.bgLayer || heroPayload.canvasHeight)) {
-        const normalized = normalizeHeroConfig(heroPayload);
-        setCachedHeroConfig(normalized);
-        // Sync to server API in background so JSON file has it
-        fetch("/api/hero-config", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(normalized),
-        }).catch(() => {});
-        return normalized;
-      }
-    }
-  } catch {}
-
-  // 3. Fallback to static public /hero-config.json
+  // 2. Fallback to static public /hero-config.json
   try {
     const staticResp = await fetch("/hero-config.json", {
       headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
@@ -423,24 +401,18 @@ export async function getHeroConfig(): Promise<CustomHeroConfig> {
       const data = await staticResp.json();
       if (data && (data.midLayer || data.bgLayer)) {
         const normalized = normalizeHeroConfig(data);
-        setCachedHeroConfig(normalized);
         return normalized;
       }
     }
   } catch {}
 
-  // 4. Fallback to localStorage or bundled default JSON
   return getCachedHeroConfig();
 }
 
 /**
- * Dedicated JSON File & Setting Saver:
- * Persists the elements' coordinates, sizes, layers, animations and text metadata
- * into:
- * 1. LocalStorage (instant UI responsiveness)
- * 2. Window CustomEvent (instant in-memory cross-component sync)
- * 3. /api/hero-config (disk JSON file)
- * 4. Firestore /settings/hero (cloud persistence across instances/restarts, 1 single write)
+ * Dedicated JSON File Saver:
+ * Persists layout metadata strictly into the single JSON file on disk via /api/hero-config.
+ * Zero database writes.
  */
 export async function saveHeroConfig(
   updates: Partial<CustomHeroConfig>,
@@ -458,34 +430,20 @@ export async function saveHeroConfig(
     sourceApp,
   });
 
-  // 1. Update localStorage immediately for fast responsive feedback
-  setCachedHeroConfig(payload);
-
   if (typeof window !== "undefined") {
-    // 2. Dispatch window event for instant in-memory update across Main Hero & Studio
+    // 1. Dispatch window event for instant in-memory update across Main Hero & Studio
     window.dispatchEvent(new CustomEvent("sym_hero_config_updated", { detail: payload }));
 
-    // 3. Persist directly into the JSON file on disk via server API
-    fetch("/api/hero-config", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload),
-    }).catch((err) => {
-      console.warn("Could not save to /api/hero-config:", err);
-    });
-
-    // 4. Also store in Firestore document (/settings/hero) — 1 single write, zero real-time leakage
+    // 2. Persist strictly into the single JSON file on disk via server API
     try {
-      const heroDocRef = doc(db, "settings", "hero");
-      setDoc(heroDocRef, {
-        ...payload,
-        configJson: JSON.stringify(payload),
-        updatedAt: Date.now(),
-        updatedBy: updatedByEmail || "owner",
-      }, { merge: true }).catch((err) => {
-        console.warn("Could not write hero config to Firestore settings:", err);
+      await fetch("/api/hero-config", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
       });
-    } catch {}
+    } catch (err) {
+      console.warn("Could not save to /api/hero-config:", err);
+    }
   }
 
   return payload;
