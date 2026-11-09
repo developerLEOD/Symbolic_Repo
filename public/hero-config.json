@@ -63,7 +63,7 @@
         "size": 285,
         "rotation": 0,
         "opacity": 0.25,
-        "transitionDirection": "fade",
+        "transitionDirection": "top",
         "transitionSpeed": "smooth",
         "transitionDelay": 0.15000000000000002,
         "hoverEffect": "none",
@@ -82,7 +82,7 @@
         "size": 235,
         "rotation": 0,
         "opacity": 0.15,
-        "transitionDirection": "fade",
+        "transitionDirection": "right",
         "transitionSpeed": "smooth",
         "transitionDelay": 0.2,
         "hoverEffect": "none",
@@ -107,7 +107,7 @@
         "textAlign": "left",
         "lineHeight": 0.8,
         "letterSpacing": -5,
-        "fontWeight": 900,
+        "fontWeight": 800,
         "textTransform": "uppercase",
         "italic": false
       }
