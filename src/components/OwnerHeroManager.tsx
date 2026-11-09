@@ -94,6 +94,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
   const [newGraphicName, setNewGraphicName] = useState("");
   const [isAddingGraphicToDb, setIsAddingGraphicToDb] = useState(false);
   const dbGraphicFileInputRef = useRef<HTMLInputElement>(null);
+  const jsonFileInputRef = useRef<HTMLInputElement>(null);
 
   // Subscribe to live Avatar Graphics database collection
   useEffect(() => {
@@ -451,6 +452,32 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
       alert("Save Config Error: " + (err?.message || "Could not save hero metadata configuration."));
     } finally {
       setIsSaving(false);
+    }
+  };
+
+  // Import saved JSON configuration file directly into database and apply
+  const handleImportJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsSaving(true);
+    soundManager.playClick(0.16);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const normalized = normalizeHeroConfig(parsed);
+      
+      const saved = await saveHeroConfig(normalized, userEmail, true);
+      setConfig(saved);
+      setPreviewKey((k) => k + 1);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      alert("Hero JSON successfully uploaded to database & applied to Main Hero!");
+    } catch (err: any) {
+      alert("Failed to import JSON file: " + (err?.message || "Invalid JSON format"));
+    } finally {
+      setIsSaving(false);
+      if (e.target) e.target.value = "";
     }
   };
 
@@ -981,11 +1008,28 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           <button
             type="button"
             onClick={() => downloadHeroConfigJson(config)}
-            className="p-1 bg-brand-surface hover:bg-[#FF4500] hover:text-white border border-brand-text text-[9px] font-black uppercase transition-colors cursor-pointer"
+            className="p-1 bg-brand-surface hover:bg-[#FF4500] hover:text-white border border-brand-text text-[9px] font-black uppercase transition-colors cursor-pointer flex items-center gap-1 px-1.5"
             title="Export hero-config.json"
           >
             <Download size={11} />
+            <span className="hidden sm:inline">EXPORT</span>
           </button>
+          <button
+            type="button"
+            onClick={() => jsonFileInputRef.current?.click()}
+            className="p-1 bg-brand-accent text-white hover:bg-black border border-brand-text text-[9px] font-black uppercase transition-colors cursor-pointer flex items-center gap-1 px-1.5 shadow-[1px_1px_0px_#050505]"
+            title="Upload saved JSON file directly into Database and apply to Main Hero"
+          >
+            <Upload size={11} />
+            <span className="hidden sm:inline">UPLOAD JSON</span>
+          </button>
+          <input 
+            ref={jsonFileInputRef}
+            type="file"
+            accept=".json,application/json"
+            onChange={handleImportJsonFile}
+            className="hidden"
+          />
           <button
             type="button"
             onClick={handleSave}

@@ -324,6 +324,32 @@ export default function HeroSidePanel({
     }
   };
 
+  // Import saved JSON configuration file directly into database and apply
+  const handleImportJsonFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsSaving(true);
+    soundManager.playClick(0.16);
+    try {
+      const text = await file.text();
+      const parsed = JSON.parse(text);
+      const normalized = normalizeHeroConfig(parsed);
+      
+      // Save directly to server JSON and Firestore database /settings/hero
+      const saved = await saveHeroConfig(normalized, userEmail, true);
+      onUpdateConfig(saved);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      alert("Hero JSON successfully imported, saved to database, and applied to Main Hero!");
+    } catch (err: any) {
+      alert("Failed to import JSON file: " + (err?.message || "Invalid JSON format"));
+    } finally {
+      setIsSaving(false);
+      if (e.target) e.target.value = "";
+    }
+  };
+
   // Reset to default
   const handleReset = async () => {
     if (!window.confirm("Reset hero canvas back to default settings?")) return;
