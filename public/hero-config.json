@@ -445,7 +445,7 @@
         "mobilePosY": 17,
         "mobileRotation": 0,
         "mobileSize": 440,
-        "mobileStickToBottom": false
+        "mobileStickToBottom": true
       },
       {
         "id": "gfx_av_9_avatar10",
@@ -753,7 +753,7 @@
       "mobilePosY": 17,
       "mobileRotation": 0,
       "mobileSize": 440,
-      "mobileStickToBottom": false
+      "mobileStickToBottom": true
     },
     {
       "id": "gfx_av_9_avatar10",
