@@ -69,10 +69,10 @@ interface OwnerProductManagerProps {
 
 // Pre-curated SYMBOLIC editorial asset images for quick photo selection
 const PRESET_IMAGES = [
-  { name: "Be Symbolic Mug", url: "/src/assets/images/mug_be_symbolic_1788008321905.jpg", category: "mugs" },
-  { name: "Seek Wisdom Mug", url: "/src/assets/images/mug_seek_wisdom_1788008333595.jpg", category: "mugs" },
-  { name: "Find Clarity Mug", url: "/src/assets/images/mug_find_clarity_1788008345150.jpg", category: "mugs" },
-  { name: "Editorial Apparel & Cap", url: "/src/assets/images/store_hero_editorial_1788008309317.jpg", category: "t-shirts" },
+  { name: "Be Symbolic Mug", url: "/assets/hero/avatar/Avatar4.png", category: "mugs" },
+  { name: "Seek Wisdom Mug", url: "/assets/hero/avatar/Avatar9.png", category: "mugs" },
+  { name: "Find Clarity Mug", url: "/assets/hero/avatar/Avatar6.png", category: "mugs" },
+  { name: "Editorial Apparel & Cap", url: "/Logo_NoName.jpg", category: "t-shirts" },
 ];
 
 export default function OwnerProductManager({ 

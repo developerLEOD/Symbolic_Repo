@@ -37,14 +37,15 @@ import {
   markFirestoreQuotaExceeded, 
   isQuotaError 
 } from "./firestoreCircuitBreaker";
-import capImage from "../assets/images/structured_twill_cap_1789233572064.jpg";
-import vesselImage from "../assets/images/ceramic_stoneware_vessel_1789233585625.jpg";
-import hoodieImage from "../assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg";
-import bagImage from "../assets/images/canvas_field_bag_1789233558525.jpg";
-import heroImage from "../assets/images/store_hero_editorial_1788008309317.jpg";
-import mugSymbolicImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
-import mugClarityImage from "../assets/images/mug_find_clarity_1788008345150.jpg";
-import mugWisdomImage from "../assets/images/mug_be_symbolic_1788008321905.jpg";
+// Placeholders for deleted assets
+const capImage = "/assets/hero/avatar/Avatar0.png";
+const vesselImage = "/assets/hero/avatar/Avatar1.png";
+const hoodieImage = "/assets/hero/avatar/Avatar2.png";
+const bagImage = "/assets/hero/avatar/Avatar3.png";
+const heroImage = "/Logo_NoName.jpg";
+const mugSymbolicImage = "/assets/hero/avatar/Avatar4.png";
+const mugClarityImage = "/assets/hero/avatar/Avatar6.png";
+const mugWisdomImage = "/assets/hero/avatar/Avatar7.png";
 
 export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
 export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
