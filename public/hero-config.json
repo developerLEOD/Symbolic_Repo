@@ -142,7 +142,8 @@
         "fontWeight": 400,
         "textTransform": "none",
         "italic": false,
-        "disableIdleAnimation": true
+        "disableIdleAnimation": true,
+        "deviceTarget": "desktop"
       },
       {
         "id": "1794248731111",
@@ -161,7 +162,8 @@
         "letterSpacing": 0,
         "fontWeight": 400,
         "textTransform": "none",
-        "italic": false
+        "italic": false,
+        "deviceTarget": "desktop"
       },
       {
         "id": "1794250718072",
@@ -183,7 +185,8 @@
         "italic": false,
         "mobileEnabled": true,
         "mobilePosX": 5,
-        "mobilePosY": 7
+        "mobilePosY": 7,
+        "deviceTarget": "mobile"
       }
     ],
     "slideshowEnabled": false,
@@ -233,7 +236,13 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": -4,
+        "mobilePosY": 28,
+        "mobileRotation": 0,
+        "mobileSize": 405,
+        "mobileStickToBottom": false
       },
       {
         "id": "gfx_av_1_avatar1",
@@ -252,7 +261,13 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 1,
+        "mobilePosY": 19,
+        "mobileRotation": 0,
+        "mobileSize": 370,
+        "mobileStickToBottom": false
       },
       {
         "id": "gfx_av_2_avatar2",
@@ -271,7 +286,11 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 3,
+        "mobilePosY": 17,
+        "mobileSize": 365
       },
       {
         "id": "gfx_av_3_avatar3",
@@ -290,7 +309,13 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 2,
+        "mobilePosY": 27,
+        "mobileRotation": 0,
+        "mobileSize": 385,
+        "mobileStickToBottom": false
       },
       {
         "id": "gfx_av_4_avatar4",
@@ -309,7 +334,11 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": -9,
+        "mobilePosY": 27,
+        "mobileSize": 430
       },
       {
         "id": "gfx_av_5_avatar6",
@@ -328,7 +357,13 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 4,
+        "mobilePosY": 17,
+        "mobileRotation": 0,
+        "mobileSize": 360,
+        "mobileStickToBottom": false
       },
       {
         "id": "gfx_av_6_avatar7",
@@ -347,7 +382,11 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 4,
+        "mobilePosY": 15,
+        "mobileSize": 345
       },
       {
         "id": "gfx_av_7_avatar8",
@@ -410,7 +449,11 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 51,
+        "mobilePosY": 6,
+        "deviceTarget": "both"
       }
     ],
     "textObjects": [],
@@ -443,7 +486,7 @@
     "mobileEnabled": false
   },
   "showCoordinates": false,
-  "canvasHeight": 720,
+  "canvasHeight": 760,
   "showCanvasBoundingBox": true,
   "canvasOverflowVisible": true,
   "backdrop": {
@@ -486,7 +529,13 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": -4,
+      "mobilePosY": 28,
+      "mobileRotation": 0,
+      "mobileSize": 405,
+      "mobileStickToBottom": false
     },
     {
       "id": "gfx_av_1_avatar1",
@@ -505,7 +554,13 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": 1,
+      "mobilePosY": 19,
+      "mobileRotation": 0,
+      "mobileSize": 370,
+      "mobileStickToBottom": false
     },
     {
       "id": "gfx_av_2_avatar2",
@@ -524,7 +579,11 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": 3,
+      "mobilePosY": 17,
+      "mobileSize": 365
     },
     {
       "id": "gfx_av_3_avatar3",
@@ -543,7 +602,13 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": 2,
+      "mobilePosY": 27,
+      "mobileRotation": 0,
+      "mobileSize": 385,
+      "mobileStickToBottom": false
     },
     {
       "id": "gfx_av_4_avatar4",
@@ -562,7 +627,11 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": -9,
+      "mobilePosY": 27,
+      "mobileSize": 430
     },
     {
       "id": "gfx_av_5_avatar6",
@@ -581,7 +650,13 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": 4,
+      "mobilePosY": 17,
+      "mobileRotation": 0,
+      "mobileSize": 360,
+      "mobileStickToBottom": false
     },
     {
       "id": "gfx_av_6_avatar7",
@@ -600,7 +675,11 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": 4,
+      "mobilePosY": 15,
+      "mobileSize": 345
     },
     {
       "id": "gfx_av_7_avatar8",
@@ -663,7 +742,11 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": 51,
+      "mobilePosY": 6,
+      "deviceTarget": "both"
     }
   ],
   "slideshowEnabled": true
