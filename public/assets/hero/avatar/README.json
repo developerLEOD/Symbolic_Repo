@@ -1,0 +1,7 @@
+{
+  "serialNumber": "SYM-AV-001",
+  "name": "Avatar Layer Slideshow Asset 01",
+  "category": "avatar",
+  "path": "/Logo_NoName.jpg",
+  "description": "Place manual avatar and slideshow graphic assets inside public/assets/hero/avatar/ and reference them in midLayer graphicObjects."
+}

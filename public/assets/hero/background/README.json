@@ -1,0 +1,7 @@
+{
+  "serialNumber": "SYM-BG-001",
+  "name": "Background Layer Asset 01",
+  "category": "background",
+  "path": "/assets/hero/background/sample_bg.jpg",
+  "description": "Place manual background graphic assets inside public/assets/hero/background/ and reference them here or in studio."
+}

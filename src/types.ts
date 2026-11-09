@@ -390,6 +390,8 @@ export interface TextObject {
 
 export interface GraphicObject {
   id: string;
+  serialNumber?: string; // e.g. "SYM-BG-001", "SYM-AV-042"
+  assetPath?: string;    // e.g. "/assets/hero/background/my_graphic.webp"
   avatarUrl: string;
   avatarAlt?: string;
   posX: number;
@@ -421,6 +423,8 @@ export interface HeroLayerConfig {
   id: HeroLayerId;
   name: string;
   isEnabled: boolean;
+  serialNumber?: string;
+  assetPath?: string;
   avatarUrl: string;
   avatarAlt?: string;
   posX: number;

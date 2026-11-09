@@ -1,0 +1,7 @@
+{
+  "serialNumber": "SYM-FG-001",
+  "name": "Foreground Layer Asset 01",
+  "category": "foreground",
+  "path": "/assets/hero/foreground/sample_fg.jpg",
+  "description": "Place manual foreground graphic assets inside public/assets/hero/foreground/ and reference them in fgLayer graphicObjects."
+}
