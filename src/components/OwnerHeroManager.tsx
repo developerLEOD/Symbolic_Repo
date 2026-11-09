@@ -915,7 +915,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
   return (
     <div className="fixed inset-0 z-[100] h-screen w-full overflow-hidden bg-brand-bg font-mono text-brand-text select-none flex flex-col">
       {/* Floating Top-Left Architectural HUD Badge */}
-      <div className="fixed top-2 left-2 right-12 sm:right-auto z-[120] flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 bg-brand-surface/95 backdrop-blur-md border-2 border-brand-text p-1.5 sm:px-3 sm:py-1.5 shadow-[3px_3px_0px_#050505] max-w-[calc(100vw-3.2rem)] font-mono">
+      <div className="fixed top-20 left-2 right-4 sm:right-auto z-[120] flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 bg-brand-surface/95 backdrop-blur-md border-2 border-brand-text p-1.5 sm:px-3 sm:py-1.5 shadow-[3px_3px_0px_#050505] max-w-[calc(100vw-1rem)] font-mono">
         {/* Back / Close button */}
         {(onClose || onTabChange) && (
           <button
