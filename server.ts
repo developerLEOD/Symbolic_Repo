@@ -95,13 +95,18 @@ app.post("/api/upload-hero-graphic", (req, res) => {
 // Scan all repository hero graphics (code assets)
 app.get("/api/scan-hero-graphics", (_req, res) => {
   try {
+    const manifestPath = path.resolve(__dirname, "public", "assets-manifest.json");
+    if (fs.existsSync(manifestPath)) {
+      const manifest = fs.readFileSync(manifestPath, "utf-8");
+      return res.setHeader("Content-Type", "application/json").send(manifest);
+    }
+
+    // Fallback to scanning for dev environment
     const graphics: any[] = [];
     const imageRegex = /\.(png|jpe?g|webp|svg)$/i;
-
     const scanDirectory = (dirPath: string, relativePrefix: string, layer: "mid" | "bg" | "fg" | "backdrop" | "auto", categoryPrefix: string) => {
       if (!fs.existsSync(dirPath)) return;
       const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-
       let counter = 0;
       for (const entry of entries) {
         if (entry.isDirectory()) {
@@ -114,13 +119,11 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
           const cleanName = rawName.replace(/[^a-zA-Z0-9_-]/g, " ");
           const serialNum = `SYM-${categoryPrefix}-${String(counter).padStart(2, "0")}`;
           counter++;
-
           let targetLayer: "mid" | "bg" | "fg" | "backdrop" = layer === "auto" ? "mid" : layer;
           if (dirPath.includes("avatar")) targetLayer = "mid";
           else if (dirPath.includes("background")) targetLayer = "bg";
           else if (dirPath.includes("foreground")) targetLayer = "fg";
           else if (dirPath.includes("backdrop")) targetLayer = "backdrop";
-
           const assetPath = `${relativePrefix}/${entry.name}`;
           graphics.push({
             id: `gfx_${categoryPrefix.toLowerCase()}_${counter}_${rawName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
@@ -137,10 +140,8 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
 
     const publicHeroDir = path.resolve(__dirname, "public", "assets", "hero");
     scanDirectory(publicHeroDir, "/assets/hero", "auto", "HERO");
-
     const srcHeroDir = path.resolve(__dirname, "src", "assets", "hero");
     scanDirectory(srcHeroDir, "/src/assets/hero", "auto", "HERO");
-
     const srcImagesDir = path.resolve(__dirname, "src", "assets", "images");
     scanDirectory(srcImagesDir, "/src/assets/images", "mid", "IMG");
 
