@@ -346,6 +346,7 @@
     "mobilePosX": 50,
     "mobilePosY": 85
   },
+  "gridOpacity": 0.11,
   "version": "1.0",
   "updatedAt": 1794220406276,
   "slideshowInterval": 10,
