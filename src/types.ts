@@ -417,6 +417,7 @@ export interface GraphicObject {
   mobileSize?: number;
   mobileRotation?: number;
   mobileStickToBottom?: boolean;
+  stickToBottom?: boolean;
 }
 
 export interface HeroLayerConfig {

@@ -801,14 +801,14 @@ export default function HeroSidePanel({
                       type="button"
                       onClick={() => {
                         soundManager.playClick(0.1);
-                        const nextVal = currentLayer.stickToBottom === false ? true : false;
-                        updateLayerProps({ stickToBottom: nextVal });
+                        const curStick = getActiveObjectValue("stickToBottom", false);
+                        updateActiveObjectProps({ stickToBottom: !curStick });
                       }}
                       className={`px-2 py-1 border border-brand-text text-[8px] font-black uppercase tracking-wider cursor-pointer transition-all ${
-                        currentLayer.stickToBottom !== false ? "bg-brand-accent text-white shadow-[1px_1px_0px_#050505]" : "bg-brand-bg text-brand-text/50"
+                        getActiveObjectValue("stickToBottom", false) ? "bg-brand-accent text-white shadow-[1px_1px_0px_#050505]" : "bg-brand-bg text-brand-text/50"
                       }`}
                     >
-                      {currentLayer.stickToBottom !== false ? "STICK TO BOTTOM [ON]" : "FREE FLOAT [OFF]"}
+                      {getActiveObjectValue("stickToBottom", false) ? "STICK TO BOTTOM [ON]" : "FREE FLOAT [OFF]"}
                     </button>
                   </div>
 
@@ -1434,11 +1434,108 @@ export default function HeroSidePanel({
                           OBJECT TRANSFORM &amp; MOTION
                         </span>
                       </div>
-                      <span className={`text-[7px] font-mono px-1 py-0.2 border uppercase ${
-                        isMobileMode ? "bg-brand-accent text-white border-brand-accent font-bold" : "bg-brand-surface text-brand-text border-brand-text/40"
-                      }`}>
-                        {isMobileMode ? "📱 MOBILE" : "💻 PC"}
-                      </span>
+                      <div className="flex items-center gap-1">
+                        {isGraphicSelected && (
+                          <>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                soundManager.playClick(0.08);
+                                (window as any).sym_graphic_clipboard = { ...currentGraphicEntity, isMain: isMainGraphic };
+                                alert("COPIED PARAMETERS: " + (isMainGraphic ? "Main Graphic" : "Secondary Graphic"));
+                              }}
+                              className="px-1.5 py-0.2 bg-brand-surface hover:bg-brand-text hover:text-brand-bg border border-brand-text text-[6.5px] font-black uppercase cursor-pointer"
+                              title="Copy parameters (size, position, animations)"
+                            >
+                              COPY
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                const clipboard = (window as any).sym_graphic_clipboard;
+                                if (!clipboard) {
+                                  alert("Clipboard empty. COPY a graphic first.");
+                                  return;
+                                }
+                                soundManager.playClick(0.12);
+                                if (!window.confirm("PASTE to ALL avatars in this layer? This will sync size, position, and animations across all graphics.")) return;
+                                
+                                const paramsToPaste = {
+                                  posX: clipboard.posX,
+                                  posY: clipboard.posY,
+                                  size: clipboard.size,
+                                  rotation: clipboard.rotation,
+                                  opacity: clipboard.opacity,
+                                  transitionDirection: clipboard.transitionDirection,
+                                  transitionSpeed: clipboard.transitionSpeed,
+                                  transitionDelay: clipboard.transitionDelay,
+                                  hoverEffect: clipboard.hoverEffect,
+                                  disableIdleAnimation: clipboard.disableIdleAnimation,
+                                  shadow: clipboard.shadow,
+                                  border: clipboard.border,
+                                  stickToBottom: clipboard.stickToBottom,
+                                  mobileEnabled: clipboard.mobileEnabled,
+                                  mobilePosX: clipboard.mobilePosX,
+                                  mobilePosY: clipboard.mobilePosY,
+                                  mobileSize: clipboard.mobileSize,
+                                  mobileRotation: clipboard.mobileRotation,
+                                  mobileStickToBottom: clipboard.mobileStickToBottom,
+                                };
+
+                                onUpdateConfig(prev => {
+                                  const layer = prev[activeLayerKey as keyof CustomHeroConfig] as any;
+                                  const nextLayer = { ...layer };
+                                  
+                                  // Apply to main
+                                  nextLayer.posX = paramsToPaste.posX;
+                                  nextLayer.posY = paramsToPaste.posY;
+                                  nextLayer.size = paramsToPaste.size;
+                                  nextLayer.rotation = paramsToPaste.rotation;
+                                  nextLayer.opacity = paramsToPaste.opacity;
+                                  nextLayer.transitionDirection = paramsToPaste.transitionDirection;
+                                  nextLayer.transitionSpeed = paramsToPaste.transitionSpeed;
+                                  nextLayer.transitionDelay = paramsToPaste.transitionDelay;
+                                  nextLayer.hoverEffect = paramsToPaste.hoverEffect;
+                                  nextLayer.disableIdleAnimation = paramsToPaste.disableIdleAnimation;
+                                  nextLayer.shadow = paramsToPaste.shadow;
+                                  nextLayer.border = paramsToPaste.border;
+                                  nextLayer.stickToBottom = paramsToPaste.stickToBottom;
+                                  nextLayer.mobileEnabled = paramsToPaste.mobileEnabled;
+                                  nextLayer.mobilePosX = paramsToPaste.mobilePosX;
+                                  nextLayer.mobilePosY = paramsToPaste.mobilePosY;
+                                  nextLayer.mobileSize = paramsToPaste.mobileSize;
+                                  nextLayer.mobileRotation = paramsToPaste.mobileRotation;
+                                  nextLayer.mobileStickToBottom = paramsToPaste.mobileStickToBottom;
+
+                                  // Apply to all secondaries
+                                  if (nextLayer.graphicObjects) {
+                                    nextLayer.graphicObjects = nextLayer.graphicObjects.map((g: any) => ({
+                                      ...g,
+                                      ...paramsToPaste
+                                    }));
+                                  }
+
+                                  return {
+                                    ...prev,
+                                    activeEditingLayer: activeLayerId,
+                                    [activeLayerKey]: nextLayer,
+                                    ...(activeLayerId === "mid" ? paramsToPaste : {})
+                                  };
+                                });
+                              }}
+                              className="px-1.5 py-0.2 bg-brand-accent text-white hover:bg-black border border-brand-text text-[6.5px] font-black uppercase cursor-pointer"
+                              title="Paste parameters to ALL graphics in this layer"
+                            >
+                              PASTE ALL
+                            </button>
+                          </>
+                        )}
+                        <span className={`text-[7px] font-mono px-1 py-0.2 border uppercase ${
+                          isMobileMode ? "bg-brand-accent text-white border-brand-accent font-bold" : "bg-brand-surface text-brand-text border-brand-text/40"
+                        }`}>
+                          {isMobileMode ? "📱 MOBILE" : "💻 PC"}
+                        </span>
+                      </div>
                     </div>
 
                     {/* 1. Device Target / Screen Visibility Selector */}

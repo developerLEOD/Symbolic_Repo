@@ -114,17 +114,19 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
           const prefix = entry.name === "avatar" ? "AV" : entry.name === "background" ? "BG" : entry.name === "foreground" ? "FG" : entry.name === "backdrop" ? "BD" : categoryPrefix;
           scanDirectory(path.join(dirPath, entry.name), `${relativePrefix}/${entry.name}`, subLayer, prefix);
         } else if (imageRegex.test(entry.name)) {
+          // STRICT RULE: Only add files if they are in a known subfolder (layer !== "auto")
+          // This prevents loose root images from being added as "fake" avatars.
+          if (layer === "auto") continue;
+
           const ext = path.extname(entry.name);
           const rawName = path.basename(entry.name, ext);
           const cleanName = rawName.replace(/[^a-zA-Z0-9_-]/g, " ");
           const serialNum = `SYM-${categoryPrefix}-${String(counter).padStart(2, "0")}`;
           counter++;
-          let targetLayer: "mid" | "bg" | "fg" | "backdrop" = layer === "auto" ? "mid" : layer;
-          if (dirPath.includes("avatar")) targetLayer = "mid";
-          else if (dirPath.includes("background")) targetLayer = "bg";
-          else if (dirPath.includes("foreground")) targetLayer = "fg";
-          else if (dirPath.includes("backdrop")) targetLayer = "backdrop";
+          
+          let targetLayer: "mid" | "bg" | "fg" | "backdrop" = layer;
           const assetPath = `${relativePrefix}/${entry.name}`;
+          
           graphics.push({
             id: `gfx_${categoryPrefix.toLowerCase()}_${counter}_${rawName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
             serialNumber: serialNum,
@@ -139,6 +141,7 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
     };
 
     const publicHeroDir = path.resolve(__dirname, "public", "assets", "hero");
+    // Pass "auto" as initial layer to force subfolder scanning
     scanDirectory(publicHeroDir, "/assets/hero", "auto", "HERO");
 
     return res.json({ success: true, count: graphics.length, graphics });

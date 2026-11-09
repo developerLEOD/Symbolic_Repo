@@ -29,7 +29,8 @@ import {
   Smartphone,
   Database,
   Plus,
-  Download
+  Download,
+  Copy
 } from "lucide-react";
 import { 
   CustomHeroConfig, 
@@ -508,6 +509,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
       mobileSize?: number;
       mobileRotation?: number;
       mobileStickToBottom?: boolean;
+      stickToBottom?: boolean;
     }> = [];
 
     if (layer.avatarUrl) {
@@ -536,6 +538,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
         mobileSize: layer.mobileSize,
         mobileRotation: layer.mobileRotation,
         mobileStickToBottom: layer.mobileStickToBottom,
+        stickToBottom: layer.stickToBottom,
       });
     }
 
@@ -566,6 +569,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           mobileSize: g.mobileSize,
           mobileRotation: g.mobileRotation,
           mobileStickToBottom: g.mobileStickToBottom,
+          stickToBottom: g.stickToBottom,
         });
       });
     }
@@ -597,12 +601,10 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           const effectivePosY = (isMobileMode && item.mobileEnabled && item.mobilePosY !== undefined) ? item.mobilePosY : item.posY;
           const effectiveSize = (isMobileMode && item.mobileEnabled && item.mobileSize !== undefined) ? item.mobileSize : (item.size || 180);
           const effectiveRotation = (isMobileMode && item.mobileEnabled && item.mobileRotation !== undefined) ? item.mobileRotation : (item.rotation || 0);
-          const isMainGraphic = actualIndex === 0;
-          const effectiveStickBottom = isMainGraphic
-            ? ((isMobileMode && item.mobileEnabled && item.mobileStickToBottom !== undefined) 
-                ? Boolean(item.mobileStickToBottom && effectivePosY >= 90) 
-                : Boolean(defaultLayerStickBottom && effectivePosY >= 90))
-            : false;
+          const isMain = actualIndex === 0;
+          const effectiveStickBottom = (isMobileMode && item.mobileEnabled && item.mobileStickToBottom !== undefined)
+            ? Boolean(item.mobileStickToBottom && effectivePosY >= 90)
+            : Boolean((item.stickToBottom ?? (isMain ? defaultLayerStickBottom : false)) && effectivePosY >= 90);
 
           return (
             <motion.div
@@ -662,6 +664,104 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
                     <span className="absolute -top-3.5 left-1 bg-brand-accent text-white font-mono text-[7.5px] font-black uppercase px-1">
                       {isSlideshowActive ? `SLIDE ${safeSlideIdx + 1}/${visibleGraphics.length} • ` : ""}EDITING {item.isMain ? "MAIN GRAPHIC" : `GRAPHIC ${actualIndex + 1}`} {isMobileMode ? "[📱 MOBILE]" : "[💻 PC]"}
                     </span>
+
+                    {/* Floating COPY/PASTE Overlay UI inside the preview canvas */}
+                    <div className="absolute -bottom-8 left-1/2 -translate-x-1/2 flex items-center gap-1 pointer-events-auto">
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          soundManager.playClick(0.08);
+                          (window as any).sym_graphic_clipboard = { ...item };
+                          alert("COPIED PARAMETERS: " + (item.isMain ? "Main Graphic" : "Secondary Graphic"));
+                        }}
+                        className="px-2 py-0.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text text-[7px] font-black uppercase shadow-[1.5px_1.5px_0px_#050505] flex items-center gap-1"
+                        title="Copy parameters (size, position, animations)"
+                      >
+                        <Copy size={9} />
+                        <span>COPY</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          const clipboard = (window as any).sym_graphic_clipboard;
+                          if (!clipboard) {
+                            alert("Clipboard empty. COPY a graphic first.");
+                            return;
+                          }
+                          soundManager.playClick(0.12);
+                          if (!window.confirm("PASTE to ALL avatars in this layer? This will sync size, position, and animations across all graphics.")) return;
+                          
+                          const paramsToPaste = {
+                            posX: clipboard.posX,
+                            posY: clipboard.posY,
+                            size: clipboard.size,
+                            rotation: clipboard.rotation,
+                            opacity: clipboard.opacity,
+                            transitionDirection: clipboard.transitionDirection,
+                            transitionSpeed: clipboard.transitionSpeed,
+                            transitionDelay: clipboard.transitionDelay,
+                            hoverEffect: clipboard.hoverEffect,
+                            disableIdleAnimation: clipboard.disableIdleAnimation,
+                            shadow: clipboard.shadow,
+                            border: clipboard.border,
+                            stickToBottom: clipboard.stickToBottom,
+                            mobileEnabled: clipboard.mobileEnabled,
+                            mobilePosX: clipboard.mobilePosX,
+                            mobilePosY: clipboard.mobilePosY,
+                            mobileSize: clipboard.mobileSize,
+                            mobileRotation: clipboard.mobileRotation,
+                            mobileStickToBottom: clipboard.mobileStickToBottom,
+                          };
+
+                          setConfig(prev => {
+                            const layer = prev[activeLayerKey as keyof CustomHeroConfig] as any;
+                            const nextLayer = { ...layer };
+                            
+                            // Apply to main
+                            nextLayer.posX = paramsToPaste.posX;
+                            nextLayer.posY = paramsToPaste.posY;
+                            nextLayer.size = paramsToPaste.size;
+                            nextLayer.rotation = paramsToPaste.rotation;
+                            nextLayer.opacity = paramsToPaste.opacity;
+                            nextLayer.transitionDirection = paramsToPaste.transitionDirection;
+                            nextLayer.transitionSpeed = paramsToPaste.transitionSpeed;
+                            nextLayer.transitionDelay = paramsToPaste.transitionDelay;
+                            nextLayer.hoverEffect = paramsToPaste.hoverEffect;
+                            nextLayer.disableIdleAnimation = paramsToPaste.disableIdleAnimation;
+                            nextLayer.shadow = paramsToPaste.shadow;
+                            nextLayer.border = paramsToPaste.border;
+                            nextLayer.stickToBottom = paramsToPaste.stickToBottom;
+                            nextLayer.mobileEnabled = paramsToPaste.mobileEnabled;
+                            nextLayer.mobilePosX = paramsToPaste.mobilePosX;
+                            nextLayer.mobilePosY = paramsToPaste.mobilePosY;
+                            nextLayer.mobileSize = paramsToPaste.mobileSize;
+                            nextLayer.mobileRotation = paramsToPaste.mobileRotation;
+                            nextLayer.mobileStickToBottom = paramsToPaste.mobileStickToBottom;
+
+                            // Apply to all secondaries
+                            if (nextLayer.graphicObjects) {
+                              nextLayer.graphicObjects = nextLayer.graphicObjects.map((g: any) => ({
+                                ...g,
+                                ...paramsToPaste
+                              }));
+                            }
+
+                            return {
+                              ...prev,
+                              [activeLayerKey]: nextLayer,
+                              ...(activeLayerId === "mid" ? paramsToPaste : {})
+                            };
+                          });
+                        }}
+                        className="px-2 py-0.5 bg-brand-accent text-white hover:bg-black border border-brand-text text-[7px] font-black uppercase shadow-[1.5px_1.5px_0px_#050505] flex items-center gap-1"
+                        title="Paste parameters to ALL graphics in this layer"
+                      >
+                        <Zap size={9} />
+                        <span>PASTE TO ALL</span>
+                      </button>
+                    </div>
                   </div>
                 )}
 

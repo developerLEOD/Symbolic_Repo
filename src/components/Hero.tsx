@@ -358,6 +358,7 @@ function SingleLayerRenderer({
     mobileSize?: number;
     mobileRotation?: number;
     mobileStickToBottom?: boolean;
+    stickToBottom?: boolean;
   }> = [];
 
   if (layer?.avatarUrl) {
@@ -386,6 +387,7 @@ function SingleLayerRenderer({
       mobileSize: layer.mobileSize,
       mobileRotation: layer.mobileRotation,
       mobileStickToBottom: layer.mobileStickToBottom,
+      stickToBottom: layer.stickToBottom,
     });
   }
 
@@ -416,6 +418,7 @@ function SingleLayerRenderer({
         mobileSize: g.mobileSize,
         mobileRotation: g.mobileRotation,
         mobileStickToBottom: g.mobileStickToBottom,
+        stickToBottom: g.stickToBottom,
       });
     });
   }
@@ -472,7 +475,7 @@ function SingleLayerRenderer({
                 elementRef={elementRef}
                 isSlideshow={true}
                 slideshowTransition={layer.slideshowTransition || "fade"}
-                stickToBottom={layer.stickToBottom ?? (layer.id === "mid")}
+                stickToBottom={visibleGraphics[safeSlideIndex].stickToBottom ?? (layer.id === "mid")}
                 isMobile={isMobile}
               />
             )}
@@ -490,7 +493,7 @@ function SingleLayerRenderer({
               elementRef={idx === 0 ? elementRef : undefined}
               isSlideshow={false}
               slideshowTransition={layer.slideshowTransition || "fade"}
-              stickToBottom={idx === 0 ? (layer.stickToBottom ?? (layer.id === "mid")) : false}
+              stickToBottom={item.stickToBottom ?? (layer.id === "mid")}
               isMobile={isMobile}
             />
           ))}
