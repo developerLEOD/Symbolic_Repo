@@ -51,6 +51,44 @@
         "disableIdleAnimation": false,
         "shadow": false,
         "border": false
+      },
+      {
+        "id": "gfx_bg_1_layer4",
+        "serialNumber": "SYM-BG-00",
+        "assetPath": "/assets/hero/background/Layer 4.png",
+        "avatarUrl": "/assets/hero/background/Layer 4.png",
+        "avatarAlt": "Layer 4",
+        "posX": 41,
+        "posY": 30,
+        "size": 320,
+        "rotation": 0,
+        "opacity": 0.25,
+        "transitionDirection": "fade",
+        "transitionSpeed": "smooth",
+        "transitionDelay": 0.15000000000000002,
+        "hoverEffect": "none",
+        "disableIdleAnimation": false,
+        "shadow": false,
+        "border": false
+      },
+      {
+        "id": "gfx_bg_2_layer5",
+        "serialNumber": "SYM-BG-01",
+        "assetPath": "/assets/hero/background/Layer 5.png",
+        "avatarUrl": "/assets/hero/background/Layer 5.png",
+        "avatarAlt": "Layer 5",
+        "posX": 57,
+        "posY": 30,
+        "size": 320,
+        "rotation": 0,
+        "opacity": 0.25,
+        "transitionDirection": "fade",
+        "transitionSpeed": "smooth",
+        "transitionDelay": 0.2,
+        "hoverEffect": "none",
+        "disableIdleAnimation": false,
+        "shadow": false,
+        "border": false
       }
     ],
     "textObjects": [
@@ -346,7 +384,7 @@
     "mobilePosX": 50,
     "mobilePosY": 85
   },
-  "gridOpacity": 0.11,
+  "gridOpacity": 0.12,
   "version": "1.0",
   "updatedAt": 1794220406276,
   "slideshowInterval": 10,
