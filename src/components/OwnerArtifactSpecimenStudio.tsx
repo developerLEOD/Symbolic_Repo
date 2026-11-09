@@ -1,1959 +1,855 @@
-import React, { useState, useEffect, useRef, ChangeEvent, DragEvent } from "react";
+import React, { useState, useEffect } from "react";
 import { 
   Artifact, 
   Specimen, 
-  ArtifactWithSpecimens 
+  ArtifactWithSpecimens, 
+  SpecimenMediumConfig, 
+  ArtifactStatus, 
+  SpecimenStatus 
 } from "../types";
 import { 
   fetchArtifactsWithSpecimens, 
   saveArtifact, 
   saveSpecimen, 
-  deleteArtifactCascade, 
-  deleteSpecimenCascade,
-  calculateArtifactSetPrice,
-  getMediumConfig
+  deleteArtifact, 
+  deleteSpecimen, 
+  CANONICAL_SPECIMEN_MEDIUMS 
 } from "../lib/artifactService";
+import { soundManager } from "../lib/soundEffects";
 import { 
   Plus, 
-  Edit3, 
   Trash2, 
-  Check, 
-  X, 
+  Edit3, 
+  ExternalLink, 
   Layers, 
-  Box, 
-  Image as ImageIcon, 
-  RefreshCw, 
-  Search, 
-  Tag, 
-  CheckCircle2, 
-  AlertCircle,
+  Save, 
+  X, 
+  Check, 
+  AlertCircle, 
+  Image as ImageIcon,
   ChevronDown,
   ChevronRight,
-  Sparkles,
-  ExternalLink,
-  Upload,
-  ShieldCheck
+  ShieldCheck,
+  Tag
 } from "lucide-react";
-import { motion, AnimatePresence } from "motion/react";
-import { soundManager } from "../lib/soundEffects";
-import { PRESET_SYMBOL_KNOWLEDGE } from "../lib/symbolKnowledge";
-import { processFileToCompressedDataUrl, compressDataUrl, applyArchivalWatermarkToCanvas } from "../lib/imageOptimization";
-import ArtifactWatermark from "./ArtifactWatermark";
+import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
+import LiquidCarveButton from "./LiquidCarveButton";
 
 interface OwnerArtifactSpecimenStudioProps {
   onDataChanged?: () => void;
-  onViewArtifactInStore?: (id: string) => void;
+  onViewArtifactInStore?: (artifactId: string) => void;
 }
 
 export default function OwnerArtifactSpecimenStudio({
   onDataChanged,
   onViewArtifactInStore
 }: OwnerArtifactSpecimenStudioProps) {
-  const [data, setData] = useState<ArtifactWithSpecimens[]>([]);
+  const [artifactsWithSpecs, setArtifactsWithSpecs] = useState<ArtifactWithSpecimens[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeTab, setActiveTab] = useState<"registry" | "create_artifact" | "create_specimen">("registry");
-  const [searchQuery, setSearchQuery] = useState("");
-  const [collectionFilter, setCollectionFilter] = useState("all");
-  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
+  const [activeArtifactId, setActiveArtifactId] = useState<string | null>(null);
 
-  // Selected for editing
-  const [editingArtifact, setEditingArtifact] = useState<Artifact | null>(null);
-  const [editingSpecimen, setEditingSpecimen] = useState<{ specimen: Specimen; parentArtifact: Artifact } | null>(null);
-  const [targetArtifactForSpecimen, setTargetArtifactForSpecimen] = useState<Artifact | null>(null);
-
-  // Deletion Modal States (Bypasses iframe blocked window.confirm)
-  const [artifactToDelete, setArtifactToDelete] = useState<Artifact | null>(null);
-  const [specimenToDelete, setSpecimenToDelete] = useState<Specimen | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-
-  // Specimen Manifestation & Edit Loading Screen State
-  const [specimenLoadingState, setSpecimenLoadingState] = useState<{
-    active: boolean;
-    mode: "manifest" | "edit" | "prepare_edit";
-    title: string;
-    subtitle: string;
-    specimenName: string;
-    medium: string;
-    sku: string;
-    image?: string;
-    price?: number;
-    inventory?: number;
-    material?: string;
-    edition?: string;
-    stage: string;
-    progress: number;
+  // Edit / Create modal states
+  const [editingArtifact, setEditingArtifact] = useState<Partial<Artifact> | null>(null);
+  const [editingSpecimen, setEditingSpecimen] = useState<{
+    specimen: Partial<Specimen>;
+    parentArtifact: Artifact;
   } | null>(null);
-  const [isSubmittingSpecimen, setIsSubmittingSpecimen] = useState(false);
 
-  // Artifact Form State
-  const [artName, setArtName] = useState("");
-  const [artId, setArtId] = useState("");
-  const [artInscription, setArtInscription] = useState("");
-  const [artCollection, setArtCollection] = useState("Be Palestine");
-  const [artGraphic, setArtGraphic] = useState("");
-  const [artShortDesc, setArtShortDesc] = useState("");
-  const [artConcept, setArtConcept] = useState("");
-  const [artPillar1, setArtPillar1] = useState("");
-  const [artPillar2, setArtPillar2] = useState("");
-  const [artPillar3, setArtPillar3] = useState("");
-  const [artPillar4, setArtPillar4] = useState("");
-  const [artSetDiscount, setArtSetDiscount] = useState<number>(10);
-
-  // Specimen Form State
-  const [specParentId, setSpecParentId] = useState("");
-  const [specMedium, setSpecMedium] = useState("T-Shirt");
-  const [specType, setSpecType] = useState("Drop Shoulder Heavyweight");
-  const [specMaterial, setSpecMaterial] = useState("400 GSM Combed Organic Cotton");
-  const [specPrice, setSpecPrice] = useState<number>(4500);
-  const [specInventory, setSpecInventory] = useState<number>(50);
-  const [specAvailability, setSpecAvailability] = useState<boolean>(true);
-  const [specColor, setSpecColor] = useState("Charcoal Black");
-  const [specEdition, setSpecEdition] = useState("050 SPECIMENS");
-  const [specSizes, setSpecSizes] = useState<string[]>(["S", "M", "L", "XL"]);
-  const [specImages, setSpecImages] = useState<string[]>([]);
-  const [newImageUrl, setNewImageUrl] = useState("");
-  const [isUploadingGraphic, setIsUploadingGraphic] = useState(false);
-  const [isUploadingSpecImages, setIsUploadingSpecImages] = useState(false);
-  const [isDraggingGraphic, setIsDraggingGraphic] = useState(false);
-  const [isDraggingSpecImages, setIsDraggingSpecImages] = useState(false);
-  const [autoWatermarkGraphic, setAutoWatermarkGraphic] = useState(true);
-  const [isWatermarking, setIsWatermarking] = useState(false);
-
-  const artGraphicFileRef = useRef<HTMLInputElement | null>(null);
-  const specImagesFileRef = useRef<HTMLInputElement | null>(null);
-
-  // Artifact graphic file upload handler
-  const handleGraphicFiles = async (files: FileList | File[]) => {
-    const fileList = Array.from(files).filter(f => f.type.startsWith("image/"));
-    if (fileList.length === 0) return;
-    setIsUploadingGraphic(true);
-    try {
-      let dataUrl = await processFileToCompressedDataUrl(fileList[0], 1600, 0.88);
-      if (autoWatermarkGraphic) {
-        dataUrl = await applyArchivalWatermarkToCanvas(dataUrl, artName || "ARTIFACT", artId || "SYM-ART");
-      }
-      setArtGraphic(dataUrl);
-      showNotification("success", autoWatermarkGraphic ? "Central artwork loaded & archival watermark stamped." : "Central artwork image loaded in high definition.");
-    } catch (err) {
-      console.error(err);
-      showNotification("error", "Failed to load image file.");
-    } finally {
-      setIsUploadingGraphic(false);
-      if (artGraphicFileRef.current) artGraphicFileRef.current.value = "";
-    }
-  };
-
-  // Stamp archival watermark into current central artwork
-  const handleStampArchivalWatermark = async () => {
-    if (!artGraphic) return;
-    setIsWatermarking(true);
-    try {
-      const watermarked = await applyArchivalWatermarkToCanvas(artGraphic, artName || "ARTIFACT", artId || "SYM-ART");
-      setArtGraphic(watermarked);
-      showNotification("success", "Archival watermark permanently stamped into central graphic!");
-    } catch (err) {
-      console.error(err);
-      showNotification("error", "Failed to stamp archival watermark.");
-    } finally {
-      setIsWatermarking(false);
-    }
-  };
-
-  // Specimen images file upload handler
-  const handleSpecimenFiles = async (files: FileList | File[]) => {
-    const fileList = Array.from(files).filter(f => f.type.startsWith("image/"));
-    if (fileList.length === 0) return;
-    setIsUploadingSpecImages(true);
-    try {
-      const urls: string[] = [];
-      for (const file of fileList) {
-        const dataUrl = await processFileToCompressedDataUrl(file, 1600, 0.88);
-        urls.push(dataUrl);
-      }
-      setSpecImages(prev => [...prev, ...urls]);
-      showNotification("success", `Added ${urls.length} high-resolution photo(s).`);
-    } catch (err) {
-      console.error(err);
-      showNotification("error", "Failed to load one or more photos.");
-    } finally {
-      setIsUploadingSpecImages(false);
-      if (specImagesFileRef.current) specImagesFileRef.current.value = "";
-    }
-  };
-
-  const showNotification = (type: "success" | "error", message: string) => {
-    setNotification({ type, message });
-    setTimeout(() => setNotification(null), 4000);
-  };
-
-  const loadData = async () => {
-    setLoading(true);
-    try {
-      const items = await fetchArtifactsWithSpecimens();
-      setData(items);
-    } catch (err) {
-      console.error("Failed to load artifacts and specimens:", err);
-      showNotification("error", "Failed to retrieve archival register.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  const [saving, setSaving] = useState(false);
+  const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
 
   useEffect(() => {
     loadData();
   }, []);
 
-  // Quick preset loader for Artifact form
-  const applySymbolKnowledge = (symKey: string) => {
-    const info = PRESET_SYMBOL_KNOWLEDGE[symKey];
-    if (info) {
-      setArtInscription(info.symbol);
-      setArtPillar1(info.represents);
-      setArtPillar2(info.whyChosen);
-      setArtPillar3(info.communicates);
-      setArtPillar4(info.wearerCarries);
-      showNotification("success", `Applied thesis for "${symKey}" (${info.name})`);
+  const showNotification = (type: "success" | "error", message: string) => {
+    setNotification({ type, message });
+    setTimeout(() => setNotification(null), 3500);
+  };
+
+  const loadData = async () => {
+    setLoading(true);
+    try {
+      const data = await fetchArtifactsWithSpecimens();
+      setArtifactsWithSpecs(data);
+      if (data.length > 0 && !activeArtifactId) {
+        setActiveArtifactId(data[0].id);
+      }
+    } catch (err: any) {
+      console.error("Failed to load artifacts and specimens:", err);
+      showNotification("error", "Failed to load artifacts catalog.");
+    } finally {
+      setLoading(false);
     }
   };
 
-  // When medium changes in specimen form, auto-fill standard presets
-  const handleMediumChange = (med: string) => {
-    setSpecMedium(med);
-    const cfg = getMediumConfig(med);
-    setSpecType(cfg.defaultType || cfg.defaultGarmentTypes?.[0] || "");
-    setSpecMaterial(cfg.defaultMaterial || "");
-    setSpecPrice(cfg.defaultPrice || 2500);
-    setSpecSizes(cfg.defaultSizes || ["S", "M", "L", "XL"]);
-  };
-
-  // Reset Artifact Form
-  const resetArtifactForm = () => {
-    setEditingArtifact(null);
-    setArtName("");
-    setArtId("");
-    setArtInscription("");
-    setArtCollection("Be Palestine");
-    setArtGraphic("");
-    setArtShortDesc("");
-    setArtConcept("");
-    setArtPillar1("");
-    setArtPillar2("");
-    setArtPillar3("");
-    setArtPillar4("");
-    setArtSetDiscount(10);
-  };
-
-  // Populate Artifact Form for editing
-  const startEditArtifact = (art: Artifact) => {
-    soundManager.playClick();
-    setEditingArtifact(art);
-    setArtName(art.name);
-    setArtId(art.artifactId);
-    setArtInscription(art.inscription || "");
-    setArtCollection(art.collectionName || "Be Palestine");
-    setArtGraphic(art.graphic || "");
-    setArtShortDesc(art.shortDescription || "");
-    setArtConcept(art.concept || "");
-    setArtPillar1(art.pillar1Represents || "");
-    setArtPillar2(art.pillar2WhyChosen || "");
-    setArtPillar3(art.pillar3Communicates || "");
-    setArtPillar4(art.pillar4WearerCarries || "");
-    setArtSetDiscount(art.completeSetDiscountPercent ?? art.setDiscountPercentage ?? 10);
-    setActiveTab("create_artifact");
-  };
-
-  // Reset Specimen Form
-  const resetSpecimenForm = () => {
-    setEditingSpecimen(null);
-    setTargetArtifactForSpecimen(null);
-    setSpecParentId(data[0]?.id || "");
-    handleMediumChange("T-Shirt");
-    setSpecInventory(50);
-    setSpecAvailability(true);
-    setSpecColor("Charcoal Black");
-    setSpecEdition("050 SPECIMENS");
-    setSpecImages([]);
-    setNewImageUrl("");
-  };
-
-  // Start adding specimen under specific artifact
-  const startAddSpecimenUnderArtifact = (art: Artifact) => {
-    soundManager.playClick();
-    resetSpecimenForm();
-    setTargetArtifactForSpecimen(art);
-    setSpecParentId(art.id);
-    setActiveTab("create_specimen");
-  };
-
-  // Populate Specimen Form for editing
-  const startEditSpecimen = async (spec: Specimen, parent: Artifact) => {
-    soundManager.playClick();
-    const thumb = spec.thumbnailImage || spec.images?.[0] || parent.graphic;
-
-    setSpecimenLoadingState({
-      active: true,
-      mode: "prepare_edit",
-      title: "ARCHIVAL RETRIEVAL // LOADING SPECIMEN RECORD",
-      subtitle: "RETRIEVING SPECIMEN ATTRIBUTES, IMAGES & STUDIO CONTROLS",
-      specimenName: `${parent.name} // ${spec.medium.toUpperCase()}`,
-      medium: `${spec.medium} — ${spec.type || spec.garmentType || "Standard"}`,
-      sku: spec.sku || "SPEC-SKU",
-      image: thumb,
-      price: spec.price,
-      inventory: spec.inventory,
-      material: spec.material || "Standard Specimen Structure",
-      edition: spec.edition || "050 SPECIMENS",
-      stage: "RETRIEVING SPECIMEN RECORD FROM FIRESTORE ARCHIVE...",
-      progress: 35,
+  const handleCreateNewArtifact = () => {
+    soundManager.playClick(0.12);
+    setEditingArtifact({
+      id: `art_${Date.now()}`,
+      artifactId: `SYM-${String(artifactsWithSpecs.length + 1).padStart(2, "0")}`,
+      name: "",
+      shortDescription: "",
+      description: "",
+      graphic: "/Logo_NoName.jpg",
+      images: ["/Logo_NoName.jpg"],
+      inscription: "",
+      pillar1Represents: "",
+      pillar2WhyChosen: "",
+      pillar3Communicates: "",
+      pillar4WearerCarries: "",
+      collectionName: "Be Symbolic",
+      tags: ["Series 01"],
+      status: "published",
+      specimenIds: [],
+      completeSetDiscountPercent: 10
     });
-
-    await new Promise(r => setTimeout(r, 220));
-
-    setSpecimenLoadingState(prev => prev ? {
-      ...prev,
-      stage: "INITIALIZING STUDIO REVISION WORKBENCH...",
-      progress: 80,
-    } : null);
-
-    setEditingSpecimen({ specimen: spec, parentArtifact: parent });
-    setTargetArtifactForSpecimen(parent);
-    setSpecParentId(parent.id);
-    setSpecMedium(spec.medium);
-    setSpecType(spec.type || spec.garmentType || "");
-    setSpecMaterial(spec.material || "");
-    setSpecPrice(spec.price);
-    setSpecInventory(spec.inventory);
-    setSpecAvailability(spec.availability);
-    setSpecColor(spec.color || "Standard");
-    setSpecEdition(spec.edition || "050 SPECIMENS");
-    setSpecSizes(spec.availableSizes || ["S", "M", "L", "XL"]);
-    setSpecImages(spec.images || [spec.thumbnailImage || ""]);
-
-    await new Promise(r => setTimeout(r, 160));
-
-    setSpecimenLoadingState(prev => prev ? {
-      ...prev,
-      stage: "SPECIMEN EDITOR READY FOR REVISIONS.",
-      progress: 100,
-    } : null);
-
-    await new Promise(r => setTimeout(r, 120));
-    setSpecimenLoadingState(null);
-    setActiveTab("create_specimen");
   };
 
-  // Save Artifact Handler
-  const handleSaveArtifact = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!artName.trim()) {
+  const handleSaveArtifact = async () => {
+    if (!editingArtifact || !editingArtifact.name) {
       showNotification("error", "Artifact name is required.");
       return;
     }
 
+    setSaving(true);
+    soundManager.playClick(0.16);
     try {
-      soundManager.playClick();
-      const artifactRecord: Artifact = {
-        id: editingArtifact ? editingArtifact.id : `art_${Date.now()}`,
-        name: artName.trim(),
-        artifactId: artId.trim() || `SYM-${String(data.length + 1).padStart(2, '0')}`,
-        inscription: artInscription.trim(),
-        collectionName: artCollection,
-        graphic: artGraphic.trim() || "/Logo_NoName.jpg",
-        images: [artGraphic.trim() || "/Logo_NoName.jpg"],
-        thumbnailImage: artGraphic.trim() || "/Logo_NoName.jpg",
-        shortDescription: artShortDesc.trim(),
-        description: artShortDesc.trim(),
-        concept: artConcept.trim() || artShortDesc.trim(),
-        pillar1Represents: artPillar1.trim(),
-        pillar2WhyChosen: artPillar2.trim(),
-        pillar3Communicates: artPillar3.trim(),
-        pillar4WearerCarries: artPillar4.trim(),
-        completeSetDiscountPercent: Number(artSetDiscount) || 10,
-        setDiscountPercentage: Number(artSetDiscount) || 10,
-        tags: [artCollection, "Series 01"],
-        status: "published",
-        specimenIds: editingArtifact ? editingArtifact.specimenIds : [],
-        createdAt: editingArtifact?.createdAt || Date.now(),
-        updatedAt: Date.now()
-      };
-
-      await saveArtifact(artifactRecord);
-      showNotification("success", `Artifact "${artName}" registered successfully.`);
-      resetArtifactForm();
+      await saveArtifact(editingArtifact as Artifact);
+      showNotification("success", `Artifact "${editingArtifact.name}" saved successfully.`);
+      setEditingArtifact(null);
       await loadData();
-      setActiveTab("registry");
       if (onDataChanged) onDataChanged();
-    } catch (err) {
-      console.error("Save artifact error:", err);
-      showNotification("error", "Failed to save artifact.");
+    } catch (err: any) {
+      console.error("Error saving artifact:", err);
+      showNotification("error", "Could not save artifact: " + (err.message || "Unknown error"));
+    } finally {
+      setSaving(false);
     }
   };
 
-  // Save Specimen Handler
-  const handleSaveSpecimen = async (e: React.FormEvent) => {
-    e.preventDefault();
-    const parent = data.find(d => d.id === specParentId) || targetArtifactForSpecimen;
-    if (!parent) {
-      showNotification("error", "Please select a valid parent Artifact.");
+  const handleDeleteArtifact = async (artifact: Artifact) => {
+    if (!window.confirm(`Delete Artifact "${artifact.name}" and all its physical specimens? This cannot be undone.`)) {
       return;
     }
 
-    const isEdit = Boolean(editingSpecimen);
-    const cfg = getMediumConfig(specMedium);
-    const generatedSku = editingSpecimen?.specimen.sku || `${parent.artifactId || "SYM"}-${specMedium.substring(0, 3).toUpperCase()}-01`;
-    const thumb = specImages[0] || parent.graphic;
+    soundManager.playClick(0.14);
+    try {
+      await deleteArtifact(artifact.id, true);
+      showNotification("success", `Artifact "${artifact.name}" deleted.`);
+      await loadData();
+      if (onDataChanged) onDataChanged();
+    } catch (err: any) {
+      console.error("Error deleting artifact:", err);
+      showNotification("error", "Failed to delete artifact: " + err.message);
+    }
+  };
 
-    setIsSubmittingSpecimen(true);
-    setSpecimenLoadingState({
-      active: true,
-      mode: isEdit ? "edit" : "manifest",
-      title: isEdit ? "ARCHIVAL REVISION // COMMITTING SPECIMEN CHANGES" : "MANIFESTATION PROTOCOL // COMMITTING SPECIMEN",
-      subtitle: isEdit 
-        ? "SYNCHRONIZING REVISIONS WITH CLOUD ARCHIVE & STOREFRONT" 
-        : "REGISTERING PHYSICAL SPECIMEN UNDER MASTER ARTIFACT",
-      specimenName: `${parent.name} // ${specMedium.toUpperCase()}`,
-      medium: `${specMedium} — ${specType.trim() || cfg.defaultType || "Standard"}`,
-      sku: generatedSku,
-      image: thumb,
-      price: Number(specPrice) || cfg.defaultPrice || 2500,
-      inventory: Number(specInventory) || 50,
-      material: specMaterial.trim() || cfg.defaultMaterial || "Canonical Archive",
-      edition: specEdition.trim() || "050 SPECIMENS",
-      stage: isEdit 
-        ? "ENCODING SPECIMEN REVISIONS & UPDATING ATTRIBUTES..." 
-        : "INITIALIZING CANONICAL SPECIMEN MANIFESTATION...",
-      progress: 20,
+  const handleCreateNewSpecimen = (parentArtifact: Artifact) => {
+    soundManager.playClick(0.12);
+    const defaultMedium = CANONICAL_SPECIMEN_MEDIUMS[0];
+    setEditingSpecimen({
+      parentArtifact,
+      specimen: {
+        id: `spec_${Date.now()}`,
+        parentArtifactId: parentArtifact.id,
+        medium: defaultMedium.name,
+        mediumCategory: defaultMedium.category,
+        sku: `${parentArtifact.artifactId || "SYM"}-${defaultMedium.name.slice(0, 3).toUpperCase()}`,
+        price: defaultMedium.defaultPrice || 4200,
+        inventory: 25,
+        availability: true,
+        status: "available",
+        images: parentArtifact.images || ["/Logo_NoName.jpg"],
+        garmentType: defaultMedium.defaultGarmentTypes?.[0] || "Heavyweight Boxy",
+        availableSizes: defaultMedium.defaultSizes || ["S", "M", "L", "XL"],
+        color: "Carbon Black",
+        colorHex: "#1C1C1C"
+      }
     });
+  };
 
+  const handleSaveSpecimen = async () => {
+    if (!editingSpecimen || !editingSpecimen.specimen.medium) {
+      showNotification("error", "Specimen medium and price are required.");
+      return;
+    }
+
+    setSaving(true);
+    soundManager.playClick(0.16);
     try {
-      soundManager.playClick();
-
-      // Step 1: Processing images & metadata
-      await new Promise(r => setTimeout(r, 260));
-      setSpecimenLoadingState(prev => prev ? {
-        ...prev,
-        stage: "OPTIMIZING SPECIMEN PHOTOGRAMMETRY & MEDIA ASSETS...",
-        progress: 50,
-      } : null);
-
-      const specimenRecord: Specimen = {
-        id: editingSpecimen ? editingSpecimen.specimen.id : `spec_${Date.now()}_${Math.floor(Math.random()*1000)}`,
-        parentArtifactId: parent.id,
-        artifactName: parent.name,
-        artifactGraphic: parent.graphic,
-        artifactInscription: parent.inscription,
-        medium: specMedium,
-        mediumCategory: cfg.category,
-        type: specType.trim() || cfg.defaultType || cfg.defaultGarmentTypes?.[0] || "Standard",
-        garmentType: specType.trim() || cfg.defaultType || cfg.defaultGarmentTypes?.[0] || "Standard",
-        material: specMaterial.trim() || cfg.defaultMaterial || "",
-        price: Number(specPrice) || cfg.defaultPrice || 2500,
-        inventory: Number(specInventory) || 50,
-        availability: specAvailability,
-        status: specAvailability ? "available" : "sold_out",
-        color: specColor.trim() || "Standard Finish",
-        edition: specEdition.trim() || "050 SPECIMENS",
-        availableSizes: specSizes,
-        sku: generatedSku,
-        thumbnailImage: thumb,
-        images: specImages.length > 0 ? specImages : [parent.graphic],
-        createdAt: editingSpecimen?.specimen.createdAt || Date.now(),
-        updatedAt: Date.now()
-      };
-
-      // Step 2: Committing to Cloud & Cache
-      setSpecimenLoadingState(prev => prev ? {
-        ...prev,
-        stage: "COMMITTING RECORD TO CLOUD FIRESTORE & LOCAL REGISTRY...",
-        progress: 80,
-      } : null);
-
-      await saveSpecimen(specimenRecord);
-
-      // Step 3: Finalizing sync
-      setSpecimenLoadingState(prev => prev ? {
-        ...prev,
-        stage: "SPECIMEN PERSISTED & INDEXED IN ARCHIVE.",
-        progress: 100,
-      } : null);
-
+      await saveSpecimen(editingSpecimen.specimen as Specimen);
+      showNotification("success", `Specimen saved under "${editingSpecimen.parentArtifact.name}".`);
+      setEditingSpecimen(null);
       await loadData();
       if (onDataChanged) onDataChanged();
-
-      await new Promise(r => setTimeout(r, 400));
-
-      soundManager.playSuccess(0.12);
-      showNotification("success", isEdit 
-        ? `Specimen "${parent.name} — ${specMedium}" updated successfully.`
-        : `Specimen "${parent.name} — ${specMedium}" manifested successfully.`
-      );
-      resetSpecimenForm();
-      setActiveTab("registry");
-    } catch (err) {
-      console.error("Save specimen error:", err);
-      showNotification("error", "Failed to save specimen.");
+    } catch (err: any) {
+      console.error("Error saving specimen:", err);
+      showNotification("error", "Could not save specimen: " + (err.message || "Unknown error"));
     } finally {
-      setIsSubmittingSpecimen(false);
-      setSpecimenLoadingState(null);
+      setSaving(false);
     }
   };
 
-  // Trigger Deletion Modal for Artifact
-  const handleDeleteArtifact = (art: Artifact) => {
-    soundManager.playClick();
-    setArtifactToDelete(art);
-  };
-
-  // Execute Deletion for Artifact
-  const executeDeleteArtifact = async () => {
-    if (!artifactToDelete) return;
-    setIsDeleting(true);
-
+  const handleDeleteSpecimen = async (specimenId: string) => {
+    if (!window.confirm("Remove this physical specimen from the artifact?")) return;
+    soundManager.playClick(0.14);
     try {
-      soundManager.playClick();
-      await deleteArtifactCascade(artifactToDelete.id);
-      showNotification("success", `Artifact "${artifactToDelete.name}" and associated specimens permanently deleted.`);
-      setArtifactToDelete(null);
+      await deleteSpecimen(specimenId);
+      showNotification("success", "Specimen deleted.");
       await loadData();
       if (onDataChanged) onDataChanged();
-    } catch (err) {
-      console.error("Delete artifact error:", err);
-      showNotification("error", "Failed to delete artifact.");
-    } finally {
-      setIsDeleting(false);
+    } catch (err: any) {
+      console.error("Error deleting specimen:", err);
+      showNotification("error", "Failed to delete specimen: " + err.message);
     }
   };
 
-  // Trigger Deletion Modal for Specimen
-  const handleDeleteSpecimen = (spec: Specimen) => {
-    soundManager.playClick();
-    setSpecimenToDelete(spec);
-  };
-
-  // Execute Deletion for Specimen
-  const executeDeleteSpecimen = async () => {
-    if (!specimenToDelete) return;
-    setIsDeleting(true);
+  const handleImageUpload = async (
+    e: React.ChangeEvent<HTMLInputElement>,
+    target: "artifact_graphic" | "artifact_image" | "specimen_image"
+  ) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
 
     try {
-      soundManager.playClick();
-      await deleteSpecimenCascade(specimenToDelete.id, specimenToDelete.parentArtifactId);
-      showNotification("success", `Specimen "${specimenToDelete.medium}" (${specimenToDelete.sku}) removed.`);
-      setSpecimenToDelete(null);
-      await loadData();
-      if (onDataChanged) onDataChanged();
-    } catch (err) {
-      console.error("Delete specimen error:", err);
-      showNotification("error", "Failed to delete specimen.");
-    } finally {
-      setIsDeleting(false);
+      const dataUrl = await processFileToCompressedDataUrl(file, 1400);
+      if (target === "artifact_graphic" && editingArtifact) {
+        setEditingArtifact(prev => ({ ...prev, graphic: dataUrl }));
+      } else if (target === "artifact_image" && editingArtifact) {
+        setEditingArtifact(prev => ({ 
+          ...prev, 
+          images: [...(prev?.images || []), dataUrl] 
+        }));
+      } else if (target === "specimen_image" && editingSpecimen) {
+        setEditingSpecimen(prev => prev ? ({
+          ...prev,
+          specimen: {
+            ...prev.specimen,
+            images: [...(prev.specimen.images || []), dataUrl]
+          }
+        }) : null);
+      }
+      showNotification("success", "Image asset compressed and staged.");
+    } catch (err: any) {
+      showNotification("error", "Image upload failed: " + err.message);
     }
   };
-
-  // Quick toggle specimen availability
-  const handleToggleSpecimenAvailability = async (spec: Specimen) => {
-    try {
-      soundManager.playClick(0.08);
-      const newAvail = !spec.availability;
-      await saveSpecimen({
-        ...spec,
-        availability: newAvail,
-        status: newAvail ? "available" : "sold_out"
-      });
-      showNotification("success", `Specimen ${spec.medium} marked ${newAvail ? "AVAILABLE" : "ALLOTTED"}`);
-      await loadData();
-      if (onDataChanged) onDataChanged();
-    } catch (err) {
-      console.error("Toggle availability error:", err);
-    }
-  };
-
-  // Filtered dataset
-  const filteredData = data.filter(item => {
-    const art = item;
-    if (collectionFilter !== "all" && art.collectionName?.toLowerCase() !== collectionFilter.toLowerCase()) {
-      return false;
-    }
-    if (searchQuery.trim()) {
-      const q = searchQuery.toLowerCase().trim();
-      const matchName = (art.name || "").toLowerCase().includes(q);
-      const matchInsc = (art.inscription || "").toLowerCase().includes(q);
-      const matchCode = (art.artifactId || "").toLowerCase().includes(q);
-      const matchSpecimen = (item.specimens || []).some(s => 
-        (s.medium || "").toLowerCase().includes(q) || 
-        (s.type || "").toLowerCase().includes(q) || 
-        (s.sku || "").toLowerCase().includes(q)
-      );
-      return matchName || matchInsc || matchCode || matchSpecimen;
-    }
-    return true;
-  });
-
-  // Aggregated Stats
-  const totalArtifacts = data.length;
-  const totalSpecimens = data.reduce((sum, d) => sum + d.specimens.length, 0);
-  const availableSpecimens = data.reduce((sum, d) => sum + d.specimens.filter(s => s.availability && s.status !== "sold_out").length, 0);
-  const distinctMediums = new Set(data.flatMap(d => d.specimens.map(s => s.medium))).size;
 
   return (
-    <div className="space-y-6 font-mono">
-      {/* Notification Toast */}
+    <div className="space-y-8 select-none">
+      {/* Toast Notification */}
       {notification && (
-        <div className={`p-3 border-2 border-brand-text text-xs font-black uppercase flex items-center justify-between shadow-[4px_4px_0px_#050505] ${
+        <div className={`p-4 border-2 font-mono text-xs font-black uppercase flex items-center justify-between ${
           notification.type === "success" 
-            ? "bg-emerald-100 text-emerald-950 border-emerald-800" 
-            : "bg-red-100 text-red-950 border-red-800"
+            ? "bg-green-500/10 border-green-500 text-green-400" 
+            : "bg-red-500/10 border-red-500 text-red-400"
         }`}>
-          <div className="flex items-center gap-2">
-            {notification.type === "success" ? <CheckCircle2 size={16} /> : <AlertCircle size={16} />}
-            <span>{notification.message}</span>
-          </div>
-          <button type="button" onClick={() => setNotification(null)} className="p-1 hover:opacity-75">
+          <span>{notification.message}</span>
+          <button type="button" onClick={() => setNotification(null)} className="cursor-pointer">
             <X size={14} />
           </button>
         </div>
       )}
 
-      {/* ─── 1. ARCHIVAL SYSTEM STATS BANNER ─── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 bg-brand-surface border-2 border-brand-text p-4 shadow-[4px_4px_0px_#050505]">
+      {/* Studio Header */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b-2 border-brand-text pb-6">
         <div>
-          <span className="text-[8.5px] text-brand-text/60 font-black uppercase block">CORE ARTIFACTS</span>
-          <span className="text-xl sm:text-2xl font-black text-brand-text">{totalArtifacts}</span>
-          <span className="text-[8px] text-brand-text/50 uppercase block">DESIGNS REGISTERED</span>
-        </div>
-        <div>
-          <span className="text-[8.5px] text-brand-text/60 font-black uppercase block">MANIFESTED SPECIMENS</span>
-          <span className="text-xl sm:text-2xl font-black text-brand-text">{totalSpecimens}</span>
-          <span className="text-[8px] text-brand-text/50 uppercase block">PHYSICAL OBJECTS</span>
-        </div>
-        <div>
-          <span className="text-[8.5px] text-brand-text/60 font-black uppercase block">AVAILABLE FOR ALLOTMENT</span>
-          <span className="text-xl sm:text-2xl font-black text-emerald-700">{availableSpecimens}</span>
-          <span className="text-[8px] text-brand-text/50 uppercase block">IN ARCHIVE</span>
-        </div>
-        <div>
-          <span className="text-[8.5px] text-brand-text/60 font-black uppercase block">MEDIUM CATEGORIES</span>
-          <span className="text-xl sm:text-2xl font-black text-brand-accent">{distinctMediums}</span>
-          <span className="text-[8px] text-brand-text/50 uppercase block">PHYSICAL FORMS</span>
-        </div>
-      </div>
-
-      {/* ─── 2. STUDIO NAVIGATION STRIP ─── */}
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b-2 border-brand-text pb-4">
-        <div className="inline-flex border-2 border-brand-text bg-brand-surface shadow-[3px_3px_0px_#050505] divide-x-2 divide-brand-text overflow-hidden">
-          <button
-            type="button"
-            onClick={() => {
-              soundManager.playClick();
-              setActiveTab("registry");
-            }}
-            className={`px-3 sm:px-4 py-2 text-xs font-black uppercase transition-colors cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "registry" 
-                ? "bg-brand-text text-brand-bg" 
-                : "hover:bg-brand-text/10 text-brand-text"
-            }`}
-          >
-            <Layers size={14} />
-            <span>ARTIFACT REGISTER ({data.length})</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              soundManager.playClick();
-              resetArtifactForm();
-              setActiveTab("create_artifact");
-            }}
-            className={`px-3 sm:px-4 py-2 text-xs font-black uppercase transition-colors cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "create_artifact" 
-                ? "bg-brand-text text-brand-bg" 
-                : "hover:bg-brand-text/10 text-brand-text"
-            }`}
-          >
-            <Plus size={14} />
-            <span>{editingArtifact ? "EDIT ARTIFACT" : "+ CREATE ARTIFACT"}</span>
-          </button>
-          <button
-            type="button"
-            onClick={() => {
-              soundManager.playClick();
-              resetSpecimenForm();
-              setActiveTab("create_specimen");
-            }}
-            className={`px-3 sm:px-4 py-2 text-xs font-black uppercase transition-colors cursor-pointer flex items-center gap-1.5 ${
-              activeTab === "create_specimen" 
-                ? "bg-brand-text text-brand-bg" 
-                : "hover:bg-brand-text/10 text-brand-text"
-            }`}
-          >
-            <Box size={14} />
-            <span>{editingSpecimen ? "EDIT SPECIMEN" : "+ ADD SPECIMEN"}</span>
-          </button>
+          <span className="font-mono text-xs font-black uppercase text-brand-accent tracking-widest bg-brand-accent/10 px-3 py-1 border border-brand-accent/30 inline-block">
+            [ ATELIER ARCHIVE // SPECIMEN ARCHITECTURE ]
+          </span>
+          <h2 className="text-2xl sm:text-4xl font-mono font-black uppercase tracking-tight text-brand-text mt-2">
+            ARTIFACTS &amp; SPECIMENS STUDIO
+          </h2>
+          <p className="font-mono text-xs text-brand-text/70 uppercase mt-1">
+            // ARTIFACT = CONCEPT &amp; INSCRIPTION • SPECIMEN = PHYSICAL TACTILE MEDIUM (T-SHIRT, HOODIE, CAP, MUG)
+          </p>
         </div>
 
         <button
           type="button"
-          onClick={() => {
-            soundManager.playClick();
-            loadData();
-          }}
-          className="p-2 bg-brand-surface hover:bg-brand-text hover:text-brand-bg border border-brand-text text-xs font-black uppercase flex items-center gap-1 shadow-[2px_2px_0px_#050505] transition-colors cursor-pointer"
-          title="Refresh Registry"
+          onClick={handleCreateNewArtifact}
+          className="px-5 py-3 bg-brand-accent hover:bg-black text-white font-mono text-xs font-black uppercase border-2 border-brand-text shadow-[4px_4px_0px_#050505] transition-all cursor-pointer flex items-center gap-2 self-start sm:self-auto"
         >
-          <RefreshCw size={13} className={loading ? "animate-spin" : ""} />
-          <span className="hidden sm:inline">REFRESH</span>
+          <Plus size={16} />
+          <span>NEW ARTIFACT</span>
         </button>
       </div>
 
-      {/* ─── TAB 1: ARTIFACT & SPECIMEN MASTER REGISTRY ─── */}
-      {activeTab === "registry" && (
-        <div className="space-y-6">
-          {/* Search and Filters */}
-          <div className="flex flex-col sm:flex-row gap-3">
-            <div className="relative flex-1">
-              <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-brand-text/50" />
-              <input
-                type="text"
-                placeholder="SEARCH ARTIFACT BY NAME, INSCRIPTION, OR SPECIMEN SKU..."
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                className="w-full pl-9 pr-3 py-2 bg-brand-surface border-2 border-brand-text text-xs font-bold uppercase placeholder:text-brand-text/40 shadow-[2px_2px_0px_#050505] focus:outline-none"
-              />
-            </div>
-
-            <div className="flex gap-2">
-              <select
-                value={collectionFilter}
-                onChange={e => setCollectionFilter(e.target.value)}
-                className="px-3 py-2 bg-brand-surface border-2 border-brand-text text-xs font-bold uppercase shadow-[2px_2px_0px_#050505] focus:outline-none cursor-pointer"
-              >
-                <option value="all">ALL COLLECTIONS</option>
-                <option value="Be Palestine">BE PALESTINE</option>
-                <option value="Be Symbolic">BE SYMBOLIC</option>
-              </select>
-            </div>
-          </div>
-
-          {/* Artifact Cards Tree */}
-          {loading ? (
-            <div className="p-8 text-center bg-brand-surface border-2 border-brand-text animate-pulse">
-              <span className="text-xs font-black uppercase text-brand-text/60">SYNCHRONIZING ARCHIVAL REGISTER...</span>
-            </div>
-          ) : filteredData.length === 0 ? (
-            <div className="p-8 text-center bg-brand-surface border-2 border-brand-text space-y-3">
-              <p className="text-xs font-black uppercase text-brand-text/70">NO MATCHING ARTIFACTS FOUND IN REGISTER.</p>
-              <button
-                type="button"
-                onClick={() => {
-                  resetArtifactForm();
-                  setActiveTab("create_artifact");
-                }}
-                className="px-4 py-2 bg-brand-text text-brand-bg text-xs font-black uppercase border border-brand-text"
-              >
-                + REGISTER FIRST ARTIFACT
-              </button>
-            </div>
-          ) : (
-            <div className="space-y-6">
-              {filteredData.map((item, idx) => {
-                const art = item;
-                const specs = item.specimens || [];
-                const setCalc = calculateArtifactSetPrice(art, specs);
-
-                return (
-                  <div 
-                    key={art.id} 
-                    className="border-2 border-brand-text bg-brand-surface shadow-[4px_4px_0px_#050505] overflow-hidden"
-                  >
-                    {/* Primary Artifact Header */}
-                    <div className="p-4 sm:p-5 border-b-2 border-brand-text bg-brand-bg/50 flex flex-col md:flex-row md:items-center justify-between gap-4">
-                      <div className="flex items-start gap-4">
-                        {/* Artifact Artwork / Graphic Thumbnail */}
-                        <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] overflow-hidden p-1 flex items-center justify-center relative">
-                          <img 
-                            src={art.graphic || "/Logo_NoName.jpg"} 
-                            alt={art.name}
-                            referrerPolicy="no-referrer"
-                            className="w-full h-full object-contain"
-                          />
-                          <ArtifactWatermark variant="badge" />
-                        </div>
-
-                        <div className="space-y-1">
-                          <div className="flex items-center gap-2">
-                            <span className="text-[9px] font-black uppercase bg-brand-text text-brand-bg px-1.5 py-0.5">
-                              {art.artifactId || `ART-0${idx + 1}`}
-                            </span>
-                            <span className="text-[9px] font-bold uppercase text-brand-text/70 border border-brand-text/30 px-1.5 py-0.5">
-                              {art.collectionName}
-                            </span>
-                            {art.inscription && (
-                              <span className="font-serif text-sm font-black text-brand-accent px-1.5 py-0.5 bg-brand-bg border border-brand-text/40 leading-none">
-                                {art.inscription}
-                              </span>
-                            )}
-                          </div>
-
-                          <h3 className="text-lg sm:text-xl font-mono font-black uppercase text-brand-text leading-tight">
-                            {art.name}
-                          </h3>
-
-                          <p className="text-[9.5px] font-mono uppercase text-brand-text/70 line-clamp-1 max-w-xl">
-                            {art.shortDescription || art.concept || "Architectural symbolic identity work."}
-                          </p>
-                        </div>
-                      </div>
-
-                      {/* Artifact Actions & Set Pricing */}
-                      <div className="flex flex-wrap items-center gap-2 shrink-0">
-                        {onViewArtifactInStore && (
-                          <button
-                            type="button"
-                            onClick={() => onViewArtifactInStore(art.artifactId || art.id)}
-                            className="px-2.5 py-1.5 bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border border-brand-text text-[10px] font-black uppercase flex items-center gap-1 shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
-                            title="View in Storefront"
-                          >
-                            <ExternalLink size={12} />
-                            <span>PREVIEW</span>
-                          </button>
-                        )}
-
-                        <button
-                          type="button"
-                          onClick={() => startAddSpecimenUnderArtifact(art)}
-                          className="px-2.5 py-1.5 bg-brand-accent hover:bg-brand-text text-white border border-brand-text text-[10px] font-black uppercase flex items-center gap-1 shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
-                        >
-                          <Plus size={12} />
-                          <span>+ ADD SPECIMEN</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => startEditArtifact(art)}
-                          className="px-2.5 py-1.5 bg-brand-surface hover:bg-brand-text text-brand-text hover:text-brand-bg border border-brand-text text-[10px] font-black uppercase flex items-center gap-1 shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
-                        >
-                          <Edit3 size={12} />
-                          <span>EDIT</span>
-                        </button>
-
-                        <button
-                          type="button"
-                          onClick={() => handleDeleteArtifact(art)}
-                          className="p-1.5 bg-brand-surface hover:bg-red-600 hover:text-white text-red-600 border border-brand-text text-[10px] font-black uppercase shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
-                          title="Delete Artifact & All Specimens"
-                        >
-                          <Trash2 size={13} />
-                        </button>
-                      </div>
-                    </div>
-
-                    {/* Set Bundle Privilege Bar */}
-                    {setCalc.specimenCount > 1 && (
-                      <div className="bg-brand-accent/5 border-b border-brand-text/20 px-4 py-2 flex items-center justify-between text-[9px] font-mono">
-                        <div className="flex items-center gap-2">
-                          <Box size={12} className="text-brand-accent" />
-                          <span className="font-black text-brand-text uppercase">COMPLETE ARTIFACT SET:</span>
-                          <span className="text-brand-text/70">{setCalc.specimenCount} Specimens</span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="line-through text-brand-text/50">PKR {setCalc.individualTotal.toLocaleString()}</span>
-                          <span className="font-black text-brand-accent">SET PRICE: PKR {setCalc.setPrice.toLocaleString()}</span>
-                          <span className="text-emerald-700 font-black">({setCalc.discountPercent}% OFF)</span>
-                        </div>
-                      </div>
-                    )}
-
-                    {/* Specimens Manifestation Table / List */}
-                    <div className="p-4 sm:p-5">
-                      <div className="flex items-center justify-between mb-3 text-[9px] font-black uppercase text-brand-text/60">
-                        <span>PHYSICAL SPECIMENS UNDER THIS ARTIFACT ({specs.length})</span>
-                        <span>CLICK SPECIMEN TO EDIT / MANAGE STOCK</span>
-                      </div>
-
-                      {specs.length === 0 ? (
-                        <div className="p-4 text-center border border-dashed border-brand-text/40 text-[10px] uppercase font-bold text-brand-text/60">
-                          No physical specimens currently attached to this design.
-                          <button
-                            type="button"
-                            onClick={() => startAddSpecimenUnderArtifact(art)}
-                            className="ml-2 underline text-brand-accent cursor-pointer"
-                          >
-                            Add first specimen now &rarr;
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-                          {specs.map((spec) => {
-                            const isSold = !spec.availability || spec.status === "sold_out" || spec.inventory <= 0;
-
-                            return (
-                              <div
-                                key={spec.id}
-                                className="border border-brand-text/60 bg-brand-bg p-3 shadow-[2px_2px_0px_#050505] flex flex-col justify-between space-y-2 relative"
-                              >
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="flex items-center gap-2">
-                                    <div className="w-10 h-10 shrink-0 bg-brand-surface border border-brand-text p-0.5 overflow-hidden">
-                                      <img 
-                                        src={spec.thumbnailImage || art.graphic} 
-                                        alt={spec.medium}
-                                        referrerPolicy="no-referrer"
-                                        className="w-full h-full object-contain"
-                                      />
-                                    </div>
-                                    <div>
-                                      <div className="flex items-center gap-1.5">
-                                        <span className="font-black text-xs uppercase text-brand-text">
-                                          {spec.medium}
-                                        </span>
-                                        <span className="text-[8px] font-mono text-brand-text/60">
-                                          {spec.sku}
-                                        </span>
-                                      </div>
-                                      <span className="text-[8.5px] font-bold text-brand-text/70 uppercase block">
-                                        {spec.type || spec.garmentType || "Standard"}
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => handleToggleSpecimenAvailability(spec)}
-                                    className={`text-[8px] font-black uppercase px-1.5 py-0.5 border cursor-pointer transition-colors ${
-                                      isSold 
-                                        ? "bg-red-100 text-red-700 border-red-400" 
-                                        : "bg-emerald-100 text-emerald-800 border-emerald-400"
-                                    }`}
-                                  >
-                                    {isSold ? "ALLOTTED" : "AVAILABLE"}
-                                  </button>
-                                </div>
-
-                                <div className="border-t border-brand-text/20 pt-2 flex items-center justify-between text-[9px]">
-                                  <span className="font-black text-brand-text">PKR {spec.price.toLocaleString()}</span>
-                                  <span className="text-brand-text/70">{spec.inventory} in archive</span>
-                                  <span className="text-brand-text/70">{spec.availableSizes?.join(",") || "Standard"}</span>
-                                </div>
-
-                                <div className="pt-1 flex items-center justify-end gap-1.5">
-                                  <button
-                                    type="button"
-                                    onClick={() => startEditSpecimen(spec, art)}
-                                    className="p-1 hover:bg-brand-text hover:text-white border border-brand-text/50 text-[8.5px] uppercase font-bold transition-colors cursor-pointer"
-                                  >
-                                    <Edit3 size={11} />
-                                  </button>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleDeleteSpecimen(spec)}
-                                    className="p-1 hover:bg-red-600 hover:text-white text-red-600 border border-brand-text/50 text-[8.5px] uppercase font-bold transition-colors cursor-pointer"
-                                    title="Delete specimen"
-                                  >
-                                    <Trash2 size={11} />
-                                  </button>
-                                </div>
-                              </div>
-                            );
-                          })}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          )}
+      {loading ? (
+        <div className="p-12 text-center font-mono text-xs font-bold text-brand-text/60 animate-pulse">
+          // ACCESSING ARCHIVAL ARTIFACT REGISTRY...
         </div>
-      )}
-
-      {/* ─── TAB 2: REGISTER / EDIT ARTIFACT (THE DESIGN) ─── */}
-      {activeTab === "create_artifact" && (
-        <form onSubmit={handleSaveArtifact} className="space-y-6">
-          <div className="border-2 border-brand-text bg-brand-surface p-6 shadow-[4px_4px_0px_#050505]">
-            <div className="border-b-2 border-brand-text pb-3 mb-6 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black uppercase text-brand-text">
-                  {editingArtifact ? `EDIT ARTIFACT // ${editingArtifact.name}` : "REGISTER NEW ARTIFACT (THE DESIGN WORK)"}
-                </h3>
-                <p className="text-[10px] text-brand-text/70 uppercase">
-                  The Artifact is the conceptual artwork, symbol, and ideological thesis. Physical objects are specimens under it.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  resetArtifactForm();
-                  setActiveTab("registry");
-                }}
-                className="text-xs font-bold uppercase underline text-brand-text/70 hover:text-brand-text"
+      ) : artifactsWithSpecs.length === 0 ? (
+        <div className="p-12 border-2 border-dashed border-brand-text/30 text-center space-y-4">
+          <p className="font-mono text-sm font-bold text-brand-text/60 uppercase">
+            No artifacts found in registry.
+          </p>
+          <button
+            type="button"
+            onClick={handleCreateNewArtifact}
+            className="px-4 py-2 bg-brand-text text-brand-bg font-mono text-xs font-black uppercase"
+          >
+            Create Initial Artifact
+          </button>
+        </div>
+      ) : (
+        /* Artifacts List & Specimen Hierarchy */
+        <div className="space-y-6">
+          {artifactsWithSpecs.map((artifact) => {
+            const isExpanded = activeArtifactId === artifact.id;
+            return (
+              <div 
+                key={artifact.id}
+                className="bg-brand-surface border-2 border-brand-text shadow-[4px_4px_0px_#050505] overflow-hidden"
               >
-                CANCEL
-              </button>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  ARTIFACT NAME (DESIGN IDENTITY) *
-                </label>
-                <input
-                  type="text"
-                  required
-                  placeholder="e.g. SUMUD, ALIF, ADAB"
-                  value={artName}
-                  onChange={e => setArtName(e.target.value)}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-black uppercase focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  ARCHIVAL CODE (ID)
-                </label>
-                <input
-                  type="text"
-                  placeholder="e.g. SYM-01, SYM-PAL-01"
-                  value={artId}
-                  onChange={e => setArtId(e.target.value)}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-bold uppercase focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  ETHOS COLLECTION
-                </label>
-                <select
-                  value={artCollection}
-                  onChange={e => setArtCollection(e.target.value)}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-bold uppercase focus:outline-none"
+                {/* Artifact Summary Bar */}
+                <div 
+                  className="p-5 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b-2 border-brand-text bg-brand-surface hover:bg-brand-bg/50 transition-colors cursor-pointer"
+                  onClick={() => setActiveArtifactId(isExpanded ? null : artifact.id)}
                 >
-                  <option value="Be Palestine">BE PALESTINE (THE STEADFAST LINE)</option>
-                  <option value="Be Symbolic">BE SYMBOLIC (CORE IDENTITY)</option>
-                </select>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div className="space-y-2">
-                <div className="flex items-center justify-between">
-                  <label className="block text-[9.5px] font-black uppercase">
-                    CENTRAL GRAPHIC / ARTWORK
-                  </label>
-                  <span className="text-[8px] font-mono text-brand-accent uppercase font-bold">
-                    DEVICE UPLOAD &bull; DRAG & DROP &bull; URL
-                  </span>
-                </div>
-
-                {/* Device Upload / Drag-and-drop Dropzone */}
-                <div
-                  onDragOver={(e: DragEvent<HTMLDivElement>) => {
-                    e.preventDefault();
-                    setIsDraggingGraphic(true);
-                  }}
-                  onDragLeave={() => setIsDraggingGraphic(false)}
-                  onDrop={(e: DragEvent<HTMLDivElement>) => {
-                    e.preventDefault();
-                    setIsDraggingGraphic(false);
-                    if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                      handleGraphicFiles(e.dataTransfer.files);
-                    }
-                  }}
-                  className={`p-3 border-2 border-dashed transition-all flex flex-col items-center justify-center text-center gap-1.5 bg-brand-bg ${
-                    isDraggingGraphic 
-                      ? "border-brand-accent bg-brand-accent/10" 
-                      : "border-brand-text/40 hover:border-brand-text"
-                  }`}
-                >
-                  <input
-                    type="file"
-                    ref={artGraphicFileRef}
-                    accept="image/*"
-                    onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                      if (e.target.files) handleGraphicFiles(e.target.files);
-                    }}
-                    className="hidden"
-                    id="artifact-graphic-file"
-                  />
-                  <div className="flex items-center gap-2">
-                    <label
-                      htmlFor="artifact-graphic-file"
-                      className="px-3 py-1.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white text-[9.5px] font-mono font-black uppercase flex items-center gap-1.5 border border-brand-text shadow-[1.5px_1.5px_0px_#050505] cursor-pointer transition-colors"
+                  <div className="flex items-center gap-4">
+                    <button 
+                      type="button" 
+                      className="p-1 border border-brand-text/40 bg-brand-bg text-brand-text"
                     >
-                      {isUploadingGraphic ? (
-                        <RefreshCw size={11} className="animate-spin" />
-                      ) : (
-                        <Upload size={11} />
-                      )}
-                      <span>{isUploadingGraphic ? "PROCESSING..." : "CHOOSE IMAGE FROM DEVICE"}</span>
-                    </label>
-                    <span className="text-[8px] font-mono uppercase text-brand-text/60">
-                      or drag & drop
-                    </span>
-                  </div>
-
-                  {/* Watermark toggle */}
-                  <label className="flex items-center gap-1.5 text-[8.5px] font-mono uppercase text-brand-text/80 cursor-pointer pt-0.5 select-none">
-                    <input
-                      type="checkbox"
-                      checked={autoWatermarkGraphic}
-                      onChange={e => setAutoWatermarkGraphic(e.target.checked)}
-                      className="accent-brand-accent w-3 h-3 cursor-pointer"
-                    />
-                    <span>Stamp Archival Security Watermark into file</span>
-                  </label>
-                </div>
-
-                {/* URL Input */}
-                <div className="flex gap-1.5">
-                  <input
-                    type="text"
-                    placeholder="Or paste image URL (https://... or /assets/...)"
-                    value={artGraphic}
-                    onChange={e => setArtGraphic(e.target.value)}
-                    className="flex-1 p-2 bg-brand-bg border-2 border-brand-text text-xs focus:outline-none font-mono"
-                  />
-                  {artGraphic && (
-                    <button
-                      type="button"
-                      onClick={() => setArtGraphic("")}
-                      className="px-2.5 py-1 bg-brand-surface hover:bg-red-600 hover:text-white text-red-600 border border-brand-text text-[9px] font-black uppercase shadow-[1px_1px_0px_#050505] cursor-pointer"
-                      title="Clear image"
-                    >
-                      <X size={12} />
+                      {isExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
                     </button>
-                  )}
-                </div>
 
-                {/* Graphic Preview & Watermark Tooling */}
-                {artGraphic && (
-                  <div className="p-2.5 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] space-y-2">
-                    <div className="flex items-center gap-3">
-                      <div className="w-14 h-14 bg-brand-bg border-2 border-brand-text overflow-hidden shrink-0 relative flex items-center justify-center p-1">
-                        <img 
-                          src={artGraphic} 
-                          alt="Central Graphic Preview" 
-                          referrerPolicy="no-referrer"
-                          className="w-full h-full object-contain" 
-                        />
-                        <ArtifactWatermark variant="badge" />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <span className="text-[9px] font-mono font-black uppercase text-brand-text block truncate">
-                          {artGraphic.startsWith("data:") ? "Archival Device Artwork (High-Def Data)" : artGraphic}
+                    <div className="w-12 h-12 bg-black border border-brand-text shrink-0 overflow-hidden flex items-center justify-center">
+                      <img 
+                        src={artifact.graphic || artifact.images?.[0] || "/Logo_NoName.jpg"} 
+                        alt={artifact.name}
+                        className="w-full h-full object-cover"
+                      />
+                    </div>
+
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <span className="font-mono text-[10px] font-black text-brand-accent uppercase">
+                          {artifact.artifactId || "SYM"}
                         </span>
-                        <div className="flex items-center gap-1.5 mt-0.5">
-                          <span className="w-1.5 h-1.5 bg-emerald-500 inline-block" />
-                          <span className="text-[8px] font-mono text-emerald-700 font-black uppercase">
-                            Primary Artwork Active & Protected
+                        <h3 className="font-mono text-lg font-black text-brand-text uppercase">
+                          {artifact.name}
+                        </h3>
+                        {artifact.inscription && (
+                          <span className="font-serif text-sm font-bold text-brand-text/80 px-2 py-0.5 bg-brand-bg border border-brand-text/20">
+                            {artifact.inscription}
                           </span>
-                        </div>
-                      </div>
-                    </div>
-
-                    {/* Watermark Actions Bar */}
-                    <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-brand-text/20">
-                      <div className="text-[8px] font-mono uppercase text-brand-text/60">
-                        ARCHIVAL WATERMARK PROTOCOL
-                      </div>
-
-                      <button
-                        type="button"
-                        onClick={handleStampArchivalWatermark}
-                        disabled={isWatermarking}
-                        className="px-2.5 py-1 bg-brand-bg hover:bg-brand-text hover:text-white border border-brand-text text-[8.5px] font-mono font-black uppercase flex items-center gap-1.5 shadow-[1px_1px_0px_#050505] transition-colors cursor-pointer"
-                        title="Permanently bake archival watermark into image canvas"
-                      >
-                        {isWatermarking ? (
-                          <RefreshCw size={10} className="animate-spin text-brand-accent" />
-                        ) : (
-                          <ShieldCheck size={10} className="text-brand-accent" />
                         )}
-                        <span>{isWatermarking ? "STAMPING..." : "BAKE WATERMARK INTO CANVAS"}</span>
-                      </button>
+                      </div>
+
+                      <div className="flex flex-wrap items-center gap-2 font-mono text-[10px] text-brand-text/60 mt-1">
+                        <span>COLLECTION: {artifact.collectionName}</span>
+                        <span>•</span>
+                        <span>{artifact.specimens?.length || 0} PHYSICAL SPECIMENS</span>
+                        <span>•</span>
+                        <span className="uppercase text-green-500 font-black">{artifact.status}</span>
+                      </div>
                     </div>
                   </div>
-                )}
-              </div>
 
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  ARABIC CALLIGRAPHIC INSCRIPTION
-                </label>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    placeholder="e.g. صُمُود, أَلِف"
-                    value={artInscription}
-                    onChange={e => setArtInscription(e.target.value)}
-                    className="flex-1 p-2 bg-brand-bg border-2 border-brand-text text-base font-serif font-black text-brand-accent focus:outline-none"
-                    dir="rtl"
-                  />
-                  <div className="flex gap-1">
-                    {["صُمُود", "أَلِف", "صَبْر", "أَدَب"].map(sym => (
+                  {/* Actions */}
+                  <div className="flex items-center gap-2 self-end md:self-auto" onClick={(e) => e.stopPropagation()}>
+                    {onViewArtifactInStore && (
                       <button
-                        key={sym}
                         type="button"
-                        onClick={() => applySymbolKnowledge(sym)}
-                        className="px-2 bg-brand-surface hover:bg-brand-text hover:text-white border border-brand-text text-xs font-serif cursor-pointer"
+                        onClick={() => onViewArtifactInStore(artifact.id)}
+                        className="p-2 border border-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors cursor-pointer"
+                        title="View Artifact Dossier in Store"
                       >
-                        {sym}
+                        <ExternalLink size={14} />
                       </button>
-                    ))}
-                  </div>
-                </div>
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  SHORT THESIS / TAGLINE
-                </label>
-                <input
-                  type="text"
-                  placeholder="Unbending moral rootedness against displacement."
-                  value={artShortDesc}
-                  onChange={e => setArtShortDesc(e.target.value)}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-bold uppercase focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  COMPLETE SET BUNDLE PRIVILEGE DISCOUNT (%)
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  max={50}
-                  value={artSetDiscount}
-                  onChange={e => setArtSetDiscount(Number(e.target.value))}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-black focus:outline-none"
-                />
-              </div>
-            </div>
-
-            {/* 4 Pillars Fields */}
-            <div className="border-t border-brand-text/30 pt-4 mt-4 space-y-3">
-              <span className="text-[9px] font-black text-brand-accent uppercase block">
-                THE 4 PILLARS OF SYMBOLIC REPRESENTATION
-              </span>
-
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-                <div>
-                  <label className="block text-[8px] font-black uppercase mb-0.5">PILLAR 01 // WHAT IT REPRESENTS</label>
-                  <textarea
-                    rows={2}
-                    value={artPillar1}
-                    onChange={e => setArtPillar1(e.target.value)}
-                    placeholder="Roots, steadfast resistance, unyielding identity..."
-                    className="w-full p-2 bg-brand-bg border border-brand-text text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[8px] font-black uppercase mb-0.5">PILLAR 02 // WHY DELIBERATELY CHOSEN</label>
-                  <textarea
-                    rows={2}
-                    value={artPillar2}
-                    onChange={e => setArtPillar2(e.target.value)}
-                    placeholder="Chosen because solidarity is not a seasonal trend..."
-                    className="w-full p-2 bg-brand-bg border border-brand-text text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[8px] font-black uppercase mb-0.5">PILLAR 03 // WHAT IT COMMUNICATES</label>
-                  <textarea
-                    rows={2}
-                    value={artPillar3}
-                    onChange={e => setArtPillar3(e.target.value)}
-                    placeholder="Public proclamation of unwavering support and refusal to assimilate..."
-                    className="w-full p-2 bg-brand-bg border border-brand-text text-xs focus:outline-none"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-[8px] font-black uppercase mb-0.5">PILLAR 04 // WHAT WEARER CARRIES</label>
-                  <textarea
-                    rows={2}
-                    value={artPillar4}
-                    onChange={e => setArtPillar4(e.target.value)}
-                    placeholder="Inward oath to maintain dignity and steadfastness in character..."
-                    className="w-full p-2 bg-brand-bg border border-brand-text text-xs focus:outline-none"
-                  />
-                </div>
-              </div>
-            </div>
-
-            <div className="pt-6 mt-6 border-t-2 border-brand-text flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  resetArtifactForm();
-                  setActiveTab("registry");
-                }}
-                className="px-4 py-2 border-2 border-brand-text text-xs font-black uppercase hover:bg-brand-text/10"
-              >
-                CANCEL
-              </button>
-              <button
-                type="submit"
-                className="px-6 py-2 bg-brand-text text-brand-bg text-xs font-black uppercase border-2 border-brand-text hover:bg-brand-accent hover:text-white shadow-[2px_2px_0px_#050505] cursor-pointer"
-              >
-                {editingArtifact ? "SAVE ARTIFACT CHANGES" : "REGISTER ARTIFACT"}
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
-
-      {/* ─── TAB 3: REGISTER / EDIT SPECIMEN (PHYSICAL MANIFESTATION) ─── */}
-      {activeTab === "create_specimen" && (
-        <form onSubmit={handleSaveSpecimen} className="space-y-6">
-          <div className="border-2 border-brand-text bg-brand-surface p-6 shadow-[4px_4px_0px_#050505]">
-            <div className="border-b-2 border-brand-text pb-3 mb-6 flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-black uppercase text-brand-text">
-                  {editingSpecimen 
-                    ? `EDIT SPECIMEN // ${editingSpecimen.parentArtifact.name} — ${editingSpecimen.specimen.medium}` 
-                    : "MANIFEST PHYSICAL SPECIMEN UNDER ARTIFACT"}
-                </h3>
-                <p className="text-[10px] text-brand-text/70 uppercase">
-                  A Specimen is a physical garment or object (T-shirt, P-Cap, Mug, Hoodie) expressing an Artifact design.
-                </p>
-              </div>
-              <button
-                type="button"
-                onClick={() => {
-                  resetSpecimenForm();
-                  setActiveTab("registry");
-                }}
-                className="text-xs font-bold uppercase underline text-brand-text/70 hover:text-brand-text"
-              >
-                CANCEL
-              </button>
-            </div>
-
-            {/* Parent Artifact Picker */}
-            <div className="mb-4 bg-brand-bg p-4 border-2 border-brand-text shadow-[2px_2px_0px_#050505]">
-              <label className="block text-[9.5px] font-black uppercase mb-1.5 text-brand-accent">
-                SELECT PARENT ARTIFACT (THE DESIGN IDENTITY) *
-              </label>
-              <select
-                required
-                value={specParentId}
-                onChange={e => setSpecParentId(e.target.value)}
-                className="w-full p-2.5 bg-brand-surface border-2 border-brand-text text-xs font-black uppercase focus:outline-none cursor-pointer"
-              >
-                {data.map(d => (
-                  <option key={d.id} value={d.id}>
-                    ARTIFACT: {d.name} ({d.artifactId}) — {d.collectionName}
-                  </option>
-                ))}
-              </select>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  SPECIMEN MEDIUM *
-                </label>
-                <select
-                  value={specMedium}
-                  onChange={e => handleMediumChange(e.target.value)}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-black uppercase focus:outline-none cursor-pointer"
-                >
-                  <option value="T-Shirt">T-SHIRT</option>
-                  <option value="P-Cap">P-CAP (HEADWEAR)</option>
-                  <option value="Mug">MUG (VESSEL)</option>
-                  <option value="Hoodie">HOODIE</option>
-                  <option value="Full Sleeve">FULL SLEEVE</option>
-                  <option value="Tote Bag">TOTE BAG (CARRY)</option>
-                  <option value="Journal">JOURNAL</option>
-                  <option value="Artisan Stoneware">ARTISAN STONEWARE</option>
-                </select>
-              </div>
-
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  CUT / STRUCTURAL PROFILE
-                </label>
-                <input
-                  type="text"
-                  value={specType}
-                  onChange={e => setSpecType(e.target.value)}
-                  placeholder="Drop Shoulder Boxy, 6-Panel Twill, etc."
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-bold uppercase focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  ALLOTMENT PRICE (PKR) *
-                </label>
-                <input
-                  type="number"
-                  required
-                  min={100}
-                  value={specPrice}
-                  onChange={e => setSpecPrice(Number(e.target.value))}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-black focus:outline-none"
-                />
-              </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  MATERIAL SPECIFICATION
-                </label>
-                <input
-                  type="text"
-                  value={specMaterial}
-                  onChange={e => setSpecMaterial(e.target.value)}
-                  placeholder="400 GSM Combed Cotton, 100% Twill..."
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-bold uppercase focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  INVENTORY IN ARCHIVE
-                </label>
-                <input
-                  type="number"
-                  min={0}
-                  value={specInventory}
-                  onChange={e => setSpecInventory(Number(e.target.value))}
-                  className="w-full p-2 bg-brand-bg border-2 border-brand-text text-xs font-bold focus:outline-none"
-                />
-              </div>
-
-              <div>
-                <label className="block text-[9.5px] font-black uppercase mb-1">
-                  AVAILABILITY STATUS
-                </label>
-                <div className="flex items-center gap-3 pt-1">
-                  <label className="flex items-center gap-1.5 text-xs font-bold uppercase cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={specAvailability}
-                      onChange={e => setSpecAvailability(e.target.checked)}
-                      className="w-4 h-4"
-                    />
-                    <span>AVAILABLE FOR PUBLIC ALLOTMENT</span>
-                  </label>
-                </div>
-              </div>
-            </div>
-
-            {/* Available Sizes for this Specimen */}
-            <div className="mb-4">
-              <label className="block text-[9.5px] font-black uppercase mb-1.5">
-                AVAILABLE SIZES (CLICK TO TOGGLE)
-              </label>
-              <div className="flex flex-wrap gap-2">
-                {["Standard", "S", "M", "L", "XL", "2XL", "One Size"].map(sz => {
-                  const isChecked = specSizes.includes(sz);
-                  return (
+                    )}
                     <button
-                      key={sz}
                       type="button"
                       onClick={() => {
-                        soundManager.playClick(0.05);
-                        if (isChecked) {
-                          setSpecSizes(specSizes.filter(s => s !== sz));
-                        } else {
-                          setSpecSizes([...specSizes, sz]);
-                        }
+                        soundManager.playClick(0.12);
+                        setEditingArtifact(artifact);
                       }}
-                      className={`px-3 py-1.5 text-xs font-black uppercase border transition-colors cursor-pointer ${
-                        isChecked 
-                          ? "bg-brand-text text-brand-bg border-brand-text shadow-[1.5px_1.5px_0px_#050505]" 
-                          : "bg-brand-bg text-brand-text border-brand-text/40 hover:border-brand-text"
-                      }`}
+                      className="p-2 border border-brand-text hover:bg-brand-text hover:text-brand-bg transition-colors cursor-pointer"
+                      title="Edit Artifact Meta & Pillars"
                     >
-                      {sz}
+                      <Edit3 size={14} />
                     </button>
-                  );
-                })}
-              </div>
-            </div>
-
-            {/* Specimen Multi-Angle Photos */}
-            <div className="border-t border-brand-text/20 pt-4 mb-4 space-y-3">
-              <div className="flex items-center justify-between">
-                <label className="block text-[9.5px] font-black uppercase">
-                  SPECIMEN MULTI-ANGLE PHOTOGRAPHS (FRONT, BACK, DETAIL, ON-BODY)
-                </label>
-                <span className="text-[8px] font-mono text-brand-accent uppercase font-bold">
-                  MULTI-FILE DEVICE UPLOAD &bull; DRAG & DROP &bull; URL
-                </span>
-              </div>
-
-              {/* Local File Multi-Upload & Dropzone */}
-              <div
-                onDragOver={(e: DragEvent<HTMLDivElement>) => {
-                  e.preventDefault();
-                  setIsDraggingSpecImages(true);
-                }}
-                onDragLeave={() => setIsDraggingSpecImages(false)}
-                onDrop={(e: DragEvent<HTMLDivElement>) => {
-                  e.preventDefault();
-                  setIsDraggingSpecImages(false);
-                  if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-                    handleSpecimenFiles(e.dataTransfer.files);
-                  }
-                }}
-                className={`p-4 border-2 border-dashed transition-all flex flex-col items-center justify-center text-center gap-2 bg-brand-bg ${
-                  isDraggingSpecImages 
-                    ? "border-brand-accent bg-brand-accent/10" 
-                    : "border-brand-text/40 hover:border-brand-text"
-                }`}
-              >
-                <input
-                  type="file"
-                  ref={specImagesFileRef}
-                  multiple
-                  accept="image/*"
-                  onChange={(e: ChangeEvent<HTMLInputElement>) => {
-                    if (e.target.files) handleSpecimenFiles(e.target.files);
-                  }}
-                  className="hidden"
-                  id="specimen-photos-file-upload"
-                />
-                <div className="flex flex-wrap items-center justify-center gap-2">
-                  <label
-                    htmlFor="specimen-photos-file-upload"
-                    className="px-4 py-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white text-[10px] font-mono font-black uppercase flex items-center gap-2 border border-brand-text shadow-[2px_2px_0px_#050505] cursor-pointer transition-colors"
-                  >
-                    {isUploadingSpecImages ? (
-                      <RefreshCw size={12} className="animate-spin" />
-                    ) : (
-                      <Upload size={12} />
-                    )}
-                    <span>{isUploadingSpecImages ? "PROCESSING PHOTOS..." : "UPLOAD PHOTOS FROM DEVICE (MULTIPLE)"}</span>
-                  </label>
-                  <span className="text-[8.5px] font-mono uppercase text-brand-text/60">
-                    or drag & drop anywhere here
-                  </span>
+                    <button
+                      type="button"
+                      onClick={() => handleCreateNewSpecimen(artifact)}
+                      className="px-3 py-1.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white font-mono text-[10px] font-black uppercase transition-colors cursor-pointer flex items-center gap-1.5"
+                    >
+                      <Plus size={12} />
+                      <span>ATTACH SPECIMEN</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleDeleteArtifact(artifact)}
+                      className="p-2 border border-red-500 text-red-500 hover:bg-red-500 hover:text-white transition-colors cursor-pointer"
+                      title="Delete Artifact"
+                    >
+                      <Trash2 size={14} />
+                    </button>
+                  </div>
                 </div>
-              </div>
 
-              {/* External Image URL input */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  placeholder="Or paste external image URL (https://... or /assets/images/...)"
-                  value={newImageUrl}
-                  onChange={e => setNewImageUrl(e.target.value)}
-                  className="flex-1 p-2 bg-brand-bg border-2 border-brand-text text-xs focus:outline-none font-mono"
-                />
-                <button
-                  type="button"
-                  onClick={() => {
-                    if (newImageUrl.trim()) {
-                      setSpecImages([...specImages, newImageUrl.trim()]);
-                      setNewImageUrl("");
-                      showNotification("success", "Photo URL added.");
-                    }
-                  }}
-                  className="px-4 py-2 bg-brand-surface hover:bg-brand-text hover:text-brand-bg text-brand-text font-black text-xs uppercase border-2 border-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-colors cursor-pointer"
-                >
-                  + ADD URL
-                </button>
-              </div>
+                {/* Expanded Child Specimens Matrix */}
+                {isExpanded && (
+                  <div className="p-6 bg-brand-bg space-y-4">
+                    <div className="flex items-center justify-between border-b border-brand-text/20 pb-2">
+                      <span className="font-mono text-xs font-black uppercase tracking-wider text-brand-text">
+                        PHYSICAL MANIFESTATIONS ({artifact.specimens?.length || 0} SPECIMENS)
+                      </span>
+                      <span className="font-mono text-[10px] text-brand-text/60 uppercase">
+                        COMPLETE SET ACQUISITION DISCOUNT: {artifact.completeSetDiscountPercent || 10}%
+                      </span>
+                    </div>
 
-              {/* Photos Gallery Preview */}
-              {specImages.length > 0 && (
-                <div className="space-y-1.5 pt-2">
-                  <span className="text-[8.5px] font-mono font-bold uppercase text-brand-text/80 block">
-                    ATTACHED SPECIMEN PHOTOS ({specImages.length}) &bull; FIRST IMAGE IS CARD COVER:
-                  </span>
-                  <div className="grid grid-cols-3 sm:grid-cols-6 gap-3">
-                    {specImages.map((img, i) => (
-                      <div key={i} className="relative aspect-square bg-brand-bg border-2 border-brand-text p-1 shadow-[2px_2px_0px_#050505] group">
-                        <img src={img} alt={`Specimen view ${i + 1}`} referrerPolicy="no-referrer" className="w-full h-full object-contain" />
-                        {i === 0 && (
-                          <span className="absolute top-1 left-1 bg-brand-accent text-white text-[7px] font-black uppercase px-1 py-0.5 border border-brand-text leading-none">
-                            PRIMARY
-                          </span>
-                        )}
+                    {!artifact.specimens || artifact.specimens.length === 0 ? (
+                      <div className="p-8 border border-dashed border-brand-text/30 text-center space-y-2">
+                        <p className="font-mono text-xs text-brand-text/60 uppercase">
+                          No physical specimens attached to this design yet.
+                        </p>
                         <button
                           type="button"
-                          onClick={() => setSpecImages(specImages.filter((_, idx) => idx !== i))}
-                          className="absolute -top-1.5 -right-1.5 bg-red-600 text-white p-0.5 rounded-full border border-brand-text hover:scale-110 transition-transform cursor-pointer"
-                          title="Remove photo"
+                          onClick={() => handleCreateNewSpecimen(artifact)}
+                          className="px-3 py-1.5 bg-brand-text text-brand-bg font-mono text-[10px] font-black uppercase cursor-pointer"
                         >
-                          <X size={10} />
+                          Attach First Specimen
                         </button>
                       </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                    ) : (
+                      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                        {artifact.specimens.map((spec) => (
+                          <div 
+                            key={spec.id}
+                            className="bg-brand-surface border border-brand-text p-4 space-y-3 relative group"
+                          >
+                            <div className="flex items-start gap-3">
+                              <div className="w-14 h-14 bg-black border border-brand-text shrink-0 overflow-hidden flex items-center justify-center">
+                                <img 
+                                  src={spec.images?.[0] || artifact.graphic || "/Logo_NoName.jpg"} 
+                                  alt={spec.medium}
+                                  className="w-full h-full object-cover"
+                                />
+                              </div>
 
-            <div className="pt-6 mt-6 border-t-2 border-brand-text flex justify-end gap-3">
-              <button
-                type="button"
-                onClick={() => {
-                  resetSpecimenForm();
-                  setActiveTab("registry");
-                }}
-                className="px-4 py-2 border-2 border-brand-text text-xs font-black uppercase hover:bg-brand-text/10"
-              >
-                CANCEL
-              </button>
-              <button
-                type="submit"
-                disabled={isSubmittingSpecimen}
-                className="px-6 py-2 bg-brand-text text-brand-bg text-xs font-black uppercase border-2 border-brand-text hover:bg-brand-accent hover:text-white shadow-[2px_2px_0px_#050505] cursor-pointer disabled:opacity-50 flex items-center gap-2"
-              >
-                {isSubmittingSpecimen ? (
-                  <>
-                    <RefreshCw size={13} className="animate-spin text-brand-accent" />
-                    <span>{editingSpecimen ? "SAVING CHANGES..." : "MANIFESTING SPECIMEN..."}</span>
-                  </>
-                ) : (
-                  <span>{editingSpecimen ? "SAVE SPECIMEN CHANGES" : "MANIFEST SPECIMEN"}</span>
-                )}
-              </button>
-            </div>
-          </div>
-        </form>
-      )}
+                              <div className="flex-1 min-w-0">
+                                <span className="font-mono text-[9px] font-black text-brand-accent uppercase block">
+                                  {spec.sku}
+                                </span>
+                                <h4 className="font-mono text-sm font-black text-brand-text uppercase truncate">
+                                  {spec.medium}
+                                </h4>
+                                <div className="font-mono text-xs font-bold text-brand-text mt-0.5">
+                                  PKR {spec.price?.toLocaleString()}
+                                </div>
+                              </div>
+                            </div>
 
-      {/* Custom In-App Artifact Delete Confirmation Modal (Iframe Sandbox Safe) */}
-      {artifactToDelete && (
-        <div 
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-text/80 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => !isDeleting && setArtifactToDelete(null)}
-        >
-          <div 
-            className="w-full max-w-lg bg-brand-surface border-4 border-brand-text p-6 shadow-[8px_8px_0px_#050505] space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b-2 border-brand-text/30 pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <Trash2 size={18} />
-                <span className="text-xs font-mono font-black uppercase tracking-wider">
-                  CONFIRM ARCHIVAL PURGE
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => !isDeleting && setArtifactToDelete(null)}
-                disabled={isDeleting}
-                className="text-brand-text/60 hover:text-brand-text disabled:opacity-50 p-1 cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
+                            <div className="font-mono text-[10px] text-brand-text/70 space-y-1 border-t border-brand-text/10 pt-2">
+                              <div className="flex justify-between">
+                                <span>INVENTORY:</span>
+                                <span className="font-bold">{spec.inventory} UNITS</span>
+                              </div>
+                              <div className="flex justify-between">
+                                <span>GARMENT / CUT:</span>
+                                <span>{spec.garmentType || "Standard"}</span>
+                              </div>
+                              {spec.color && (
+                                <div className="flex justify-between">
+                                  <span>SHADE:</span>
+                                  <span>{spec.color}</span>
+                                </div>
+                              )}
+                            </div>
 
-            <div className="space-y-3">
-              <div className="p-3 bg-red-500/10 border-2 border-red-600/40 text-xs font-mono">
-                <p className="font-bold text-red-700 uppercase">
-                  PERMANENT DELETION WARNING //
-                </p>
-                <p className="text-brand-text mt-1">
-                  You are about to permanently purge Artifact:
-                </p>
-                <p className="font-black text-sm uppercase mt-1 text-brand-text">
-                  &quot;{artifactToDelete.name}&quot; ({artifactToDelete.artifactId || artifactToDelete.id})
-                </p>
-                <p className="text-[10px] text-brand-text/80 mt-2">
-                  This will simultaneously delete all associated physical specimens and medium records from both Firestore and local registries.
-                </p>
-              </div>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setArtifactToDelete(null)}
-                disabled={isDeleting}
-                className="px-4 py-2 bg-brand-surface border-2 border-brand-text text-xs font-black uppercase hover:bg-brand-text/10 disabled:opacity-50 cursor-pointer shadow-[2px_2px_0px_#050505]"
-              >
-                CANCEL
-              </button>
-              <button
-                type="button"
-                onClick={executeDeleteArtifact}
-                disabled={isDeleting}
-                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white border-2 border-brand-text text-xs font-black uppercase flex items-center gap-2 shadow-[2px_2px_0px_#050505] disabled:opacity-50 cursor-pointer"
-              >
-                {isDeleting ? (
-                  <>
-                    <RefreshCw size={13} className="animate-spin" />
-                    <span>DELETING...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={13} />
-                    <span>DELETE PERMANENTLY</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Custom In-App Specimen Delete Confirmation Modal */}
-      {specimenToDelete && (
-        <div 
-          role="dialog"
-          aria-modal="true"
-          className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-brand-text/80 backdrop-blur-xs animate-in fade-in duration-150"
-          onClick={() => !isDeleting && setSpecimenToDelete(null)}
-        >
-          <div 
-            className="w-full max-w-md bg-brand-surface border-4 border-brand-text p-6 shadow-[8px_8px_0px_#050505] space-y-5"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <div className="flex items-center justify-between border-b-2 border-brand-text/30 pb-3">
-              <div className="flex items-center gap-2 text-red-600">
-                <Trash2 size={18} />
-                <span className="text-xs font-mono font-black uppercase tracking-wider">
-                  REMOVE SPECIMEN
-                </span>
-              </div>
-              <button
-                type="button"
-                onClick={() => !isDeleting && setSpecimenToDelete(null)}
-                disabled={isDeleting}
-                className="text-brand-text/60 hover:text-brand-text disabled:opacity-50 p-1 cursor-pointer"
-              >
-                <X size={16} />
-              </button>
-            </div>
-
-            <div className="space-y-2 text-xs font-mono">
-              <p className="text-brand-text">
-                Remove physical specimen <span className="font-bold text-brand-text">&quot;{specimenToDelete.medium}&quot;</span> (SKU: {specimenToDelete.sku}) from this artifact?
-              </p>
-            </div>
-
-            <div className="flex items-center justify-end gap-3 pt-2">
-              <button
-                type="button"
-                onClick={() => setSpecimenToDelete(null)}
-                disabled={isDeleting}
-                className="px-4 py-2 bg-brand-surface border-2 border-brand-text text-xs font-black uppercase hover:bg-brand-text/10 disabled:opacity-50 cursor-pointer shadow-[2px_2px_0px_#050505]"
-              >
-                CANCEL
-              </button>
-              <button
-                type="button"
-                onClick={executeDeleteSpecimen}
-                disabled={isDeleting}
-                className="px-5 py-2 bg-red-600 hover:bg-red-700 text-white border-2 border-brand-text text-xs font-black uppercase flex items-center gap-2 shadow-[2px_2px_0px_#050505] disabled:opacity-50 cursor-pointer"
-              >
-                {isDeleting ? (
-                  <>
-                    <RefreshCw size={13} className="animate-spin" />
-                    <span>REMOVING...</span>
-                  </>
-                ) : (
-                  <>
-                    <Trash2 size={13} />
-                    <span>CONFIRM REMOVAL</span>
-                  </>
-                )}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* ─── DEDICATED WORKING LOADING SCREEN FOR SPECIMEN MANIFESTATION & EDITS ─── */}
-      <AnimatePresence>
-        {specimenLoadingState && (
-          <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.18 }}
-            className="fixed inset-0 z-[120] flex items-center justify-center p-4 sm:p-6 bg-brand-bg/95 backdrop-blur-md overflow-y-auto select-none"
-            role="status"
-            aria-live="polite"
-          >
-            <motion.div
-              initial={{ scale: 0.95, y: 14 }}
-              animate={{ scale: 1, y: 0 }}
-              exit={{ scale: 0.95, y: 14 }}
-              transition={{ type: "spring", stiffness: 350, damping: 25 }}
-              className="w-full max-w-lg bg-brand-surface border-4 border-brand-text shadow-[12px_12px_0px_#050505] p-5 sm:p-7 space-y-5 font-mono text-brand-text"
-              onClick={(e) => e.stopPropagation()}
-            >
-              {/* Header Bar */}
-              <div className="flex items-center justify-between border-b-2 border-brand-text/30 pb-3">
-                <div className="flex items-center gap-2.5">
-                  <span className="w-3 h-3 bg-brand-accent shadow-[1.5px_1.5px_0px_#050505] animate-pulse" />
-                  <span className="text-[10px] sm:text-xs font-black uppercase tracking-wider text-brand-text">
-                    SYMBOLIC PROTOCOL // {specimenLoadingState.mode === "manifest" ? "SPECIMEN MANIFESTATION" : specimenLoadingState.mode === "edit" ? "SPECIMEN REVISION" : "RETRIEVING RECORD"}
-                  </span>
-                </div>
-                <div className="flex items-center gap-1.5 text-[8.5px] font-mono text-brand-text/70 bg-brand-bg border border-brand-text/40 px-2 py-0.5 shadow-[1px_1px_0px_#050505]">
-                  <RefreshCw size={10} className="animate-spin text-brand-accent" />
-                  <span>ACTIVE</span>
-                </div>
-              </div>
-
-              {/* Title & Subtitle */}
-              <div className="space-y-1">
-                <h3 className="text-sm sm:text-base font-black uppercase tracking-tight text-brand-text">
-                  {specimenLoadingState.title}
-                </h3>
-                <p className="text-[9.5px] sm:text-[10.5px] font-bold text-brand-text/70 uppercase">
-                  {specimenLoadingState.subtitle}
-                </p>
-              </div>
-
-              {/* Specimen Preview Card */}
-              <div className="bg-brand-bg border-2 border-brand-text p-3 shadow-[4px_4px_0px_#050505] flex gap-3.5 items-center">
-                <div className="w-16 h-16 sm:w-20 sm:h-20 shrink-0 bg-brand-surface border-2 border-brand-text/60 overflow-hidden relative flex items-center justify-center">
-                  {specimenLoadingState.image ? (
-                    <img
-                      src={specimenLoadingState.image}
-                      alt={specimenLoadingState.specimenName}
-                      referrerPolicy="no-referrer"
-                      className="w-full h-full object-contain p-1"
-                    />
-                  ) : (
-                    <Box size={24} className="text-brand-text/40 animate-pulse" />
-                  )}
-                  <span className="absolute bottom-0 inset-x-0 bg-brand-text/90 text-brand-bg text-[6.5px] font-black uppercase text-center py-0.5">
-                    SPECIMEN
-                  </span>
-                </div>
-
-                <div className="flex-1 min-w-0 space-y-1">
-                  <div className="flex items-center gap-1.5 flex-wrap">
-                    <span className="px-1.5 py-0.5 bg-brand-accent text-white text-[7.5px] font-black uppercase tracking-wider shadow-[1px_1px_0px_#050505]">
-                      {specimenLoadingState.sku}
-                    </span>
-                    {specimenLoadingState.price !== undefined && (
-                      <span className="text-[9px] font-black text-brand-text">
-                        PKR {specimenLoadingState.price.toLocaleString()}
-                      </span>
+                            <div className="flex items-center justify-end gap-2 pt-2 border-t border-brand-text/10">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  soundManager.playClick(0.12);
+                                  setEditingSpecimen({ parentArtifact: artifact, specimen: spec });
+                                }}
+                                className="px-2.5 py-1 border border-brand-text text-[9px] font-mono font-bold uppercase hover:bg-brand-text hover:text-brand-bg transition-colors cursor-pointer"
+                              >
+                                Edit Spec
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => handleDeleteSpecimen(spec.id)}
+                                className="p-1 text-red-500 hover:text-red-700 transition-colors cursor-pointer"
+                                title="Remove specimen"
+                              >
+                                <Trash2 size={13} />
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
                     )}
                   </div>
-
-                  <h4 className="font-black text-xs uppercase text-brand-text truncate">
-                    {specimenLoadingState.specimenName}
-                  </h4>
-
-                  <div className="text-[8.5px] text-brand-text/70 uppercase font-bold truncate">
-                    {specimenLoadingState.medium}
-                  </div>
-
-                  {specimenLoadingState.material && (
-                    <div className="text-[7.5px] text-brand-text/60 uppercase truncate">
-                      {specimenLoadingState.material}
-                    </div>
-                  )}
-                </div>
+                )}
               </div>
+            );
+          })}
+        </div>
+      )}
 
-              {/* Live Step Checklist */}
-              <div className="border border-brand-text/30 bg-brand-surface/60 p-3 space-y-2 text-[9px] font-mono">
-                <div className="flex items-center justify-between text-brand-text font-black uppercase border-b border-brand-text/20 pb-1">
-                  <span>MANIFESTATION PIPELINE</span>
-                  <span className="text-brand-accent">
-                    STEP {specimenLoadingState.progress >= 100 ? "3/3" : specimenLoadingState.progress >= 70 ? "3/3" : specimenLoadingState.progress >= 40 ? "2/3" : "1/3"}
-                  </span>
+      {/* Artifact Edit Modal */}
+      {editingArtifact && (
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-brand-surface border-2 border-brand-text max-w-2xl w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto shadow-[6px_6px_0px_#050505]">
+            <div className="flex items-center justify-between border-b-2 border-brand-text pb-4">
+              <h3 className="font-mono text-lg font-black uppercase text-brand-text">
+                {editingArtifact.id ? "EDIT ARTIFACT SPECIFICATION" : "CREATE NEW ARTIFACT"}
+              </h3>
+              <button 
+                type="button" 
+                onClick={() => setEditingArtifact(null)}
+                className="p-1 hover:bg-brand-text hover:text-brand-bg transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4 font-mono text-xs">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Artifact ID / Code
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.artifactId || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, artifactId: e.target.value })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-mono"
+                    placeholder="e.g. SYM-01"
+                  />
                 </div>
 
-                <div className="space-y-1.5 pt-0.5">
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      {specimenLoadingState.progress >= 40 ? (
-                        <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
-                      ) : (
-                        <RefreshCw size={11} className="animate-spin text-brand-accent shrink-0" />
-                      )}
-                      <span className={specimenLoadingState.progress >= 40 ? "text-brand-text line-through opacity-70" : "text-brand-text font-bold"}>
-                        1. ENCODE SPECIMEN PARAMETERS & MEDIA
-                      </span>
-                    </span>
-                    <span className="text-[8px] uppercase text-brand-text/60">
-                      {specimenLoadingState.progress >= 40 ? "COMPLETED" : "PROCESSING"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      {specimenLoadingState.progress >= 80 ? (
-                        <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
-                      ) : specimenLoadingState.progress >= 40 ? (
-                        <RefreshCw size={11} className="animate-spin text-brand-accent shrink-0" />
-                      ) : (
-                        <span className="w-2.5 h-2.5 border border-brand-text/40 inline-block shrink-0" />
-                      )}
-                      <span className={specimenLoadingState.progress >= 80 ? "text-brand-text line-through opacity-70" : specimenLoadingState.progress >= 40 ? "text-brand-text font-bold" : "text-brand-text/50"}>
-                        2. SYNCHRONIZE CLOUD FIRESTORE REGISTRY
-                      </span>
-                    </span>
-                    <span className="text-[8px] uppercase text-brand-text/60">
-                      {specimenLoadingState.progress >= 80 ? "COMPLETED" : specimenLoadingState.progress >= 40 ? "SYNCING" : "QUEUED"}
-                    </span>
-                  </div>
-
-                  <div className="flex items-center justify-between">
-                    <span className="flex items-center gap-1.5">
-                      {specimenLoadingState.progress >= 100 ? (
-                        <CheckCircle2 size={12} className="text-emerald-600 shrink-0" />
-                      ) : specimenLoadingState.progress >= 80 ? (
-                        <RefreshCw size={11} className="animate-spin text-brand-accent shrink-0" />
-                      ) : (
-                        <span className="w-2.5 h-2.5 border border-brand-text/40 inline-block shrink-0" />
-                      )}
-                      <span className={specimenLoadingState.progress >= 100 ? "text-brand-text line-through opacity-70" : specimenLoadingState.progress >= 80 ? "text-brand-text font-bold" : "text-brand-text/50"}>
-                        3. COMMIT LOCAL CACHE & STOREFRONT INDEX
-                      </span>
-                    </span>
-                    <span className="text-[8px] uppercase text-brand-text/60">
-                      {specimenLoadingState.progress >= 100 ? "VERIFIED" : specimenLoadingState.progress >= 80 ? "INDEXING" : "QUEUED"}
-                    </span>
-                  </div>
-                </div>
-              </div>
-
-              {/* Progress Bar & Numeric Readout */}
-              <div className="space-y-1.5">
-                <div className="flex items-center justify-between text-[9px] font-black uppercase text-brand-text">
-                  <span className="truncate pr-2 text-brand-accent font-bold">
-                    &gt; {specimenLoadingState.stage}
-                  </span>
-                  <span className="font-mono bg-brand-text text-brand-bg px-1.5 py-0.5 shadow-[1px_1px_0px_#050505] shrink-0">
-                    {specimenLoadingState.progress}%
-                  </span>
-                </div>
-
-                <div className="w-full bg-brand-bg border-2 border-brand-text h-3 sm:h-3.5 p-0.5 shadow-[2px_2px_0px_#050505] overflow-hidden">
-                  <motion.div
-                    className="h-full bg-brand-accent shadow-[0_0_8px_rgba(255,69,0,0.6)]"
-                    initial={{ width: 0 }}
-                    animate={{ width: `${specimenLoadingState.progress}%` }}
-                    transition={{ ease: "easeOut", duration: 0.25 }}
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Design Name *
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.name || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, name: e.target.value })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-mono font-bold"
+                    placeholder="e.g. SUMUD"
                   />
                 </div>
               </div>
 
-              {/* Industrial Footer Status */}
-              <div className="pt-2 border-t-2 border-brand-text/20 flex items-center justify-between text-[8px] font-mono text-brand-text/60 uppercase">
-                <span>NODE: ARCHIVE-FIRESTORE // CANONICAL</span>
-                <span className="text-brand-text font-bold">DO NOT CLOSE TAB</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Primary Symbol Inscription
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.inscription || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, inscription: e.target.value })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-serif font-bold text-sm"
+                    placeholder="e.g. صُمُود"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Collection Name
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.collectionName || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, collectionName: e.target.value })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-mono"
+                    placeholder="e.g. Be Palestine"
+                  />
+                </div>
               </div>
-            </motion.div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+
+              <div>
+                <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                  Short Description
+                </label>
+                <textarea
+                  value={editingArtifact.shortDescription || ""}
+                  onChange={(e) => setEditingArtifact({ ...editingArtifact, shortDescription: e.target.value })}
+                  rows={2}
+                  className="w-full bg-brand-bg border border-brand-text p-2 font-mono"
+                  placeholder="Concise theological/ideological summary..."
+                />
+              </div>
+
+              {/* 4 Pillars of Symbolic Representation */}
+              <div className="p-4 bg-brand-bg border border-brand-text/30 space-y-3">
+                <span className="font-black text-brand-accent uppercase block">
+                  // 4 PILLARS OF SYMBOLIC REPRESENTATION
+                </span>
+
+                <div>
+                  <label className="font-bold text-[10px] text-brand-text/70 uppercase block mb-0.5">
+                    Pillar 01: Doctrine / Scriptural Roots (What the symbol represents)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.pillar1Represents || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, pillar1Represents: e.target.value })}
+                    className="w-full bg-brand-surface border border-brand-text/40 p-1.5 font-sans text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[10px] text-brand-text/70 uppercase block mb-0.5">
+                    Pillar 02: Intent / Selection (Why it was chosen)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.pillar2WhyChosen || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, pillar2WhyChosen: e.target.value })}
+                    className="w-full bg-brand-surface border border-brand-text/40 p-1.5 font-sans text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[10px] text-brand-text/70 uppercase block mb-0.5">
+                    Pillar 03: Public Witness (What wearing communicates)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.pillar3Communicates || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, pillar3Communicates: e.target.value })}
+                    className="w-full bg-brand-surface border border-brand-text/40 p-1.5 font-sans text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-[10px] text-brand-text/70 uppercase block mb-0.5">
+                    Pillar 04: Inward Burden (What idea the wearer carries)
+                  </label>
+                  <input
+                    type="text"
+                    value={editingArtifact.pillar4WearerCarries || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, pillar4WearerCarries: e.target.value })}
+                    className="w-full bg-brand-surface border border-brand-text/40 p-1.5 font-sans text-xs"
+                  />
+                </div>
+              </div>
+
+              {/* Graphic Asset */}
+              <div>
+                <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                  Central Artwork Graphic Asset
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={editingArtifact.graphic || ""}
+                    onChange={(e) => setEditingArtifact({ ...editingArtifact, graphic: e.target.value })}
+                    className="flex-1 bg-brand-bg border border-brand-text p-2 font-mono"
+                    placeholder="/Logo_NoName.jpg or data URL"
+                  />
+                  <label className="px-3 py-2 bg-brand-text text-brand-bg font-bold cursor-pointer shrink-0 uppercase text-[10px]">
+                    UPLOAD
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, "artifact_graphic")}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t-2 border-brand-text pt-4">
+              <button
+                type="button"
+                onClick={() => setEditingArtifact(null)}
+                className="px-4 py-2 border border-brand-text font-mono text-xs uppercase cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveArtifact}
+                disabled={saving}
+                className="px-5 py-2 bg-brand-accent text-white font-mono text-xs font-black uppercase border border-brand-text cursor-pointer disabled:opacity-50"
+              >
+                {saving ? "SAVING..." : "SAVE ARTIFACT"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Specimen Edit Modal */}
+      {editingSpecimen && (
+        <div className="fixed inset-0 z-[200] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
+          <div className="bg-brand-surface border-2 border-brand-text max-w-lg w-full p-6 space-y-6 max-h-[90vh] overflow-y-auto shadow-[6px_6px_0px_#050505]">
+            <div className="flex items-center justify-between border-b-2 border-brand-text pb-4">
+              <div>
+                <span className="font-mono text-[10px] text-brand-accent font-black uppercase">
+                  PARENT: {editingSpecimen.parentArtifact.name}
+                </span>
+                <h3 className="font-mono text-lg font-black uppercase text-brand-text">
+                  CONFIGURE PHYSICAL SPECIMEN
+                </h3>
+              </div>
+              <button 
+                type="button" 
+                onClick={() => setEditingSpecimen(null)}
+                className="p-1 hover:bg-brand-text hover:text-brand-bg transition-colors cursor-pointer"
+              >
+                <X size={18} />
+              </button>
+            </div>
+
+            <div className="space-y-4 font-mono text-xs">
+              <div>
+                <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                  Physical Medium *
+                </label>
+                <select
+                  value={editingSpecimen.specimen.medium || ""}
+                  onChange={(e) => {
+                    const mediumName = e.target.value;
+                    const matched = CANONICAL_SPECIMEN_MEDIUMS.find(m => m.name === mediumName);
+                    setEditingSpecimen({
+                      ...editingSpecimen,
+                      specimen: {
+                        ...editingSpecimen.specimen,
+                        medium: mediumName,
+                        mediumCategory: matched?.category || "wear",
+                        price: matched?.defaultPrice || editingSpecimen.specimen.price || 4200,
+                        garmentType: matched?.defaultGarmentTypes?.[0] || editingSpecimen.specimen.garmentType
+                      }
+                    });
+                  }}
+                  className="w-full bg-brand-bg border border-brand-text p-2 font-mono font-bold"
+                >
+                  {CANONICAL_SPECIMEN_MEDIUMS.map((m) => (
+                    <option key={m.id} value={m.name}>
+                      {m.name} ({m.category.toUpperCase()})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Price (PKR) *
+                  </label>
+                  <input
+                    type="number"
+                    value={editingSpecimen.specimen.price || ""}
+                    onChange={(e) => setEditingSpecimen({
+                      ...editingSpecimen,
+                      specimen: { ...editingSpecimen.specimen, price: Number(e.target.value) }
+                    })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-mono font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Inventory Units
+                  </label>
+                  <input
+                    type="number"
+                    value={editingSpecimen.specimen.inventory ?? 20}
+                    onChange={(e) => setEditingSpecimen({
+                      ...editingSpecimen,
+                      specimen: { ...editingSpecimen.specimen, inventory: Number(e.target.value) }
+                    })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Garment Cut / Silhouette
+                  </label>
+                  <input
+                    type="text"
+                    value={editingSpecimen.specimen.garmentType || ""}
+                    onChange={(e) => setEditingSpecimen({
+                      ...editingSpecimen,
+                      specimen: { ...editingSpecimen.specimen, garmentType: e.target.value }
+                    })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-mono"
+                    placeholder="e.g. Drop Shoulder"
+                  />
+                </div>
+
+                <div>
+                  <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                    Color Shade
+                  </label>
+                  <input
+                    type="text"
+                    value={editingSpecimen.specimen.color || ""}
+                    onChange={(e) => setEditingSpecimen({
+                      ...editingSpecimen,
+                      specimen: { ...editingSpecimen.specimen, color: e.target.value }
+                    })}
+                    className="w-full bg-brand-bg border border-brand-text p-2 font-mono"
+                    placeholder="e.g. Carbon Black"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="font-bold text-brand-text/70 uppercase block mb-1">
+                  Specimen Photo / Asset
+                </label>
+                <div className="flex items-center gap-3">
+                  <input
+                    type="text"
+                    value={editingSpecimen.specimen.images?.[0] || ""}
+                    onChange={(e) => setEditingSpecimen({
+                      ...editingSpecimen,
+                      specimen: { ...editingSpecimen.specimen, images: [e.target.value] }
+                    })}
+                    className="flex-1 bg-brand-bg border border-brand-text p-2 font-mono text-[11px]"
+                    placeholder="Image URL or upload"
+                  />
+                  <label className="px-3 py-2 bg-brand-text text-brand-bg font-bold cursor-pointer shrink-0 uppercase text-[10px]">
+                    UPLOAD
+                    <input
+                      type="file"
+                      accept="image/*"
+                      className="hidden"
+                      onChange={(e) => handleImageUpload(e, "specimen_image")}
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex items-center justify-end gap-3 border-t-2 border-brand-text pt-4">
+              <button
+                type="button"
+                onClick={() => setEditingSpecimen(null)}
+                className="px-4 py-2 border border-brand-text font-mono text-xs uppercase cursor-pointer"
+              >
+                Cancel
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveSpecimen}
+                disabled={saving}
+                className="px-5 py-2 bg-brand-accent text-white font-mono text-xs font-black uppercase border border-brand-text cursor-pointer disabled:opacity-50"
+              >
+                {saving ? "SAVING..." : "SAVE SPECIMEN"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,186 +1,308 @@
 /**
  * @license
  * SPDX-License-Identifier: Apache-2.0
+ * 
+ * SYMBOLIC MUSLIMS — Product Service & Catalog Interface
+ * Bridges the Artifact & Specimen architecture with the storefront Product presentation models.
  */
 
-import { Product, Category, CategoryTaxonomy, ProductVariant } from "../types";
-import { fetchArtifactsWithSpecimens } from "./artifactService";
-
-export const CANONICAL_CATEGORIES = [
-  { id: "wear", name: "Wear", label: "WEAR" as CategoryTaxonomy, description: "Daily armor of modesty and dignified public posture", order: 1 },
-  { id: "carry", name: "Carry", label: "CARRY" as CategoryTaxonomy, description: "Instruments of transit and stewardship", order: 2 },
-  { id: "headwear", name: "Headwear", label: "HEADWEAR" as CategoryTaxonomy, description: "Crown of focus and gaze-restraint", order: 3 },
-  { id: "vessels", name: "Vessels", label: "VESSELS" as CategoryTaxonomy, description: "Rituals of sustenance and contemplation", order: 4 }
-];
-
-export const CANONICAL_COLLECTIONS = [
-  { id: "be-symbolic", name: "Be Symbolic", label: "BE SYMBOLIC", order: 1 },
-  { id: "be-palestine", name: "Be Palestine", label: "BE PALESTINE", order: 2 }
-];
+import { Product, ProductVariant, Category } from "../types";
+import { 
+  fetchArtifacts, 
+  fetchSpecimens, 
+  getCachedArtifacts, 
+  getCachedSpecimens, 
+  convertArtifactsAndSpecimensToProducts,
+  deleteArtifact,
+  deleteSpecimen,
+  saveArtifact,
+  saveSpecimen,
+  CANONICAL_SPECIMEN_MEDIUMS
+} from "./artifactService";
+import { 
+  isFirestoreQuotaExceeded, 
+  markFirestoreQuotaExceeded, 
+  isQuotaError 
+} from "./firestoreCircuitBreaker";
 
 export const STUDIO_FALLBACK_IMAGE = "/Logo_NoName.jpg";
 
-export async function fetchCategories(): Promise<Category[]> {
-  return CANONICAL_CATEGORIES;
+export const CANONICAL_CATEGORIES: Category[] = [
+  { id: "wear", name: "Wear", label: "WEAR", order: 1, description: "Dense 400+ GSM Boxy drop-shoulder armor & heavyweight pullovers." },
+  { id: "headwear", name: "Headwear", label: "HEADWEAR", order: 2, description: "Structured 6-panel brushed twill crowns with brass clasps." },
+  { id: "vessels", name: "Vessels", label: "VESSELS", order: 3, description: "Dense 1,280°C high-fired artisan stoneware ceramics." },
+  { id: "statements", name: "Statements", label: "STATEMENTS", order: 4, description: "Ideological witness textiles and archival statement objects." },
+  { id: "objects", name: "Objects", label: "OBJECTS", order: 5, description: "Archival symbolic possessions, field carries & physical specimens." }
+];
+
+export const CANONICAL_COLLECTIONS: { id: string; label: string }[] = [
+  { id: "be-palestine", label: "BE PALESTINE" },
+  { id: "be-symbolic", label: "BE SYMBOLIC" },
+  { id: "series-01", label: "SERIES 01" }
+];
+
+export const PRODUCTS_CACHE_KEY = "sym_products_cache_v1";
+
+/**
+ * Normalizes product category taxonomy
+ */
+export function normalizeProductCategory(product: Partial<Product> | null | undefined): string {
+  if (!product) return "OBJECTS";
+  if (product.category) return product.category;
+  if (product.medium) return product.medium;
+  if (product.categoryId) {
+    const found = CANONICAL_CATEGORIES.find(c => c.id.toLowerCase() === product.categoryId?.toLowerCase());
+    if (found) return found.name || found.label;
+    return product.categoryId;
+  }
+  return "OBJECTS";
 }
 
+/**
+ * Normalizes collection name
+ */
+export function normalizeProductCollection(product: Partial<Product> | null | undefined): string {
+  if (!product) return "SYMBOLIC";
+  if (product.collectionName) return product.collectionName;
+  return "SYMBOLIC";
+}
+
+/**
+ * Resolves all product image assets with fallback safety
+ */
+export function resolveProductImages(product: Partial<Product> | null | undefined): string[] {
+  if (!product) return [STUDIO_FALLBACK_IMAGE];
+  const list: string[] = [];
+  if (Array.isArray(product.images) && product.images.length > 0) {
+    list.push(...product.images.filter(Boolean));
+  }
+  if (product.thumbnailImage && !list.includes(product.thumbnailImage)) {
+    list.unshift(product.thumbnailImage);
+  }
+  if (product.graphic && !list.includes(product.graphic)) {
+    list.push(product.graphic);
+  }
+  return list.length > 0 ? list : [STUDIO_FALLBACK_IMAGE];
+}
+
+/**
+ * Checks if product is publicly available
+ */
+export function isProductLive(product: Partial<Product> | null | undefined): boolean {
+  if (!product) return false;
+  if (product.availability === false) return false;
+  if (product.status === "draft" || product.status === "archived") return false;
+  return true;
+}
+
+/**
+ * Checks if product is hidden/draft
+ */
+export function isProductDraftOrHidden(product: Partial<Product> | null | undefined): boolean {
+  return !isProductLive(product);
+}
+
+/**
+ * Retrieves cached products synchronously from localStorage and artifact models
+ */
+export function getCachedProducts(): Product[] {
+  const artifacts = getCachedArtifacts();
+  const specimens = getCachedSpecimens();
+  if (artifacts.length > 0 || specimens.length > 0) {
+    return convertArtifactsAndSpecimensToProducts(artifacts, specimens);
+  }
+  if (typeof window !== "undefined") {
+    try {
+      const raw = localStorage.getItem(PRODUCTS_CACHE_KEY);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+      }
+    } catch {}
+  }
+  return [];
+}
+
+/**
+ * Fetch all products from Artifact & Specimen engine
+ */
 export async function fetchProducts(): Promise<Product[]> {
   try {
-    const artifactsWithSpecs = await fetchArtifactsWithSpecimens();
-    const products: Product[] = [];
-    
-    artifactsWithSpecs.forEach(art => {
-      if (art.specimens && art.specimens.length > 0) {
-        art.specimens.forEach(spec => {
-          products.push({
-            id: spec.id,
-            productId: spec.sku,
-            name: `${art.name} — ${spec.medium}`,
-            description: art.description,
-            price: spec.price,
-            categoryId: spec.mediumCategory || "wear",
-            category: spec.mediumCategory || "wear",
-            sku: spec.sku,
-            images: spec.images?.length > 0 ? spec.images : art.images,
-            thumbnailImage: spec.thumbnailImage || art.thumbnailImage || art.graphic,
-            parentArtifactId: art.artifactId,
-            graphic: art.graphic,
-            material: spec.material,
-            weight: spec.weight,
-            fit: spec.fit,
-            printMethod: spec.printMethod,
-            edition: spec.edition,
-            color: spec.color,
-            colorHex: spec.colorHex,
-            capacity: spec.capacity,
-            dimensions: spec.dimensions,
-            careInstructions: spec.careInstructions,
-            finish: spec.finish,
-            inscription: art.inscription,
-            pillar1Represents: art.pillar1Represents,
-            pillar2WhyChosen: art.pillar2WhyChosen,
-            pillar3Communicates: art.pillar3Communicates,
-            pillar4WearerCarries: art.pillar4WearerCarries,
-            statement: art.pillar4WearerCarries,
-            representation: art.pillar2WhyChosen,
-            wearingCommunicates: art.pillar3Communicates,
-            statementMeaning: art.pillar1Represents,
-            medium: spec.medium,
-            artifactClassification: (spec.mediumCategory || "wear").toUpperCase(),
-            artifactTags: art.tags,
-            inventory: spec.inventory,
-            availability: spec.availability,
-            status: spec.status,
-            collectionName: art.collectionName,
-            symbolicTagline: art.symbolicTagline
-          });
-        });
-      } else {
-        products.push({
-          id: art.id,
-          productId: art.artifactId,
-          name: art.name,
-          description: art.description,
-          price: art.setPriceOverride || 4200,
-          categoryId: "wear",
-          category: "wear",
-          sku: art.artifactId,
-          images: art.images,
-          thumbnailImage: art.thumbnailImage || art.graphic,
-          parentArtifactId: art.artifactId,
-          graphic: art.graphic,
-          inscription: art.inscription,
-          pillar1Represents: art.pillar1Represents,
-          pillar2WhyChosen: art.pillar2WhyChosen,
-          pillar3Communicates: art.pillar3Communicates,
-          pillar4WearerCarries: art.pillar4WearerCarries,
-          statement: art.pillar4WearerCarries,
-          representation: art.pillar2WhyChosen,
-          wearingCommunicates: art.pillar3Communicates,
-          statementMeaning: art.pillar1Represents,
-          medium: "Artifact",
-          artifactClassification: "WEAR",
-          artifactTags: art.tags,
-          inventory: 10,
-          availability: true,
-          status: art.status,
-          collectionName: art.collectionName,
-          symbolicTagline: art.symbolicTagline
-        });
-      }
-    });
-
+    const [artifacts, specimens] = await Promise.all([
+      fetchArtifacts(),
+      fetchSpecimens()
+    ]);
+    const products = convertArtifactsAndSpecimensToProducts(artifacts, specimens);
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(products));
+      } catch {}
+    }
     return products;
   } catch (err) {
-    console.warn("Failed to fetch products, returning cache:", err);
+    console.warn("Could not fetch products live, using cached products:", err);
     return getCachedProducts();
   }
 }
 
-export function getCachedProducts(): Product[] {
-  if (typeof window === "undefined") return [];
-  try {
-    const raw = localStorage.getItem("sym_products_cache");
-    if (raw) return JSON.parse(raw);
-  } catch {}
-  return [];
+/**
+ * Fetch taxonomy categories
+ */
+export async function fetchCategories(): Promise<Category[]> {
+  return CANONICAL_CATEGORIES;
 }
 
-export function normalizeProductCategory(catOrProd?: any): string {
-  if (!catOrProd) return "wear";
-  const cat = typeof catOrProd === "string" ? catOrProd : (catOrProd.category || catOrProd.categoryId || "wear");
-  const lower = String(cat).toLowerCase();
-  if (lower.includes("carry")) return "carry";
-  if (lower.includes("head")) return "headwear";
-  if (lower.includes("vessel")) return "vessels";
-  return "wear";
-}
-
-export function normalizeProductCollection(colOrProd?: any): string {
-  if (!colOrProd) return "be-symbolic";
-  const col = typeof colOrProd === "string" ? colOrProd : (colOrProd.collectionName || colOrProd.category || "be-symbolic");
-  const lower = String(col).toLowerCase();
-  if (lower.includes("palestine") || lower.includes("falasteen")) return "be-palestine";
-  return "be-symbolic";
-}
-
-export function isProductLive(prod: Product): boolean {
-  if (prod.status === "archived") return false;
-  return prod.availability !== false;
-}
-
-export function isProductDraftOrHidden(prod: Product | string): boolean {
-  if (typeof prod === "string") return false;
-  return prod.status === "draft" || prod.availability === false;
-}
-
+/**
+ * Fetch single product by id, slug, or sku
+ */
 export async function fetchProductBySlugOrId(idOrSlug: string): Promise<Product | null> {
-  const prods = await fetchProducts();
-  return prods.find(p => p.id === idOrSlug || p.productId === idOrSlug || p.sku === idOrSlug) || null;
+  const cached = getCachedProducts();
+  const lower = idOrSlug.toLowerCase();
+  const match = cached.find(p => 
+    p.id.toLowerCase() === lower || 
+    p.productId?.toLowerCase() === lower || 
+    p.sku?.toLowerCase() === lower
+  );
+  if (match) return match;
+
+  const refreshed = await fetchProducts();
+  return refreshed.find(p => 
+    p.id.toLowerCase() === lower || 
+    p.productId?.toLowerCase() === lower || 
+    p.sku?.toLowerCase() === lower
+  ) || null;
 }
 
+/**
+ * Fetch variants for a product
+ */
 export async function fetchProductVariants(productId: string): Promise<ProductVariant[]> {
-  return [];
+  const cached = getCachedProducts();
+  const product = cached.find(p => p.id === productId);
+  if (!product) return [];
+
+  // Generate variants from available sizes & colors
+  const variants: ProductVariant[] = [];
+  const sizes = product.availableSizes && product.availableSizes.length > 0 ? product.availableSizes : ["One Size"];
+  const colors = product.availableColors && product.availableColors.length > 0 ? product.availableColors : [{ id: "standard", name: product.color || "Standard", hex: product.colorHex || "#1C1C1C" }];
+
+  for (const c of colors) {
+    for (const s of sizes) {
+      variants.push({
+        id: `var_${productId}_${c.id}_${s.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+        productId,
+        sku: `${product.sku || product.id}-${c.name.slice(0, 3).toUpperCase()}-${s}`,
+        price: product.price,
+        inventoryQuantity: product.inventory ?? 20,
+        inStock: (product.inventory ?? 20) > 0,
+        color: c.name,
+        colorHex: c.hex,
+        size: s
+      });
+    }
+  }
+
+  return variants;
 }
 
-export async function saveProductWithVariants(product: Product, variants: ProductVariant[]): Promise<void> {
-  // stub
+/**
+ * Save product with variants (Owner action)
+ */
+export async function saveProductWithVariants(
+  productData: Partial<Product>,
+  variantsData?: Partial<ProductVariant>[]
+): Promise<Product> {
+  const isSpecimen = Boolean(productData.parentArtifactId);
+
+  if (isSpecimen && productData.parentArtifactId) {
+    const savedSpecimen = await saveSpecimen({
+      id: productData.id || `spec_${Date.now()}`,
+      parentArtifactId: productData.parentArtifactId,
+      medium: productData.medium || "T-Shirt",
+      mediumCategory: (productData.category?.toLowerCase() as any) || "wear",
+      sku: productData.sku || `SPEC-${Date.now()}`,
+      price: productData.price || 4200,
+      inventory: productData.inventory || 20,
+      availability: productData.availability !== false,
+      status: productData.availability === false ? "sold_out" : "available",
+      images: productData.images || [],
+      thumbnailImage: productData.thumbnailImage,
+      color: productData.color,
+      colorHex: productData.colorHex,
+      availableSizes: productData.availableSizes,
+      availableColors: productData.availableColors,
+      material: productData.material,
+      weight: productData.weight,
+      garmentType: productData.fit || productData.garmentTypes?.[0]?.name,
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    });
+
+    const refreshed = await fetchProducts();
+    const result = refreshed.find(p => p.id === savedSpecimen.id);
+    return result || (productData as Product);
+  }
+
+  const savedArtifact = await saveArtifact({
+    id: productData.id || `art_${Date.now()}`,
+    artifactId: productData.productId || `SYM-${Date.now()}`,
+    name: productData.name || "UNNAMED ARTIFACT",
+    shortDescription: productData.description || "",
+    description: productData.description || "",
+    graphic: productData.graphic || productData.images?.[0] || STUDIO_FALLBACK_IMAGE,
+    images: productData.images || [],
+    thumbnailImage: productData.thumbnailImage,
+    inscription: productData.inscription,
+    pillar1Represents: productData.pillar1Represents,
+    pillar2WhyChosen: productData.pillar2WhyChosen,
+    pillar3Communicates: productData.pillar3Communicates,
+    pillar4WearerCarries: productData.pillar4WearerCarries,
+    collectionName: productData.collectionName || "Be Symbolic",
+    tags: productData.artifactTags || [],
+    status: (productData.status as any) || "published",
+    specimenIds: productData.specimenIds || [],
+    createdAt: Date.now(),
+    updatedAt: Date.now()
+  });
+
+  const refreshed = await fetchProducts();
+  const result = refreshed.find(p => p.id === savedArtifact.id);
+  return result || (productData as Product);
 }
 
-export async function toggleProductAvailability(productId: string, availability: boolean): Promise<void> {
-  // stub
-}
-
+/**
+ * Delete product and its variants
+ */
 export async function deleteProductAndVariants(productId: string): Promise<void> {
-  // stub
+  const cached = getCachedProducts();
+  const product = cached.find(p => p.id === productId);
+
+  if (product?.parentArtifactId) {
+    await deleteSpecimen(productId);
+  } else {
+    await deleteArtifact(productId);
+  }
 }
 
-export function resolveProductImages(prodOrImages?: any): string[] {
-  if (!prodOrImages) return [STUDIO_FALLBACK_IMAGE];
-  if (typeof prodOrImages === "string") return [prodOrImages];
-  if (Array.isArray(prodOrImages)) return prodOrImages.length > 0 ? prodOrImages : [STUDIO_FALLBACK_IMAGE];
-  if (prodOrImages.images && Array.isArray(prodOrImages.images) && prodOrImages.images.length > 0) return prodOrImages.images;
-  if (prodOrImages.thumbnailImage) return [prodOrImages.thumbnailImage];
-  if (prodOrImages.graphic) return [prodOrImages.graphic];
-  return [STUDIO_FALLBACK_IMAGE];
+/**
+ * Toggle product availability status
+ */
+export async function toggleProductAvailability(productId: string, availability: boolean): Promise<void> {
+  const cached = getCachedProducts();
+  const product = cached.find(p => p.id === productId);
+  if (!product) return;
+
+  if (product.parentArtifactId) {
+    const allSpecs = getCachedSpecimens();
+    const spec = allSpecs.find(s => s.id === productId);
+    if (spec) {
+      await saveSpecimen({ ...spec, availability, status: availability ? "available" : "sold_out" });
+    }
+  } else {
+    const allArts = getCachedArtifacts();
+    const art = allArts.find(a => a.id === productId);
+    if (art) {
+      await saveArtifact({ ...art, status: availability ? "published" : "draft" });
+    }
+  }
 }
