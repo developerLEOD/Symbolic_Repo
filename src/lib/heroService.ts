@@ -19,6 +19,8 @@
 
 import { CustomHeroConfig, HeroLayerConfig, BackdropConfig, HeroButtonsConfig } from "../types";
 import bundledDefaultConfig from "../data/heroConfig.json";
+import { doc, getDoc, setDoc } from "firebase/firestore";
+import { db } from "./firebase";
 
 export const HERO_STORAGE_KEY = "sym_hero_json_metadata_v1";
 
@@ -378,49 +380,80 @@ export function setCachedHeroConfig(config: CustomHeroConfig): void {
 
 /**
  * Asynchronously loads hero configuration from the canonical JSON metadata file (/api/hero-config or /hero-config.json)
- * with zero Firestore calls and zero Firestore credit consumption.
+ * and falls back to persistent Firestore setting (/settings/hero) on cold start.
+ * 
+ * ZERO CONTINUOUS LISTENERS: Only reads once on initial boot; no streaming listeners.
  */
 export async function getHeroConfig(): Promise<CustomHeroConfig> {
   if (typeof window === "undefined") {
     return getCachedHeroConfig();
   }
 
-  // 1. Try fetching from /api/hero-config (Express backend) or static /hero-config.json
+  // 1. Try fetching fresh JSON from /api/hero-config (Express backend)
   try {
     const response = await fetch("/api/hero-config", {
-      headers: { "Cache-Control": "no-cache" }
+      headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+      cache: "no-store",
     });
     if (response.ok) {
       const data = await response.json();
-      const normalized = normalizeHeroConfig(data);
-      setCachedHeroConfig(normalized);
-      return normalized;
+      if (data && (data.midLayer || data.bgLayer || data.canvasHeight)) {
+        const normalized = normalizeHeroConfig(data);
+        setCachedHeroConfig(normalized);
+        return normalized;
+      }
     }
   } catch {}
 
-  // 2. Fallback to static public /hero-config.json
+  // 2. Try fetching persistent document from Firestore (doc /settings/hero) — single read, 0 continuous listeners
+  try {
+    const heroDocRef = doc(db, "settings", "hero");
+    const snap = await getDoc(heroDocRef);
+    if (snap.exists()) {
+      const dbData = snap.data();
+      const heroPayload = dbData.configJson ? JSON.parse(dbData.configJson) : dbData;
+      if (heroPayload && (heroPayload.midLayer || heroPayload.bgLayer || heroPayload.canvasHeight)) {
+        const normalized = normalizeHeroConfig(heroPayload);
+        setCachedHeroConfig(normalized);
+        // Sync to server API in background so JSON file has it
+        fetch("/api/hero-config", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(normalized),
+        }).catch(() => {});
+        return normalized;
+      }
+    }
+  } catch {}
+
+  // 3. Fallback to static public /hero-config.json
   try {
     const staticResp = await fetch("/hero-config.json", {
-      headers: { "Cache-Control": "no-cache" }
+      headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+      cache: "no-store",
     });
     if (staticResp.ok) {
       const data = await staticResp.json();
-      const normalized = normalizeHeroConfig(data);
-      setCachedHeroConfig(normalized);
-      return normalized;
+      if (data && (data.midLayer || data.bgLayer)) {
+        const normalized = normalizeHeroConfig(data);
+        setCachedHeroConfig(normalized);
+        return normalized;
+      }
     }
   } catch {}
 
-  // 3. Fallback to localStorage or bundled default JSON
+  // 4. Fallback to localStorage or bundled default JSON
   return getCachedHeroConfig();
 }
 
 /**
- * Dedicated JSON File Saver:
+ * Dedicated JSON File & Setting Saver:
  * Persists the elements' coordinates, sizes, layers, animations and text metadata
- * into the JSON file via /api/hero-config and local storage.
- * 
- * ZERO FIRESTORE LEAKAGE: Does NOT write to Firestore settings or revisions.
+ * into:
+ * 1. LocalStorage (instant UI responsiveness)
+ * 2. Window CustomEvent (instant in-memory cross-component sync)
+ * 3. /api/hero-config (disk JSON file)
+ * 4. Firestore /settings/hero (cloud persistence across instances/restarts, 1 single write)
  */
 export async function saveHeroConfig(
   updates: Partial<CustomHeroConfig>,
@@ -430,29 +463,42 @@ export async function saveHeroConfig(
   const current = getCachedHeroConfig();
   const sourceApp = getSourceAppIdentifier();
 
-  const payload: CustomHeroConfig = {
+  const payload: CustomHeroConfig = normalizeHeroConfig({
     ...current,
     ...updates,
     updatedAt: Date.now(),
     updatedBy: updatedByEmail || "owner",
     sourceApp,
-  };
+  });
 
   // 1. Update localStorage immediately for fast responsive feedback
   setCachedHeroConfig(payload);
 
-  // 2. Persist directly into the JSON file on disk via server API
   if (typeof window !== "undefined") {
+    // 2. Dispatch window event for instant in-memory update across Main Hero & Studio
+    window.dispatchEvent(new CustomEvent("sym_hero_config_updated", { detail: payload }));
+
+    // 3. Persist directly into the JSON file on disk via server API
+    fetch("/api/hero-config", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    }).catch((err) => {
+      console.warn("Could not save to /api/hero-config:", err);
+    });
+
+    // 4. Also store in Firestore document (/settings/hero) — 1 single write, zero real-time leakage
     try {
-      await fetch("/api/hero-config", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      const heroDocRef = doc(db, "settings", "hero");
+      setDoc(heroDocRef, {
+        ...payload,
+        configJson: JSON.stringify(payload),
+        updatedAt: Date.now(),
+        updatedBy: updatedByEmail || "owner",
+      }, { merge: true }).catch((err) => {
+        console.warn("Could not write hero config to Firestore settings:", err);
       });
-      window.dispatchEvent(new CustomEvent("sym_hero_config_updated", { detail: payload }));
-    } catch (err) {
-      console.warn("Could not save to /api/hero-config, saved locally:", err);
-    }
+    } catch {}
   }
 
   return payload;

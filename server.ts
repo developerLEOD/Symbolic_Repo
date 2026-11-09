@@ -95,6 +95,10 @@ app.post("/api/upload-hero-graphic", (req, res) => {
 // Hero JSON Metadata Endpoints (Zero-Firestore, fully decoupled)
 app.get("/api/hero-config", (_req, res) => {
   try {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
     const publicPath = path.resolve(__dirname, "public", "hero-config.json");
     const distPath = path.resolve(__dirname, "dist", "hero-config.json");
     const filePath = fs.existsSync(publicPath) ? publicPath : (fs.existsSync(distPath) ? distPath : null);
@@ -116,7 +120,16 @@ app.post("/api/hero-config", (req, res) => {
       return res.status(400).json({ error: "Invalid hero config payload" });
     }
 
+    const publicPath = path.resolve(__dirname, "public", "hero-config.json");
+    let existing: any = {};
+    if (fs.existsSync(publicPath)) {
+      try {
+        existing = JSON.parse(fs.readFileSync(publicPath, "utf-8"));
+      } catch {}
+    }
+
     const payloadWithTimestamp = {
+      ...existing,
       ...payload,
       updatedAt: Date.now(),
     };
@@ -124,18 +137,9 @@ app.post("/api/hero-config", (req, res) => {
     const jsonString = JSON.stringify(payloadWithTimestamp, null, 2);
 
     // Save to public/hero-config.json
-    const publicPath = path.resolve(__dirname, "public", "hero-config.json");
     fs.writeFileSync(publicPath, jsonString, "utf-8");
 
-    // Also sync to src/data/heroConfig.json if directory exists
-    const srcDataPath = path.resolve(__dirname, "src", "data", "heroConfig.json");
-    try {
-      if (fs.existsSync(path.dirname(srcDataPath))) {
-        fs.writeFileSync(srcDataPath, jsonString, "utf-8");
-      }
-    } catch {}
-
-    // In production, also sync to dist if present
+    // In production or if dist exists, sync to dist
     const distPath = path.resolve(__dirname, "dist", "hero-config.json");
     try {
       if (fs.existsSync(path.dirname(distPath))) {
@@ -143,6 +147,7 @@ app.post("/api/hero-config", (req, res) => {
       }
     } catch {}
 
+    res.setHeader("Cache-Control", "no-store");
     return res.json({ success: true, config: payloadWithTimestamp });
   } catch (err: any) {
     return res.status(500).json({ error: err?.message || "Failed to save hero config" });

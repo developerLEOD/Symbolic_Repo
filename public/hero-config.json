@@ -1,16 +1,16 @@
 {
   "version": "1.0",
-  "updatedAt": 1700000000000,
+  "updatedAt": 1794220406276,
   "isEnabled": true,
   "activeEditingLayer": "mid",
-  "canvasHeight": 700,
+  "canvasHeight": 720,
   "showCoordinates": false,
   "showCanvasBoundingBox": true,
   "canvasOverflowVisible": true,
   "backdrop": {
     "isEnabled": false,
     "imageUrl": "",
-    "opacity": 1.0
+    "opacity": 1
   },
   "heroButtons": {
     "showButtons": true,
@@ -55,7 +55,7 @@
     "posY": 100,
     "size": 380,
     "rotation": 0,
-    "opacity": 1.0,
+    "opacity": 1,
     "transitionDirection": "bottom",
     "transitionSpeed": "spring",
     "transitionDelay": 0.15,
@@ -81,7 +81,7 @@
     "posY": 68,
     "size": 110,
     "rotation": 0,
-    "opacity": 1.0,
+    "opacity": 1,
     "transitionDirection": "top",
     "transitionSpeed": "snappy",
     "transitionDelay": 0.3,

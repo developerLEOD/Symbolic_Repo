@@ -53,7 +53,8 @@ import {
   DEFAULT_BACKDROP,
   DEFAULT_HERO_BUTTONS,
   normalizeHeroConfig,
-  getHeroConfig, 
+  getHeroConfig,
+  getCachedHeroConfig, 
   saveHeroConfig, 
   resetHeroConfig,
   downloadHeroConfigJson
@@ -78,7 +79,7 @@ interface OwnerHeroManagerProps {
 
 
 export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabChange, onClose }: OwnerHeroManagerProps) {
-  const [config, setConfig] = useState<CustomHeroConfig>(DEFAULT_HERO_CONFIG);
+  const [config, setConfig] = useState<CustomHeroConfig>(() => getCachedHeroConfig());
   const [activeLayerId, setActiveLayerId] = useState<HeroLayerId>("mid");
   const [activeObjectId, setActiveObjectId] = useState<string>("graphic");
   const [previewDeviceMode, setPreviewDeviceMode] = useState<"desktop" | "mobile">("desktop");
@@ -101,6 +102,20 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
     });
     return () => unsub();
   }, []);
+
+  // Debounced auto-save: automatically writes to hero-config.json and local storage 400ms after last adjustment
+  const isFirstMountRef = useRef(true);
+  useEffect(() => {
+    if (isFirstMountRef.current) {
+      isFirstMountRef.current = false;
+      return;
+    }
+    const timer = setTimeout(() => {
+      saveHeroConfig(config, userEmail, false).catch(() => {});
+    }, 400);
+
+    return () => clearTimeout(timer);
+  }, [config, userEmail]);
   
   // Animation replay trigger key for testing
   const [previewKey, setPreviewKey] = useState(0);
@@ -878,8 +893,9 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
         {(onClose || onTabChange) && (
           <button
             type="button"
-            onClick={() => {
+            onClick={async () => {
               soundManager.playClick(0.08);
+              await saveHeroConfig(config, userEmail, true);
               if (onTabChange) onTabChange("artifacts");
               else if (onClose) onClose();
             }}
@@ -981,9 +997,12 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           {onViewStorefront && (
             <button
               type="button"
-              onClick={onViewStorefront}
+              onClick={async () => {
+                await saveHeroConfig(config, userEmail, true);
+                onViewStorefront();
+              }}
               className="p-1 bg-brand-text text-brand-bg hover:bg-[#FF4500] hover:text-white border border-brand-text transition-colors cursor-pointer"
-              title="View Live Storefront"
+              title="View Live Storefront (Saves changes)"
             >
               <ExternalLink size={11} />
             </button>
