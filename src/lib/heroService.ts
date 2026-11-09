@@ -534,64 +534,126 @@ export async function summonRepoGraphics(
   const nextMidGraphics: GraphicObject[] = [...(currentConfig.midLayer?.graphicObjects || [])];
   const nextBgGraphics: GraphicObject[] = [...(currentConfig.bgLayer?.graphicObjects || [])];
   const nextFgGraphics: GraphicObject[] = [...(currentConfig.fgLayer?.graphicObjects || [])];
+  let nextBackdrop: BackdropConfig = { ...(currentConfig.backdrop || DEFAULT_BACKDROP) };
 
   let addedCount = 0;
 
   scannedItems.forEach((item) => {
     const targetUrl = item.avatarUrl || item.assetPath;
-    const existsInMid = nextMidGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
-    const existsInBg = nextBgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
-    const existsInFg = nextFgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
-    const isMainAvatar = currentConfig.midLayer?.avatarUrl === targetUrl;
+    const targetLayer = item.layer || "mid";
 
-    if (!existsInMid && !existsInBg && !existsInFg && !isMainAvatar) {
-      const gridX = 25 + ((addedCount % 4) * 16);
-      const gridY = 30 + (Math.floor(addedCount / 4) * 18);
-
-      const graphicObj: GraphicObject = {
-        id: item.id || `gfx_sum_${Date.now()}_${addedCount}`,
-        serialNumber: item.serialNumber || `SYM-GFX-${String(addedCount).padStart(2, "0")}`,
-        assetPath: item.assetPath || targetUrl,
-        avatarUrl: targetUrl,
-        avatarAlt: item.name || item.avatarAlt || `Graphic ${addedCount + 1}`,
-        posX: Math.min(85, Math.max(15, gridX)),
-        posY: Math.min(85, Math.max(20, gridY)),
-        size: item.layer === "bg" ? 320 : item.layer === "fg" ? 140 : 260,
-        rotation: 0,
-        opacity: item.layer === "bg" ? 0.25 : 1,
-        transitionDirection: item.layer === "fg" ? "top" : "bottom",
-        transitionSpeed: "spring",
-        transitionDelay: 0.1 + (addedCount * 0.05),
-        hoverEffect: "none",
-        disableIdleAnimation: false,
-        shadow: false,
-        border: false,
-      };
-
-      if (item.layer === "bg") {
-        nextBgGraphics.push(graphicObj);
-      } else if (item.layer === "fg") {
-        nextFgGraphics.push(graphicObj);
-      } else {
-        nextMidGraphics.push(graphicObj);
+    if (targetLayer === "backdrop") {
+      if (!nextBackdrop.imageUrl || nextBackdrop.imageUrl !== targetUrl) {
+        nextBackdrop = {
+          isEnabled: true,
+          imageUrl: targetUrl,
+          opacity: nextBackdrop.opacity ?? 1,
+        };
+        addedCount++;
       }
-      addedCount++;
+    } else if (targetLayer === "bg") {
+      const existsInBg = nextBgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      if (!existsInBg) {
+        const gridX = 25 + ((nextBgGraphics.length % 4) * 16);
+        const gridY = 30 + (Math.floor(nextBgGraphics.length / 4) * 18);
+        const graphicObj: GraphicObject = {
+          id: item.id || `gfx_bg_${Date.now()}_${nextBgGraphics.length}`,
+          serialNumber: item.serialNumber || `SYM-BG-${String(nextBgGraphics.length).padStart(2, "0")}`,
+          assetPath: item.assetPath || targetUrl,
+          avatarUrl: targetUrl,
+          avatarAlt: item.name || item.avatarAlt || `Background Graphic ${nextBgGraphics.length + 1}`,
+          posX: Math.min(85, Math.max(15, gridX)),
+          posY: Math.min(85, Math.max(20, gridY)),
+          size: 320,
+          rotation: 0,
+          opacity: 0.25,
+          transitionDirection: "fade",
+          transitionSpeed: "smooth",
+          transitionDelay: 0.1 + (nextBgGraphics.length * 0.05),
+          hoverEffect: "none",
+          disableIdleAnimation: false,
+          shadow: false,
+          border: false,
+        };
+        nextBgGraphics.push(graphicObj);
+        addedCount++;
+      }
+    } else if (targetLayer === "fg") {
+      const existsInFg = nextFgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      if (!existsInFg) {
+        const gridX = 25 + ((nextFgGraphics.length % 4) * 16);
+        const gridY = 30 + (Math.floor(nextFgGraphics.length / 4) * 18);
+        const graphicObj: GraphicObject = {
+          id: item.id || `gfx_fg_${Date.now()}_${nextFgGraphics.length}`,
+          serialNumber: item.serialNumber || `SYM-FG-${String(nextFgGraphics.length).padStart(2, "0")}`,
+          assetPath: item.assetPath || targetUrl,
+          avatarUrl: targetUrl,
+          avatarAlt: item.name || item.avatarAlt || `Foreground Graphic ${nextFgGraphics.length + 1}`,
+          posX: Math.min(85, Math.max(15, gridX)),
+          posY: Math.min(85, Math.max(20, gridY)),
+          size: 140,
+          rotation: 0,
+          opacity: 1,
+          transitionDirection: "top",
+          transitionSpeed: "snappy",
+          transitionDelay: 0.1 + (nextFgGraphics.length * 0.05),
+          hoverEffect: "none",
+          disableIdleAnimation: false,
+          shadow: false,
+          border: false,
+        };
+        nextFgGraphics.push(graphicObj);
+        addedCount++;
+      }
+    } else {
+      // mid / avatar layer
+      const existsInMid = nextMidGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const isMainAvatar = currentConfig.midLayer?.avatarUrl === targetUrl;
+      if (!existsInMid && !isMainAvatar) {
+        const gridX = 25 + ((nextMidGraphics.length % 4) * 16);
+        const gridY = 30 + (Math.floor(nextMidGraphics.length / 4) * 18);
+        const graphicObj: GraphicObject = {
+          id: item.id || `gfx_mid_${Date.now()}_${nextMidGraphics.length}`,
+          serialNumber: item.serialNumber || `SYM-AV-${String(nextMidGraphics.length).padStart(2, "0")}`,
+          assetPath: item.assetPath || targetUrl,
+          avatarUrl: targetUrl,
+          avatarAlt: item.name || item.avatarAlt || `Avatar Graphic ${nextMidGraphics.length + 1}`,
+          posX: Math.min(85, Math.max(15, gridX)),
+          posY: Math.min(85, Math.max(20, gridY)),
+          size: 260,
+          rotation: 0,
+          opacity: 1,
+          transitionDirection: "bottom",
+          transitionSpeed: "spring",
+          transitionDelay: 0.1 + (nextMidGraphics.length * 0.05),
+          hoverEffect: "none",
+          disableIdleAnimation: false,
+          shadow: false,
+          border: false,
+        };
+        nextMidGraphics.push(graphicObj);
+        addedCount++;
+      }
     }
   });
 
   const nextConfig: CustomHeroConfig = {
     ...currentConfig,
+    backdrop: nextBackdrop,
     midLayer: {
       ...currentConfig.midLayer,
+      isEnabled: true,
       graphicObjects: nextMidGraphics,
       slideshowEnabled: nextMidGraphics.length > 0 ? true : currentConfig.midLayer?.slideshowEnabled,
     },
     bgLayer: {
       ...currentConfig.bgLayer,
+      isEnabled: nextBgGraphics.length > 0 ? true : (currentConfig.bgLayer?.isEnabled ?? false),
       graphicObjects: nextBgGraphics,
     },
     fgLayer: {
       ...currentConfig.fgLayer,
+      isEnabled: nextFgGraphics.length > 0 ? true : (currentConfig.fgLayer?.isEnabled ?? false),
       graphicObjects: nextFgGraphics,
     },
   };
