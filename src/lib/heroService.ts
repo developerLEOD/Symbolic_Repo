@@ -137,6 +137,7 @@ export const DEFAULT_HERO_CONFIG: CustomHeroConfig = {
   canvasOverflowVisible: true,
   backdrop: DEFAULT_BACKDROP,
   heroButtons: DEFAULT_HERO_BUTTONS,
+  gridOpacity: 0.12,
 };
 
 /**
@@ -231,9 +232,10 @@ export function normalizeHeroConfig(input?: Partial<CustomHeroConfig>): CustomHe
     bgLayer: baseBg,
     midLayer: baseMid,
     fgLayer: baseFg,
-    backdrop: baseBackdrop,
-    heroButtons: baseButtons,
-  };
+  backdrop: baseBackdrop,
+  heroButtons: baseButtons,
+  gridOpacity: input.gridOpacity ?? DEFAULT_HERO_CONFIG.gridOpacity,
+};
 }
 
 /**

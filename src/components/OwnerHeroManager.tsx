@@ -1041,7 +1041,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
             } ${previewDeviceMode === "mobile" ? "border-x-4 border-b-4 border-brand-text rounded-b-3xl shadow-[6px_6px_0px_#050505]" : "border-0"} ${config.canvasOverflowVisible !== false ? "overflow-visible" : "overflow-hidden"} select-none cursor-crosshair group`}
             style={{
               ...(config.showCanvasBoundingBox !== false ? {
-                backgroundImage: "radial-gradient(#050505 1px, transparent 1px)",
+                backgroundImage: `radial-gradient(rgba(5, 5, 5, ${config.gridOpacity ?? 0.12}) 1px, transparent 1px)`,
                 backgroundSize: "24px 24px",
                 backgroundPosition: "center center",
               } : {})

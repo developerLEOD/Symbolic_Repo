@@ -523,6 +523,7 @@ export interface CustomHeroConfig {
   canvasHeight?: number;
   showCanvasBoundingBox?: boolean;
   canvasOverflowVisible?: boolean;
+  gridOpacity?: number;
   updatedAt?: number;
   updatedBy?: string;
   version?: number;

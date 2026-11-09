@@ -2015,6 +2015,19 @@ export default function HeroSidePanel({
                     className="w-full accent-brand-accent cursor-pointer"
                   />
                 </div>
+
+                <div className="space-y-1 pt-1.5 border-t border-brand-text/10">
+                  <div className="flex items-center justify-between text-[9px] font-black uppercase">
+                    <span>GRID DOTS OPACITY</span>
+                    <span className="text-brand-accent">{Math.round((config.gridOpacity ?? 0.12) * 100)}%</span>
+                  </div>
+                  <input 
+                    type="range" min={0} max={1} step={0.01}
+                    value={config.gridOpacity ?? 0.12}
+                    onChange={(e) => updateTopProp("gridOpacity", Number(e.target.value))}
+                    className="w-full accent-brand-accent cursor-pointer"
+                  />
+                </div>
               </div>
 
               {/* Bounding/Frame settings for Graphic only */}

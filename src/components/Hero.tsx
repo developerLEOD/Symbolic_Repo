@@ -685,7 +685,7 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
           minHeight: isMobile ? "100svh" : "100dvh",
           height: isMobile ? "100svh" : "100dvh",
           ...(config.showCanvasBoundingBox !== false ? {
-            backgroundImage: "radial-gradient(#050505 1px, transparent 1px)",
+            backgroundImage: `radial-gradient(rgba(5, 5, 5, ${config.gridOpacity ?? 0.12}) 1px, transparent 1px)`,
             backgroundSize: "28px 28px",
             backgroundPosition: "center center",
           } : {})
