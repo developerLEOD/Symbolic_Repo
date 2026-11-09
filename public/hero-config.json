@@ -1,6 +1,6 @@
 {
   "isEnabled": true,
-  "activeEditingLayer": "mid",
+  "activeEditingLayer": "bg",
   "avatarUrl": "",
   "avatarAlt": "SYMBOLIC Monolithic Emblem",
   "posX": 50,
@@ -41,7 +41,7 @@
         "avatarAlt": "circle",
         "posX": 37,
         "posY": 12,
-        "size": 400,
+        "size": 485,
         "rotation": 0,
         "opacity": 1,
         "transitionDirection": "fade",
@@ -53,7 +53,27 @@
         "border": false
       }
     ],
-    "textObjects": [],
+    "textObjects": [
+      {
+        "id": "1794244902130",
+        "text": "Be\nSymbolic",
+        "posX": 0,
+        "posY": 82,
+        "fontSize": 102,
+        "color": "#050505",
+        "rotation": 0,
+        "opacity": 1,
+        "transitionDirection": "bottom",
+        "transitionSpeed": "smooth",
+        "hoverEffect": "none",
+        "textAlign": "left",
+        "lineHeight": 0.8,
+        "letterSpacing": -5,
+        "fontWeight": 900,
+        "textTransform": "uppercase",
+        "italic": false
+      }
+    ],
     "slideshowEnabled": false,
     "slideshowInterval": 4,
     "slideshowTransition": "fade",
@@ -80,7 +100,7 @@
     "captionTitle": "SYMBOLIC // AVATAR",
     "captionSubtitle": "POSSESSION & IDENTITY",
     "slideshowEnabled": true,
-    "slideshowInterval": 5,
+    "slideshowInterval": 10,
     "slideshowTransition": "fade",
     "stickToBottom": true,
     "graphicObjects": [
