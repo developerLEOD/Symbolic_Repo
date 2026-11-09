@@ -1,6 +1,6 @@
 {
   "isEnabled": true,
-  "activeEditingLayer": "bg",
+  "activeEditingLayer": "mid",
   "avatarUrl": "",
   "avatarAlt": "SYMBOLIC Monolithic Emblem",
   "posX": 50,
@@ -239,10 +239,10 @@
         "border": false,
         "mobileEnabled": true,
         "mobilePosX": -4,
-        "mobilePosY": 28,
+        "mobilePosY": 27,
         "mobileRotation": 0,
-        "mobileSize": 405,
-        "mobileStickToBottom": false,
+        "mobileSize": 465,
+        "mobileStickToBottom": true,
         "deviceTarget": "both"
       },
       {
@@ -540,11 +540,11 @@
       "shadow": false,
       "border": false,
       "mobileEnabled": true,
-      "mobilePosX": -4,
+      "mobilePosX": 4,
       "mobilePosY": 28,
       "mobileRotation": 0,
-      "mobileSize": 405,
-      "mobileStickToBottom": false,
+      "mobileSize": 465,
+      "mobileStickToBottom": true,
       "deviceTarget": "both"
     },
     {
