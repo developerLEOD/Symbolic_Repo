@@ -693,7 +693,7 @@ export default function HeroSidePanel({
                     const zText = layerId === "backdrop" ? "Z-0" : (layerId === "bg" ? "Z-10" : layerId === "mid" ? "Z-20" : "Z-30");
 
                     return (
-                      <button
+                    <button
                         key={layerId}
                         type="button"
                         onClick={() => {
@@ -710,6 +710,9 @@ export default function HeroSidePanel({
                       >
                         <span className="text-[8.5px] font-black leading-tight">{label}</span>
                         <span className="text-[7.5px] opacity-70">({zText})</span>
+                        <span className="text-[7px] font-black uppercase mt-0.5 opacity-80">
+                          {layerId === "backdrop" ? (config.backdrop?.imageUrl ? 1 : 0) : ((layer as HeroLayerConfig)?.graphicObjects?.length || 0)} ITEMS
+                        </span>
                         <span className={`text-[7px] font-black uppercase tracking-wider mt-1 px-1 py-0.2 border ${
                           layer?.isEnabled ? "bg-brand-accent text-white border-brand-accent" : "bg-transparent text-brand-text/50 border-brand-text/30"
                         }`}>
