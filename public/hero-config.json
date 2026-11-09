@@ -100,7 +100,7 @@
     "captionTitle": "SYMBOLIC // AVATAR",
     "captionSubtitle": "POSSESSION & IDENTITY",
     "slideshowEnabled": true,
-    "slideshowInterval": 1,
+    "slideshowInterval": 10,
     "slideshowTransition": "fade",
     "stickToBottom": true,
     "graphicObjects": [
