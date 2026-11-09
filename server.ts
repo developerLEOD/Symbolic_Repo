@@ -98,15 +98,16 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
     const graphics: any[] = [];
     const imageRegex = /\.(png|jpe?g|webp|svg)$/i;
 
-    const scanDirectory = (dirPath: string, relativePrefix: string, layer: "mid" | "bg" | "fg" | "auto", categoryPrefix: string) => {
+    const scanDirectory = (dirPath: string, relativePrefix: string, layer: "mid" | "bg" | "fg" | "backdrop" | "auto", categoryPrefix: string) => {
       if (!fs.existsSync(dirPath)) return;
       const entries = fs.readdirSync(dirPath, { withFileTypes: true });
 
       let counter = 0;
       for (const entry of entries) {
         if (entry.isDirectory()) {
-          const subLayer = entry.name === "avatar" ? "mid" : entry.name === "background" ? "bg" : entry.name === "foreground" ? "fg" : layer;
-          scanDirectory(path.join(dirPath, entry.name), `${relativePrefix}/${entry.name}`, subLayer, entry.name.toUpperCase().slice(0, 2));
+          const subLayer = entry.name === "avatar" ? "mid" : entry.name === "background" ? "bg" : entry.name === "foreground" ? "fg" : entry.name === "backdrop" ? "backdrop" : layer;
+          const prefix = entry.name === "avatar" ? "AV" : entry.name === "background" ? "BG" : entry.name === "foreground" ? "FG" : entry.name === "backdrop" ? "BD" : categoryPrefix;
+          scanDirectory(path.join(dirPath, entry.name), `${relativePrefix}/${entry.name}`, subLayer, prefix);
         } else if (imageRegex.test(entry.name)) {
           const ext = path.extname(entry.name);
           const rawName = path.basename(entry.name, ext);
@@ -114,10 +115,11 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
           const serialNum = `SYM-${categoryPrefix}-${String(counter).padStart(2, "0")}`;
           counter++;
 
-          let targetLayer: "mid" | "bg" | "fg" = layer === "auto" ? "mid" : layer;
+          let targetLayer: "mid" | "bg" | "fg" | "backdrop" = layer === "auto" ? "mid" : layer;
           if (dirPath.includes("avatar")) targetLayer = "mid";
           else if (dirPath.includes("background")) targetLayer = "bg";
           else if (dirPath.includes("foreground")) targetLayer = "fg";
+          else if (dirPath.includes("backdrop")) targetLayer = "backdrop";
 
           const assetPath = `${relativePrefix}/${entry.name}`;
           graphics.push({
@@ -138,23 +140,6 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
 
     const srcImagesDir = path.resolve(__dirname, "public", "src", "assets", "images");
     scanDirectory(srcImagesDir, "/src/assets/images", "mid", "IMG");
-
-    const uploadsDir = path.resolve(__dirname, "public", "uploads", "hero");
-    scanDirectory(uploadsDir, "/uploads/hero", "mid", "UPL");
-
-    // Check root Logo_NoName.jpg if exists
-    const rootLogo = path.resolve(__dirname, "public", "Logo_NoName.jpg");
-    if (fs.existsSync(rootLogo)) {
-      graphics.push({
-        id: "gfx_root_monolith_logo",
-        serialNumber: "SYM-CORE-00",
-        name: "Monolith Emblem Logo",
-        assetPath: "/Logo_NoName.jpg",
-        avatarUrl: "/Logo_NoName.jpg",
-        avatarAlt: "Monolith Emblem Logo",
-        layer: "mid",
-      });
-    }
 
     return res.json({ success: true, count: graphics.length, graphics });
   } catch (err: any) {

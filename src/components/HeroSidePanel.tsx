@@ -69,8 +69,7 @@ import { soundManager } from "../lib/soundEffects";
 import { 
   subscribeAvatarGraphics, 
   addAvatarGraphicToDatabase, 
-  deleteAvatarGraphicFromDatabase,
-  uploadHeroGraphicFile 
+  deleteAvatarGraphicFromDatabase 
 } from "../lib/avatarGraphicsService";
 
 interface HeroSidePanelProps {
@@ -126,7 +125,6 @@ const HOVER_OPTIONS: { id: HeroHoverEffect; label: string }[] = [
 
 // Curated avatar & specimen presets for instant testing & slideshows
 const SAMPLE_AVATARS = [
-  { name: "SYMBOLIC Monolith Emblem", url: "/Logo_NoName.jpg" },
   { name: "Falasteen Kuffiyeh Hoodie", url: "/src/assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg" },
   { name: "Canvas Field Bag", url: "/src/assets/images/canvas_field_bag_1789233558525.jpg" },
   { name: "Structured Twill Cap", url: "/src/assets/images/structured_twill_cap_1789233572064.jpg" },
@@ -161,7 +159,6 @@ export default function HeroSidePanel({
     }
   };
   const [nudgeStep, setNudgeStep] = useState<number>(1);
-  const [isUploading, setIsUploading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   
@@ -169,10 +166,8 @@ export default function HeroSidePanel({
   const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
   const [newGraphicName, setNewGraphicName] = useState("");
   const [isAddingGraphicToDb, setIsAddingGraphicToDb] = useState(false);
-  const dbGraphicFileInputRef = useRef<HTMLInputElement>(null);
 
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Subscribe to live Avatar Graphics database collection
   useEffect(() => {
@@ -380,111 +375,6 @@ export default function HeroSidePanel({
       setTimeout(() => setSaveSuccess(false), 2500);
     } finally {
       setIsSaving(false);
-    }
-  };
-
-  // Handle image upload from computer — saves to dedicated /public/uploads/hero/ and persists
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    soundManager.playClick(0.1);
-    try {
-      // 1. Upload to dedicated /public/uploads/hero/ directory
-      const cleanName = file.name.replace(/\.[^/.]+$/, "");
-      const uploaded = await uploadHeroGraphicFile(file, cleanName);
-      const targetUrl = uploaded.url;
-
-      // 2. Also register in database catalog
-      try {
-        await addAvatarGraphicToDatabase({
-          name: cleanName.toUpperCase(),
-          imageInput: targetUrl,
-          createdByEmail: userEmail,
-        });
-      } catch {
-        // Continue even if database sync fails
-      }
-
-      // 3. Update local hero configuration
-      let nextConfig = { ...config };
-      if (activeLayerId === "backdrop") {
-        nextConfig = {
-          ...nextConfig,
-          backdrop: { ...(config.backdrop || DEFAULT_BACKDROP), imageUrl: targetUrl, isEnabled: true },
-        };
-      } else if (isMainGraphic) {
-        nextConfig = {
-          ...nextConfig,
-          [activeLayerId]: {
-            ...currentLayer,
-            avatarUrl: targetUrl,
-            avatarAlt: cleanName,
-            isEnabled: true,
-          },
-        };
-      } else if (selectedSecondaryGraphic) {
-        const newGraphics = [...(currentLayer.graphicObjects || [])];
-        newGraphics[selectedSecondaryGraphicIndex] = {
-          ...selectedSecondaryGraphic,
-          avatarUrl: targetUrl,
-          avatarAlt: cleanName,
-        };
-        nextConfig = {
-          ...nextConfig,
-          [activeLayerId]: {
-            ...currentLayer,
-            graphicObjects: newGraphics,
-          },
-        };
-      }
-
-      onUpdateConfig(nextConfig);
-
-      // 4. Auto-persist to hero-config.json
-      saveHeroConfig(nextConfig, userEmail).catch((err) => {
-        console.warn("Auto-save of hero-config.json failed:", err);
-      });
-    } catch (err: any) {
-      alert("Failed to upload image file: " + (err?.message || "Invalid file format"));
-    } finally {
-      setIsUploading(false);
-      if (e.target) e.target.value = "";
-    }
-  };
-
-  // Add custom Avatar Graphic directly to dedicated directory & database collection (`/avatar_graphics`)
-  const handleDirectUploadToDatabase = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsAddingGraphicToDb(true);
-    soundManager.playClick(0.12);
-    try {
-      const customName = newGraphicName.trim() || file.name.replace(/\.[^/.]+$/, "").toUpperCase();
-      const added = await addAvatarGraphicToDatabase({
-        name: customName,
-        imageInput: file,
-        createdByEmail: userEmail,
-      });
-      setNewGraphicName("");
-      // Automatically assign new graphic to active layer / graphic object
-      updateActiveObjectProps({
-        avatarUrl: added.url,
-        avatarAlt: added.name,
-      });
-      soundManager.playClick(0.16);
-
-      // Auto-persist active changes to hero-config.json
-      setTimeout(() => {
-        saveHeroConfig(config, userEmail).catch(() => {});
-      }, 500);
-    } catch (err: any) {
-      alert("Failed to add avatar graphic to database: " + (err?.message || "Invalid image"));
-    } finally {
-      setIsAddingGraphicToDb(false);
-      if (e.target) e.target.value = "";
     }
   };
 
@@ -796,15 +686,9 @@ export default function HeroSidePanel({
                       )}
                     </div>
                     <div className="flex-1">
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="w-full py-1.5 px-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text text-[8.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[1px_1px_0px_#050505] cursor-pointer"
-                      >
-                        <Upload size={11} />
-                        <span>{isUploading ? "UPLOADING..." : "UPLOAD BACKDROP"}</span>
-                      </button>
+                      <p className="text-[7.5px] font-mono text-brand-text/60 leading-tight">
+                        // Backdrop graphics are loaded directly from code repo: /assets/hero/backdrop
+                      </p>
                     </div>
                   </div>
 
@@ -1117,41 +1001,28 @@ export default function HeroSidePanel({
 
                   <div className="flex items-center gap-3">
                     <div className="w-14 h-14 bg-brand-surface border-2 border-brand-text shadow-[2px_2px_0px_#050505] shrink-0 overflow-hidden flex items-center justify-center p-1">
-                      <img 
-                        src={currentGraphicEntity?.avatarUrl || "/Logo_NoName.jpg"} 
-                        alt="Current Graphic" 
-                        style={{ opacity: currentGraphicEntity?.opacity ?? 1 }}
-                        className="w-full h-full object-contain"
-                      />
+                      {currentGraphicEntity?.avatarUrl ? (
+                        <img 
+                          src={currentGraphicEntity.avatarUrl} 
+                          alt="Current Graphic" 
+                          style={{ opacity: currentGraphicEntity?.opacity ?? 1 }}
+                          className="w-full h-full object-contain"
+                        />
+                      ) : (
+                        <span className="text-[7.5px] font-mono text-brand-text/40 font-bold">EMPTY</span>
+                      )}
                     </div>
 
                     <div className="flex-1 space-y-1.5">
-                      <input 
-                        type="file" 
-                        ref={fileInputRef} 
-                        accept="image/*" 
-                        onChange={handleFileUpload} 
-                        className="hidden" 
-                      />
-                      <button
-                        type="button"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={isUploading}
-                        className="w-full py-1.5 px-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text text-[8.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[1px_1px_0px_#050505] cursor-pointer disabled:opacity-50"
-                      >
-                        <Upload size={11} />
-                        <span>{isUploading ? "UPLOADING..." : "UPLOAD PNG / JPG"}</span>
-                      </button>
-
-                      <div className="space-y-1 pt-1">
+                      <div className="space-y-1">
                         <label className="text-[7.5px] font-black uppercase tracking-wider text-brand-text/60 block">
-                          OR PASTE IMAGE URL
+                          GRAPHIC IMAGE PATH / URL
                         </label>
                         <input
-                          type="url"
+                          type="text"
                           value={currentGraphicEntity?.avatarUrl || ""}
                           onChange={(e) => updateActiveObjectProps({ avatarUrl: e.target.value })}
-                          placeholder="https://..."
+                          placeholder="/assets/hero/..."
                           className="w-full bg-brand-surface border border-brand-text px-2 py-1 text-[8px] font-mono font-bold text-brand-text focus:outline-none focus:border-brand-accent"
                         />
                       </div>
@@ -1175,46 +1046,29 @@ export default function HeroSidePanel({
                     {/* Manual Add Graphic to Database Controls */}
                     <div className="p-2 bg-brand-surface border border-brand-text space-y-1.5">
                       <label className="text-[7.5px] font-black uppercase tracking-wider text-brand-text/70 block">
-                        + ADD NEW AVATAR GRAPHIC TO DATABASE
+                        + REGISTER CURRENT GRAPHIC URL IN CATALOG
                       </label>
-
-                      <input
-                        type="text"
-                        value={newGraphicName}
-                        onChange={(e) => setNewGraphicName(e.target.value)}
-                        placeholder="AVATAR GRAPHIC TITLE (e.g. EMBLEM 01)..."
-                        className="w-full bg-brand-bg border border-brand-text px-2 py-1 text-[8.5px] font-mono font-bold focus:outline-none focus:border-brand-accent"
-                      />
 
                       <div className="flex items-center gap-1.5">
                         <input
-                          type="file"
-                          ref={dbGraphicFileInputRef}
-                          accept="image/*"
-                          onChange={handleDirectUploadToDatabase}
-                          className="hidden"
+                          type="text"
+                          value={newGraphicName}
+                          onChange={(e) => setNewGraphicName(e.target.value)}
+                          placeholder="AVATAR GRAPHIC TITLE..."
+                          className="flex-1 bg-brand-bg border border-brand-text px-2 py-1 text-[8.5px] font-mono font-bold focus:outline-none focus:border-brand-accent"
                         />
-                        <button
-                          type="button"
-                          onClick={() => dbGraphicFileInputRef.current?.click()}
-                          disabled={isAddingGraphicToDb}
-                          className="flex-1 py-1 px-2 bg-brand-accent text-white hover:bg-black border border-brand-text text-[8px] font-black uppercase tracking-wider flex items-center justify-center gap-1 cursor-pointer disabled:opacity-50"
-                        >
-                          <Plus size={11} />
-                          <span>{isAddingGraphicToDb ? "SAVING TO DB..." : "UPLOAD FILE TO DB"}</span>
-                        </button>
 
                         <button
                           type="button"
                           onClick={async () => {
                             const url = currentGraphicEntity?.avatarUrl;
                             if (!url) {
-                              alert("Please enter or select an image URL first");
+                              alert("Please enter or select a graphic URL first");
                               return;
                             }
                             setIsAddingGraphicToDb(true);
                             try {
-                              const name = newGraphicName.trim() || "MANUAL DB GRAPHIC";
+                              const name = newGraphicName.trim() || "REPO GRAPHIC";
                               await addAvatarGraphicToDatabase({
                                 name,
                                 imageInput: url,
@@ -1231,7 +1085,7 @@ export default function HeroSidePanel({
                           disabled={isAddingGraphicToDb}
                           className="py-1 px-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text text-[8px] font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
                         >
-                          <span>SAVE CURRENT URL TO DB</span>
+                          <span>SAVE URL</span>
                         </button>
                       </div>
                     </div>

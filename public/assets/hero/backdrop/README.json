@@ -1,0 +1,7 @@
+{
+  "serialNumber": "SYM-BD-001",
+  "name": "Backdrop Layer Asset 01",
+  "category": "backdrop",
+  "path": "/assets/hero/backdrop/sample_bd.jpg",
+  "description": "Place manual backdrop image assets inside public/assets/hero/backdrop/ and reference them in hero config."
+}

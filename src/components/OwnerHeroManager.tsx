@@ -65,8 +65,7 @@ import { soundManager } from "../lib/soundEffects";
 import { 
   subscribeAvatarGraphics, 
   addAvatarGraphicToDatabase, 
-  deleteAvatarGraphicFromDatabase,
-  uploadHeroGraphicFile 
+  deleteAvatarGraphicFromDatabase 
 } from "../lib/avatarGraphicsService";
 import LiquidCarveButton from "./LiquidCarveButton";
 import HeroSidePanel from "./HeroSidePanel";
@@ -88,13 +87,10 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-  const [isUploading, setIsUploading] = useState(false);
   
   // Database Avatar Graphics catalog state & handlers
   const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
   const [newGraphicName, setNewGraphicName] = useState("");
-  const [isAddingGraphicToDb, setIsAddingGraphicToDb] = useState(false);
-  const dbGraphicFileInputRef = useRef<HTMLInputElement>(null);
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
 
   // Subscribe to live Avatar Graphics database collection
@@ -345,100 +341,6 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
     soundManager.playToggle(0.12);
     setPreviewKey((k) => k + 1);
   };
-
-  // Handle image upload from computer: saves to /public/uploads/hero/, stores in DB, and syncs to JSON
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsUploading(true);
-    soundManager.playClick(0.1);
-    try {
-      // 1. Upload to dedicated /public/uploads/hero/ directory
-      const uploadRes = await uploadHeroGraphicFile(file);
-
-      // 2. Store in Firestore database collection (/avatar_graphics)
-      const addedDb = await addAvatarGraphicToDatabase({
-        name: file.name.replace(/\.[^/.]+$/, ""),
-        imageInput: uploadRes.url,
-        createdByEmail: userEmail,
-      });
-
-      // 3. Update layer config with clean /uploads/hero/... URL
-      const layerToUpdate = (config[activeLayerKey as keyof CustomHeroConfig] as any) || (activeLayerId === "bg" ? DEFAULT_BG_LAYER : activeLayerId === "fg" ? DEFAULT_FG_LAYER : DEFAULT_MID_LAYER);
-      const updatedLayer = {
-        ...layerToUpdate,
-        avatarUrl: addedDb.url,
-        avatarAlt: addedDb.name,
-        isEnabled: true,
-      };
-      const nextConfig = {
-        ...config,
-        [activeLayerKey]: updatedLayer,
-        ...(activeLayerId === "mid" ? {
-          avatarUrl: addedDb.url,
-          avatarAlt: addedDb.name,
-        } : {}),
-      };
-
-      setConfig(nextConfig);
-      // 4. Immediately persist into hero-config.json for instant Main Hero pickup
-      await saveHeroConfig(nextConfig, userEmail, true);
-      handleReplayAnimation();
-    } catch (err: any) {
-      alert("Failed to upload image file: " + (err?.message || "Invalid file format"));
-    } finally {
-      setIsUploading(false);
-      if (e.target) e.target.value = "";
-    }
-  };
-
-  // Add custom Avatar Graphic directly to Firestore database collection (`/avatar_graphics`)
-  const handleDirectUploadToDatabase = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-
-    setIsAddingGraphicToDb(true);
-    soundManager.playClick(0.12);
-    try {
-      const customName = newGraphicName.trim() || file.name.replace(/\.[^/.]+$/, "").toUpperCase();
-      // 1. Upload to dedicated directory and save in database collection
-      const added = await addAvatarGraphicToDatabase({
-        name: customName,
-        imageInput: file,
-        createdByEmail: userEmail,
-      });
-      setNewGraphicName("");
-
-      // 2. Automatically assign new graphic to active layer / graphic object
-      const layerToUpdate = (config[activeLayerKey as keyof CustomHeroConfig] as any) || (activeLayerId === "bg" ? DEFAULT_BG_LAYER : activeLayerId === "fg" ? DEFAULT_FG_LAYER : DEFAULT_MID_LAYER);
-      const updatedLayer = {
-        ...layerToUpdate,
-        avatarUrl: added.url,
-        avatarAlt: added.name,
-        isEnabled: true,
-      };
-      const nextConfig = {
-        ...config,
-        [activeLayerKey]: updatedLayer,
-        ...(activeLayerId === "mid" ? {
-          avatarUrl: added.url,
-          avatarAlt: added.name,
-        } : {}),
-      };
-      setConfig(nextConfig);
-      // 3. Immediately persist into hero-config.json for instant Main Hero pickup
-      await saveHeroConfig(nextConfig, userEmail, true);
-      handleReplayAnimation();
-      soundManager.playClick(0.16);
-    } catch (err: any) {
-      alert("Failed to add avatar graphic to database: " + (err?.message || "Invalid image"));
-    } finally {
-      setIsAddingGraphicToDb(false);
-      if (e.target) e.target.value = "";
-    }
-  };
-
 
   // Save changes
   const handleSave = async () => {
