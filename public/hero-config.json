@@ -348,7 +348,7 @@
   },
   "version": "1.0",
   "updatedAt": 1794220406276,
-  "slideshowInterval": 1,
+  "slideshowInterval": 10,
   "graphicObjects": [
     {
       "id": "gfx_av_0_avatar0",
