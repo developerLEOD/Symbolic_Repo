@@ -1,6 +1,6 @@
 {
   "isEnabled": true,
-  "activeEditingLayer": "mid",
+  "activeEditingLayer": "bg",
   "avatarUrl": "",
   "avatarAlt": "SYMBOLIC Monolithic Emblem",
   "posX": 50,
@@ -52,10 +52,10 @@
         "shadow": false,
         "border": false,
         "mobileEnabled": true,
-        "mobilePosX": 13,
-        "mobilePosY": 18,
+        "mobilePosX": 9,
+        "mobilePosY": 22,
         "mobileRotation": 0,
-        "mobileSize": 280,
+        "mobileSize": 310,
         "mobileStickToBottom": false
       },
       {
@@ -242,7 +242,8 @@
         "mobilePosY": 28,
         "mobileRotation": 0,
         "mobileSize": 405,
-        "mobileStickToBottom": false
+        "mobileStickToBottom": false,
+        "deviceTarget": "both"
       },
       {
         "id": "gfx_av_1_avatar1",
@@ -267,7 +268,8 @@
         "mobilePosY": 19,
         "mobileRotation": 0,
         "mobileSize": 370,
-        "mobileStickToBottom": false
+        "mobileStickToBottom": false,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_2_avatar2",
@@ -290,7 +292,8 @@
         "mobileEnabled": true,
         "mobilePosX": 3,
         "mobilePosY": 17,
-        "mobileSize": 365
+        "mobileSize": 365,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_3_avatar3",
@@ -315,7 +318,8 @@
         "mobilePosY": 27,
         "mobileRotation": 0,
         "mobileSize": 385,
-        "mobileStickToBottom": false
+        "mobileStickToBottom": false,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_4_avatar4",
@@ -338,7 +342,8 @@
         "mobileEnabled": true,
         "mobilePosX": -9,
         "mobilePosY": 27,
-        "mobileSize": 430
+        "mobileSize": 430,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_5_avatar6",
@@ -363,7 +368,8 @@
         "mobilePosY": 17,
         "mobileRotation": 0,
         "mobileSize": 360,
-        "mobileStickToBottom": false
+        "mobileStickToBottom": false,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_6_avatar7",
@@ -386,7 +392,8 @@
         "mobileEnabled": true,
         "mobilePosX": 4,
         "mobilePosY": 15,
-        "mobileSize": 345
+        "mobileSize": 345,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_7_avatar8",
@@ -411,7 +418,8 @@
         "mobilePosY": 19,
         "mobileRotation": 0,
         "mobileSize": 345,
-        "mobileStickToBottom": true
+        "mobileStickToBottom": true,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_8_avatar9",
@@ -430,7 +438,8 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_9_avatar10",
@@ -453,7 +462,7 @@
         "mobileEnabled": true,
         "mobilePosX": 51,
         "mobilePosY": 6,
-        "deviceTarget": "both"
+        "deviceTarget": "desktop"
       }
     ],
     "textObjects": [],
@@ -535,7 +544,8 @@
       "mobilePosY": 28,
       "mobileRotation": 0,
       "mobileSize": 405,
-      "mobileStickToBottom": false
+      "mobileStickToBottom": false,
+      "deviceTarget": "both"
     },
     {
       "id": "gfx_av_1_avatar1",
@@ -560,7 +570,8 @@
       "mobilePosY": 19,
       "mobileRotation": 0,
       "mobileSize": 370,
-      "mobileStickToBottom": false
+      "mobileStickToBottom": false,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_2_avatar2",
@@ -583,7 +594,8 @@
       "mobileEnabled": true,
       "mobilePosX": 3,
       "mobilePosY": 17,
-      "mobileSize": 365
+      "mobileSize": 365,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_3_avatar3",
@@ -608,7 +620,8 @@
       "mobilePosY": 27,
       "mobileRotation": 0,
       "mobileSize": 385,
-      "mobileStickToBottom": false
+      "mobileStickToBottom": false,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_4_avatar4",
@@ -631,7 +644,8 @@
       "mobileEnabled": true,
       "mobilePosX": -9,
       "mobilePosY": 27,
-      "mobileSize": 430
+      "mobileSize": 430,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_5_avatar6",
@@ -656,7 +670,8 @@
       "mobilePosY": 17,
       "mobileRotation": 0,
       "mobileSize": 360,
-      "mobileStickToBottom": false
+      "mobileStickToBottom": false,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_6_avatar7",
@@ -679,7 +694,8 @@
       "mobileEnabled": true,
       "mobilePosX": 4,
       "mobilePosY": 15,
-      "mobileSize": 345
+      "mobileSize": 345,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_7_avatar8",
@@ -704,7 +720,8 @@
       "mobilePosY": 19,
       "mobileRotation": 0,
       "mobileSize": 345,
-      "mobileStickToBottom": true
+      "mobileStickToBottom": true,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_8_avatar9",
@@ -723,7 +740,8 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_9_avatar10",
@@ -746,7 +764,7 @@
       "mobileEnabled": true,
       "mobilePosX": 51,
       "mobilePosY": 6,
-      "deviceTarget": "both"
+      "deviceTarget": "desktop"
     }
   ],
   "slideshowEnabled": true
