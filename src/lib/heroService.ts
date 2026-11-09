@@ -352,30 +352,17 @@ export function getSourceAppIdentifier(): "google_ai_studio" | "vercel_webapp" |
 }
 
 /**
- * Retrieves cached hero configuration synchronously from localStorage or bundled JSON
+ * Retrieves bundled default hero configuration synchronously
  */
 export function getCachedHeroConfig(): CustomHeroConfig {
-  if (typeof window === "undefined") {
-    return normalizeHeroConfig(bundledDefaultConfig as unknown as Partial<CustomHeroConfig>);
-  }
-  try {
-    const raw = localStorage.getItem(HERO_STORAGE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      return normalizeHeroConfig(parsed);
-    }
-  } catch {}
   return normalizeHeroConfig(bundledDefaultConfig as unknown as Partial<CustomHeroConfig>);
 }
 
 /**
- * Saves hero configuration to local cache
+ * No-op cache setter (localStorage removed per architectural mandate)
  */
-export function setCachedHeroConfig(config: CustomHeroConfig): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(HERO_STORAGE_KEY, JSON.stringify(config));
-  } catch {}
+export function setCachedHeroConfig(_config: CustomHeroConfig): void {
+  // Local storage completely disabled for hero configuration
 }
 
 /**

@@ -100,34 +100,17 @@ export const DEFAULT_DATABASE_AVATARS: AvatarGraphic[] = [
 ];
 
 /**
- * Retrieves cached avatar graphics synchronously from localStorage
+ * Retrieves bundled avatar graphics catalog
  */
 export function getCachedAvatarGraphics(): AvatarGraphic[] {
-  if (typeof window === "undefined") return DEFAULT_DATABASE_AVATARS;
-  try {
-    const raw = localStorage.getItem(AVATAR_GRAPHICS_CACHE_KEY);
-    if (raw) {
-      const parsed = JSON.parse(raw);
-      if (Array.isArray(parsed) && parsed.length > 0) {
-        return parsed;
-      }
-    }
-  } catch {
-    // Ignore parse error
-  }
   return DEFAULT_DATABASE_AVATARS;
 }
 
 /**
- * Caches avatar graphics to localStorage
+ * No-op cache setter (localStorage removed per architectural mandate)
  */
-export function setCachedAvatarGraphics(graphics: AvatarGraphic[]): void {
-  if (typeof window === "undefined") return;
-  try {
-    localStorage.setItem(AVATAR_GRAPHICS_CACHE_KEY, JSON.stringify(graphics));
-  } catch {
-    // Ignore storage quota error
-  }
+export function setCachedAvatarGraphics(_graphics: AvatarGraphic[]): void {
+  // Local storage completely disabled for avatar graphics
 }
 
 /**
