@@ -1,6 +1,6 @@
 {
   "success": true,
-  "count": 21,
+  "count": 12,
   "graphics": [
     {
       "id": "gfx_av_1_avatar0",
@@ -102,15 +102,6 @@
       "layer": "backdrop"
     },
     {
-      "id": "gfx_bd_2_watchtowerdesert",
-      "serialNumber": "SYM-BD-01",
-      "name": "Watchtower_desert",
-      "assetPath": "/assets/hero/backdrop/Watchtower_desert.jpg",
-      "avatarUrl": "/assets/hero/backdrop/Watchtower_desert.jpg",
-      "avatarAlt": "Watchtower_desert",
-      "layer": "backdrop"
-    },
-    {
       "id": "gfx_bg_1_circle",
       "serialNumber": "SYM-BG-00",
       "name": "circle",
@@ -118,78 +109,6 @@
       "avatarUrl": "/assets/hero/background/circle.png",
       "avatarAlt": "circle",
       "layer": "bg"
-    },
-    {
-      "id": "gfx_img_1_canvasfieldbag1789233558525",
-      "serialNumber": "SYM-IMG-00",
-      "name": "canvas_field_bag_1789233558525",
-      "assetPath": "/src/assets/images/canvas_field_bag_1789233558525.jpg",
-      "avatarUrl": "/src/assets/images/canvas_field_bag_1789233558525.jpg",
-      "avatarAlt": "canvas_field_bag_1789233558525",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_img_2_ceramicstonewarevessel1789233585625",
-      "serialNumber": "SYM-IMG-01",
-      "name": "ceramic_stoneware_vessel_1789233585625",
-      "assetPath": "/src/assets/images/ceramic_stoneware_vessel_1789233585625.jpg",
-      "avatarUrl": "/src/assets/images/ceramic_stoneware_vessel_1789233585625.jpg",
-      "avatarAlt": "ceramic_stoneware_vessel_1789233585625",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_img_3_completelyblankcomingsoon1789235306808",
-      "serialNumber": "SYM-IMG-02",
-      "name": "completely_blank_coming_soon_1789235306808",
-      "assetPath": "/src/assets/images/completely_blank_coming_soon_1789235306808.jpg",
-      "avatarUrl": "/src/assets/images/completely_blank_coming_soon_1789235306808.jpg",
-      "avatarAlt": "completely_blank_coming_soon_1789235306808",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_img_4_falasteenkuffiyehhoodie1789233545448",
-      "serialNumber": "SYM-IMG-03",
-      "name": "falasteen_kuffiyeh_hoodie_1789233545448",
-      "assetPath": "/src/assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg",
-      "avatarUrl": "/src/assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg",
-      "avatarAlt": "falasteen_kuffiyeh_hoodie_1789233545448",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_img_5_mugbesymbolic1788008321905",
-      "serialNumber": "SYM-IMG-04",
-      "name": "mug_be_symbolic_1788008321905",
-      "assetPath": "/src/assets/images/mug_be_symbolic_1788008321905.jpg",
-      "avatarUrl": "/src/assets/images/mug_be_symbolic_1788008321905.jpg",
-      "avatarAlt": "mug_be_symbolic_1788008321905",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_img_6_mugfindclarity1788008345150",
-      "serialNumber": "SYM-IMG-05",
-      "name": "mug_find_clarity_1788008345150",
-      "assetPath": "/src/assets/images/mug_find_clarity_1788008345150.jpg",
-      "avatarUrl": "/src/assets/images/mug_find_clarity_1788008345150.jpg",
-      "avatarAlt": "mug_find_clarity_1788008345150",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_img_7_storeheroeditorial1788008309317",
-      "serialNumber": "SYM-IMG-06",
-      "name": "store_hero_editorial_1788008309317",
-      "assetPath": "/src/assets/images/store_hero_editorial_1788008309317.jpg",
-      "avatarUrl": "/src/assets/images/store_hero_editorial_1788008309317.jpg",
-      "avatarAlt": "store_hero_editorial_1788008309317",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_img_8_structuredtwillcap1789233572064",
-      "serialNumber": "SYM-IMG-07",
-      "name": "structured_twill_cap_1789233572064",
-      "assetPath": "/src/assets/images/structured_twill_cap_1789233572064.jpg",
-      "avatarUrl": "/src/assets/images/structured_twill_cap_1789233572064.jpg",
-      "avatarAlt": "structured_twill_cap_1789233572064",
-      "layer": "mid"
     }
   ]
 }

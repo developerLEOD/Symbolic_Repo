@@ -52,8 +52,8 @@ scanDirectory(publicHeroDir, "/assets/hero", "auto", "HERO");
 const srcHeroDir = path.resolve(root, "src", "assets", "hero");
 scanDirectory(srcHeroDir, "/src/assets/hero", "auto", "HERO");
 
-const srcImagesDir = path.resolve(root, "src", "assets", "images");
-scanDirectory(srcImagesDir, "/src/assets/images", "mid", "IMG");
+// const srcImagesDir = path.resolve(root, "src", "assets", "images");
+// scanDirectory(srcImagesDir, "/src/assets/images", "mid", "IMG");
 
 fs.writeFileSync(path.resolve(root, "public", "assets-manifest.json"), JSON.stringify({ success: true, count: graphics.length, graphics }, null, 2));
 console.log(`Manifest generated with ${graphics.length} graphics.`);

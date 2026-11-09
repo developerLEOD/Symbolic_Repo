@@ -187,8 +187,8 @@ function LayerGraphicItem({
   const finalSize = useMobile ? (item.mobileSize ?? item.size) : item.size;
   const finalRotation = useMobile ? (item.mobileRotation ?? item.rotation ?? 0) : (item.rotation ?? 0);
   const finalStickToBottom = useMobile 
-    ? Boolean((item.mobileStickToBottom ?? stickToBottom) && (finalPosY >= 90)) 
-    : Boolean(stickToBottom && (finalPosY >= 90));
+    ? Boolean(item.mobileStickToBottom ?? stickToBottom) 
+    : Boolean(stickToBottom);
 
   const slideSettings = isSlideshow ? getSlideshowTransitionSettings(slideshowTransition) : null;
   
