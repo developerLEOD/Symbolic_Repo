@@ -661,3 +661,183 @@ export async function summonRepoGraphics(
   await saveHeroConfig(nextConfig);
   return { config: nextConfig, count: addedCount };
 }
+
+/**
+ * Summons graphics for a single specified layer step-by-step
+ */
+export async function summonSingleLayerGraphics(
+  currentConfig: CustomHeroConfig,
+  targetLayerId: "backdrop" | "bg" | "mid" | "fg"
+): Promise<{ config: CustomHeroConfig; count: number; layerLabel: string }> {
+  let scannedItems: any[] = [];
+  try {
+    const res = await fetch("/api/scan-hero-graphics");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.graphics)) {
+        scannedItems = data.graphics;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch /api/scan-hero-graphics:", err);
+  }
+
+  const layerItems = scannedItems.filter(item => (item.layer || "mid") === targetLayerId);
+  const layerLabel = targetLayerId === "backdrop" ? "BACKDROP" : targetLayerId === "bg" ? "BACKGROUND" : targetLayerId === "fg" ? "FOREGROUND" : "AVATAR";
+
+  let nextConfig = { ...currentConfig };
+  let addedCount = 0;
+
+  if (targetLayerId === "backdrop") {
+    let nextBackdrop = { ...(currentConfig.backdrop || DEFAULT_BACKDROP) };
+    layerItems.forEach((item) => {
+      const targetUrl = item.avatarUrl || item.assetPath;
+      if (!nextBackdrop.imageUrl || nextBackdrop.imageUrl !== targetUrl) {
+        nextBackdrop = {
+          isEnabled: true,
+          imageUrl: targetUrl,
+          opacity: nextBackdrop.opacity ?? 1,
+        };
+        addedCount++;
+      }
+    });
+    nextConfig.backdrop = nextBackdrop;
+  } else if (targetLayerId === "bg") {
+    const nextBgGraphics = [...(currentConfig.bgLayer?.graphicObjects || [])];
+    layerItems.forEach((item) => {
+      const targetUrl = item.avatarUrl || item.assetPath;
+      const exists = nextBgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      if (!exists) {
+        const gridX = 25 + ((nextBgGraphics.length % 4) * 16);
+        const gridY = 30 + (Math.floor(nextBgGraphics.length / 4) * 18);
+        nextBgGraphics.push({
+          id: item.id || `gfx_bg_${Date.now()}_${nextBgGraphics.length}`,
+          serialNumber: item.serialNumber || `SYM-BG-${String(nextBgGraphics.length).padStart(2, "0")}`,
+          assetPath: item.assetPath || targetUrl,
+          avatarUrl: targetUrl,
+          avatarAlt: item.name || `Background Graphic ${nextBgGraphics.length + 1}`,
+          posX: Math.min(85, Math.max(15, gridX)),
+          posY: Math.min(85, Math.max(20, gridY)),
+          size: 320,
+          rotation: 0,
+          opacity: 0.25,
+          transitionDirection: "fade",
+          transitionSpeed: "smooth",
+          transitionDelay: 0.1 + (nextBgGraphics.length * 0.05),
+          hoverEffect: "none",
+          disableIdleAnimation: false,
+          shadow: false,
+          border: false,
+        });
+        addedCount++;
+      }
+    });
+    nextConfig.bgLayer = {
+      ...currentConfig.bgLayer,
+      isEnabled: nextBgGraphics.length > 0 ? true : (currentConfig.bgLayer?.isEnabled ?? false),
+      graphicObjects: nextBgGraphics,
+    };
+  } else if (targetLayerId === "fg") {
+    const nextFgGraphics = [...(currentConfig.fgLayer?.graphicObjects || [])];
+    layerItems.forEach((item) => {
+      const targetUrl = item.avatarUrl || item.assetPath;
+      const exists = nextFgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      if (!exists) {
+        const gridX = 25 + ((nextFgGraphics.length % 4) * 16);
+        const gridY = 30 + (Math.floor(nextFgGraphics.length / 4) * 18);
+        nextFgGraphics.push({
+          id: item.id || `gfx_fg_${Date.now()}_${nextFgGraphics.length}`,
+          serialNumber: item.serialNumber || `SYM-FG-${String(nextFgGraphics.length).padStart(2, "0")}`,
+          assetPath: item.assetPath || targetUrl,
+          avatarUrl: targetUrl,
+          avatarAlt: item.name || `Foreground Graphic ${nextFgGraphics.length + 1}`,
+          posX: Math.min(85, Math.max(15, gridX)),
+          posY: Math.min(85, Math.max(20, gridY)),
+          size: 140,
+          rotation: 0,
+          opacity: 1,
+          transitionDirection: "top",
+          transitionSpeed: "snappy",
+          transitionDelay: 0.1 + (nextFgGraphics.length * 0.05),
+          hoverEffect: "none",
+          disableIdleAnimation: false,
+          shadow: false,
+          border: false,
+        });
+        addedCount++;
+      }
+    });
+    nextConfig.fgLayer = {
+      ...currentConfig.fgLayer,
+      isEnabled: nextFgGraphics.length > 0 ? true : (currentConfig.fgLayer?.isEnabled ?? false),
+      graphicObjects: nextFgGraphics,
+    };
+  } else {
+    // mid / avatar
+    const nextMidGraphics = [...(currentConfig.midLayer?.graphicObjects || [])];
+    layerItems.forEach((item) => {
+      const targetUrl = item.avatarUrl || item.assetPath;
+      const exists = nextMidGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const isMain = currentConfig.midLayer?.avatarUrl === targetUrl;
+      if (!exists && !isMain) {
+        const gridX = 25 + ((nextMidGraphics.length % 4) * 16);
+        const gridY = 30 + (Math.floor(nextMidGraphics.length / 4) * 18);
+        nextMidGraphics.push({
+          id: item.id || `gfx_mid_${Date.now()}_${nextMidGraphics.length}`,
+          serialNumber: item.serialNumber || `SYM-AV-${String(nextMidGraphics.length).padStart(2, "0")}`,
+          assetPath: item.assetPath || targetUrl,
+          avatarUrl: targetUrl,
+          avatarAlt: item.name || `Avatar Graphic ${nextMidGraphics.length + 1}`,
+          posX: Math.min(85, Math.max(15, gridX)),
+          posY: Math.min(85, Math.max(20, gridY)),
+          size: 260,
+          rotation: 0,
+          opacity: 1,
+          transitionDirection: "bottom",
+          transitionSpeed: "spring",
+          transitionDelay: 0.1 + (nextMidGraphics.length * 0.05),
+          hoverEffect: "none",
+          disableIdleAnimation: false,
+          shadow: false,
+          border: false,
+        });
+        addedCount++;
+      }
+    });
+    nextConfig.midLayer = {
+      ...currentConfig.midLayer,
+      isEnabled: true,
+      graphicObjects: nextMidGraphics,
+      slideshowEnabled: nextMidGraphics.length > 0 ? true : currentConfig.midLayer?.slideshowEnabled,
+    };
+  }
+
+  await saveHeroConfig(nextConfig);
+  return { config: nextConfig, count: addedCount, layerLabel };
+}
+
+/**
+ * Summons all layers one-by-one step by step in order:
+ * Step 1: Backdrop -> Step 2: Background -> Step 3: Avatar (Mid) -> Step 4: Foreground
+ */
+export async function summonRepoGraphicsStepByStep(
+  currentConfig: CustomHeroConfig,
+  onStepProgress?: (stepName: string, layerCount: number) => void
+): Promise<{ config: CustomHeroConfig; totalCount: number; summary: Record<string, number> }> {
+  const steps: ("backdrop" | "bg" | "mid" | "fg")[] = ["backdrop", "bg", "mid", "fg"];
+  let workingConfig = { ...currentConfig };
+  let totalCount = 0;
+  const summary: Record<string, number> = {};
+
+  for (const layerId of steps) {
+    const res = await summonSingleLayerGraphics(workingConfig, layerId);
+    workingConfig = res.config;
+    totalCount += res.count;
+    summary[res.layerLabel] = res.count;
+    if (onStepProgress) {
+      onStepProgress(res.layerLabel, res.count);
+    }
+  }
+
+  return { config: workingConfig, totalCount, summary };
+}

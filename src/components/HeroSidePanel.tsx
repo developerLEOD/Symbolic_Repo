@@ -62,7 +62,9 @@ import {
   saveHeroConfig, 
   resetHeroConfig,
   downloadHeroConfigJson,
-  summonRepoGraphics
+  summonRepoGraphics,
+  summonSingleLayerGraphics,
+  summonRepoGraphicsStepByStep
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
@@ -161,8 +163,9 @@ export default function HeroSidePanel({
   const [nudgeStep, setNudgeStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
-  
-  // Database Avatar Graphics catalog state & handlers
+  const [stepProgressStatus, setStepProgressStatus] = useState<string>("");
+
+  // Database Avatar Graphics catalog state
   const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
   const [newGraphicName, setNewGraphicName] = useState("");
   const [isAddingGraphicToDb, setIsAddingGraphicToDb] = useState(false);
@@ -346,6 +349,50 @@ export default function HeroSidePanel({
     }
   };
 
+  // Summon all repo graphics step by step layer by layer: (Backdrop -> Background -> Avatar -> Foreground)
+  const handleSummonStepByStep = async () => {
+    setIsSaving(true);
+    soundManager.playClick(0.16);
+    try {
+      setStepProgressStatus("Step 1/4: Scanning Backdrop layer...");
+      const { config: updatedConfig, totalCount, summary } = await summonRepoGraphicsStepByStep(
+        config,
+        (stepName, count) => {
+          setStepProgressStatus(`Step: ${stepName} (${count} added)...`);
+        }
+      );
+      onUpdateConfig(updatedConfig);
+      setSaveSuccess(true);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setStepProgressStatus("");
+      }, 4000);
+      alert(`Step-by-step layer summoning complete!\nTotal Graphics Summoned: ${totalCount}\n\nBreakdown by Layer:\n• BACKDROP: ${summary["BACKDROP"] || 0}\n• BACKGROUND: ${summary["BACKGROUND"] || 0}\n• AVATAR: ${summary["AVATAR"] || 0}\n• FOREGROUND: ${summary["FOREGROUND"] || 0}`);
+    } catch (err: any) {
+      alert("Failed step-by-step layer summoning: " + (err?.message || "Unknown error"));
+      setStepProgressStatus("");
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  // Summon graphics specifically for a single layer
+  const handleSummonSingleLayer = async (targetLayerId: "backdrop" | "bg" | "mid" | "fg") => {
+    setIsSaving(true);
+    soundManager.playClick(0.14);
+    try {
+      const { config: updatedConfig, count, layerLabel } = await summonSingleLayerGraphics(config, targetLayerId);
+      onUpdateConfig(updatedConfig);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      alert(`Summoned ${count} graphics into ${layerLabel} layer!`);
+    } catch (err: any) {
+      alert(`Failed to summon ${targetLayerId} layer graphics: ` + (err?.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Summon all repo graphics from code/directory
   const handleSummonGraphics = async () => {
     setIsSaving(true);
@@ -511,17 +558,35 @@ export default function HeroSidePanel({
                   <span className="text-emerald-600 font-bold">hero-config.json [ZERO DB USAGE]</span>
                 </div>
 
-                {/* Summon Graphics Button */}
+                {/* Step-by-Step Layer Summoning Button */}
+                <button
+                  type="button"
+                  onClick={handleSummonStepByStep}
+                  disabled={isSaving}
+                  className="w-full py-2 px-2 bg-brand-accent hover:bg-black text-white border-2 border-brand-text text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50 transition-all"
+                  title="Reads layers sequentially step-by-step: 1. Backdrop -> 2. Background -> 3. Avatar -> 4. Foreground"
+                >
+                  <Sparkles size={13} className="text-white animate-pulse" />
+                  <span>SUMMON STEP-BY-STEP (ALL LAYERS)</span>
+                </button>
+
+                {/* Single Batch Summon Graphics Button */}
                 <button
                   type="button"
                   onClick={handleSummonGraphics}
                   disabled={isSaving}
-                  className="w-full py-2 px-2 bg-amber-500 hover:bg-black text-black hover:text-white border-2 border-brand-text text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50 transition-all"
-                  title="Render all local repo graphics (Avatar0.png...Avatar10.png, etc.) into Studio Hero canvas"
+                  className="w-full py-1.5 px-2 bg-amber-500 hover:bg-black text-black hover:text-white border-2 border-brand-text text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50 transition-all"
+                  title="Render all local repo graphics into Studio Hero canvas in one batch"
                 >
-                  <Sparkles size={13} className="text-black group-hover:text-white" />
-                  <span>SUMMON GRAPHICS FROM REPO</span>
+                  <Sparkles size={12} className="text-black group-hover:text-white" />
+                  <span>QUICK SUMMON ALL GRAPHICS</span>
                 </button>
+
+                {stepProgressStatus && (
+                  <div className="p-1.5 bg-brand-accent/10 border border-brand-accent text-brand-accent text-[8px] font-mono font-bold uppercase tracking-wider text-center animate-pulse">
+                    {stepProgressStatus}
+                  </div>
+                )}
 
                 <div className="grid grid-cols-3 gap-1.5">
                   <button
@@ -654,6 +719,17 @@ export default function HeroSidePanel({
                     );
                   })}
                 </div>
+
+                <button
+                  type="button"
+                  onClick={() => handleSummonSingleLayer(activeLayerId)}
+                  disabled={isSaving}
+                  className="w-full py-1.5 px-2 bg-brand-bg hover:bg-brand-text hover:text-brand-bg border border-brand-text text-[8.5px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[1px_1px_0px_#050505] cursor-pointer disabled:opacity-50 transition-all"
+                  title={`Summon graphics specifically for ${activeLayerId.toUpperCase()} layer step-by-step`}
+                >
+                  <Sparkles size={11} className="text-brand-accent animate-pulse" />
+                  <span>SUMMON {activeLayerId === "backdrop" ? "BACKDROP" : activeLayerId === "bg" ? "BACKGROUND" : activeLayerId === "mid" ? "AVATAR" : "FOREGROUND"} LAYER ONLY</span>
+                </button>
               </div>
 
               {/* Backdrop Layer Editor (Specific Controls) */}
