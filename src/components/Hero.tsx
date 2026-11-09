@@ -478,22 +478,6 @@ function SingleLayerRenderer({
             )}
           </AnimatePresence>
 
-          {/* Minimal Brutalist Slide Counter / Dots Indicator */}
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-30 pointer-events-auto">
-            {visibleGraphics.map((item, idx) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => setSlideIndex(idx)}
-                className={`transition-all cursor-pointer ${
-                  safeSlideIndex === idx
-                    ? "w-6 h-1.5 bg-brand-accent shadow-[1px_1px_0px_#050505]"
-                    : "w-2 h-1.5 bg-brand-text/30 hover:bg-brand-text/60"
-                }`}
-                title={`Slide ${idx + 1}`}
-              />
-            ))}
-          </div>
         </>
       ) : (
         <>

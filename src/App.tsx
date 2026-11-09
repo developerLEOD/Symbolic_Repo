@@ -408,6 +408,28 @@ function StorefrontApp() {
     return () => unsubscribe();
   }, [user?.uid, user?.email]);
 
+  // Sync global grid opacity with hero configuration
+  useEffect(() => {
+    const syncGridOpacity = async () => {
+      const { getHeroConfig } = await import("./lib/heroService");
+      const config = await getHeroConfig();
+      if (config.gridOpacity !== undefined) {
+        document.documentElement.style.setProperty("--grid-opacity", config.gridOpacity.toString());
+      }
+    };
+    syncGridOpacity();
+
+    const handleConfigUpdate = (e: any) => {
+      const newConfig = e.detail;
+      if (newConfig?.gridOpacity !== undefined) {
+        document.documentElement.style.setProperty("--grid-opacity", newConfig.gridOpacity.toString());
+      }
+    };
+
+    window.addEventListener("sym_hero_config_updated", handleConfigUpdate);
+    return () => window.removeEventListener("sym_hero_config_updated", handleConfigUpdate);
+  }, []);
+
   const handleAddToCart = (item: CartItem) => {
     setCart(prev => {
       const existing = prev.find(i => i.id === item.id);
@@ -494,7 +516,7 @@ function StorefrontApp() {
   }
 
   return (
-    <div className="relative min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white overflow-x-hidden">
+    <div className="relative min-h-screen bg-brand-bg font-mono text-brand-text selection:bg-brand-text selection:text-white overflow-x-hidden neo-grid-backdrop">
       <StudioBackground currentView={location.pathname} />
       <CustomCursor />
       <ScrollToTop />
@@ -546,7 +568,7 @@ function StorefrontApp() {
         onReferralClick={handleOpenReferral}
       />
 
-      <div className={`${location.pathname === "/" ? "pt-0" : "pt-2 sm:pt-4"} relative z-10`}>
+      <div className={`${location.pathname === "/" ? "pt-0" : "pt-24 sm:pt-32"} relative z-10`}>
         {location.pathname !== "/" && <Breadcrumbs categories={categories} />}
         
         <main className="min-h-screen bg-transparent relative">

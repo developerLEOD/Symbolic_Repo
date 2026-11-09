@@ -719,30 +719,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           );
         })}
 
-        {/* Minimal Brutalist Slide Counter / Dots Indicator in Studio Preview */}
-        {isSlideshowActive && (
-          <div className="absolute top-3 left-1/2 -translate-x-1/2 flex items-center gap-1.5 z-40 pointer-events-auto bg-brand-bg/80 border border-brand-text px-2 py-1 shadow-[2px_2px_0px_#050505]">
-            <span className="font-mono text-[7.5px] font-black uppercase text-brand-text/70 mr-1">SLIDES:</span>
-            {visibleGraphics.map((item, idx) => (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => {
-                  setStudioSlideIndices(prev => ({ ...prev, [layer.id]: idx }));
-                  setActiveLayerId(layer.id);
-                  setActiveObjectId(item.id);
-                  soundManager.playClick(0.06);
-                }}
-                className={`transition-all cursor-pointer ${
-                  safeSlideIdx === idx
-                    ? "w-6 h-1.5 bg-brand-accent shadow-[1px_1px_0px_#050505]"
-                    : "w-2 h-1.5 bg-brand-text/30 hover:bg-brand-text/60"
-                }`}
-                title={`Studio Slide ${idx + 1}`}
-              />
-            ))}
-          </div>
-        )}
+
         {/* Independent Text Objects */}
         {(layer.textObjects || [])
           .filter(t => isItemVisible(t.deviceTarget))
