@@ -1618,7 +1618,52 @@ export default function HeroSidePanel({
                     <div className="space-y-2">
                       <div className="flex items-center justify-between text-[8px] font-black uppercase opacity-60">
                         <span>{isMobileMode ? "MOBILE COORDINATES (X / Y %)" : "PC COORDINATES (X / Y %)"}</span>
-                        <span className="font-mono text-brand-accent">{curPosX}%, {curPosY}%</span>
+                        <div className="flex items-center gap-1">
+                          <span className="font-mono text-brand-accent">{curPosX}%, {curPosY}%</span>
+                          {/* Paste to All Other Avatars */}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              soundManager.playClick(0.1);
+                              if (!isGraphicSelected) return;
+                              const updates = {
+                                posX: getActiveObjectValue("posX", 50),
+                                posY: getActiveObjectValue("posY", 50),
+                                size: getActiveObjectValue("size", 180),
+                                rotation: getActiveObjectValue("rotation", 0),
+                                opacity: getActiveObjectValue("opacity", 1),
+                                transitionDirection: getActiveObjectValue("transitionDirection", "fade"),
+                                transitionSpeed: getActiveObjectValue("transitionSpeed", "smooth"),
+                                transitionDelay: getActiveObjectValue("transitionDelay", 0.2),
+                                hoverEffect: getActiveObjectValue("hoverEffect", "none"),
+                                disableIdleAnimation: getActiveObjectValue("disableIdleAnimation", false),
+                                shadow: getActiveObjectValue("shadow", false),
+                                border: getActiveObjectValue("border", false),
+                              };
+                              // Apply to all other graphics in the layer
+                              if (isMainGraphic) {
+                                // Paste to all graphics in the layer
+                                const newGraphics = (currentLayer.graphicObjects || []).map((g: GraphicObject) => ({
+                                  ...g,
+                                  ...updates
+                                }));
+                                updateLayerProps({ graphicObjects: newGraphics });
+                              } else if (selectedSecondaryGraphic) {
+                                // Paste to all graphics in the layer EXCEPT the active one
+                                const newGraphics = (currentLayer.graphicObjects || []).map((g: GraphicObject) => {
+                                  if (g.id === activeObjectId) return g;
+                                  return { ...g, ...updates };
+                                });
+                                updateLayerProps({ graphicObjects: newGraphics });
+                              }
+                              alert("Parameters applied to all other avatars!");
+                            }}
+                            className="px-1.5 py-0.5 bg-brand-accent text-white hover:bg-black font-black uppercase text-[7px]"
+                            title="Paste these parameters to all other avatars"
+                          >
+                            PASTE TO ALL
+                          </button>
+                        </div>
                       </div>
                       
                       <div className="flex flex-col items-center justify-center gap-1 py-0.5">
