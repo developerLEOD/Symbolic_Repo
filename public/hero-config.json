@@ -1,6 +1,6 @@
 {
   "isEnabled": true,
-  "activeEditingLayer": "bg",
+  "activeEditingLayer": "mid",
   "avatarUrl": "",
   "avatarAlt": "SYMBOLIC Monolithic Emblem",
   "posX": 50,
@@ -52,8 +52,8 @@
         "shadow": false,
         "border": false,
         "mobileEnabled": true,
-        "mobilePosX": 2,
-        "mobilePosY": 20,
+        "mobilePosX": 12,
+        "mobilePosY": 16,
         "mobileRotation": 0,
         "mobileSize": 310,
         "mobileStickToBottom": false
@@ -243,7 +243,7 @@
         "mobileRotation": 0,
         "mobileSize": 585,
         "mobileStickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_1_avatar1",
@@ -439,7 +439,13 @@
         "disableIdleAnimation": false,
         "shadow": false,
         "border": false,
-        "deviceTarget": "desktop"
+        "deviceTarget": "both",
+        "mobileEnabled": true,
+        "mobilePosX": 1,
+        "mobilePosY": 17,
+        "mobileRotation": 0,
+        "mobileSize": 440,
+        "mobileStickToBottom": false
       },
       {
         "id": "gfx_av_9_avatar10",
@@ -466,7 +472,7 @@
       }
     ],
     "textObjects": [],
-    "deviceTarget": "both",
+    "deviceTarget": "desktop",
     "mobileEnabled": false
   },
   "fgLayer": {
@@ -540,12 +546,12 @@
       "shadow": false,
       "border": false,
       "mobileEnabled": true,
-      "mobilePosX": -37,
-      "mobilePosY": 11,
+      "mobilePosX": -46,
+      "mobilePosY": 16,
       "mobileRotation": 0,
       "mobileSize": 585,
       "mobileStickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_1_avatar1",
@@ -741,7 +747,13 @@
       "disableIdleAnimation": false,
       "shadow": false,
       "border": false,
-      "deviceTarget": "desktop"
+      "deviceTarget": "both",
+      "mobileEnabled": true,
+      "mobilePosX": 1,
+      "mobilePosY": 17,
+      "mobileRotation": 0,
+      "mobileSize": 440,
+      "mobileStickToBottom": false
     },
     {
       "id": "gfx_av_9_avatar10",
@@ -767,5 +779,6 @@
       "deviceTarget": "desktop"
     }
   ],
-  "slideshowEnabled": true
+  "slideshowEnabled": true,
+  "deviceTarget": "desktop"
 }
