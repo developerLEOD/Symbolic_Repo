@@ -29,6 +29,69 @@ export const ai = process.env.GEMINI_API_KEY
 
 import fs from "fs";
 
+// Ensure separate directory for uploaded hero graphics exists
+const heroUploadsDir = path.resolve(__dirname, "public", "uploads", "hero");
+if (!fs.existsSync(heroUploadsDir)) {
+  fs.mkdirSync(heroUploadsDir, { recursive: true });
+}
+
+// Serve /uploads statically in all environments
+app.use("/uploads", express.static(path.resolve(__dirname, "public", "uploads")));
+
+// Upload Hero Graphic to dedicated directory /public/uploads/hero
+app.post("/api/upload-hero-graphic", (req, res) => {
+  try {
+    const { dataUrl, filename, name } = req.body;
+    if (!dataUrl || typeof dataUrl !== "string") {
+      return res.status(400).json({ error: "Missing dataUrl" });
+    }
+
+    // Extract base64
+    const matches = dataUrl.match(/^data:([A-Za-z-+\/]+);base64,(.+)$/);
+    let buffer: Buffer;
+    let ext = "webp";
+
+    if (matches && matches.length === 3) {
+      const mime = matches[1];
+      if (mime.includes("png")) ext = "png";
+      else if (mime.includes("jpeg") || mime.includes("jpg")) ext = "jpg";
+      else if (mime.includes("webp")) ext = "webp";
+      buffer = Buffer.from(matches[2], "base64");
+    } else {
+      buffer = Buffer.from(dataUrl, "base64");
+    }
+
+    const cleanName = (name || filename || "graphic")
+      .toLowerCase()
+      .replace(/[^a-z0-9_-]/g, "_")
+      .slice(0, 32);
+    const uniqueFilename = `hero_${Date.now()}_${cleanName}.${ext}`;
+    const targetFilePath = path.join(heroUploadsDir, uniqueFilename);
+
+    fs.writeFileSync(targetFilePath, buffer);
+
+    // Sync to dist/uploads/hero if dist exists
+    const distHeroDir = path.resolve(__dirname, "dist", "uploads", "hero");
+    try {
+      if (!fs.existsSync(distHeroDir)) {
+        fs.mkdirSync(distHeroDir, { recursive: true });
+      }
+      fs.writeFileSync(path.join(distHeroDir, uniqueFilename), buffer);
+    } catch {}
+
+    const fileUrl = `/uploads/hero/${uniqueFilename}`;
+    return res.json({
+      success: true,
+      url: fileUrl,
+      filename: uniqueFilename,
+      name: name || cleanName,
+    });
+  } catch (err: any) {
+    console.error("Upload error:", err);
+    return res.status(500).json({ error: err?.message || "Upload failed" });
+  }
+});
+
 // Hero JSON Metadata Endpoints (Zero-Firestore, fully decoupled)
 app.get("/api/hero-config", (_req, res) => {
   try {

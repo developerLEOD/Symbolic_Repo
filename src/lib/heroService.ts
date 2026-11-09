@@ -449,6 +449,7 @@ export async function saveHeroConfig(
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload),
       });
+      window.dispatchEvent(new CustomEvent("sym_hero_config_updated", { detail: payload }));
     } catch (err) {
       console.warn("Could not save to /api/hero-config, saved locally:", err);
     }

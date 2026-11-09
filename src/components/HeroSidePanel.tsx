@@ -68,7 +68,8 @@ import { soundManager } from "../lib/soundEffects";
 import { 
   subscribeAvatarGraphics, 
   addAvatarGraphicToDatabase, 
-  deleteAvatarGraphicFromDatabase 
+  deleteAvatarGraphicFromDatabase,
+  uploadHeroGraphicFile 
 } from "../lib/avatarGraphicsService";
 
 interface HeroSidePanelProps {
@@ -338,7 +339,7 @@ export default function HeroSidePanel({
     }
   };
 
-  // Handle image upload from computer
+  // Handle image upload from computer — saves to dedicated /public/uploads/hero/ and persists
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -346,33 +347,70 @@ export default function HeroSidePanel({
     setIsUploading(true);
     soundManager.playClick(0.1);
     try {
-      const compressedDataUrl = await processFileToCompressedDataUrl(file, 1000, 0.82);
-      if (activeLayerId === "backdrop") {
-        updateTopProp("backdrop", { ...(config.backdrop || DEFAULT_BACKDROP), imageUrl: compressedDataUrl, isEnabled: true });
-      } else if (isMainGraphic) {
-        updateLayerProps({
-          avatarUrl: compressedDataUrl,
-          avatarAlt: file.name.replace(/\.[^/.]+$/, ""),
-          isEnabled: true,
+      // 1. Upload to dedicated /public/uploads/hero/ directory
+      const cleanName = file.name.replace(/\.[^/.]+$/, "");
+      const uploaded = await uploadHeroGraphicFile(file, cleanName);
+      const targetUrl = uploaded.url;
+
+      // 2. Also register in database catalog
+      try {
+        await addAvatarGraphicToDatabase({
+          name: cleanName.toUpperCase(),
+          imageInput: targetUrl,
+          createdByEmail: userEmail,
         });
+      } catch {
+        // Continue even if database sync fails
+      }
+
+      // 3. Update local hero configuration
+      let nextConfig = { ...config };
+      if (activeLayerId === "backdrop") {
+        nextConfig = {
+          ...nextConfig,
+          backdrop: { ...(config.backdrop || DEFAULT_BACKDROP), imageUrl: targetUrl, isEnabled: true },
+        };
+      } else if (isMainGraphic) {
+        nextConfig = {
+          ...nextConfig,
+          [activeLayerId]: {
+            ...currentLayer,
+            avatarUrl: targetUrl,
+            avatarAlt: cleanName,
+            isEnabled: true,
+          },
+        };
       } else if (selectedSecondaryGraphic) {
         const newGraphics = [...(currentLayer.graphicObjects || [])];
         newGraphics[selectedSecondaryGraphicIndex] = {
           ...selectedSecondaryGraphic,
-          avatarUrl: compressedDataUrl,
-          avatarAlt: file.name.replace(/\.[^/.]+$/, ""),
+          avatarUrl: targetUrl,
+          avatarAlt: cleanName,
         };
-        updateLayerProps({ graphicObjects: newGraphics });
+        nextConfig = {
+          ...nextConfig,
+          [activeLayerId]: {
+            ...currentLayer,
+            graphicObjects: newGraphics,
+          },
+        };
       }
+
+      onUpdateConfig(nextConfig);
+
+      // 4. Auto-persist to hero-config.json
+      saveHeroConfig(nextConfig, userEmail).catch((err) => {
+        console.warn("Auto-save of hero-config.json failed:", err);
+      });
     } catch (err: any) {
-      alert("Failed to read image file: " + (err?.message || "Invalid file format"));
+      alert("Failed to upload image file: " + (err?.message || "Invalid file format"));
     } finally {
       setIsUploading(false);
       if (e.target) e.target.value = "";
     }
   };
 
-  // Add custom Avatar Graphic directly to Firestore database collection (`/avatar_graphics`)
+  // Add custom Avatar Graphic directly to dedicated directory & database collection (`/avatar_graphics`)
   const handleDirectUploadToDatabase = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -393,6 +431,11 @@ export default function HeroSidePanel({
         avatarAlt: added.name,
       });
       soundManager.playClick(0.16);
+
+      // Auto-persist active changes to hero-config.json
+      setTimeout(() => {
+        saveHeroConfig(config, userEmail).catch(() => {});
+      }, 500);
     } catch (err: any) {
       alert("Failed to add avatar graphic to database: " + (err?.message || "Invalid image"));
     } finally {

@@ -63,7 +63,8 @@ import { soundManager } from "../lib/soundEffects";
 import { 
   subscribeAvatarGraphics, 
   addAvatarGraphicToDatabase, 
-  deleteAvatarGraphicFromDatabase 
+  deleteAvatarGraphicFromDatabase,
+  uploadHeroGraphicFile 
 } from "../lib/avatarGraphicsService";
 import LiquidCarveButton from "./LiquidCarveButton";
 import HeroSidePanel from "./HeroSidePanel";
@@ -328,7 +329,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
     setPreviewKey((k) => k + 1);
   };
 
-  // Handle image upload from computer
+  // Handle image upload from computer: saves to /public/uploads/hero/, stores in DB, and syncs to JSON
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
@@ -336,15 +337,39 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
     setIsUploading(true);
     soundManager.playClick(0.1);
     try {
-      const compressedDataUrl = await processFileToCompressedDataUrl(file, 1000, 0.82);
-      updateLayerProps({
-        avatarUrl: compressedDataUrl,
-        avatarAlt: file.name.replace(/\.[^/.]+$/, ""),
-        isEnabled: true,
+      // 1. Upload to dedicated /public/uploads/hero/ directory
+      const uploadRes = await uploadHeroGraphicFile(file);
+
+      // 2. Store in Firestore database collection (/avatar_graphics)
+      const addedDb = await addAvatarGraphicToDatabase({
+        name: file.name.replace(/\.[^/.]+$/, ""),
+        imageInput: uploadRes.url,
+        createdByEmail: userEmail,
       });
+
+      // 3. Update layer config with clean /uploads/hero/... URL
+      const layerToUpdate = (config[activeLayerKey as keyof CustomHeroConfig] as any) || (activeLayerId === "bg" ? DEFAULT_BG_LAYER : activeLayerId === "fg" ? DEFAULT_FG_LAYER : DEFAULT_MID_LAYER);
+      const updatedLayer = {
+        ...layerToUpdate,
+        avatarUrl: addedDb.url,
+        avatarAlt: addedDb.name,
+        isEnabled: true,
+      };
+      const nextConfig = {
+        ...config,
+        [activeLayerKey]: updatedLayer,
+        ...(activeLayerId === "mid" ? {
+          avatarUrl: addedDb.url,
+          avatarAlt: addedDb.name,
+        } : {}),
+      };
+
+      setConfig(nextConfig);
+      // 4. Immediately persist into hero-config.json for instant Main Hero pickup
+      await saveHeroConfig(nextConfig, userEmail, true);
       handleReplayAnimation();
     } catch (err: any) {
-      alert("Failed to read image file: " + (err?.message || "Invalid file format"));
+      alert("Failed to upload image file: " + (err?.message || "Invalid file format"));
     } finally {
       setIsUploading(false);
       if (e.target) e.target.value = "";
@@ -360,17 +385,33 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
     soundManager.playClick(0.12);
     try {
       const customName = newGraphicName.trim() || file.name.replace(/\.[^/.]+$/, "").toUpperCase();
+      // 1. Upload to dedicated directory and save in database collection
       const added = await addAvatarGraphicToDatabase({
         name: customName,
         imageInput: file,
         createdByEmail: userEmail,
       });
       setNewGraphicName("");
-      // Automatically assign new graphic to active layer / graphic object
-      updateActiveObjectProps({
+
+      // 2. Automatically assign new graphic to active layer / graphic object
+      const layerToUpdate = (config[activeLayerKey as keyof CustomHeroConfig] as any) || (activeLayerId === "bg" ? DEFAULT_BG_LAYER : activeLayerId === "fg" ? DEFAULT_FG_LAYER : DEFAULT_MID_LAYER);
+      const updatedLayer = {
+        ...layerToUpdate,
         avatarUrl: added.url,
         avatarAlt: added.name,
-      });
+        isEnabled: true,
+      };
+      const nextConfig = {
+        ...config,
+        [activeLayerKey]: updatedLayer,
+        ...(activeLayerId === "mid" ? {
+          avatarUrl: added.url,
+          avatarAlt: added.name,
+        } : {}),
+      };
+      setConfig(nextConfig);
+      // 3. Immediately persist into hero-config.json for instant Main Hero pickup
+      await saveHeroConfig(nextConfig, userEmail, true);
       handleReplayAnimation();
       soundManager.playClick(0.16);
     } catch (err: any) {
@@ -593,7 +634,12 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           const effectivePosY = (isMobileMode && item.mobileEnabled && item.mobilePosY !== undefined) ? item.mobilePosY : item.posY;
           const effectiveSize = (isMobileMode && item.mobileEnabled && item.mobileSize !== undefined) ? item.mobileSize : (item.size || 180);
           const effectiveRotation = (isMobileMode && item.mobileEnabled && item.mobileRotation !== undefined) ? item.mobileRotation : (item.rotation || 0);
-          const effectiveStickBottom = (isMobileMode && item.mobileEnabled && item.mobileStickToBottom !== undefined) ? item.mobileStickToBottom : defaultLayerStickBottom;
+          const isMainGraphic = actualIndex === 0;
+          const effectiveStickBottom = isMainGraphic
+            ? ((isMobileMode && item.mobileEnabled && item.mobileStickToBottom !== undefined) 
+                ? Boolean(item.mobileStickToBottom && effectivePosY >= 90) 
+                : Boolean(defaultLayerStickBottom && effectivePosY >= 90))
+            : false;
 
           return (
             <motion.div

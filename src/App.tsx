@@ -547,7 +547,7 @@ function StorefrontApp() {
       />
 
       <div className={`${location.pathname === "/" ? "pt-0" : "pt-2 sm:pt-4"} relative z-10`}>
-        <Breadcrumbs categories={categories} />
+        {location.pathname !== "/" && <Breadcrumbs categories={categories} />}
         
         <main className="min-h-screen bg-transparent relative">
           <Routes location={location}>

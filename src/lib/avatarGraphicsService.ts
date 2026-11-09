@@ -158,9 +158,49 @@ export async function seedDefaultAvatarGraphics(): Promise<void> {
 }
 
 /**
- * Adds a new custom Avatar Graphic to the Firestore database manually (File upload or Image URL).
- * Automatically compresses images to high-definition ~1000px WebP to prevent database bloat.
+ * Uploads an image file to the dedicated /public/uploads/hero/ directory on the server
  */
+export async function uploadHeroGraphicFile(
+  imageInput: File | string,
+  name?: string
+): Promise<{ url: string; name: string }> {
+  let compressedDataUrl = "";
+  let baseFilename = name || "hero_graphic";
+
+  if (typeof imageInput === "string") {
+    if (imageInput.startsWith("data:image/")) {
+      compressedDataUrl = await compressDataUrl(imageInput, 1200, 0.85);
+    } else {
+      return { url: imageInput, name: baseFilename };
+    }
+  } else if (imageInput instanceof File) {
+    baseFilename = imageInput.name.replace(/\.[^/.]+$/, "");
+    compressedDataUrl = await processFileToCompressedDataUrl(imageInput, 1200, 0.85);
+  }
+
+  try {
+    const res = await fetch("/api/upload-hero-graphic", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        dataUrl: compressedDataUrl,
+        filename: baseFilename,
+        name: name || baseFilename,
+      }),
+    });
+    if (res.ok) {
+      const data = await res.json();
+      if (data.url) {
+        return { url: data.url, name: data.name || baseFilename };
+      }
+    }
+  } catch (err) {
+    console.warn("Could not save to /api/upload-hero-graphic, falling back to dataUrl:", err);
+  }
+
+  return { url: compressedDataUrl, name: baseFilename };
+}
+
 export async function addAvatarGraphicToDatabase(params: {
   name: string;
   imageInput: File | string;
@@ -168,17 +208,8 @@ export async function addAvatarGraphicToDatabase(params: {
   tags?: string[];
   createdByEmail?: string;
 }): Promise<AvatarGraphic> {
-  let finalUrl = "";
-
-  if (typeof params.imageInput === "string") {
-    if (params.imageInput.startsWith("data:image/")) {
-      finalUrl = await compressDataUrl(params.imageInput, 1000, 0.82);
-    } else {
-      finalUrl = params.imageInput;
-    }
-  } else if (params.imageInput instanceof File) {
-    finalUrl = await processFileToCompressedDataUrl(params.imageInput, 1000, 0.82);
-  }
+  const uploadResult = await uploadHeroGraphicFile(params.imageInput, params.name);
+  const finalUrl = uploadResult.url;
 
   if (!finalUrl) {
     throw new Error("Invalid image format or image data");
@@ -189,7 +220,7 @@ export async function addAvatarGraphicToDatabase(params: {
 
   const record: AvatarGraphic = {
     id: graphicId,
-    name: params.name || "Custom Avatar Graphic",
+    name: params.name || uploadResult.name || "Custom Avatar Graphic",
     url: finalUrl,
     category: params.category || "custom",
     tags: params.tags || ["custom"],
@@ -200,12 +231,16 @@ export async function addAvatarGraphicToDatabase(params: {
 
   // 1. Update local cache immediately
   const current = getCachedAvatarGraphics();
-  const updated = [record, ...current];
+  const updated = [record, ...current.filter((g) => g.id !== graphicId)];
   setCachedAvatarGraphics(updated);
 
   // 2. Save directly to Firestore database collection `/avatar_graphics/{graphicId}`
-  const docRef = doc(db, AVATAR_GRAPHICS_COLLECTION, graphicId);
-  await setDoc(docRef, record, { merge: true });
+  try {
+    const docRef = doc(db, AVATAR_GRAPHICS_COLLECTION, graphicId);
+    await setDoc(docRef, record, { merge: true });
+  } catch (err) {
+    console.warn("Could not save to Firestore avatar_graphics collection:", err);
+  }
 
   return record;
 }

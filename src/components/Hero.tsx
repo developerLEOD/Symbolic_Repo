@@ -187,8 +187,8 @@ function LayerGraphicItem({
   const finalSize = useMobile ? (item.mobileSize ?? item.size) : item.size;
   const finalRotation = useMobile ? (item.mobileRotation ?? item.rotation ?? 0) : (item.rotation ?? 0);
   const finalStickToBottom = useMobile 
-    ? (item.mobileStickToBottom ?? stickToBottom) 
-    : stickToBottom;
+    ? Boolean((item.mobileStickToBottom ?? stickToBottom) && (finalPosY >= 90)) 
+    : Boolean(stickToBottom && (finalPosY >= 90));
 
   const slideSettings = isSlideshow ? getSlideshowTransitionSettings(slideshowTransition) : null;
   
@@ -506,7 +506,7 @@ function SingleLayerRenderer({
               elementRef={idx === 0 ? elementRef : undefined}
               isSlideshow={false}
               slideshowTransition={layer.slideshowTransition || "fade"}
-              stickToBottom={layer.stickToBottom ?? (layer.id === "mid")}
+              stickToBottom={idx === 0 ? (layer.stickToBottom ?? (layer.id === "mid")) : false}
               isMobile={isMobile}
             />
           ))}
@@ -602,15 +602,38 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
   const [measuredLowestHeight, setMeasuredLowestHeight] = useState<number | null>(null);
 
   // Load hero metadata once on mount from the canonical JSON configuration file
+  // and listen for manual studio update events without polling or Firestore leakage
   useEffect(() => {
     let mounted = true;
-    getHeroConfig().then((loadedConfig) => {
-      if (mounted) {
-        setConfig(loadedConfig);
+    const fetchLatest = () => {
+      getHeroConfig().then((loadedConfig) => {
+        if (mounted) {
+          setConfig(loadedConfig);
+        }
+      });
+    };
+
+    fetchLatest();
+
+    const handleConfigEvent = (e: any) => {
+      if (mounted && e?.detail) {
+        setConfig(e.detail);
+      } else {
+        fetchLatest();
       }
-    });
+    };
+
+    const handleFocus = () => {
+      fetchLatest();
+    };
+
+    window.addEventListener("sym_hero_config_updated", handleConfigEvent);
+    window.addEventListener("focus", handleFocus);
+
     return () => {
       mounted = false;
+      window.removeEventListener("sym_hero_config_updated", handleConfigEvent);
+      window.removeEventListener("focus", handleFocus);
     };
   }, []);
 
