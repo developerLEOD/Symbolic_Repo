@@ -140,10 +140,6 @@ app.get("/api/scan-hero-graphics", (_req, res) => {
 
     const publicHeroDir = path.resolve(__dirname, "public", "assets", "hero");
     scanDirectory(publicHeroDir, "/assets/hero", "auto", "HERO");
-    const srcHeroDir = path.resolve(__dirname, "src", "assets", "hero");
-    scanDirectory(srcHeroDir, "/src/assets/hero", "auto", "HERO");
-    // const srcImagesDir = path.resolve(__dirname, "src", "assets", "images");
-    // scanDirectory(srcImagesDir, "/src/assets/images", "mid", "IMG");
 
     return res.json({ success: true, count: graphics.length, graphics });
   } catch (err: any) {

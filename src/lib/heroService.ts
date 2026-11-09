@@ -514,21 +514,9 @@ export async function summonRepoGraphics(
     console.warn("Could not fetch /api/scan-hero-graphics, using fallback list:", err);
   }
 
-  // Fallback repo images list if API is unreachable
+  // No hardcoded fallback list — strictly use scanned repo graphics
   if (scannedItems.length === 0) {
-    const defaultAvatars = [
-      "Avatar0.png", "Avatar1.png", "Avatar2.png", "Avatar3.png", "Avatar4.png",
-      "Avatar6.png", "Avatar7.png", "Avatar8.png", "Avatar9.png", "Avatar10.png"
-    ];
-    scannedItems = defaultAvatars.map((file, idx) => ({
-      id: `gfx_av_${idx}_${file.replace(/\.[^/.]+$/, "").toLowerCase()}`,
-      serialNumber: `SYM-AV-${String(idx).padStart(2, "0")}`,
-      name: file.replace(/\.[^/.]+$/, ""),
-      assetPath: `/assets/hero/avatar/${file}`,
-      avatarUrl: `/assets/hero/avatar/${file}`,
-      avatarAlt: file.replace(/\.[^/.]+$/, ""),
-      layer: "mid"
-    }));
+    scannedItems = [];
   }
 
   const nextMidGraphics: GraphicObject[] = [...(currentConfig.midLayer?.graphicObjects || [])];

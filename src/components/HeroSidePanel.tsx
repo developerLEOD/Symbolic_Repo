@@ -125,16 +125,7 @@ const HOVER_OPTIONS: { id: HeroHoverEffect; label: string }[] = [
   { id: "pulse", label: "BREATHE" },
 ];
 
-// Curated avatar & specimen presets for instant testing & slideshows
-const SAMPLE_AVATARS = [
-  { name: "Falasteen Kuffiyeh Hoodie", url: "/src/assets/images/falasteen_kuffiyeh_hoodie_1789233545448.jpg" },
-  { name: "Canvas Field Bag", url: "/src/assets/images/canvas_field_bag_1789233558525.jpg" },
-  { name: "Structured Twill Cap", url: "/src/assets/images/structured_twill_cap_1789233572064.jpg" },
-  { name: "Ceramic Stoneware Vessel", url: "/src/assets/images/ceramic_stoneware_vessel_1789233585625.jpg" },
-  { name: "Seek Wisdom Archival Mug", url: "/src/assets/images/mug_seek_wisdom_1788008333595.jpg" },
-  { name: "Find Clarity Emblem Mug", url: "/src/assets/images/mug_find_clarity_1788008345150.jpg" },
-  { name: "Be Symbolic Identity Mug", url: "/src/assets/images/mug_be_symbolic_1788008321905.jpg" },
-];
+// Curated avatar & specimen presets removed to strictly use repository assets
 
 export default function HeroSidePanel({ 
   config, 
@@ -1639,6 +1630,13 @@ export default function HeroSidePanel({
                                 disableIdleAnimation: getActiveObjectValue("disableIdleAnimation", false),
                                 shadow: getActiveObjectValue("shadow", false),
                                 border: getActiveObjectValue("border", false),
+                                // Mobile parameters synchronization
+                                mobileEnabled: getActiveObjectValue("mobileEnabled", false),
+                                mobilePosX: getActiveObjectValue("mobilePosX", undefined),
+                                mobilePosY: getActiveObjectValue("mobilePosY", undefined),
+                                mobileSize: getActiveObjectValue("mobileSize", undefined),
+                                mobileRotation: getActiveObjectValue("mobileRotation", undefined),
+                                mobileStickToBottom: getActiveObjectValue("mobileStickToBottom", undefined),
                               };
                               // Apply to all other graphics in the layer
                               if (isMainGraphic) {
