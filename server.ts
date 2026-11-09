@@ -92,6 +92,77 @@ app.post("/api/upload-hero-graphic", (req, res) => {
   }
 });
 
+// Scan all repository hero graphics (code assets)
+app.get("/api/scan-hero-graphics", (_req, res) => {
+  try {
+    const graphics: any[] = [];
+    const imageRegex = /\.(png|jpe?g|webp|svg)$/i;
+
+    const scanDirectory = (dirPath: string, relativePrefix: string, layer: "mid" | "bg" | "fg" | "auto", categoryPrefix: string) => {
+      if (!fs.existsSync(dirPath)) return;
+      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
+
+      let counter = 0;
+      for (const entry of entries) {
+        if (entry.isDirectory()) {
+          const subLayer = entry.name === "avatar" ? "mid" : entry.name === "background" ? "bg" : entry.name === "foreground" ? "fg" : layer;
+          scanDirectory(path.join(dirPath, entry.name), `${relativePrefix}/${entry.name}`, subLayer, entry.name.toUpperCase().slice(0, 2));
+        } else if (imageRegex.test(entry.name)) {
+          const ext = path.extname(entry.name);
+          const rawName = path.basename(entry.name, ext);
+          const cleanName = rawName.replace(/[^a-zA-Z0-9_-]/g, " ");
+          const serialNum = `SYM-${categoryPrefix}-${String(counter).padStart(2, "0")}`;
+          counter++;
+
+          let targetLayer: "mid" | "bg" | "fg" = layer === "auto" ? "mid" : layer;
+          if (dirPath.includes("avatar")) targetLayer = "mid";
+          else if (dirPath.includes("background")) targetLayer = "bg";
+          else if (dirPath.includes("foreground")) targetLayer = "fg";
+
+          const assetPath = `${relativePrefix}/${entry.name}`;
+          graphics.push({
+            id: `gfx_${categoryPrefix.toLowerCase()}_${counter}_${rawName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
+            serialNumber: serialNum,
+            name: cleanName,
+            assetPath,
+            avatarUrl: assetPath,
+            avatarAlt: cleanName,
+            layer: targetLayer,
+          });
+        }
+      }
+    };
+
+    const publicHeroDir = path.resolve(__dirname, "public", "assets", "hero");
+    scanDirectory(publicHeroDir, "/assets/hero", "auto", "HERO");
+
+    const srcImagesDir = path.resolve(__dirname, "public", "src", "assets", "images");
+    scanDirectory(srcImagesDir, "/src/assets/images", "mid", "IMG");
+
+    const uploadsDir = path.resolve(__dirname, "public", "uploads", "hero");
+    scanDirectory(uploadsDir, "/uploads/hero", "mid", "UPL");
+
+    // Check root Logo_NoName.jpg if exists
+    const rootLogo = path.resolve(__dirname, "public", "Logo_NoName.jpg");
+    if (fs.existsSync(rootLogo)) {
+      graphics.push({
+        id: "gfx_root_monolith_logo",
+        serialNumber: "SYM-CORE-00",
+        name: "Monolith Emblem Logo",
+        assetPath: "/Logo_NoName.jpg",
+        avatarUrl: "/Logo_NoName.jpg",
+        avatarAlt: "Monolith Emblem Logo",
+        layer: "mid",
+      });
+    }
+
+    return res.json({ success: true, count: graphics.length, graphics });
+  } catch (err: any) {
+    console.error("Scan graphics error:", err);
+    return res.status(500).json({ error: err?.message || "Failed to scan graphics" });
+  }
+});
+
 // Hero JSON Metadata Endpoints (Zero-Firestore, fully decoupled)
 app.get("/api/hero-config", (_req, res) => {
   try {

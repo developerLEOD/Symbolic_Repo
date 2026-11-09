@@ -61,7 +61,8 @@ import {
   normalizeHeroConfig,
   saveHeroConfig, 
   resetHeroConfig,
-  downloadHeroConfigJson
+  downloadHeroConfigJson,
+  summonRepoGraphics
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
@@ -350,6 +351,23 @@ export default function HeroSidePanel({
     }
   };
 
+  // Summon all repo graphics from code/directory
+  const handleSummonGraphics = async () => {
+    setIsSaving(true);
+    soundManager.playClick(0.16);
+    try {
+      const { config: updatedConfig, count } = await summonRepoGraphics(config);
+      onUpdateConfig(updatedConfig);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      alert(`Summoned ${count} repo graphics! Set parameters for each graphic and click EXPORT to save JSON.`);
+    } catch (err: any) {
+      alert("Failed to summon repo graphics: " + (err?.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
   // Reset to default
   const handleReset = async () => {
     if (!window.confirm("Reset hero canvas back to default settings?")) return;
@@ -596,12 +614,25 @@ export default function HeroSidePanel({
             {/* Scrollable Controls Content */}
             <div className="p-4 overflow-y-auto space-y-4 flex-1 scrollbar-thin scrollbar-thumb-brand-text">
               
-              {/* Top Quick Actions (Save to JSON & Export + Reset) */}
+              {/* Top Quick Actions (Summon Repo Graphics + Save to JSON & Export + Reset) */}
               <div className="space-y-1.5 pb-2 border-b border-brand-text/15">
                 <div className="flex items-center justify-between text-[8px] font-mono text-brand-text/60 uppercase">
                   <span>METADATA STORAGE:</span>
                   <span className="text-emerald-600 font-bold">hero-config.json [ZERO DB USAGE]</span>
                 </div>
+
+                {/* Summon Graphics Button */}
+                <button
+                  type="button"
+                  onClick={handleSummonGraphics}
+                  disabled={isSaving}
+                  className="w-full py-2 px-2 bg-amber-500 hover:bg-black text-black hover:text-white border-2 border-brand-text text-[10px] font-black uppercase tracking-wider flex items-center justify-center gap-1.5 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50 transition-all"
+                  title="Render all local repo graphics (Avatar0.png...Avatar10.png, etc.) into Studio Hero canvas"
+                >
+                  <Sparkles size={13} className="text-black group-hover:text-white" />
+                  <span>SUMMON GRAPHICS FROM REPO</span>
+                </button>
+
                 <div className="grid grid-cols-3 gap-1.5">
                   <button
                     type="button"

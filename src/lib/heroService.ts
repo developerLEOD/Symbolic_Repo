@@ -17,7 +17,7 @@
  *    and text object according to the JSON specifications without any Firestore reads.
  */
 
-import { CustomHeroConfig, HeroLayerConfig, BackdropConfig, HeroButtonsConfig } from "../types";
+import { CustomHeroConfig, HeroLayerConfig, BackdropConfig, HeroButtonsConfig, GraphicObject } from "../types";
 import bundledDefaultConfig from "../data/heroConfig.json";
 import { doc, getDoc, setDoc } from "firebase/firestore";
 import { db } from "./firebase";
@@ -491,4 +491,111 @@ export function downloadHeroConfigJson(config?: CustomHeroConfig): void {
   a.click();
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
+}
+
+/**
+ * Scans all graphics/images in the repository code folders (/public/assets/hero/..., etc.)
+ * and populates them into the hero layers (midLayer, bgLayer, fgLayer) with unique serial numbers
+ * so they can be visually positioned in Studio Hero and exported to JSON.
+ */
+export async function summonRepoGraphics(
+  currentConfig: CustomHeroConfig
+): Promise<{ config: CustomHeroConfig; count: number }> {
+  let scannedItems: any[] = [];
+  try {
+    const res = await fetch("/api/scan-hero-graphics");
+    if (res.ok) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.graphics)) {
+        scannedItems = data.graphics;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch /api/scan-hero-graphics, using fallback list:", err);
+  }
+
+  // Fallback repo images list if API is unreachable
+  if (scannedItems.length === 0) {
+    const defaultAvatars = [
+      "Avatar0.png", "Avatar1.png", "Avatar2.png", "Avatar3.png", "Avatar4.png",
+      "Avatar6.png", "Avatar7.png", "Avatar8.png", "Avatar9.png", "Avatar10.png"
+    ];
+    scannedItems = defaultAvatars.map((file, idx) => ({
+      id: `gfx_av_${idx}_${file.replace(/\.[^/.]+$/, "").toLowerCase()}`,
+      serialNumber: `SYM-AV-${String(idx).padStart(2, "0")}`,
+      name: file.replace(/\.[^/.]+$/, ""),
+      assetPath: `/assets/hero/avatar/${file}`,
+      avatarUrl: `/assets/hero/avatar/${file}`,
+      avatarAlt: file.replace(/\.[^/.]+$/, ""),
+      layer: "mid"
+    }));
+  }
+
+  const nextMidGraphics: GraphicObject[] = [...(currentConfig.midLayer?.graphicObjects || [])];
+  const nextBgGraphics: GraphicObject[] = [...(currentConfig.bgLayer?.graphicObjects || [])];
+  const nextFgGraphics: GraphicObject[] = [...(currentConfig.fgLayer?.graphicObjects || [])];
+
+  let addedCount = 0;
+
+  scannedItems.forEach((item) => {
+    const targetUrl = item.avatarUrl || item.assetPath;
+    const existsInMid = nextMidGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+    const existsInBg = nextBgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+    const existsInFg = nextFgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+    const isMainAvatar = currentConfig.midLayer?.avatarUrl === targetUrl;
+
+    if (!existsInMid && !existsInBg && !existsInFg && !isMainAvatar) {
+      const gridX = 25 + ((addedCount % 4) * 16);
+      const gridY = 30 + (Math.floor(addedCount / 4) * 18);
+
+      const graphicObj: GraphicObject = {
+        id: item.id || `gfx_sum_${Date.now()}_${addedCount}`,
+        serialNumber: item.serialNumber || `SYM-GFX-${String(addedCount).padStart(2, "0")}`,
+        assetPath: item.assetPath || targetUrl,
+        avatarUrl: targetUrl,
+        avatarAlt: item.name || item.avatarAlt || `Graphic ${addedCount + 1}`,
+        posX: Math.min(85, Math.max(15, gridX)),
+        posY: Math.min(85, Math.max(20, gridY)),
+        size: item.layer === "bg" ? 320 : item.layer === "fg" ? 140 : 260,
+        rotation: 0,
+        opacity: item.layer === "bg" ? 0.25 : 1,
+        transitionDirection: item.layer === "fg" ? "top" : "bottom",
+        transitionSpeed: "spring",
+        transitionDelay: 0.1 + (addedCount * 0.05),
+        hoverEffect: "none",
+        disableIdleAnimation: false,
+        shadow: false,
+        border: false,
+      };
+
+      if (item.layer === "bg") {
+        nextBgGraphics.push(graphicObj);
+      } else if (item.layer === "fg") {
+        nextFgGraphics.push(graphicObj);
+      } else {
+        nextMidGraphics.push(graphicObj);
+      }
+      addedCount++;
+    }
+  });
+
+  const nextConfig: CustomHeroConfig = {
+    ...currentConfig,
+    midLayer: {
+      ...currentConfig.midLayer,
+      graphicObjects: nextMidGraphics,
+      slideshowEnabled: nextMidGraphics.length > 0 ? true : currentConfig.midLayer?.slideshowEnabled,
+    },
+    bgLayer: {
+      ...currentConfig.bgLayer,
+      graphicObjects: nextBgGraphics,
+    },
+    fgLayer: {
+      ...currentConfig.fgLayer,
+      graphicObjects: nextFgGraphics,
+    },
+  };
+
+  await saveHeroConfig(nextConfig);
+  return { config: nextConfig, count: addedCount };
 }

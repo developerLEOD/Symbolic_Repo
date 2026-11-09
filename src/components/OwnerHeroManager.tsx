@@ -57,7 +57,8 @@ import {
   getCachedHeroConfig, 
   saveHeroConfig, 
   resetHeroConfig,
-  downloadHeroConfigJson
+  downloadHeroConfigJson,
+  summonRepoGraphics
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
@@ -478,6 +479,24 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
     } finally {
       setIsSaving(false);
       if (e.target) e.target.value = "";
+    }
+  };
+
+  // Summon all repo graphics from code/directory
+  const handleSummonGraphics = async () => {
+    setIsSaving(true);
+    soundManager.playClick(0.16);
+    try {
+      const { config: updatedConfig, count } = await summonRepoGraphics(config);
+      setConfig(updatedConfig);
+      setPreviewKey((k) => k + 1);
+      setSaveSuccess(true);
+      setTimeout(() => setSaveSuccess(false), 3000);
+      alert(`Summoned ${count} repo graphics! Set parameters for each graphic and click EXPORT to save JSON.`);
+    } catch (err: any) {
+      alert("Failed to summon repo graphics: " + (err?.message || "Unknown error"));
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -1004,6 +1023,16 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
             title="Replay Motion Transition"
           >
             <Play size={11} className="text-[#FF4500] fill-[#FF4500]" />
+          </button>
+          <button
+            type="button"
+            onClick={handleSummonGraphics}
+            disabled={isSaving}
+            className="p-1 bg-amber-500 hover:bg-black text-black hover:text-white border border-brand-text text-[9px] font-black uppercase transition-colors cursor-pointer flex items-center gap-1 px-2 shadow-[1px_1px_0px_#050505] disabled:opacity-50"
+            title="Summon all repo graphics (code/directory assets) into Studio Hero"
+          >
+            <Sparkles size={11} className="text-black group-hover:text-white" />
+            <span className="font-bold">SUMMON GRAPHICS</span>
           </button>
           <button
             type="button"
