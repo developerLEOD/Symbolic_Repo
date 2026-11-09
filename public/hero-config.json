@@ -1,6 +1,6 @@
 {
   "isEnabled": true,
-  "activeEditingLayer": "bg",
+  "activeEditingLayer": "mid",
   "avatarUrl": "",
   "avatarAlt": "SYMBOLIC Monolithic Emblem",
   "posX": 50,
@@ -50,7 +50,13 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 13,
+        "mobilePosY": 18,
+        "mobileRotation": 0,
+        "mobileSize": 280,
+        "mobileStickToBottom": false
       },
       {
         "id": "gfx_bg_1_layer4",
@@ -69,7 +75,13 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 6,
+        "mobilePosY": 31,
+        "mobileRotation": 0,
+        "mobileSize": 280,
+        "mobileStickToBottom": false
       },
       {
         "id": "gfx_bg_2_layer5",
@@ -109,7 +121,8 @@
         "letterSpacing": -5,
         "fontWeight": 800,
         "textTransform": "uppercase",
-        "italic": false
+        "italic": false,
+        "deviceTarget": "desktop"
       },
       {
         "id": "1794248618000",
@@ -149,6 +162,28 @@
         "fontWeight": 400,
         "textTransform": "none",
         "italic": false
+      },
+      {
+        "id": "1794250718072",
+        "text": "Be Symbolic",
+        "posX": 50,
+        "posY": 50,
+        "fontSize": 64,
+        "color": "#050505",
+        "rotation": 0,
+        "opacity": 1,
+        "transitionDirection": "fade",
+        "transitionSpeed": "smooth",
+        "hoverEffect": "none",
+        "textAlign": "center",
+        "lineHeight": 1.1,
+        "letterSpacing": -5,
+        "fontWeight": 900,
+        "textTransform": "uppercase",
+        "italic": false,
+        "mobileEnabled": true,
+        "mobilePosX": 5,
+        "mobilePosY": 7
       }
     ],
     "slideshowEnabled": false,
@@ -331,7 +366,13 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "mobileEnabled": true,
+        "mobilePosX": 5,
+        "mobilePosY": 19,
+        "mobileRotation": 0,
+        "mobileSize": 345,
+        "mobileStickToBottom": true
       },
       {
         "id": "gfx_av_8_avatar9",
@@ -419,8 +460,8 @@
     "posX": 78,
     "posY": 87,
     "deviceTarget": "both",
-    "mobileEnabled": false,
-    "mobilePosX": 50,
+    "mobileEnabled": true,
+    "mobilePosX": 46,
     "mobilePosY": 85
   },
   "gridOpacity": 0.12,
@@ -578,7 +619,13 @@
       "hoverEffect": "none",
       "disableIdleAnimation": false,
       "shadow": false,
-      "border": false
+      "border": false,
+      "mobileEnabled": true,
+      "mobilePosX": 5,
+      "mobilePosY": 19,
+      "mobileRotation": 0,
+      "mobileSize": 345,
+      "mobileStickToBottom": true
     },
     {
       "id": "gfx_av_8_avatar9",
