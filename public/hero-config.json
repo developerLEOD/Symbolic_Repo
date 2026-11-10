@@ -56,7 +56,9 @@
         "mobilePosY": 16,
         "mobileRotation": 0,
         "mobileSize": 310,
-        "mobileStickToBottom": false
+        "mobileStickToBottom": false,
+        "stickToBottom": true,
+        "stickToBottomOffset": 348
       },
       {
         "id": "gfx_bg_1_layer4",
@@ -122,7 +124,9 @@
         "fontWeight": 800,
         "textTransform": "uppercase",
         "italic": false,
-        "deviceTarget": "desktop"
+        "deviceTarget": "desktop",
+        "stickToBottom": true,
+        "stickToBottomOffset": 0
       },
       {
         "id": "1794248618000",
