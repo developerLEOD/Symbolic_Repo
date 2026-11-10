@@ -937,10 +937,12 @@ function StorefrontApp() {
         isHomepage={location.pathname === "/"}
       />
 
-      {/* Firestore Artifacts & Database Diagnostic Verification Panel */}
-      <ArtifactDatabaseDiagnosticPanel 
-        onOpenStudio={() => navigate("/studio/artifacts")}
-      />
+      {/* Firestore Artifacts & Database Diagnostic Verification Panel (Owner Only) */}
+      {isOwner && (
+        <ArtifactDatabaseDiagnosticPanel 
+          onOpenStudio={() => navigate("/studio/artifacts")}
+        />
+      )}
 
       {/* Owner Product Manager Studio */}
       {isOwnerOpen && isOwner && (
