@@ -226,7 +226,9 @@ export default function Header({
     <motion.header 
       initial={false}
       animate={{ y: "0%", opacity: 1, scale: 1 }}
-      className="fixed top-0 left-0 w-full z-50 h-10 sm:h-28 bg-brand-accent sm:bg-transparent border-b-2 sm:border-b-0 border-brand-text shadow-[0_2px_0px_#050505] sm:shadow-none flex items-center justify-between px-2.5 sm:px-8 lg:px-12 transition-colors select-none"
+      className={`fixed top-0 left-0 w-full z-50 h-10 bg-brand-accent border-b-2 border-brand-text shadow-[0_2px_0px_#050505] flex items-center justify-between px-2.5 sm:px-8 lg:px-12 transition-all select-none ${
+        scrolled ? "sm:h-10 sm:bg-brand-accent sm:border-b-2 sm:shadow-[0_2px_0px_#050505]" : "sm:h-28 sm:bg-transparent sm:border-b-0 sm:shadow-none"
+      }`}
     >
       {/* Top Left: Logo */}
       <div className="flex items-center shrink-0">
@@ -234,7 +236,9 @@ export default function Header({
           to="/"
           className="group flex items-center gap-2 sm:gap-4 focus:outline-none cursor-pointer shrink-0 select-none"
         >
-          <div className="shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border sm:border-2 border-brand-text shadow-[1.5px_1.5px_0px_#050505] sm:shadow-[2px_2px_0px_#050505] transition-all w-7 h-7 sm:w-14 sm:h-14">
+          <div className={`shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border border-brand-text shadow-[1.5px_1.5px_0px_#050505] transition-all w-7 h-7 ${
+            scrolled ? "sm:w-7 sm:h-7 sm:border sm:shadow-[1.5px_1.5px_0px_#050505]" : "sm:w-14 sm:h-14 sm:border-2 sm:shadow-[2px_2px_0px_#050505]"
+          }`}>
             <img 
               src="/Logo_NoName.jpg" 
               alt="SYMBOLIC" 
@@ -244,10 +248,14 @@ export default function Header({
           </div>
           <div className="flex flex-col justify-center text-left shrink-0">
             <div className="w-fit inline-flex flex-col">
-              <span className="block font-mono font-black tracking-tight uppercase text-white sm:text-brand-text leading-none text-xs sm:text-2xl">
+              <span className={`block font-mono font-black tracking-tight uppercase text-white leading-none text-xs ${
+                scrolled ? "sm:text-xs sm:text-white" : "sm:text-2xl sm:text-brand-text"
+              }`}>
                 SYMBOLIC
               </span>
-              <span className="self-end font-mono font-black italic tracking-wider text-black sm:text-brand-accent leading-none mt-0.5 text-[8px] sm:text-sm">
+              <span className={`self-end font-mono font-black italic tracking-wider text-black leading-none mt-0.5 text-[8px] ${
+                scrolled ? "sm:text-[8px] sm:text-black" : "sm:text-sm sm:text-brand-accent"
+              }`}>
                 MUSLIMS
               </span>
             </div>
@@ -263,7 +271,11 @@ export default function Header({
             soundManager.playClick(0.12);
             onAuthClick();
           }}
-          className="h-7 sm:h-12 flex items-center justify-center px-2.5 sm:px-5 text-[9px] sm:text-xs font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none sm:rounded-full transition-colors shadow-[1.5px_1.5px_0px_#050505] sm:shadow-[2px_2px_0px_#050505] cursor-pointer border sm:border-2 border-brand-text bg-white sm:bg-brand-surface text-brand-text hover:bg-black hover:text-white"
+          className={`h-7 flex items-center justify-center px-2.5 text-[9px] font-mono uppercase font-black tracking-wider rounded-none transition-colors shadow-[1.5px_1.5px_0px_#050505] cursor-pointer border border-brand-text bg-white text-brand-text hover:bg-black hover:text-white ${
+            scrolled 
+              ? "sm:h-7 sm:px-2.5 sm:text-[9px] sm:rounded-none sm:shadow-[1.5px_1.5px_0px_#050505] sm:border sm:bg-white sm:text-brand-text" 
+              : "sm:h-12 sm:px-5 sm:text-xs sm:tracking-widest sm:rounded-full sm:shadow-[2px_2px_0px_#050505] sm:border-2 sm:bg-brand-surface"
+          }`}
           title={user ? "Profile" : "Authenticate"}
         >
           {user ? (
@@ -279,10 +291,14 @@ export default function Header({
             soundManager.playClick(0.14);
             onCartClick();
           }}
-          className="h-7 sm:h-12 relative flex items-center px-2.5 sm:px-5 text-[9px] sm:text-xs font-mono uppercase font-black tracking-wider sm:tracking-widest bg-black text-white rounded-none sm:rounded-full border sm:border-2 border-brand-text hover:bg-brand-surface hover:text-brand-text transition-colors shadow-[1.5px_1.5px_0px_#050505] sm:shadow-[2px_2px_0px_#050505] cursor-pointer"
+          className={`h-7 relative flex items-center px-2.5 text-[9px] font-mono uppercase font-black tracking-wider bg-black text-white rounded-none border border-brand-text hover:bg-brand-surface hover:text-brand-text transition-colors shadow-[1.5px_1.5px_0px_#050505] cursor-pointer ${
+            scrolled 
+              ? "sm:h-7 sm:px-2.5 sm:text-[9px] sm:rounded-none sm:shadow-[1.5px_1.5px_0px_#050505] sm:border" 
+              : "sm:h-12 sm:px-5 sm:text-xs sm:tracking-widest sm:rounded-full sm:shadow-[2px_2px_0px_#050505] sm:border-2"
+          }`}
           title="Possessions"
         >
-          <span className="hidden sm:inline shrink-0">POSSESSIONS // </span>
+          <span className={`shrink-0 ${scrolled ? "hidden sm:hidden" : "hidden sm:inline"}`}>POSSESSIONS // </span>
           <span className="shrink-0 font-black">
             [ {formattedCartCount} ]
           </span>

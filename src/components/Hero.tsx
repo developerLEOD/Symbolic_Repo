@@ -155,6 +155,9 @@ interface LayerGraphicSlideProps {
     mobileSize?: number;
     mobileRotation?: number;
     mobileStickToBottom?: boolean;
+    stickToBottom?: boolean;
+    stickToBottomOffset?: number;
+    mobileStickToBottomOffset?: number;
   };
   zIndex: number;
   showCoordinates?: boolean;
@@ -162,6 +165,8 @@ interface LayerGraphicSlideProps {
   isSlideshow?: boolean;
   slideshowTransition?: "fade" | "slide-horizontal" | "slide-vertical" | "zoom";
   stickToBottom?: boolean;
+  stickToBottomOffset?: number;
+  mobileStickToBottomOffset?: number;
   isMobile?: boolean;
 }
 
@@ -173,6 +178,8 @@ function LayerGraphicItem({
   isSlideshow, 
   slideshowTransition, 
   stickToBottom,
+  stickToBottomOffset,
+  mobileStickToBottomOffset,
   isMobile 
 }: LayerGraphicSlideProps) {
   // Check device target visibility
@@ -189,6 +196,9 @@ function LayerGraphicItem({
   const finalStickToBottom = useMobile 
     ? Boolean(item.mobileStickToBottom ?? stickToBottom) 
     : Boolean(stickToBottom);
+  const baseOffset = useMobile
+    ? (item.mobileStickToBottomOffset ?? mobileStickToBottomOffset ?? item.stickToBottomOffset ?? stickToBottomOffset ?? 0)
+    : (item.stickToBottomOffset ?? stickToBottomOffset ?? 0);
 
   const slideSettings = isSlideshow ? getSlideshowTransitionSettings(slideshowTransition) : null;
   
@@ -222,7 +232,7 @@ function LayerGraphicItem({
         finalStickToBottom
           ? {
               left: `${finalPosX}%`,
-              bottom: isMobile ? "5px" : "0",
+              bottom: isMobile ? `${5 + baseOffset}px` : `${baseOffset}px`,
               top: "auto",
               transform: `translateX(-50%) rotate(${finalRotation}deg)`,
               transformOrigin: "bottom center",
@@ -359,6 +369,8 @@ function SingleLayerRenderer({
     mobileRotation?: number;
     mobileStickToBottom?: boolean;
     stickToBottom?: boolean;
+    stickToBottomOffset?: number;
+    mobileStickToBottomOffset?: number;
   }> = [];
 
   if (layer?.avatarUrl) {
@@ -388,6 +400,8 @@ function SingleLayerRenderer({
       mobileRotation: layer.mobileRotation,
       mobileStickToBottom: layer.mobileStickToBottom,
       stickToBottom: layer.stickToBottom,
+      stickToBottomOffset: layer.stickToBottomOffset,
+      mobileStickToBottomOffset: layer.mobileStickToBottomOffset,
     });
   }
 
@@ -419,6 +433,8 @@ function SingleLayerRenderer({
         mobileRotation: g.mobileRotation,
         mobileStickToBottom: g.mobileStickToBottom,
         stickToBottom: g.stickToBottom,
+        stickToBottomOffset: g.stickToBottomOffset,
+        mobileStickToBottomOffset: g.mobileStickToBottomOffset,
       });
     });
   }
@@ -476,6 +492,8 @@ function SingleLayerRenderer({
                 isSlideshow={true}
                 slideshowTransition={layer.slideshowTransition || "fade"}
                 stickToBottom={visibleGraphics[safeSlideIndex].stickToBottom ?? (layer.id === "mid")}
+                stickToBottomOffset={visibleGraphics[safeSlideIndex].stickToBottomOffset ?? layer.stickToBottomOffset}
+                mobileStickToBottomOffset={visibleGraphics[safeSlideIndex].mobileStickToBottomOffset ?? layer.mobileStickToBottomOffset}
                 isMobile={isMobile}
               />
             )}
@@ -494,6 +512,8 @@ function SingleLayerRenderer({
               isSlideshow={false}
               slideshowTransition={layer.slideshowTransition || "fade"}
               stickToBottom={item.stickToBottom ?? (layer.id === "mid")}
+              stickToBottomOffset={item.stickToBottomOffset ?? layer.stickToBottomOffset}
+              mobileStickToBottomOffset={item.mobileStickToBottomOffset ?? layer.mobileStickToBottomOffset}
               isMobile={isMobile}
             />
           ))}

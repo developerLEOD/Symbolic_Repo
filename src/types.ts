@@ -418,6 +418,8 @@ export interface GraphicObject {
   mobileRotation?: number;
   mobileStickToBottom?: boolean;
   stickToBottom?: boolean;
+  stickToBottomOffset?: number;
+  mobileStickToBottomOffset?: number;
 }
 
 export interface HeroLayerConfig {
@@ -451,6 +453,7 @@ export interface HeroLayerConfig {
   slideshowTransition?: "fade" | "slide-horizontal" | "slide-vertical" | "zoom";
   slideshowMode?: "all-graphics" | "secondary-only";
   stickToBottom?: boolean; // When true, sticks graphic's bottom directly to stage bottom (like backdrop)
+  stickToBottomOffset?: number;
 
   // Responsive device visibility & custom mobile transforms for layer's primary graphic
   deviceTarget?: DeviceTarget; // "both" | "desktop" | "mobile"
@@ -460,6 +463,7 @@ export interface HeroLayerConfig {
   mobileSize?: number;
   mobileRotation?: number;
   mobileStickToBottom?: boolean;
+  mobileStickToBottomOffset?: number;
 }
 
 export interface AvatarGraphic {

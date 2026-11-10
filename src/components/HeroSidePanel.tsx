@@ -144,6 +144,7 @@ export default function HeroSidePanel({
   const [internalDeviceMode, setInternalDeviceMode] = useState<"desktop" | "mobile">("desktop");
   
   const deviceEditMode = externalDeviceMode ?? internalDeviceMode;
+  const isMobileMode = deviceEditMode === "mobile";
   const setDeviceEditMode = (mode: "desktop" | "mobile") => {
     if (onDeviceEditModeChange) {
       onDeviceEditModeChange(mode);
@@ -2127,13 +2128,87 @@ export default function HeroSidePanel({
                 </div>
               </div>
 
-              {/* Bounding/Frame settings for Graphic only */}
+              {/* Bounding/Frame settings & Stick to Bottom for Graphic only */}
               {isGraphicSelected && (
-                <div className="p-3 bg-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] space-y-2">
+                <div className="p-3 bg-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] space-y-3">
                   <span className="text-[9px] font-black uppercase tracking-wider text-brand-text/75 block border-b border-brand-text/15 pb-1">
-                    GRAPHIC FRAME STYLING:
+                    STICK TO BOTTOM &amp; FRAME STYLING:
                   </span>
-                  <div className="grid grid-cols-2 gap-2">
+
+                  {/* Sticky Bottom Anchor Mode */}
+                  <div className="flex items-center justify-between border-b border-brand-text/15 pb-2">
+                    <div className="space-y-0.5">
+                      <div className="flex items-center gap-1.5">
+                        <ArrowDown size={12} className="text-brand-accent" />
+                        <span className="text-[9.5px] font-black uppercase tracking-wider">
+                          {isMobileMode && getActiveObjectValue("mobileEnabled", false) ? "MOBILE STICK TO BOTTOM" : "PC STICK TO BOTTOM"}
+                        </span>
+                      </div>
+                      <p className="text-[7.5px] font-mono text-brand-text/60 leading-none">
+                        // Anchor graphic bottom to stage bottom
+                      </p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        soundManager.playClick(0.1);
+                        if (isMobileMode && getActiveObjectValue("mobileEnabled", false)) {
+                          const cur = getActiveObjectValue("mobileStickToBottom", getActiveObjectValue("stickToBottom", false));
+                          updateActiveObjectProps({ mobileStickToBottom: !cur });
+                        } else {
+                          const cur = getActiveObjectValue("stickToBottom", false);
+                          updateActiveObjectProps({ stickToBottom: !cur });
+                        }
+                      }}
+                      className={`px-2 py-1 border border-brand-text text-[8px] font-black uppercase tracking-wider cursor-pointer transition-all ${
+                        (isMobileMode && getActiveObjectValue("mobileEnabled", false) 
+                          ? getActiveObjectValue("mobileStickToBottom", getActiveObjectValue("stickToBottom", false)) 
+                          : getActiveObjectValue("stickToBottom", false)) 
+                          ? "bg-brand-accent text-white shadow-[1px_1px_0px_#050505]" 
+                          : "bg-brand-bg text-brand-text/50"
+                      }`}
+                    >
+                      {(isMobileMode && getActiveObjectValue("mobileEnabled", false) 
+                        ? getActiveObjectValue("mobileStickToBottom", getActiveObjectValue("stickToBottom", false)) 
+                        : getActiveObjectValue("stickToBottom", false)) ? "STICK [ON]" : "FLOAT [OFF]"}
+                    </button>
+                  </div>
+
+                  {/* Stick Offset Parameter */}
+                  {((isMobileMode && getActiveObjectValue("mobileEnabled", false))
+                    ? getActiveObjectValue("mobileStickToBottom", getActiveObjectValue("stickToBottom", false))
+                    : getActiveObjectValue("stickToBottom", false)) && (
+                    <div className="space-y-1.5 pt-1">
+                      <div className="flex items-center justify-between text-[9px] font-black uppercase">
+                        <span>BOTTOM OFFSET (PX)</span>
+                        <span className="text-brand-accent font-mono font-bold">
+                          {isMobileMode && getActiveObjectValue("mobileEnabled", false)
+                            ? (getActiveObjectValue("mobileStickToBottomOffset", getActiveObjectValue("stickToBottomOffset", 0)))
+                            : (getActiveObjectValue("stickToBottomOffset", 0))}px
+                        </span>
+                      </div>
+                      <input
+                        type="range"
+                        min={-150}
+                        max={250}
+                        step={2}
+                        value={isMobileMode && getActiveObjectValue("mobileEnabled", false)
+                          ? (getActiveObjectValue("mobileStickToBottomOffset", getActiveObjectValue("stickToBottomOffset", 0)))
+                          : (getActiveObjectValue("stickToBottomOffset", 0))}
+                        onChange={(e) => {
+                          const val = Number(e.target.value);
+                          if (isMobileMode && getActiveObjectValue("mobileEnabled", false)) {
+                            updateActiveObjectProps({ mobileStickToBottomOffset: val });
+                          } else {
+                            updateActiveObjectProps({ stickToBottomOffset: val });
+                          }
+                        }}
+                        className="w-full accent-brand-accent cursor-pointer"
+                      />
+                    </div>
+                  )}
+
+                  <div className="grid grid-cols-2 gap-2 pt-1 border-t border-brand-text/15">
                     <button
                       type="button"
                       onClick={() => updateActiveObjectProps({ shadow: !getActiveObjectValue("shadow", false) })}

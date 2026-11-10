@@ -510,6 +510,8 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
       mobileRotation?: number;
       mobileStickToBottom?: boolean;
       stickToBottom?: boolean;
+      stickToBottomOffset?: number;
+      mobileStickToBottomOffset?: number;
     }> = [];
 
     if (layer.avatarUrl) {
@@ -539,6 +541,8 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
         mobileRotation: layer.mobileRotation,
         mobileStickToBottom: layer.mobileStickToBottom,
         stickToBottom: layer.stickToBottom,
+        stickToBottomOffset: layer.stickToBottomOffset,
+        mobileStickToBottomOffset: layer.mobileStickToBottomOffset,
       });
     }
 
@@ -570,6 +574,8 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           mobileRotation: g.mobileRotation,
           mobileStickToBottom: g.mobileStickToBottom,
           stickToBottom: g.stickToBottom,
+          stickToBottomOffset: g.stickToBottomOffset,
+          mobileStickToBottomOffset: g.mobileStickToBottomOffset,
         });
       });
     }
