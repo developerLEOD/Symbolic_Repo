@@ -26,7 +26,7 @@ function hasMidnightPacificPassed(recordedTimestamp: number): boolean {
   return nowPacific !== recordedPacific;
 }
 
-let memoryQuotaExceeded = true; // Default to true or check session storage to protect quota limits
+let memoryQuotaExceeded = false; // Default to false so initial fetch attempts occur
 
 export function isFirestoreQuotaExceeded(): boolean {
   if (memoryQuotaExceeded) return true;

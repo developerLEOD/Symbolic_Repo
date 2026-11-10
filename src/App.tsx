@@ -6,6 +6,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Routes, Route, useNavigate, useParams, useLocation } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
+import { ArrowLeft } from "lucide-react";
 import { Product, CartItem, Category } from "./types";
 import Header from "./components/Header";
 import Hero from "./components/Hero";
@@ -36,9 +37,10 @@ import { fetchCategories, deleteProductAndVariants, isProductLive, fetchProducts
 import { fetchArtifacts, fetchSpecimens } from "./lib/artifactService";
 import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralService";
 import { soundManager } from "./lib/soundEffects";
-import { ArrowLeft } from "lucide-react";
-import { Artifact, Specimen, ReferralSettings } from "./types";
 import ReferralNotification from "./components/ReferralNotification";
+import ArtifactDatabaseDiagnosticPanel from "./components/ArtifactDatabaseDiagnosticPanel";
+import firebaseConfig from "../firebase-applet-config.json";
+import { ReferralSettings } from "./types";
 
 // Wrapper for /artifacts and /artifacts/:category views
 function ArtifactsDirectoryView({
@@ -381,6 +383,39 @@ function StorefrontApp() {
     localStorage.setItem("sym_cart", JSON.stringify(cart));
   }, [cart]);
 
+  // Diagnostic verification step in App.tsx that outputs contents of fetchArtifacts() upon initialization
+  useEffect(() => {
+    const verifyArtifactsOnStartup = async () => {
+      const dbId = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomloungem-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
+      const projId = firebaseConfig.projectId || "gen-lang-client-0709348781";
+      console.group("🏛️ [SYMBOLIC APPLET INIT] Diagnostic Verification: fetchArtifacts()");
+      console.log(`Checking Firestore Database: "${dbId}" on Project: "${projId}"`);
+      const startTime = performance.now();
+      try {
+        const liveArtifacts = await fetchArtifacts(true);
+        const duration = Math.round(performance.now() - startTime);
+        console.log(`✅ [fetchArtifacts() VERIFIED] Successfully retrieved ${liveArtifacts.length} artifacts in ${duration}ms:`);
+        console.table(
+          liveArtifacts.map(a => ({
+            id: a.id,
+            code: a.artifactId,
+            name: a.name,
+            inscription: a.inscription || "—",
+            collection: a.collectionName,
+            specimens: a.specimenIds?.length || 0,
+            status: a.status
+          }))
+        );
+        console.log("Raw artifacts payload from database:", liveArtifacts);
+      } catch (err) {
+        console.error("❌ [fetchArtifacts() ERROR] Failed to retrieve artifacts from database:", err);
+      }
+      console.groupEnd();
+    };
+
+    verifyArtifactsOnStartup();
+  }, []);
+
   // Track inbound visits via referral link (?ref=CODE or ?referral=CODE) and monitor referral status
   useEffect(() => {
     const unsubscribe = subscribeReferralSettings((settings) => {
@@ -568,7 +603,7 @@ function StorefrontApp() {
         onReferralClick={handleOpenReferral}
       />
 
-      <div className={`${location.pathname === "/" ? "pt-0" : "pt-24 sm:pt-32"} relative z-10`}>
+      <div className={`${location.pathname === "/" ? "pt-0" : "pt-12 sm:pt-32"} relative z-10`}>
         {location.pathname !== "/" && <Breadcrumbs categories={categories} />}
         
         <main className="min-h-screen bg-transparent relative">
@@ -891,6 +926,11 @@ function StorefrontApp() {
         settings={referralSettings}
         onOpenReferral={handleOpenReferral}
         isHomepage={location.pathname === "/"}
+      />
+
+      {/* Firestore Artifacts & Database Diagnostic Verification Panel */}
+      <ArtifactDatabaseDiagnosticPanel 
+        onOpenStudio={() => navigate("/studio/artifacts")}
       />
 
       {/* Owner Product Manager Studio */}

@@ -55,7 +55,7 @@ export function isFirestoreQuotaExceededError(err: unknown): boolean {
   );
 }
 
-const FIRESTORE_DATABASE_ID = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomlounges-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
+const FIRESTORE_DATABASE_ID = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomloungem-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
 const FIRESTORE_PROJECT_ID = firebaseConfig.projectId || "gen-lang-client-0709348781";
 
 export const FIRESTORE_UPGRADE_URL = `https://console.firebase.google.com/project/${FIRESTORE_PROJECT_ID}/firestore/databases/${FIRESTORE_DATABASE_ID}/data?openUpgradeDialog=true`;

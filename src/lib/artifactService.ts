@@ -37,6 +37,52 @@ import {
   markFirestoreQuotaExceeded, 
   isQuotaError 
 } from "./firestoreCircuitBreaker";
+import firebaseConfig from "../../firebase-applet-config.json";
+
+export const FIRESTORE_DATABASE_ID = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomloungem-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
+export const FIRESTORE_PROJECT_ID = firebaseConfig.projectId || "gen-lang-client-0709348781";
+
+export interface ArtifactFetchDiagnostic {
+  timestamp: number;
+  source: "firestore_live" | "in_memory_cache" | "local_storage" | "seed_fallback";
+  count: number;
+  databaseId: string;
+  projectId: string;
+  isQuotaExceeded: boolean;
+  docIds: string[];
+  docNames: string[];
+  error?: string | null;
+  durationMs: number;
+  artifacts: Artifact[];
+}
+
+let lastArtifactDiagnostic: ArtifactFetchDiagnostic | null = null;
+const diagnosticListeners: Set<(diag: ArtifactFetchDiagnostic) => void> = new Set();
+
+export function getLastArtifactDiagnostic(): ArtifactFetchDiagnostic | null {
+  return lastArtifactDiagnostic;
+}
+
+export function subscribeArtifactDiagnostic(listener: (diag: ArtifactFetchDiagnostic) => void): () => void {
+  diagnosticListeners.add(listener);
+  if (lastArtifactDiagnostic) {
+    listener(lastArtifactDiagnostic);
+  }
+  return () => {
+    diagnosticListeners.delete(listener);
+  };
+}
+
+function broadcastDiagnostic(diag: ArtifactFetchDiagnostic) {
+  lastArtifactDiagnostic = diag;
+  diagnosticListeners.forEach(fn => {
+    try { fn(diag); } catch {}
+  });
+  if (typeof window !== "undefined") {
+    window.dispatchEvent(new CustomEvent("sym_artifact_diagnostic_updated", { detail: diag }));
+  }
+}
+
 // Fallback assets
 const heroImage = "/Logo_NoName.jpg";
 
@@ -241,22 +287,413 @@ export function getSpecimenArchitectureSpecs(spec?: Specimen | null): Architectu
 }
 
 //// Canonical Pre-curated Flagship Artifacts and Specimens
-export const SEED_SPECIMENS: Specimen[] = [];
+export const SEED_ARTIFACTS: Artifact[] = [
+  {
+    id: "art_sumud_01",
+    artifactId: "SYM-01",
+    name: "SUMUD",
+    shortDescription: "Steadfastness, rooted endurance, and unyielding ideological posture under pressure.",
+    description: "SUMUD represents unshakeable perseverance. Crafted with pure high-density typography and rooted geometric symmetry, this artifact serves as an emblem of enduring dignity and public witness.",
+    concept: "Steadfastness, rooted endurance, and unyielding posture",
+    graphic: "/Logo_NoName.jpg",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    inscription: "صُمُود",
+    pillar1Represents: "Rooted perseverance, patience (Sabr), and unyielding dignity under hardship.",
+    pillar2WhyChosen: "Chosen to embody the spirit of Palestinian steadfastness and timeless Islamic resistance.",
+    pillar3Communicates: "Communicates a silent, dignified declaration of resilience to the observer.",
+    pillar4WearerCarries: "The wearer carries the spiritual weight of steadfastness in daily public witness.",
+    symbolicTagline: "A symbol of rooted resilience and steadfast posture.",
+    collectionName: "Be Palestine",
+    tags: ["Series 01", "Steadfastness", "Heavyweight"],
+    status: "published",
+    specimenIds: ["spec_sumud_tshirt", "spec_sumud_hoodie", "spec_sumud_pcap", "spec_sumud_mug", "spec_sumud_tote"],
+    setDiscountPercentage: 10,
+    completeSetDiscountPercent: 10,
+    order: 1,
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "art_resisting_02",
+    artifactId: "SYM-02",
+    name: "STATUS: RESISTING",
+    shortDescription: "Ideological resistance, moral sovereignty, and refusal of submission to injustice.",
+    description: "STATUS: RESISTING is an archival witness object representing continuous spiritual and physical resistance against oppression and cultural erasure.",
+    concept: "Spiritual and physical resistance against oppression",
+    graphic: "/Logo_NoName.jpg",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    inscription: "مُقَاوِمَة",
+    pillar1Represents: "Moral sovereignty, divine justice (Adl), and active resistance against falsehood.",
+    pillar2WhyChosen: "Chosen to affirm that true dignity requires active stance and moral refusal.",
+    pillar3Communicates: "Communicates uncompromising alignment with truth and justice.",
+    pillar4WearerCarries: "The wearer carries the obligation to uphold justice in every sphere.",
+    symbolicTagline: "An emblem of unyielding ideological witness.",
+    collectionName: "Be Palestine",
+    tags: ["Series 01", "Resistance", "Statements"],
+    status: "published",
+    specimenIds: ["spec_resisting_tshirt", "spec_resisting_hoodie", "spec_resisting_tote"],
+    setDiscountPercentage: 10,
+    completeSetDiscountPercent: 10,
+    order: 2,
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "art_alif_03",
+    artifactId: "SYM-03",
+    name: "ALIF // THE MONOLITH",
+    shortDescription: "Primordial oneness (Tawheed), upright truth, and unbending alignment.",
+    description: "ALIF is the foundational vertical axis. Representing absolute oneness (Tawheed) and divine alignment, ALIF stands erect as the first letter and ultimate pillar.",
+    concept: "Tawheed (Divine Oneness) and unbending alignment",
+    graphic: "/Logo_NoName.jpg",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    inscription: "أَلِف",
+    pillar1Represents: "Tawheed (Absolute Oneness of God) and vertical moral alignment.",
+    pillar2WhyChosen: "Chosen as the origin letter from which all sacred discourse ascends.",
+    pillar3Communicates: "Communicates total devotion to the Divine Creator.",
+    pillar4WearerCarries: "The wearer carries the vertical compass of truth.",
+    symbolicTagline: "The origin letter of unbending divine alignment.",
+    collectionName: "Be Symbolic",
+    tags: ["Series 01", "Monolith", "Tawheed"],
+    status: "published",
+    specimenIds: ["spec_alif_tshirt", "spec_alif_pcap", "spec_alif_mug"],
+    setDiscountPercentage: 10,
+    completeSetDiscountPercent: 10,
+    order: 3,
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  }
+];
 
-export const SEED_ARTIFACTS: Artifact[] = [];
+export const SEED_SPECIMENS: Specimen[] = [
+  // SUMUD Specimens
+  {
+    id: "spec_sumud_tshirt",
+    parentArtifactId: "art_sumud_01",
+    artifactName: "SUMUD",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "صُمُود",
+    medium: "T-Shirt",
+    mediumCategory: "wear",
+    type: "Drop Shoulder",
+    garmentType: "Drop Shoulder",
+    sku: "SYM-SUM-TSH",
+    price: 4200,
+    inventory: 50,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Charcoal Black",
+    colorHex: "#1C1C1C",
+    availableColors: [{ id: "charcoal", name: "Charcoal Black", hex: "#1C1C1C" }],
+    availableSizes: ["S", "M", "L", "XL", "2XL"],
+    material: "400 GSM Combed Organic Cotton",
+    weight: "400 GSM Heavyweight Jersey",
+    fit: "Boxy Drop Shoulder",
+    printMethod: "High-Density Puff & Screen Print",
+    edition: "050 SPECIMENS",
+    careInstructions: "Machine wash cold inside out, air dry",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_sumud_hoodie",
+    parentArtifactId: "art_sumud_01",
+    artifactName: "SUMUD",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "صُمُود",
+    medium: "Hoodie",
+    mediumCategory: "wear",
+    type: "Heavyweight Pullover",
+    garmentType: "Double-Faced Fleece",
+    sku: "SYM-SUM-HOD",
+    price: 7500,
+    inventory: 35,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Washed Carbon Black",
+    colorHex: "#151515",
+    availableColors: [{ id: "carbon", name: "Washed Carbon Black", hex: "#151515" }],
+    availableSizes: ["S", "M", "L", "XL"],
+    material: "450 GSM Double-Faced French Terry",
+    weight: "450 GSM Heavyweight Fleece",
+    fit: "Relaxed Boxy Hood",
+    printMethod: "Direct Tonal Embroidery & HD Print",
+    edition: "050 SPECIMENS",
+    careInstructions: "Dry clean or gentle hand wash",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_sumud_pcap",
+    parentArtifactId: "art_sumud_01",
+    artifactName: "SUMUD",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "صُمُود",
+    medium: "P-Cap",
+    mediumCategory: "headwear",
+    type: "Structured 6-Panel",
+    garmentType: "Structured 6-Panel",
+    sku: "SYM-SUM-CAP",
+    price: 2500,
+    inventory: 40,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Matte Black",
+    colorHex: "#111111",
+    availableColors: [{ id: "black", name: "Matte Black", hex: "#111111" }],
+    availableSizes: ["One Size // Adjustable Brass Clasp"],
+    material: "100% Heavy Brushed Cotton Twill",
+    weight: "280 GSM Structured Crown",
+    fit: "Structured 6-Panel Crown",
+    printMethod: "Tonal 3D Raised Embroidery",
+    edition: "050 SPECIMENS",
+    finish: "Washed Twill // Brass Clasp",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_sumud_mug",
+    parentArtifactId: "art_sumud_01",
+    artifactName: "SUMUD",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "صُمُود",
+    medium: "Mug",
+    mediumCategory: "vessels",
+    type: "Dense Artisan Stoneware",
+    garmentType: "Matte Ceramic Studio Cup",
+    sku: "SYM-SUM-MUG",
+    price: 1800,
+    inventory: 30,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Matte Basalt Black",
+    colorHex: "#1C1C1C",
+    availableColors: [{ id: "basalt", name: "Matte Basalt Black", hex: "#1C1C1C" }],
+    availableSizes: ["380ml / 13oz"],
+    material: "1,280°C High-Fired Dense Stoneware Clay",
+    capacity: "380ml (13oz)",
+    weight: "420g Heavy Base",
+    finish: "Debossed Insignia // Matte Basalt Glaze",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_sumud_tote",
+    parentArtifactId: "art_sumud_01",
+    artifactName: "SUMUD",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "صُمُود",
+    medium: "Tote Bag",
+    mediumCategory: "carry",
+    type: "18oz Heavy Cotton Canvas",
+    garmentType: "Structured Field Carrier",
+    sku: "SYM-SUM-TOT",
+    price: 3200,
+    inventory: 25,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Natural Canvas / Black Handles",
+    colorHex: "#E5E0D8",
+    availableColors: [{ id: "natural", name: "Natural Canvas", hex: "#E5E0D8" }],
+    availableSizes: ["Standard Utility // 42cm x 38cm"],
+    material: "18oz Heavy Industrial Cotton Canvas",
+    dimensions: "42cm x 38cm x 10cm",
+    weight: "510 GSM Reinforced Weave",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+
+  // STATUS: RESISTING Specimens
+  {
+    id: "spec_resisting_tshirt",
+    parentArtifactId: "art_resisting_02",
+    artifactName: "STATUS: RESISTING",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "مُقَاوِمَة",
+    medium: "T-Shirt",
+    mediumCategory: "wear",
+    type: "Oversized Fit",
+    garmentType: "Oversized Fit",
+    sku: "SYM-RES-TSH",
+    price: 4200,
+    inventory: 45,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Raw Black",
+    colorHex: "#1A1A1A",
+    availableColors: [{ id: "rawblack", name: "Raw Black", hex: "#1A1A1A" }],
+    availableSizes: ["S", "M", "L", "XL"],
+    material: "400 GSM Combed Cotton",
+    weight: "400 GSM",
+    fit: "Oversized Fit",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_resisting_hoodie",
+    parentArtifactId: "art_resisting_02",
+    artifactName: "STATUS: RESISTING",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "مُقَاوِمَة",
+    medium: "Hoodie",
+    mediumCategory: "wear",
+    type: "Heavyweight 450 GSM",
+    garmentType: "Heavyweight 450 GSM",
+    sku: "SYM-RES-HOD",
+    price: 7500,
+    inventory: 30,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Carbon Gray",
+    colorHex: "#2C2C2C",
+    availableColors: [{ id: "gray", name: "Carbon Gray", hex: "#2C2C2C" }],
+    availableSizes: ["S", "M", "L", "XL"],
+    material: "450 GSM Double-Faced Fleece",
+    weight: "450 GSM",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_resisting_tote",
+    parentArtifactId: "art_resisting_02",
+    artifactName: "STATUS: RESISTING",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "مُقَاوِمَة",
+    medium: "Tote Bag",
+    mediumCategory: "carry",
+    type: "18oz Heavy Cotton Canvas",
+    garmentType: "Structured Field Carrier",
+    sku: "SYM-RES-TOT",
+    price: 3200,
+    inventory: 20,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Industrial Black",
+    colorHex: "#111111",
+    availableColors: [{ id: "indblack", name: "Industrial Black", hex: "#111111" }],
+    availableSizes: ["Standard Utility"],
+    material: "18oz Cotton Canvas",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+
+  // ALIF Specimens
+  {
+    id: "spec_alif_tshirt",
+    parentArtifactId: "art_alif_03",
+    artifactName: "ALIF // THE MONOLITH",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "أَلِف",
+    medium: "T-Shirt",
+    mediumCategory: "wear",
+    type: "Regular Boxy Cut",
+    garmentType: "Regular Boxy Cut",
+    sku: "SYM-ALF-TSH",
+    price: 4200,
+    inventory: 40,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Off-White Ecru",
+    colorHex: "#F2EFE9",
+    availableColors: [{ id: "ecru", name: "Off-White Ecru", hex: "#F2EFE9" }],
+    availableSizes: ["S", "M", "L", "XL"],
+    material: "400 GSM Combed Cotton",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_alif_pcap",
+    parentArtifactId: "art_alif_03",
+    artifactName: "ALIF // THE MONOLITH",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "أَلِف",
+    medium: "P-Cap",
+    mediumCategory: "headwear",
+    type: "Structured 6-Panel",
+    garmentType: "Structured 6-Panel",
+    sku: "SYM-ALF-CAP",
+    price: 2500,
+    inventory: 30,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Sand Khaki",
+    colorHex: "#C2B280",
+    availableColors: [{ id: "sand", name: "Sand Khaki", hex: "#C2B280" }],
+    availableSizes: ["One Size // Adjustable"],
+    material: "100% Brushed Cotton Twill",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  },
+  {
+    id: "spec_alif_mug",
+    parentArtifactId: "art_alif_03",
+    artifactName: "ALIF // THE MONOLITH",
+    artifactGraphic: "/Logo_NoName.jpg",
+    artifactInscription: "أَلِف",
+    medium: "Mug",
+    mediumCategory: "vessels",
+    type: "Dense Artisan Stoneware",
+    garmentType: "Matte Ceramic Studio Cup",
+    sku: "SYM-ALF-MUG",
+    price: 1800,
+    inventory: 25,
+    availability: true,
+    status: "available",
+    images: ["/Logo_NoName.jpg"],
+    thumbnailImage: "/Logo_NoName.jpg",
+    color: "Natural Mineral Off-White",
+    colorHex: "#EAE7DF",
+    availableColors: [{ id: "mineral", name: "Natural Mineral Off-White", hex: "#EAE7DF" }],
+    availableSizes: ["380ml / 13oz"],
+    material: "Artisan Stoneware Clay",
+    edition: "050 SPECIMENS",
+    createdAt: 1710000000000,
+    updatedAt: 1710000000000
+  }
+];
 
 // Memory Caches
 let memoryArtifacts: Artifact[] | null = null;
 let memorySpecimens: Specimen[] | null = null;
 
 export function getCachedArtifacts(): Artifact[] {
-  if (memoryArtifacts !== null) return memoryArtifacts;
+  if (memoryArtifacts !== null && memoryArtifacts.length > 0) return memoryArtifacts;
   if (typeof window !== "undefined" && window.localStorage) {
     try {
       const saved = localStorage.getItem(ARTIFACTS_CACHE_KEY);
       if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           memoryArtifacts = parsed;
           return parsed;
         }
@@ -267,13 +704,13 @@ export function getCachedArtifacts(): Artifact[] {
 }
 
 export function getCachedSpecimens(): Specimen[] {
-  if (memorySpecimens !== null) return memorySpecimens;
+  if (memorySpecimens !== null && memorySpecimens.length > 0) return memorySpecimens;
   if (typeof window !== "undefined" && window.localStorage) {
     try {
       const saved = localStorage.getItem(SPECIMENS_CACHE_KEY);
       if (saved !== null) {
         const parsed = JSON.parse(saved);
-        if (Array.isArray(parsed)) {
+        if (Array.isArray(parsed) && parsed.length > 0) {
           memorySpecimens = parsed;
           return parsed;
         }
@@ -401,38 +838,133 @@ export function normalizeSpecimen(rawSpec: any): Specimen {
 /**
  * Fetch all Artifacts from Firestore, falling back to cache & seeds
  * Employs an in-memory TTL cache (5 min) to prevent redundant Firestore read bursts.
+ * Pass forceServer = true to bypass cache and verify live Firestore directly.
  */
-export async function fetchArtifacts(): Promise<Artifact[]> {
+export async function fetchArtifacts(forceServer: boolean = false): Promise<Artifact[]> {
   const cached = getCachedArtifacts();
   const now = Date.now();
+  const startTime = performance.now();
 
-  // If in-memory cache is valid within TTL, return immediately without network call
-  if (cached.length > 0 && now - lastArtifactsFetchTime < ARTIFACTS_TTL_MS) {
+  // If in-memory cache is valid within TTL and not forcing server read, return immediately
+  if (!forceServer && cached.length > 0 && now - lastArtifactsFetchTime < ARTIFACTS_TTL_MS) {
+    const durationMs = Math.round(performance.now() - startTime);
+    const diag: ArtifactFetchDiagnostic = {
+      timestamp: now,
+      source: "in_memory_cache",
+      count: cached.length,
+      databaseId: FIRESTORE_DATABASE_ID,
+      projectId: FIRESTORE_PROJECT_ID,
+      isQuotaExceeded: isFirestoreQuotaExceeded(),
+      docIds: cached.map(a => a.id),
+      docNames: cached.map(a => a.name),
+      durationMs,
+      artifacts: cached
+    };
+    broadcastDiagnostic(diag);
     return cached;
   }
 
   // If circuit breaker tripped, return cached data without attempting Firestore read
   if (isFirestoreQuotaExceeded()) {
+    const durationMs = Math.round(performance.now() - startTime);
+    const diag: ArtifactFetchDiagnostic = {
+      timestamp: now,
+      source: "local_storage",
+      count: cached.length,
+      databaseId: FIRESTORE_DATABASE_ID,
+      projectId: FIRESTORE_PROJECT_ID,
+      isQuotaExceeded: true,
+      docIds: cached.map(a => a.id),
+      docNames: cached.map(a => a.name),
+      error: "Firestore circuit breaker tripped (daily free read quota reached). Operating in offline cache mode.",
+      durationMs,
+      artifacts: cached
+    };
+    broadcastDiagnostic(diag);
     return cached;
   }
 
   try {
+    console.log(`📡 [artifactService] Querying Firestore collection "artifacts" on database: ${FIRESTORE_DATABASE_ID}`);
     const snap = await getDocs(collection(db, "artifacts"));
     lastArtifactsFetchTime = now;
+    const durationMs = Math.round(performance.now() - startTime);
+
     if (!snap.empty && snap.docs.length > 0) {
       const live = snap.docs.map(d => normalizeArtifact({ id: d.id, ...d.data() }));
       live.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
       saveArtifactsToCache(live);
+
+      const diag: ArtifactFetchDiagnostic = {
+        timestamp: now,
+        source: "firestore_live",
+        count: live.length,
+        databaseId: FIRESTORE_DATABASE_ID,
+        projectId: FIRESTORE_PROJECT_ID,
+        isQuotaExceeded: false,
+        docIds: live.map(a => a.id),
+        docNames: live.map(a => a.name),
+        durationMs,
+        artifacts: live
+      };
+      broadcastDiagnostic(diag);
+
+      console.group(`🏛️ [artifactService] fetchArtifacts() -> Firestore LIVE (${live.length} documents in ${durationMs}ms)`);
+      console.log(`Database: ${FIRESTORE_DATABASE_ID} | Project: ${FIRESTORE_PROJECT_ID}`);
+      console.table(live.map(a => ({
+        id: a.id,
+        artifactId: a.artifactId,
+        name: a.name,
+        collection: a.collectionName,
+        specimens: a.specimenIds?.length || 0,
+        status: a.status
+      })));
+      console.groupEnd();
+
       return live;
-    } else if (snap.empty) {
-      // If collection is empty, retain seed cache
-      return cached.length > 0 ? cached : SEED_ARTIFACTS;
+    } else {
+      // Collection empty on Firestore: fallback to canonical SEED_ARTIFACTS
+      console.warn(`⚠️ [artifactService] Firestore "artifacts" collection is empty on ${FIRESTORE_DATABASE_ID}. Using canonical seed repository.`);
+      const fallbackList = cached.length > 0 ? cached : SEED_ARTIFACTS;
+      const diag: ArtifactFetchDiagnostic = {
+        timestamp: now,
+        source: "seed_fallback",
+        count: fallbackList.length,
+        databaseId: FIRESTORE_DATABASE_ID,
+        projectId: FIRESTORE_PROJECT_ID,
+        isQuotaExceeded: false,
+        docIds: fallbackList.map(a => a.id),
+        docNames: fallbackList.map(a => a.name),
+        error: "Firestore 'artifacts' collection returned 0 documents (empty snapshot).",
+        durationMs,
+        artifacts: fallbackList
+      };
+      broadcastDiagnostic(diag);
+      return fallbackList;
     }
-  } catch (err) {
-    if (isQuotaError(err)) {
+  } catch (err: any) {
+    const durationMs = Math.round(performance.now() - startTime);
+    const isQuota = isQuotaError(err);
+    if (isQuota) {
       markFirestoreQuotaExceeded();
     }
-    console.warn("Could not fetch artifacts from Firestore (using local cache):", err);
+    const errMsg = err?.message || String(err);
+    console.warn(`⚠️ [artifactService] Could not fetch artifacts from Firestore (using local cache):`, errMsg);
+    
+    const diag: ArtifactFetchDiagnostic = {
+      timestamp: now,
+      source: "seed_fallback",
+      count: cached.length,
+      databaseId: FIRESTORE_DATABASE_ID,
+      projectId: FIRESTORE_PROJECT_ID,
+      isQuotaExceeded: isQuota,
+      docIds: cached.map(a => a.id),
+      docNames: cached.map(a => a.name),
+      error: errMsg,
+      durationMs,
+      artifacts: cached
+    };
+    broadcastDiagnostic(diag);
   }
 
   // Fallback to cache or seeds if offline / network error
@@ -845,7 +1377,18 @@ export async function initializeAndMigrateArtifacts(): Promise<{
     if (existingArtifactsSnap.empty || existingArtifactsSnap.docs.length === 0) {
       saveArtifactsToCache(SEED_ARTIFACTS);
       saveSpecimensToCache(SEED_SPECIMENS);
-      // Do NOT trigger runaway background setDoc write loops to Firestore!
+      if (!isFirestoreQuotaExceeded()) {
+        try {
+          for (const art of SEED_ARTIFACTS) {
+            await setDoc(doc(db, "artifacts", art.id), cleanUndefined(art), { merge: true });
+          }
+          for (const spec of SEED_SPECIMENS) {
+            await setDoc(doc(db, "specimens", spec.id), cleanUndefined(spec), { merge: true });
+          }
+        } catch (e) {
+          console.warn("Could not seed initial artifacts into Firestore:", e);
+        }
+      }
       return { artifacts: SEED_ARTIFACTS, specimens: SEED_SPECIMENS };
     }
 

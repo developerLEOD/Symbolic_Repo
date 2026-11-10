@@ -226,28 +226,28 @@ export default function Header({
     <motion.header 
       initial={false}
       animate={{ y: "0%", opacity: 1, scale: 1 }}
-      className="fixed top-0 left-0 w-full z-50 h-20 sm:h-28 flex items-center justify-between px-3 sm:px-8 lg:px-12"
+      className="fixed top-0 left-0 w-full z-50 h-10 sm:h-28 bg-brand-accent sm:bg-transparent border-b-2 sm:border-b-0 border-brand-text shadow-[0_2px_0px_#050505] sm:shadow-none flex items-center justify-between px-2.5 sm:px-8 lg:px-12 transition-colors select-none"
     >
       {/* Top Left: Logo */}
       <div className="flex items-center shrink-0">
         <Link 
           to="/"
-          className="group flex items-center gap-3 sm:gap-4 focus:outline-none cursor-pointer shrink-0 select-none"
+          className="group flex items-center gap-2 sm:gap-4 focus:outline-none cursor-pointer shrink-0 select-none"
         >
-          <div className="shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border-2 border-brand-text shadow-[2px_2px_0px_#050505] transition-all w-10 h-10 sm:w-14 sm:h-14">
+          <div className="shrink-0 overflow-hidden bg-brand-surface flex items-center justify-center border sm:border-2 border-brand-text shadow-[1.5px_1.5px_0px_#050505] sm:shadow-[2px_2px_0px_#050505] transition-all w-7 h-7 sm:w-14 sm:h-14">
             <img 
               src="/Logo_NoName.jpg" 
               alt="SYMBOLIC" 
               referrerPolicy="no-referrer"
-              className="w-full h-full object-contain p-1"
+              className="w-full h-full object-contain p-0.5 sm:p-1"
             />
           </div>
           <div className="flex flex-col justify-center text-left shrink-0">
             <div className="w-fit inline-flex flex-col">
-              <span className="block font-mono font-black tracking-tight uppercase text-brand-text leading-none text-xl sm:text-2xl">
+              <span className="block font-mono font-black tracking-tight uppercase text-white sm:text-brand-text leading-none text-xs sm:text-2xl">
                 SYMBOLIC
               </span>
-              <span className="self-end font-mono font-black italic tracking-wider text-brand-accent leading-none mt-0.5 text-xs sm:text-sm">
+              <span className="self-end font-mono font-black italic tracking-wider text-black sm:text-brand-accent leading-none mt-0.5 text-[8px] sm:text-sm">
                 MUSLIMS
               </span>
             </div>
@@ -256,20 +256,20 @@ export default function Header({
       </div>
 
       {/* Top Right: Actions (Auth, Cart) */}
-      <div className="flex items-center gap-2 shrink-0">
+      <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
         {/* User Account */}
         <motion.button
           onClick={() => {
             soundManager.playClick(0.12);
             onAuthClick();
           }}
-          className="h-12 flex items-center justify-center px-5 text-[11px] sm:text-xs font-mono uppercase font-black tracking-widest rounded-full transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer border-2 border-brand-text bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg"
+          className="h-7 sm:h-12 flex items-center justify-center px-2.5 sm:px-5 text-[9px] sm:text-xs font-mono uppercase font-black tracking-wider sm:tracking-widest rounded-none sm:rounded-full transition-colors shadow-[1.5px_1.5px_0px_#050505] sm:shadow-[2px_2px_0px_#050505] cursor-pointer border sm:border-2 border-brand-text bg-white sm:bg-brand-surface text-brand-text hover:bg-black hover:text-white"
           title={user ? "Profile" : "Authenticate"}
         >
           {user ? (
-            <span className="truncate">{userProfile?.displayName || "PROFILE"}</span>
+            <span className="truncate max-w-[70px] sm:max-w-none">{userProfile?.displayName || "PROFILE"}</span>
           ) : (
-            <span className="shrink-0">AUTHENTICATE</span>
+            <span className="shrink-0">AUTH</span>
           )}
         </motion.button>
 
@@ -279,7 +279,7 @@ export default function Header({
             soundManager.playClick(0.14);
             onCartClick();
           }}
-          className="h-12 relative flex items-center px-5 text-[11px] sm:text-xs font-mono uppercase font-black tracking-widest bg-brand-text text-brand-bg rounded-full border-2 border-brand-text hover:bg-brand-accent hover:text-white transition-colors shadow-[2px_2px_0px_#050505] cursor-pointer"
+          className="h-7 sm:h-12 relative flex items-center px-2.5 sm:px-5 text-[9px] sm:text-xs font-mono uppercase font-black tracking-wider sm:tracking-widest bg-black text-white rounded-none sm:rounded-full border sm:border-2 border-brand-text hover:bg-brand-surface hover:text-brand-text transition-colors shadow-[1.5px_1.5px_0px_#050505] sm:shadow-[2px_2px_0px_#050505] cursor-pointer"
           title="Possessions"
         >
           <span className="hidden sm:inline shrink-0">POSSESSIONS // </span>
