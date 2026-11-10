@@ -2213,7 +2213,7 @@ export default function HeroSidePanel({
                       <input
                         type="range"
                         min={-150}
-                        max={250}
+                        max={750}
                         step={2}
                         value={isMobileMode && getActiveObjectValue("mobileEnabled", false)
                           ? (getActiveObjectValue("mobileStickToBottomOffset", getActiveObjectValue("stickToBottomOffset", 0)))
