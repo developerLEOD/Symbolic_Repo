@@ -13,7 +13,8 @@ import {
   saveSpecimen, 
   deleteArtifact, 
   deleteSpecimen, 
-  CANONICAL_SPECIMEN_MEDIUMS 
+  CANONICAL_SPECIMEN_MEDIUMS,
+  FIRESTORE_DATABASE_ID
 } from "../lib/artifactService";
 import { soundManager } from "../lib/soundEffects";
 import { 
@@ -30,7 +31,9 @@ import {
   ChevronDown,
   ChevronRight,
   ShieldCheck,
-  Tag
+  Tag,
+  RefreshCw,
+  Database
 } from "lucide-react";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import LiquidCarveButton from "./LiquidCarveButton";
@@ -67,13 +70,20 @@ export default function OwnerArtifactSpecimenStudio({
     setTimeout(() => setNotification(null), 3500);
   };
 
-  const loadData = async () => {
+  const loadData = async (forceServer: boolean = false) => {
     setLoading(true);
+    if (forceServer) {
+      soundManager.playClick(0.12);
+    }
     try {
-      const data = await fetchArtifactsWithSpecimens();
+      const data = await fetchArtifactsWithSpecimens(forceServer);
       setArtifactsWithSpecs(data);
       if (data.length > 0 && !activeArtifactId) {
         setActiveArtifactId(data[0].id);
+      }
+      if (forceServer) {
+        soundManager.playSuccess(0.12);
+        showNotification("success", `SYNCED // ${data.length} ARTIFACTS RETRIEVED FROM FIRESTORE DATABASE`);
       }
     } catch (err: any) {
       console.error("Failed to load artifacts and specimens:", err);
@@ -266,14 +276,27 @@ export default function OwnerArtifactSpecimenStudio({
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={handleCreateNewArtifact}
-          className="px-5 py-3 bg-brand-accent hover:bg-black text-white font-mono text-xs font-black uppercase border-2 border-brand-text shadow-[4px_4px_0px_#050505] transition-all cursor-pointer flex items-center gap-2 self-start sm:self-auto"
-        >
-          <Plus size={16} />
-          <span>NEW ARTIFACT</span>
-        </button>
+        <div className="flex flex-wrap items-center gap-2 sm:gap-3 self-start sm:self-auto">
+          <button
+            type="button"
+            onClick={() => loadData(true)}
+            disabled={loading}
+            className="px-3.5 sm:px-4 py-3 bg-brand-surface hover:bg-brand-text hover:text-brand-bg text-brand-text font-mono text-xs font-black uppercase border-2 border-brand-text shadow-[3px_3px_0px_#050505] transition-all cursor-pointer flex items-center gap-2 active:translate-x-0.5 active:translate-y-0.5 disabled:opacity-50"
+            title={`Force live re-fetch from Firestore database ${FIRESTORE_DATABASE_ID}`}
+          >
+            <RefreshCw size={14} className={loading ? "animate-spin" : ""} />
+            <span>SYNC DB</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={handleCreateNewArtifact}
+            className="px-5 py-3 bg-brand-accent hover:bg-black text-white font-mono text-xs font-black uppercase border-2 border-brand-text shadow-[4px_4px_0px_#050505] transition-all cursor-pointer flex items-center gap-2"
+          >
+            <Plus size={16} />
+            <span>NEW ARTIFACT</span>
+          </button>
+        </div>
       </div>
 
       {loading ? (

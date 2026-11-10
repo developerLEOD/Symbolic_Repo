@@ -39,7 +39,7 @@ import {
 } from "./firestoreCircuitBreaker";
 import firebaseConfig from "../../firebase-applet-config.json";
 
-export const FIRESTORE_DATABASE_ID = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomloungem-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
+export const FIRESTORE_DATABASE_ID = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomlounges-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
 export const FIRESTORE_PROJECT_ID = firebaseConfig.projectId || "gen-lang-client-0709348781";
 
 export interface ArtifactFetchDiagnostic {
@@ -86,8 +86,8 @@ function broadcastDiagnostic(diag: ArtifactFetchDiagnostic) {
 // Fallback assets
 const heroImage = "/Logo_NoName.jpg";
 
-export const ARTIFACTS_CACHE_KEY = "symbolic_artifacts_v1";
-export const SPECIMENS_CACHE_KEY = "symbolic_specimens_v1";
+export const ARTIFACTS_CACHE_KEY = `symbolic_artifacts_${FIRESTORE_DATABASE_ID}`;
+export const SPECIMENS_CACHE_KEY = `symbolic_specimens_${FIRESTORE_DATABASE_ID}`;
 
 let lastArtifactsFetchTime = 0;
 let lastSpecimensFetchTime = 0;
@@ -974,12 +974,13 @@ export async function fetchArtifacts(forceServer: boolean = false): Promise<Arti
 /**
  * Fetch all Specimens from Firestore, falling back to cache & seeds
  * Employs an in-memory TTL cache (5 min) to prevent redundant Firestore read bursts.
+ * Pass forceServer = true to bypass cache and query Firestore live directly.
  */
-export async function fetchSpecimens(parentArtifactId?: string): Promise<Specimen[]> {
+export async function fetchSpecimens(parentArtifactId?: string, forceServer: boolean = false): Promise<Specimen[]> {
   const allCached = getCachedSpecimens();
   const now = Date.now();
 
-  if (allCached.length > 0 && !parentArtifactId && now - lastSpecimensFetchTime < ARTIFACTS_TTL_MS) {
+  if (!forceServer && allCached.length > 0 && !parentArtifactId && now - lastSpecimensFetchTime < ARTIFACTS_TTL_MS) {
     return allCached;
   }
 
@@ -996,6 +997,7 @@ export async function fetchSpecimens(parentArtifactId?: string): Promise<Specime
       const q = query(collection(db, "specimens"), where("parentArtifactId", "==", parentArtifactId));
       snap = await getDocs(q);
     } else {
+      console.log(`📡 [artifactService] Querying Firestore collection "specimens" on database: ${FIRESTORE_DATABASE_ID} (forceServer=${forceServer})`);
       snap = await getDocs(collection(db, "specimens"));
       lastSpecimensFetchTime = now;
     }
@@ -1440,9 +1442,9 @@ export async function fetchSpecimensByArtifactId(artifactId: string): Promise<Sp
 /**
  * Fetch all artifacts paired with their specimens
  */
-export async function fetchArtifactsWithSpecimens(): Promise<ArtifactWithSpecimens[]> {
-  const artifacts = await fetchArtifacts();
-  const specimens = await fetchSpecimens();
+export async function fetchArtifactsWithSpecimens(forceServer: boolean = false): Promise<ArtifactWithSpecimens[]> {
+  const artifacts = await fetchArtifacts(forceServer);
+  const specimens = await fetchSpecimens(undefined, forceServer);
   
   return artifacts.map(art => ({
     ...art,

@@ -383,10 +383,19 @@ function StorefrontApp() {
     localStorage.setItem("sym_cart", JSON.stringify(cart));
   }, [cart]);
 
+  // Synchronize storefront products whenever the studio catalog runs an automated sync
+  useEffect(() => {
+    const handleSyncEvent = () => {
+      setRefreshKey(k => k + 1);
+    };
+    window.addEventListener("sym_products_cache_synced", handleSyncEvent);
+    return () => window.removeEventListener("sym_products_cache_synced", handleSyncEvent);
+  }, []);
+
   // Diagnostic verification step in App.tsx that outputs contents of fetchArtifacts() upon initialization
   useEffect(() => {
     const verifyArtifactsOnStartup = async () => {
-      const dbId = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomloungem-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
+      const dbId = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomlounges-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
       const projId = firebaseConfig.projectId || "gen-lang-client-0709348781";
       console.group("🏛️ [SYMBOLIC APPLET INIT] Diagnostic Verification: fetchArtifacts()");
       console.log(`Checking Firestore Database: "${dbId}" on Project: "${projId}"`);

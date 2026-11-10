@@ -17,7 +17,9 @@ import {
   deleteSpecimen,
   saveArtifact,
   saveSpecimen,
-  CANONICAL_SPECIMEN_MEDIUMS
+  CANONICAL_SPECIMEN_MEDIUMS,
+  FIRESTORE_DATABASE_ID,
+  FIRESTORE_PROJECT_ID
 } from "./artifactService";
 import { 
   isFirestoreQuotaExceeded, 
@@ -41,7 +43,7 @@ export const CANONICAL_COLLECTIONS: { id: string; label: string }[] = [
   { id: "series-01", label: "SERIES 01" }
 ];
 
-export const PRODUCTS_CACHE_KEY = "sym_products_cache_v1";
+export const PRODUCTS_CACHE_KEY = `sym_products_${FIRESTORE_DATABASE_ID}`;
 
 /**
  * Normalizes product category taxonomy
@@ -123,14 +125,29 @@ export function getCachedProducts(): Product[] {
   return [];
 }
 
+export interface CatalogSyncResult {
+  success: boolean;
+  timestamp: number;
+  artifactsCount: number;
+  specimensCount: number;
+  productsCount: number;
+  durationMs: number;
+  source: "firestore_live" | "cache_or_fallback";
+  databaseId: string;
+  projectId: string;
+  products: Product[];
+  error?: string | null;
+}
+
 /**
- * Fetch all products from Artifact & Specimen engine
+ * Fetch all products from Artifact & Specimen engine.
+ * Pass forceServer = true to bypass memory/local cache and re-query Firestore directly.
  */
-export async function fetchProducts(): Promise<Product[]> {
+export async function fetchProducts(forceServer: boolean = false): Promise<Product[]> {
   try {
     const [artifacts, specimens] = await Promise.all([
-      fetchArtifacts(),
-      fetchSpecimens()
+      fetchArtifacts(forceServer),
+      fetchSpecimens(undefined, forceServer)
     ]);
     const products = convertArtifactsAndSpecimensToProducts(artifacts, specimens);
     if (typeof window !== "undefined") {
@@ -142,6 +159,91 @@ export async function fetchProducts(): Promise<Product[]> {
   } catch (err) {
     console.warn("Could not fetch products live, using cached products:", err);
     return getCachedProducts();
+  }
+}
+
+/**
+ * Force a full automated sync of Firestore collections and products.
+ * Updates in-memory stores and local storage cache, ensuring the UI reflects
+ * the true database state.
+ */
+export async function syncDatabaseCatalogWithCache(): Promise<CatalogSyncResult> {
+  const startTime = performance.now();
+  const now = Date.now();
+  console.group("🔄 [CATALOG SYNC] Starting Full Automated Firestore Sync...");
+  console.log(`Targeting Database: ${FIRESTORE_DATABASE_ID} (Project: ${FIRESTORE_PROJECT_ID})`);
+
+  try {
+    // 1. Force re-fetch from Firestore collections "artifacts" & "specimens"
+    const [freshArtifacts, freshSpecimens] = await Promise.all([
+      fetchArtifacts(true),
+      fetchSpecimens(undefined, true)
+    ]);
+
+    // 2. Synthesize store products from the true database state
+    const products = convertArtifactsAndSpecimensToProducts(freshArtifacts, freshSpecimens);
+
+    // 3. Update localStorage products cache
+    if (typeof window !== "undefined") {
+      try {
+        localStorage.setItem(PRODUCTS_CACHE_KEY, JSON.stringify(products));
+        window.dispatchEvent(new CustomEvent("sym_products_cache_synced", {
+          detail: {
+            timestamp: now,
+            count: products.length,
+            artifactsCount: freshArtifacts.length,
+            specimensCount: freshSpecimens.length,
+            databaseId: FIRESTORE_DATABASE_ID
+          }
+        }));
+      } catch (cacheErr) {
+        console.warn("LocalStorage cache update note:", cacheErr);
+      }
+    }
+
+    const durationMs = Math.round(performance.now() - startTime);
+    console.log(`✅ [CATALOG SYNC COMPLETE] ${products.length} products (${freshArtifacts.length} artifacts, ${freshSpecimens.length} specimens) in ${durationMs}ms`);
+    console.table(products.map(p => ({
+      id: p.id,
+      name: p.name,
+      category: p.category,
+      collection: p.collectionName,
+      price: p.price,
+      inventory: p.inventory,
+      availability: p.availability
+    })));
+    console.groupEnd();
+
+    return {
+      success: true,
+      timestamp: now,
+      artifactsCount: freshArtifacts.length,
+      specimensCount: freshSpecimens.length,
+      productsCount: products.length,
+      durationMs,
+      source: "firestore_live",
+      databaseId: FIRESTORE_DATABASE_ID,
+      projectId: FIRESTORE_PROJECT_ID,
+      products
+    };
+  } catch (err: any) {
+    const durationMs = Math.round(performance.now() - startTime);
+    console.error("❌ [CATALOG SYNC ERROR] Failed to sync with Firestore:", err);
+    console.groupEnd();
+    const fallbackProducts = getCachedProducts();
+    return {
+      success: false,
+      timestamp: now,
+      artifactsCount: 0,
+      specimensCount: 0,
+      productsCount: fallbackProducts.length,
+      durationMs,
+      source: "cache_or_fallback",
+      databaseId: FIRESTORE_DATABASE_ID,
+      projectId: FIRESTORE_PROJECT_ID,
+      products: fallbackProducts,
+      error: err?.message || String(err)
+    };
   }
 }
 

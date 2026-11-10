@@ -31,7 +31,9 @@ import {
   Filter,
   Users,
   FolderTree,
-  Compass
+  Compass,
+  Database,
+  Radio
 } from "lucide-react";
 import { motion, AnimatePresence } from "motion/react";
 import { useAuth } from "../lib/AuthContext";
@@ -54,8 +56,12 @@ import {
   fetchProductVariants, 
   saveProductWithVariants, 
   deleteProductAndVariants, 
-  toggleProductAvailability 
+  toggleProductAvailability,
+  syncDatabaseCatalogWithCache,
+  CatalogSyncResult
 } from "../lib/productService";
+import { FIRESTORE_DATABASE_ID, FIRESTORE_PROJECT_ID } from "../lib/artifactService";
+import { soundManager } from "../lib/soundEffects";
 
 interface OwnerProductManagerProps {
   onClose: () => void;
@@ -111,6 +117,10 @@ export default function OwnerProductManager({
   const [catalogTagFilter, setCatalogTagFilter] = useState("all");
   const [existingProducts, setExistingProducts] = useState<Product[]>([]);
   const [loadingProducts, setLoadingProducts] = useState(false);
+  const [isSyncing, setIsSyncing] = useState(false);
+  const [autoSyncEnabled, setAutoSyncEnabled] = useState(false);
+  const [lastSyncTime, setLastSyncTime] = useState<number | null>(null);
+  const [lastSyncResult, setLastSyncResult] = useState<CatalogSyncResult | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [notification, setNotification] = useState<{ type: "success" | "error"; message: string } | null>(null);
   const [previewMode, setPreviewMode] = useState<"card" | "detail">("card");
@@ -216,10 +226,10 @@ export default function OwnerProductManager({
   };
 
   // Load existing products when catalog tab is opened
-  const loadExistingProducts = async () => {
+  const loadExistingProducts = async (forceServer: boolean = false) => {
     setLoadingProducts(true);
     try {
-      const prods = await fetchProducts();
+      const prods = await fetchProducts(forceServer);
       setExistingProducts(prods);
     } catch (err) {
       console.error(err);
@@ -227,6 +237,63 @@ export default function OwnerProductManager({
       setLoadingProducts(false);
     }
   };
+
+  // Automated sync button handler: forces live re-fetch from Firestore collections & products, updates local cache
+  const handleAutomatedSync = async (isBackground = false) => {
+    if (isSyncing) return;
+    setIsSyncing(true);
+    if (!isBackground) {
+      soundManager.playClick(0.12);
+    }
+    setLoadingProducts(true);
+    try {
+      const result = await syncDatabaseCatalogWithCache();
+      setExistingProducts(result.products);
+      setLastSyncTime(result.timestamp);
+      setLastSyncResult(result);
+      if (result.success) {
+        onProductPublished();
+        if (!isBackground) {
+          soundManager.playSuccess(0.15);
+          setNotification({
+            type: "success",
+            message: `FIRESTORE SYNC COMPLETE // ${result.productsCount} OBJECTS (${result.artifactsCount} ARTIFACTS, ${result.specimensCount} SPECIMENS) RETRIEVED IN ${result.durationMs}ms`
+          });
+          setTimeout(() => setNotification(null), 5000);
+        }
+      } else {
+        if (!isBackground) {
+          setNotification({
+            type: "error",
+            message: `SYNC NOTICE // ${result.error || "Using cached database state"}`
+          });
+          setTimeout(() => setNotification(null), 5000);
+        }
+      }
+    } catch (err: any) {
+      console.error("Auto sync failed:", err);
+      if (!isBackground) {
+        setNotification({
+          type: "error",
+          message: `SYNC FAILED // ${err?.message || "Could not query Firestore"}`
+        });
+        setTimeout(() => setNotification(null), 5000);
+      }
+    } finally {
+      setIsSyncing(false);
+      setLoadingProducts(false);
+    }
+  };
+
+  // Periodic automated sync when auto-sync toggle is active in catalog tab
+  useEffect(() => {
+    if (activeTab !== "catalog" || !autoSyncEnabled) return;
+    const interval = setInterval(() => {
+      console.log("⏰ [AUTO-SYNC] Running background periodic sync with Firestore...");
+      handleAutomatedSync(true);
+    }, 60000);
+    return () => clearInterval(interval);
+  }, [activeTab, autoSyncEnabled]);
 
   useEffect(() => {
     if (activeTab === "catalog") {
@@ -991,11 +1058,14 @@ export default function OwnerProductManager({
             <>
               <button
                 type="button"
-                onClick={loadExistingProducts}
-                className="hidden sm:flex items-center gap-1 px-2.5 py-1.5 border-2 border-brand-text bg-brand-surface hover:bg-brand-text hover:text-brand-bg text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-all shadow-[2px_2px_0px_#050505] whitespace-nowrap shrink-0"
+                onClick={() => handleAutomatedSync(false)}
+                disabled={isSyncing}
+                className="flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 border-2 border-brand-text bg-brand-accent text-white hover:bg-brand-text hover:text-brand-bg text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider transition-all shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 whitespace-nowrap shrink-0 cursor-pointer disabled:opacity-50"
+                title={`Forces live re-fetch from Firestore database ${FIRESTORE_DATABASE_ID} and updates local cache`}
               >
-                <RefreshCw size={12} className={`shrink-0 ${loadingProducts ? "animate-spin" : ""}`} />
-                <span>REFRESH</span>
+                <RefreshCw size={12} className={`shrink-0 ${isSyncing ? "animate-spin" : ""}`} />
+                <span className="hidden xs:inline">{isSyncing ? "SYNCING..." : "AUTO-SYNC DB"}</span>
+                <span className="xs:hidden">{isSyncing ? "..." : "SYNC"}</span>
               </button>
               <button
                 type="button"
@@ -1091,19 +1161,90 @@ export default function OwnerProductManager({
                 </div>
 
                 <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  {/* Automated Sync Button: forces live re-fetch from Firestore collections & products, updates local cache */}
                   <button
-                    onClick={loadExistingProducts}
-                    className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-brand-text bg-brand-surface text-[10px] font-mono font-black uppercase tracking-wider hover:bg-brand-text hover:text-brand-bg transition-all shadow-[2px_2px_0px_#050505]"
+                    type="button"
+                    onClick={() => handleAutomatedSync(false)}
+                    disabled={isSyncing}
+                    className="flex items-center gap-2 px-3 sm:px-4 py-2 border-2 border-brand-text bg-brand-accent text-white text-[10px] sm:text-xs font-mono font-black uppercase tracking-wider hover:bg-black hover:text-white transition-all shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer disabled:opacity-50"
+                    title={`Forces live re-fetch from Firestore collections ('artifacts' and 'specimens') on database ${FIRESTORE_DATABASE_ID} and updates local cache`}
                   >
-                    <RefreshCw size={12} className={loadingProducts ? "animate-spin" : ""} />
-                    <span>REFRESH</span>
+                    <RefreshCw size={12} className={`shrink-0 ${isSyncing ? "animate-spin" : ""}`} />
+                    <span>{isSyncing ? "SYNCING FIRESTORE..." : "AUTO-SYNC FIRESTORE"}</span>
                   </button>
+
+                  {/* Auto-Sync (60s) Periodic Automation Toggle */}
+                  <button
+                    type="button"
+                    onClick={() => {
+                      soundManager.playClick(0.08);
+                      setAutoSyncEnabled(!autoSyncEnabled);
+                    }}
+                    className={`flex items-center gap-1.5 px-3 py-2 border-2 border-brand-text text-[10px] font-mono font-black uppercase tracking-wider transition-all shadow-[2px_2px_0px_#050505] cursor-pointer ${
+                      autoSyncEnabled 
+                        ? "bg-emerald-500 text-black border-brand-text" 
+                        : "bg-brand-surface text-brand-text/75 hover:text-brand-text"
+                    }`}
+                    title="Automatically sync with Firestore every 60 seconds while viewing catalog"
+                  >
+                    <Radio size={12} className={autoSyncEnabled ? "animate-pulse text-black" : "text-brand-text/50"} />
+                    <span>AUTO-SYNC (60S): {autoSyncEnabled ? "ON" : "OFF"}</span>
+                  </button>
+
+                  <button
+                    onClick={() => loadExistingProducts(true)}
+                    disabled={loadingProducts}
+                    className="hidden lg:flex items-center gap-1.5 px-3 py-2 border-2 border-brand-text bg-brand-surface text-[10px] font-mono font-black uppercase tracking-wider hover:bg-brand-text hover:text-brand-bg transition-all shadow-[2px_2px_0px_#050505]"
+                    title="Quick reload of catalog products"
+                  >
+                    <RefreshCw size={11} className={loadingProducts ? "animate-spin" : ""} />
+                    <span>RELOAD</span>
+                  </button>
+
                   <button
                     onClick={() => { resetForm(); setActiveTab("upload"); }}
                     className="flex items-center gap-2 bg-brand-text text-brand-bg px-4 sm:px-5 py-2 text-[10px] font-mono font-black uppercase tracking-wider hover:bg-neutral-800 transition-all border-2 border-brand-text shadow-[3px_3px_0px_#050505]"
                   >
                     <Plus size={13} />
                     <span>+ NEW OBJECT</span>
+                  </button>
+                </div>
+              </div>
+
+              {/* Database Live State & Automated Sync Console Banner */}
+              <div className="border-2 border-brand-text bg-brand-surface p-3 sm:p-4 shadow-[4px_4px_0px_#050505] flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs font-mono">
+                <div className="flex flex-wrap items-center gap-2 sm:gap-3">
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-brand-bg border border-brand-text">
+                    <Database size={13} className="text-brand-accent shrink-0" />
+                    <span className="font-black text-[10px] tracking-wider text-brand-text truncate max-w-[260px] sm:max-w-none">
+                      DB: {FIRESTORE_DATABASE_ID}
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5 px-2.5 py-1 bg-emerald-500/10 border border-emerald-500/30 text-emerald-800 text-[10px] font-black tracking-wider">
+                    <span className={`w-2 h-2 rounded-full ${isSyncing ? "bg-amber-500 animate-ping" : "bg-emerald-500 animate-pulse"}`} />
+                    <span>{isSyncing ? "SYNCING LIVE..." : "TRUE DB STATE // ACTIVE"}</span>
+                  </div>
+                  {lastSyncTime ? (
+                    <span className="text-[10px] font-bold text-brand-text/70 uppercase">
+                      LAST SYNCED: {new Date(lastSyncTime).toLocaleTimeString()} {lastSyncResult?.durationMs ? `(${lastSyncResult.durationMs}ms)` : ""}
+                    </span>
+                  ) : (
+                    <span className="text-[10px] text-brand-text/50 uppercase">
+                      LOCAL CACHE ACTIVE // READY TO SYNC
+                    </span>
+                  )}
+                </div>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    type="button"
+                    onClick={() => handleAutomatedSync(false)}
+                    disabled={isSyncing}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border-2 border-brand-text font-black text-[10px] uppercase tracking-wider transition-all cursor-pointer shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] disabled:opacity-50"
+                    title="Force a complete re-fetch of Firestore collections ('artifacts' and 'specimens') and update local cache"
+                  >
+                    <RefreshCw size={11} className={`shrink-0 ${isSyncing ? "animate-spin" : ""}`} />
+                    <span>{isSyncing ? "UPDATING LOCAL CACHE..." : "FORCE RE-FETCH & UPDATE CACHE"}</span>
                   </button>
                 </div>
               </div>
