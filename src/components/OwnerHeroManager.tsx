@@ -121,6 +121,19 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
   const [isDragging, setIsDragging] = useState(false);
   const [nudgeStep, setNudgeStep] = useState<number>(1);
   const [studioSlideIndices, setStudioSlideIndices] = useState<Record<string, number>>({});
+  const [isCopiedJson, setIsCopiedJson] = useState(false);
+
+  const handleCopyJsonToClipboard = () => {
+    soundManager.playClick(0.12);
+    try {
+      const jsonStr = JSON.stringify(config, null, 2);
+      navigator.clipboard.writeText(jsonStr);
+      setIsCopiedJson(true);
+      setTimeout(() => setIsCopiedJson(false), 2500);
+    } catch (err: any) {
+      alert("Failed to copy JSON to clipboard: " + (err?.message || "Error"));
+    }
+  };
 
   // Auto-cycle studio slideshow preview when layer.slideshowEnabled is true
   useEffect(() => {
@@ -609,8 +622,11 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           const effectiveRotation = (isMobileMode && item.mobileEnabled && item.mobileRotation !== undefined) ? item.mobileRotation : (item.rotation || 0);
           const isMain = actualIndex === 0;
           const effectiveStickBottom = (isMobileMode && item.mobileEnabled && item.mobileStickToBottom !== undefined)
-            ? Boolean(item.mobileStickToBottom && effectivePosY >= 90)
-            : Boolean((item.stickToBottom ?? (isMain ? defaultLayerStickBottom : false)) && effectivePosY >= 90);
+            ? Boolean(item.mobileStickToBottom)
+            : Boolean(item.stickToBottom ?? (isMain ? defaultLayerStickBottom : false));
+          const baseOffset = isMobileMode
+            ? (item.mobileStickToBottomOffset ?? item.stickToBottomOffset ?? layer.mobileStickToBottomOffset ?? layer.stickToBottomOffset ?? 0)
+            : (item.stickToBottomOffset ?? layer.stickToBottomOffset ?? 0);
 
           return (
             <motion.div
@@ -628,7 +644,7 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
                 effectiveStickBottom
                   ? {
                       left: `${effectivePosX}%`,
-                      bottom: 0,
+                      bottom: isMobileMode ? `${5 + baseOffset}px` : `${baseOffset}px`,
                       top: "auto",
                       transform: `translateX(-50%) rotate(${effectiveRotation}deg)`,
                       transformOrigin: "bottom center",
@@ -837,6 +853,13 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
             const effectiveLineHeight = (isMobileMode && textObj.mobileEnabled && textObj.mobileLineHeight !== undefined) ? textObj.mobileLineHeight : (textObj.lineHeight || 1.1);
             const effectiveLetterSpacing = (isMobileMode && textObj.mobileEnabled && textObj.mobileLetterSpacing !== undefined) ? textObj.mobileLetterSpacing : (textObj.letterSpacing || 0);
 
+            const effectiveStickBottom = (isMobileMode && textObj.mobileEnabled && textObj.mobileStickToBottom !== undefined)
+              ? Boolean(textObj.mobileStickToBottom)
+              : Boolean(textObj.stickToBottom);
+            const baseOffset = (isMobileMode && textObj.mobileEnabled)
+              ? (textObj.mobileStickToBottomOffset ?? textObj.stickToBottomOffset ?? 0)
+              : (textObj.stickToBottomOffset ?? 0);
+
             return (
               <motion.div
                 key={`${layer.id}-text-${textObj.id}-${previewKey}`}
@@ -849,13 +872,24 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
                 }}
                 transition={getTransitionSettings(textObj.transitionSpeed || "smooth")}
                 className="absolute flex flex-col items-center cursor-grab active:cursor-grabbing"
-                style={{
-                  left: `${effectivePosX}%`,
-                  top: `${effectivePosY}%`,
-                  transform: `translate(-50%, -50%) rotate(${effectiveRotation}deg)`,
-                  transformOrigin: "center",
-                  zIndex: zIndex + 1,
-                }}
+                style={
+                  effectiveStickBottom
+                    ? {
+                        left: `${effectivePosX}%`,
+                        bottom: isMobileMode ? `${5 + baseOffset}px` : `${baseOffset}px`,
+                        top: "auto",
+                        transform: `translateX(-50%) rotate(${effectiveRotation}deg)`,
+                        transformOrigin: "bottom center",
+                        zIndex: zIndex + 1,
+                      }
+                    : {
+                        left: `${effectivePosX}%`,
+                        top: `${effectivePosY}%`,
+                        transform: `translate(-50%, -50%) rotate(${effectiveRotation}deg)`,
+                        transformOrigin: "center",
+                        zIndex: zIndex + 1,
+                      }
+                }
                 onClick={(e) => {
                   e.stopPropagation();
                   soundManager.playClick(0.06);
@@ -1027,6 +1061,15 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
           >
             <Download size={11} />
             <span className="hidden sm:inline">EXPORT</span>
+          </button>
+          <button
+            type="button"
+            onClick={handleCopyJsonToClipboard}
+            className="p-1 bg-brand-surface hover:bg-brand-text hover:text-brand-bg border border-brand-text text-[9px] font-black uppercase transition-colors cursor-pointer flex items-center gap-1 px-1.5 shadow-[1px_1px_0px_#050505]"
+            title="Copy hero configuration JSON to clipboard"
+          >
+            {isCopiedJson ? <Check size={11} className="text-emerald-600" /> : <Copy size={11} />}
+            <span className="hidden sm:inline">{isCopiedJson ? "COPIED!" : "COPY JSON"}</span>
           </button>
           <button
             type="button"

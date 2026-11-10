@@ -386,6 +386,10 @@ export interface TextObject {
   mobileRotation?: number;
   mobileLineHeight?: number;
   mobileLetterSpacing?: number;
+  mobileStickToBottom?: boolean;
+  stickToBottom?: boolean;
+  stickToBottomOffset?: number;
+  mobileStickToBottomOffset?: number;
 }
 
 export interface GraphicObject {

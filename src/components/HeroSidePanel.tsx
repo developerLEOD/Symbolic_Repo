@@ -155,7 +155,20 @@ export default function HeroSidePanel({
   const [nudgeStep, setNudgeStep] = useState<number>(1);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [isCopiedJson, setIsCopiedJson] = useState(false);
   const [stepProgressStatus, setStepProgressStatus] = useState<string>("");
+
+  const handleCopyJson = () => {
+    soundManager.playClick(0.1);
+    try {
+      const jsonStr = JSON.stringify(config, null, 2);
+      navigator.clipboard.writeText(jsonStr);
+      setIsCopiedJson(true);
+      setTimeout(() => setIsCopiedJson(false), 2500);
+    } catch (err: any) {
+      alert("Failed to copy JSON to clipboard: " + (err?.message || "Error"));
+    }
+  };
 
   // Database Avatar Graphics catalog state
   const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
@@ -603,6 +616,16 @@ export default function HeroSidePanel({
                   >
                     <Download size={11} />
                     <span>EXPORT</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={handleCopyJson}
+                    className="py-2 px-1.5 bg-brand-surface hover:bg-brand-accent hover:text-white border-2 border-brand-text text-[9px] font-black uppercase tracking-wider flex items-center justify-center gap-1 shadow-[2px_2px_0px_#050505] active:translate-x-0.5 active:translate-y-0.5 cursor-pointer"
+                    title="Copy hero configuration JSON directly to clipboard"
+                  >
+                    {isCopiedJson ? <Check size={11} className="text-emerald-500" /> : <Copy size={11} />}
+                    <span>{isCopiedJson ? "COPIED!" : "COPY JSON"}</span>
                   </button>
 
                   <button
@@ -2128,8 +2151,8 @@ export default function HeroSidePanel({
                 </div>
               </div>
 
-              {/* Bounding/Frame settings & Stick to Bottom for Graphic only */}
-              {isGraphicSelected && (
+              {/* Bounding/Frame settings & Stick to Bottom for Graphic or Text */}
+              {(isGraphicSelected || selectedTextObject) && (
                 <div className="p-3 bg-brand-bg border-2 border-brand-text shadow-[2px_2px_0px_#050505] space-y-3">
                   <span className="text-[9px] font-black uppercase tracking-wider text-brand-text/75 block border-b border-brand-text/15 pb-1">
                     STICK TO BOTTOM &amp; FRAME STYLING:

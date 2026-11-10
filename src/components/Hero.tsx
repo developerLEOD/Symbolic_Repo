@@ -530,6 +530,13 @@ function SingleLayerRenderer({
         const finalLineHeight = useMobile ? (textObj.mobileLineHeight ?? textObj.lineHeight ?? 1.1) : (textObj.lineHeight ?? 1.1);
         const finalLetterSpacing = useMobile ? (textObj.mobileLetterSpacing ?? textObj.letterSpacing ?? 0) : (textObj.letterSpacing ?? 0);
 
+        const finalStickToBottom = useMobile 
+          ? Boolean(textObj.mobileStickToBottom ?? textObj.stickToBottom) 
+          : Boolean(textObj.stickToBottom);
+        const baseOffset = useMobile
+          ? (textObj.mobileStickToBottomOffset ?? textObj.stickToBottomOffset ?? 0)
+          : (textObj.stickToBottomOffset ?? 0);
+
         return (
           <motion.div
             key={textObj.id}
@@ -542,13 +549,24 @@ function SingleLayerRenderer({
             }}
             transition={getTransitionSettings(textObj.transitionSpeed || "smooth", textObj.transitionDelay || 0.2)}
             className="absolute flex flex-col items-center select-none"
-            style={{
-              left: `${finalPosX}%`,
-              top: `${finalPosY}%`,
-              transform: `translate(-50%, -50%) rotate(${finalRotation}deg)`,
-              transformOrigin: "center",
-              zIndex: zIndex + 1,
-            }}
+            style={
+              finalStickToBottom
+                ? {
+                    left: `${finalPosX}%`,
+                    bottom: isMobile ? `${5 + baseOffset}px` : `${baseOffset}px`,
+                    top: "auto",
+                    transform: `translateX(-50%) rotate(${finalRotation}deg)`,
+                    transformOrigin: "bottom center",
+                    zIndex: zIndex + 1,
+                  }
+                : {
+                    left: `${finalPosX}%`,
+                    top: `${finalPosY}%`,
+                    transform: `translate(-50%, -50%) rotate(${finalRotation}deg)`,
+                    transformOrigin: "center",
+                    zIndex: zIndex + 1,
+                  }
+            }
           >
             <motion.div
               animate={
