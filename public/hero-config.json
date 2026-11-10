@@ -83,7 +83,9 @@
         "mobilePosY": 31,
         "mobileRotation": 0,
         "mobileSize": 280,
-        "mobileStickToBottom": false
+        "mobileStickToBottom": false,
+        "stickToBottom": true,
+        "stickToBottomOffset": 500
       },
       {
         "id": "gfx_bg_2_layer5",
@@ -102,7 +104,9 @@
         "hoverEffect": "none",
         "disableIdleAnimation": false,
         "shadow": false,
-        "border": false
+        "border": false,
+        "stickToBottom": true,
+        "stickToBottomOffset": 296
       }
     ],
     "textObjects": [
@@ -147,7 +151,9 @@
         "textTransform": "none",
         "italic": false,
         "disableIdleAnimation": true,
-        "deviceTarget": "desktop"
+        "deviceTarget": "desktop",
+        "stickToBottom": true,
+        "stickToBottomOffset": 268
       },
       {
         "id": "1794248731111",
@@ -167,7 +173,9 @@
         "fontWeight": 400,
         "textTransform": "none",
         "italic": false,
-        "deviceTarget": "desktop"
+        "deviceTarget": "desktop",
+        "stickToBottom": true,
+        "stickToBottomOffset": 496
       },
       {
         "id": "1794250718072",
