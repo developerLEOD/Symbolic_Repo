@@ -227,7 +227,7 @@
     "captionTitle": "SYMBOLIC // AVATAR",
     "captionSubtitle": "POSSESSION & IDENTITY",
     "slideshowEnabled": true,
-    "slideshowInterval": 10,
+    "slideshowInterval": 1,
     "slideshowTransition": "fade",
     "graphicObjects": [
       {
@@ -421,7 +421,7 @@
   "gridOpacity": 0.12,
   "version": "1.0",
   "updatedAt": 1794220406276,
-  "slideshowInterval": 10,
+  "slideshowInterval": 1,
   "graphicObjects": [
     {
       "id": "gfx_av_0_avatar0",
