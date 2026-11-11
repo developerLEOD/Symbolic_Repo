@@ -229,6 +229,7 @@
     "slideshowEnabled": true,
     "slideshowInterval": 10,
     "slideshowTransition": "fade",
+    "stickToBottom": true,
     "graphicObjects": [
       {
         "id": "gfx_av_0_avatar0",
@@ -327,12 +328,14 @@
         "shadow": false,
         "border": false,
         "mobileEnabled": true,
-        "mobilePosX": -46,
-        "mobilePosY": 16,
+        "mobilePosX": 0,
+        "mobilePosY": 5,
         "mobileRotation": 0,
-        "mobileSize": 585,
+        "mobileSize": 395,
         "mobileStickToBottom": true,
-        "deviceTarget": "desktop"
+        "deviceTarget": "both",
+        "stickToBottom": true,
+        "mobileStickToBottomOffset": -4
       },
       {
         "id": "gfx_av_4_avatar4",
@@ -520,12 +523,14 @@
       "shadow": false,
       "border": false,
       "mobileEnabled": true,
-      "mobilePosX": -46,
-      "mobilePosY": 16,
+      "mobilePosX": 0,
+      "mobilePosY": 5,
       "mobileRotation": 0,
-      "mobileSize": 585,
+      "mobileSize": 395,
       "mobileStickToBottom": true,
-      "deviceTarget": "desktop"
+      "deviceTarget": "both",
+      "stickToBottom": true,
+      "mobileStickToBottomOffset": -4
     },
     {
       "id": "gfx_av_4_avatar4",
