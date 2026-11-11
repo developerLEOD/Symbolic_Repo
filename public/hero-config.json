@@ -1,6 +1,6 @@
 {
   "isEnabled": true,
-  "activeEditingLayer": "bg",
+  "activeEditingLayer": "mid",
   "avatarUrl": "",
   "avatarAlt": "SYMBOLIC Monolithic Emblem",
   "posX": 34,
@@ -333,7 +333,7 @@
         "mobileRotation": 0,
         "mobileSize": 395,
         "mobileStickToBottom": true,
-        "deviceTarget": "both",
+        "deviceTarget": "desktop",
         "stickToBottom": true,
         "mobileStickToBottomOffset": -4
       },
@@ -356,12 +356,14 @@
         "shadow": false,
         "border": false,
         "mobileEnabled": true,
-        "mobilePosX": -46,
-        "mobilePosY": 16,
-        "mobileSize": 585,
-        "deviceTarget": "desktop",
+        "mobilePosX": 0,
+        "mobilePosY": 17,
+        "mobileSize": 380,
+        "deviceTarget": "both",
         "mobileRotation": 0,
-        "mobileStickToBottom": true
+        "mobileStickToBottom": true,
+        "stickToBottom": true,
+        "mobileStickToBottomOffset": -6
       }
     ],
     "textObjects": [],
@@ -414,8 +416,8 @@
     "button1Link": "/about",
     "button2Label": "MANIFESTO",
     "button2Link": "/manifesto",
-    "posX": 78,
-    "posY": 87,
+    "posX": 50,
+    "posY": 85,
     "deviceTarget": "both",
     "mobileEnabled": true,
     "mobilePosX": 46,
@@ -528,7 +530,7 @@
       "mobileRotation": 0,
       "mobileSize": 395,
       "mobileStickToBottom": true,
-      "deviceTarget": "both",
+      "deviceTarget": "desktop",
       "stickToBottom": true,
       "mobileStickToBottomOffset": -4
     },
@@ -551,12 +553,14 @@
       "shadow": false,
       "border": false,
       "mobileEnabled": true,
-      "mobilePosX": -46,
-      "mobilePosY": 16,
-      "mobileSize": 585,
-      "deviceTarget": "desktop",
+      "mobilePosX": 0,
+      "mobilePosY": 17,
+      "mobileSize": 380,
+      "deviceTarget": "both",
       "mobileRotation": 0,
-      "mobileStickToBottom": true
+      "mobileStickToBottom": true,
+      "stickToBottom": true,
+      "mobileStickToBottomOffset": -6
     }
   ],
   "slideshowEnabled": true,
