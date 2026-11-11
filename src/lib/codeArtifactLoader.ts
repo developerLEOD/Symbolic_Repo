@@ -184,19 +184,29 @@ function parseArtifactsDirectory(): { artifacts: Artifact[]; specimens: Specimen
 
     const specimenId = data.id || `spec_${artifactFolder}_${specimenFolder.replace(/[^a-zA-Z0-9_-]/g, '_')}`;
 
-    // Collect all resolved images
+    // Collect all resolved images (incorporating all images in the specimen directory)
     const images: string[] = [];
+    if (dirImages.length > 0) {
+      images.push(...dirImages);
+    }
     if (Array.isArray(data.images) && data.images.length > 0) {
       data.images.forEach((img: string) => {
         const found = findImageInDir(specDir, img);
-        if (found) images.push(found);
-        else if (img.startsWith('http') || img.startsWith('/')) images.push(img);
+        if (found && !images.includes(found)) {
+          images.push(found);
+        } else if ((img.startsWith('http') || img.startsWith('/')) && !images.includes(img)) {
+          images.push(img);
+        }
       });
     }
     if (images.length === 0) {
-      images.push(...(dirImages.length > 0 ? dirImages : [resolvedPreview]));
+      images.push(resolvedPreview);
     }
-    if (!images.includes(resolvedPreview)) {
+    const prevIdx = images.indexOf(resolvedPreview);
+    if (prevIdx > 0) {
+      images.splice(prevIdx, 1);
+      images.unshift(resolvedPreview);
+    } else if (prevIdx === -1 && resolvedPreview) {
       images.unshift(resolvedPreview);
     }
 

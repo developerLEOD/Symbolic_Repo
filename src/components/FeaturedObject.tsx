@@ -116,7 +116,7 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                 </span>
               </div>
 
-              {product.images.length > 1 && (
+              {images.length > 1 && (
                 <>
                   <button
                     type="button"
@@ -145,9 +145,9 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
           </div>
 
           {/* Perspective Selector Mini Thumbnails */}
-          {product.images.length > 1 && (
+          {images.length > 1 && (
             <div className="flex gap-2.5">
-              {product.images.map((img, idx) => (
+              {images.map((img, idx) => (
                 <button
                   key={idx}
                   onMouseEnter={() => soundManager.playHover(0.04)}
