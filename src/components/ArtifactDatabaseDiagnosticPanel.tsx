@@ -102,7 +102,9 @@ export default function ArtifactDatabaseDiagnosticPanel({ onOpenStudio }: Artifa
 
   const quotaExceeded = isFirestoreQuotaExceeded() || Boolean(diagnostic?.isQuotaExceeded);
   const artifactCount = diagnostic?.count ?? diagnostic?.artifacts?.length ?? 0;
-  const sourceLabel = diagnostic?.source === "firestore_live" 
+  const sourceLabel = diagnostic?.source === "code_repository"
+    ? "CODE REPOSITORY (/src/Artifacts)"
+    : diagnostic?.source === "firestore_live" 
     ? "FIRESTORE LIVE SNAPSHOT" 
     : diagnostic?.source === "in_memory_cache" 
     ? "IN-MEMORY CACHE (TTL)" 

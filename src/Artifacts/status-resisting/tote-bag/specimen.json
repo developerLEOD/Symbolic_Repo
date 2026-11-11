@@ -1,0 +1,30 @@
+{
+  "id": "spec_resisting_tote",
+  "medium": "Tote Bag",
+  "mediumCategory": "carry",
+  "type": "18oz Heavy Cotton Canvas",
+  "sku": "SYM-RES-TOT",
+  "price": 3200,
+  "inventory": 20,
+  "availability": true,
+  "status": "available",
+  "color": "Industrial Black",
+  "colorHex": "#111111",
+  "availableColors": [
+    { "id": "indblack", "name": "Industrial Black", "hex": "#111111" }
+  ],
+  "availableSizes": ["Standard Utility // 42cm x 38cm"],
+  "material": "18oz Heavy Industrial Cotton Canvas",
+  "weight": "510 GSM Reinforced Weave",
+  "fabricGsm": "510",
+  "fit": "Reinforced Box-Stitched Utility Handles",
+  "printMethod": "High-Density Screen Print Matrix",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Archival Utility Field Carrier",
+  "careInstructions": "Spot clean with damp cloth // Air dry",
+  "finish": "Raw Industrial Canvas Finish",
+  "dimensions": "42cm x 38cm x 10cm",
+  "capacity": "16 Liters",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}

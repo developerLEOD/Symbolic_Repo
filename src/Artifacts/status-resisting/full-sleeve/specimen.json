@@ -1,0 +1,31 @@
+{
+  "id": "spec_resisting_fullsleeve",
+  "medium": "Full Sleeve",
+  "mediumCategory": "wear",
+  "type": "Boxy Ribbed Cuff",
+  "sku": "SYM-RES-FLS",
+  "price": 5000,
+  "inventory": 25,
+  "availability": true,
+  "status": "available",
+  "color": "Raw Black",
+  "colorHex": "#1A1A1A",
+  "availableColors": [
+    { "id": "rawblack", "name": "Raw Black", "hex": "#1A1A1A" },
+    { "id": "slate", "name": "Slate Smoke", "hex": "#3E444C" }
+  ],
+  "availableSizes": ["S", "M", "L", "XL"],
+  "material": "320 GSM Interlock Thermal Long-Sleeve",
+  "weight": "320 GSM Interlock Cotton",
+  "fabricGsm": "320",
+  "fit": "Boxy Ribbed Cuff",
+  "printMethod": "High-Density Puff & Screen Print",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Archival Studio Allocation",
+  "careInstructions": "Machine wash cold inside out, line dry",
+  "finish": "Thermal Interlock",
+  "dimensions": "",
+  "capacity": "",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}

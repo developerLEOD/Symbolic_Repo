@@ -1,0 +1,19 @@
+{
+  "id": "art_template_name",
+  "artifactId": "SYM-04",
+  "name": "ARTIFACT_NAME",
+  "shortDescription": "One-line thesis description of this symbolic design.",
+  "description": "Full architectural manifesto and ideological thesis of the artifact.",
+  "concept": "Core symbolic concept",
+  "inscription": "العنوان",
+  "pillar1Represents": "Pillar 01: What the symbol represents",
+  "pillar2WhyChosen": "Pillar 02: Why it was chosen",
+  "pillar3Communicates": "Pillar 03: What the artifact communicates",
+  "pillar4WearerCarries": "Pillar 04: What idea the wearer carries",
+  "symbolicTagline": "A symbol of unyielding witness.",
+  "collectionName": "Be Symbolic",
+  "tags": ["Series 01", "Identity"],
+  "status": "published",
+  "order": 4,
+  "setDiscountPercentage": 10
+}

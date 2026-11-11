@@ -1,0 +1,31 @@
+{
+  "id": "spec_sumud_tshirt",
+  "medium": "T-Shirt",
+  "mediumCategory": "wear",
+  "type": "Drop Shoulder",
+  "sku": "SYM-SUM-TSH",
+  "price": 4200,
+  "inventory": 50,
+  "availability": true,
+  "status": "available",
+  "color": "Charcoal Black",
+  "colorHex": "#1C1C1C",
+  "availableColors": [
+    { "id": "charcoal", "name": "Charcoal Black", "hex": "#1C1C1C" },
+    { "id": "ecru", "name": "Washed Raw Ecru", "hex": "#F4F1EA" }
+  ],
+  "availableSizes": ["S", "M", "L", "XL", "2XL"],
+  "material": "400 GSM Combed Organic Cotton",
+  "weight": "400 GSM Heavyweight Jersey",
+  "fabricGsm": "400",
+  "fit": "Boxy Drop Shoulder",
+  "printMethod": "High-Density Puff & Screen Print",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Archival Studio Allocation",
+  "careInstructions": "Machine wash cold inside out, air dry",
+  "finish": "Brushed Combed Jersey",
+  "dimensions": "",
+  "capacity": "",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}

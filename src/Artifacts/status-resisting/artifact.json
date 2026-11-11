@@ -1,0 +1,19 @@
+{
+  "id": "art_resisting_02",
+  "artifactId": "SYM-02",
+  "name": "STATUS: RESISTING",
+  "shortDescription": "Ideological resistance, moral sovereignty, and refusal of submission to injustice.",
+  "description": "STATUS: RESISTING is an archival witness object representing continuous spiritual and physical resistance against oppression and cultural erasure.",
+  "concept": "Spiritual and physical resistance against oppression",
+  "inscription": "مُقَاوِمَة",
+  "pillar1Represents": "Moral sovereignty, divine justice (Adl), and active resistance against falsehood.",
+  "pillar2WhyChosen": "Chosen to affirm that true dignity requires active stance and moral refusal.",
+  "pillar3Communicates": "Communicates uncompromising alignment with truth and justice.",
+  "pillar4WearerCarries": "The wearer carries the obligation to uphold justice in every sphere.",
+  "symbolicTagline": "An emblem of unyielding ideological witness.",
+  "collectionName": "Be Palestine",
+  "tags": ["Series 01", "Resistance", "Statements"],
+  "status": "published",
+  "order": 2,
+  "setDiscountPercentage": 10
+}

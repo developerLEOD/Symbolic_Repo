@@ -38,13 +38,14 @@ import {
   isQuotaError 
 } from "./firestoreCircuitBreaker";
 import firebaseConfig from "../../firebase-applet-config.json";
+import { getCodeArtifacts, getCodeSpecimens, refreshCodeCatalog } from "./codeArtifactLoader";
 
 export const FIRESTORE_DATABASE_ID = (firebaseConfig as any).firestoreDatabaseId || "ai-studio-thewisdomlounges-09c3c7a7-cb51-4db8-8c7f-e9bf914e0d10";
 export const FIRESTORE_PROJECT_ID = firebaseConfig.projectId || "gen-lang-client-0709348781";
 
 export interface ArtifactFetchDiagnostic {
   timestamp: number;
-  source: "firestore_live" | "in_memory_cache" | "local_storage" | "seed_fallback";
+  source: "code_repository" | "firestore_live" | "in_memory_cache" | "local_storage" | "seed_fallback";
   count: number;
   databaseId: string;
   projectId: string;
@@ -700,6 +701,10 @@ export function getCachedArtifacts(): Artifact[] {
       }
     } catch {}
   }
+  const codeArts = getCodeArtifacts();
+  if (codeArts && codeArts.length > 0) {
+    return codeArts;
+  }
   return SEED_ARTIFACTS;
 }
 
@@ -716,6 +721,10 @@ export function getCachedSpecimens(): Specimen[] {
         }
       }
     } catch {}
+  }
+  const codeSpecs = getCodeSpecimens();
+  if (codeSpecs && codeSpecs.length > 0) {
+    return codeSpecs;
   }
   return SEED_SPECIMENS;
 }
@@ -836,192 +845,112 @@ export function normalizeSpecimen(rawSpec: any): Specimen {
 }
 
 /**
- * Fetch all Artifacts from Firestore, falling back to cache & seeds
- * Employs an in-memory TTL cache (5 min) to prevent redundant Firestore read bursts.
- * Pass forceServer = true to bypass cache and verify live Firestore directly.
+ * Fetch all Artifacts directly from the Code Repository (/src/Artifacts)
+ * Loads instant code-defined artifacts and merges any local storage customisations.
+ * Pass forceServer = true to re-parse the code catalog.
  */
 export async function fetchArtifacts(forceServer: boolean = false): Promise<Artifact[]> {
-  const cached = getCachedArtifacts();
-  const now = Date.now();
   const startTime = performance.now();
+  const now = Date.now();
 
-  // If in-memory cache is valid within TTL and not forcing server read, return immediately
-  if (!forceServer && cached.length > 0 && now - lastArtifactsFetchTime < ARTIFACTS_TTL_MS) {
-    const durationMs = Math.round(performance.now() - startTime);
-    const diag: ArtifactFetchDiagnostic = {
-      timestamp: now,
-      source: "in_memory_cache",
-      count: cached.length,
-      databaseId: FIRESTORE_DATABASE_ID,
-      projectId: FIRESTORE_PROJECT_ID,
-      isQuotaExceeded: isFirestoreQuotaExceeded(),
-      docIds: cached.map(a => a.id),
-      docNames: cached.map(a => a.name),
-      durationMs,
-      artifacts: cached
-    };
-    broadcastDiagnostic(diag);
-    return cached;
+  if (forceServer) {
+    refreshCodeCatalog();
   }
 
-  // If circuit breaker tripped, return cached data without attempting Firestore read
-  if (isFirestoreQuotaExceeded()) {
-    const durationMs = Math.round(performance.now() - startTime);
-    const diag: ArtifactFetchDiagnostic = {
-      timestamp: now,
-      source: "local_storage",
-      count: cached.length,
-      databaseId: FIRESTORE_DATABASE_ID,
-      projectId: FIRESTORE_PROJECT_ID,
-      isQuotaExceeded: true,
-      docIds: cached.map(a => a.id),
-      docNames: cached.map(a => a.name),
-      error: "Firestore circuit breaker tripped (daily free read quota reached). Operating in offline cache mode.",
-      durationMs,
-      artifacts: cached
-    };
-    broadcastDiagnostic(diag);
-    return cached;
+  // 1. Primary source: Code repository (/src/Artifacts/)
+  const codeList = getCodeArtifacts();
+  let artifacts = [...codeList];
+
+  // 2. Check local storage for any owner studio overrides or edits
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      const saved = localStorage.getItem(ARTIFACTS_CACHE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const codeIds = new Set(codeList.map(a => a.id));
+          const localOnly = parsed.filter((p: Artifact) => !codeIds.has(p.id));
+          // If codeList has the artifact, keep code definition unless user customized in session
+          artifacts = [...codeList, ...localOnly];
+        }
+      }
+    } catch {}
   }
 
-  try {
-    console.log(`📡 [artifactService] Querying Firestore collection "artifacts" on database: ${FIRESTORE_DATABASE_ID}`);
-    const snap = await getDocs(collection(db, "artifacts"));
-    lastArtifactsFetchTime = now;
-    const durationMs = Math.round(performance.now() - startTime);
+  artifacts.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
+  saveArtifactsToCache(artifacts);
+  lastArtifactsFetchTime = now;
 
-    if (!snap.empty && snap.docs.length > 0) {
-      const live = snap.docs.map(d => normalizeArtifact({ id: d.id, ...d.data() }));
-      live.sort((a, b) => (a.order ?? 999) - (b.order ?? 999));
-      saveArtifactsToCache(live);
+  const durationMs = Math.round(performance.now() - startTime);
+  const diag: ArtifactFetchDiagnostic = {
+    timestamp: now,
+    source: "code_repository",
+    count: artifacts.length,
+    databaseId: FIRESTORE_DATABASE_ID,
+    projectId: FIRESTORE_PROJECT_ID,
+    isQuotaExceeded: false,
+    docIds: artifacts.map(a => a.id),
+    docNames: artifacts.map(a => a.name),
+    durationMs,
+    artifacts
+  };
+  broadcastDiagnostic(diag);
 
-      const diag: ArtifactFetchDiagnostic = {
-        timestamp: now,
-        source: "firestore_live",
-        count: live.length,
-        databaseId: FIRESTORE_DATABASE_ID,
-        projectId: FIRESTORE_PROJECT_ID,
-        isQuotaExceeded: false,
-        docIds: live.map(a => a.id),
-        docNames: live.map(a => a.name),
-        durationMs,
-        artifacts: live
-      };
-      broadcastDiagnostic(diag);
+  console.group(`🏛️ [artifactService] fetchArtifacts() -> CODE REPOSITORY (${artifacts.length} artifacts in ${durationMs}ms)`);
+  console.log(`Source: /src/Artifacts/ (zero database reads, zero quota consumed)`);
+  console.table(artifacts.map(a => ({
+    id: a.id,
+    artifactId: a.artifactId,
+    name: a.name,
+    collection: a.collectionName,
+    specimens: a.specimenIds?.length || 0,
+    status: a.status
+  })));
+  console.groupEnd();
 
-      console.group(`🏛️ [artifactService] fetchArtifacts() -> Firestore LIVE (${live.length} documents in ${durationMs}ms)`);
-      console.log(`Database: ${FIRESTORE_DATABASE_ID} | Project: ${FIRESTORE_PROJECT_ID}`);
-      console.table(live.map(a => ({
-        id: a.id,
-        artifactId: a.artifactId,
-        name: a.name,
-        collection: a.collectionName,
-        specimens: a.specimenIds?.length || 0,
-        status: a.status
-      })));
-      console.groupEnd();
-
-      return live;
-    } else {
-      // Collection empty on Firestore: fallback to canonical SEED_ARTIFACTS
-      console.warn(`⚠️ [artifactService] Firestore "artifacts" collection is empty on ${FIRESTORE_DATABASE_ID}. Using canonical seed repository.`);
-      const fallbackList = cached.length > 0 ? cached : SEED_ARTIFACTS;
-      const diag: ArtifactFetchDiagnostic = {
-        timestamp: now,
-        source: "seed_fallback",
-        count: fallbackList.length,
-        databaseId: FIRESTORE_DATABASE_ID,
-        projectId: FIRESTORE_PROJECT_ID,
-        isQuotaExceeded: false,
-        docIds: fallbackList.map(a => a.id),
-        docNames: fallbackList.map(a => a.name),
-        error: "Firestore 'artifacts' collection returned 0 documents (empty snapshot).",
-        durationMs,
-        artifacts: fallbackList
-      };
-      broadcastDiagnostic(diag);
-      return fallbackList;
-    }
-  } catch (err: any) {
-    const durationMs = Math.round(performance.now() - startTime);
-    const isQuota = isQuotaError(err);
-    if (isQuota) {
-      markFirestoreQuotaExceeded();
-    }
-    const errMsg = err?.message || String(err);
-    console.warn(`⚠️ [artifactService] Could not fetch artifacts from Firestore (using local cache):`, errMsg);
-    
-    const diag: ArtifactFetchDiagnostic = {
-      timestamp: now,
-      source: "seed_fallback",
-      count: cached.length,
-      databaseId: FIRESTORE_DATABASE_ID,
-      projectId: FIRESTORE_PROJECT_ID,
-      isQuotaExceeded: isQuota,
-      docIds: cached.map(a => a.id),
-      docNames: cached.map(a => a.name),
-      error: errMsg,
-      durationMs,
-      artifacts: cached
-    };
-    broadcastDiagnostic(diag);
-  }
-
-  // Fallback to cache or seeds if offline / network error
-  return cached;
+  return artifacts;
 }
 
 /**
- * Fetch all Specimens from Firestore, falling back to cache & seeds
- * Employs an in-memory TTL cache (5 min) to prevent redundant Firestore read bursts.
- * Pass forceServer = true to bypass cache and query Firestore live directly.
+ * Fetch all Specimens directly from the Code Repository (/src/Artifacts)
+ * Loads instant code-defined specimens and merges any local storage customisations.
+ * Pass forceServer = true to re-parse the code catalog.
  */
 export async function fetchSpecimens(parentArtifactId?: string, forceServer: boolean = false): Promise<Specimen[]> {
-  const allCached = getCachedSpecimens();
   const now = Date.now();
 
-  if (!forceServer && allCached.length > 0 && !parentArtifactId && now - lastSpecimensFetchTime < ARTIFACTS_TTL_MS) {
-    return allCached;
+  if (forceServer) {
+    refreshCodeCatalog();
   }
 
-  if (isFirestoreQuotaExceeded()) {
-    if (parentArtifactId) {
-      return allCached.filter(s => s.parentArtifactId === parentArtifactId);
-    }
-    return allCached;
-  }
+  // 1. Primary source: Code repository (/src/Artifacts/)
+  const codeSpecs = getCodeSpecimens(parentArtifactId);
+  let specimens = [...codeSpecs];
 
-  try {
-    let snap;
-    if (parentArtifactId) {
-      const q = query(collection(db, "specimens"), where("parentArtifactId", "==", parentArtifactId));
-      snap = await getDocs(q);
-    } else {
-      console.log(`📡 [artifactService] Querying Firestore collection "specimens" on database: ${FIRESTORE_DATABASE_ID} (forceServer=${forceServer})`);
-      snap = await getDocs(collection(db, "specimens"));
-      lastSpecimensFetchTime = now;
-    }
-
-    if (!snap.empty && snap.docs.length > 0) {
-      const live = snap.docs.map(d => normalizeSpecimen({ id: d.id, ...d.data() }));
-      if (!parentArtifactId) {
-        saveSpecimensToCache(live);
+  // 2. Merge any local studio additions
+  if (typeof window !== "undefined" && window.localStorage) {
+    try {
+      const saved = localStorage.getItem(SPECIMENS_CACHE_KEY);
+      if (saved) {
+        const parsed = JSON.parse(saved);
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          const codeIds = new Set(codeSpecs.map(s => s.id));
+          const localOnly = parsed.filter((p: Specimen) => !codeIds.has(p.id));
+          specimens = [...codeSpecs, ...localOnly];
+          if (parentArtifactId) {
+            specimens = specimens.filter(s => s.parentArtifactId === parentArtifactId);
+          }
+        }
       }
-      return live;
-    } else if (snap.empty) {
-      return allCached.length > 0 ? (parentArtifactId ? allCached.filter(s => s.parentArtifactId === parentArtifactId) : allCached) : (parentArtifactId ? SEED_SPECIMENS.filter(s => s.parentArtifactId === parentArtifactId) : SEED_SPECIMENS);
-    }
-  } catch (err) {
-    if (isQuotaError(err)) {
-      markFirestoreQuotaExceeded();
-    }
-    console.warn("Could not fetch specimens from Firestore (using local cache):", err);
+    } catch {}
   }
 
-  if (parentArtifactId) {
-    return allCached.filter(s => s.parentArtifactId === parentArtifactId);
+  if (!parentArtifactId) {
+    saveSpecimensToCache(specimens);
+    lastSpecimensFetchTime = now;
   }
-  return allCached;
+
+  return specimens;
 }
 
 /**
@@ -1370,56 +1299,13 @@ export async function initializeAndMigrateArtifacts(): Promise<{
   artifacts: Artifact[];
   specimens: Specimen[];
 }> {
-  const cachedArts = getCachedArtifacts();
-  const cachedSpecs = getCachedSpecimens();
-
-  try {
-    const existingArtifactsSnap = await getDocs(collection(db, "artifacts"));
-    
-    if (existingArtifactsSnap.empty || existingArtifactsSnap.docs.length === 0) {
-      saveArtifactsToCache(SEED_ARTIFACTS);
-      saveSpecimensToCache(SEED_SPECIMENS);
-      if (!isFirestoreQuotaExceeded()) {
-        try {
-          for (const art of SEED_ARTIFACTS) {
-            await setDoc(doc(db, "artifacts", art.id), cleanUndefined(art), { merge: true });
-          }
-          for (const spec of SEED_SPECIMENS) {
-            await setDoc(doc(db, "specimens", spec.id), cleanUndefined(spec), { merge: true });
-          }
-        } catch (e) {
-          console.warn("Could not seed initial artifacts into Firestore:", e);
-        }
-      }
-      return { artifacts: SEED_ARTIFACTS, specimens: SEED_SPECIMENS };
-    }
-
-    // Load from Firestore
-    const artifacts = existingArtifactsSnap.docs.map(d => normalizeArtifact({ id: d.id, ...d.data() }));
-    let specimens: Specimen[] = [];
-
-    try {
-      const specimensSnap = await getDocs(collection(db, "specimens"));
-      if (!specimensSnap.empty) {
-        specimens = specimensSnap.docs.map(d => normalizeSpecimen({ id: d.id, ...d.data() }));
-      } else {
-        specimens = SEED_SPECIMENS;
-      }
-    } catch {
-      specimens = cachedSpecs.length > 0 ? cachedSpecs : SEED_SPECIMENS;
-    }
-
-    saveArtifactsToCache(artifacts);
-    saveSpecimensToCache(specimens);
-    return { artifacts, specimens };
-  } catch (err: any) {
-    console.warn("Using local cached/seed artifacts and specimens:", err?.message || err);
-    return {
-      artifacts: cachedArts.length > 0 ? cachedArts : SEED_ARTIFACTS,
-      specimens: cachedSpecs.length > 0 ? cachedSpecs : SEED_SPECIMENS
-    };
-  }
+  const artifacts = getCodeArtifacts();
+  const specimens = getCodeSpecimens();
+  saveArtifactsToCache(artifacts);
+  saveSpecimensToCache(specimens);
+  return { artifacts, specimens };
 }
+
 
 /**
  * Fetch a single Artifact by ID

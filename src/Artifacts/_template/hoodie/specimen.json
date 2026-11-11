@@ -1,0 +1,31 @@
+{
+  "id": "spec_template_hoodie",
+  "medium": "Hoodie",
+  "mediumCategory": "wear",
+  "type": "Heavyweight 450 GSM",
+  "sku": "SYM-TPL-HOD",
+  "price": 7500,
+  "inventory": 50,
+  "availability": true,
+  "status": "available",
+  "color": "Charcoal Black",
+  "colorHex": "#1C1C1C",
+  "availableColors": [
+    { "id": "black", "name": "Charcoal Black", "hex": "#1C1C1C" },
+    { "id": "ecru", "name": "Raw Ecru", "hex": "#F4F1EA" }
+  ],
+  "availableSizes": ["S", "M", "L", "XL", "2XL"],
+  "material": "450 GSM Double-Faced French Terry Cotton",
+  "weight": "450 GSM Heavyweight Fleece",
+  "fabricGsm": "450",
+  "fit": "Boxy Drop-Shoulder Relaxed Fit",
+  "printMethod": "High-Density Embroidery & Screen Matrix",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Limited Studio Allocation",
+  "careInstructions": "Machine wash cold inside out // Air dry",
+  "finish": "Enzyme Washed Fleece",
+  "dimensions": "",
+  "capacity": "",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}

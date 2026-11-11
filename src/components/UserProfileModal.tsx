@@ -440,8 +440,8 @@ export default function UserProfileModal({ isOpen, onClose, onOpenOwnerManager, 
             </button>
           </div>
 
-          {/* Firestore Quota Notice Banner (Spark Free-tier daily read limit) */}
-          {isQuotaExceeded && (
+          {/* Firestore Quota Notice Banner (Visible to studio owners only) */}
+          {isQuotaExceeded && isOwner && (
             <div className="mb-4 p-3 border-2 border-brand-accent bg-brand-accent/10 text-brand-text text-[11px] font-mono leading-relaxed shadow-[2px_2px_0px_#ff4500]">
               <div className="flex items-start gap-2">
                 <AlertCircle size={15} className="text-brand-accent shrink-0 mt-0.5" />

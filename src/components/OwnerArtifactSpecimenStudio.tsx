@@ -33,7 +33,9 @@ import {
   ShieldCheck,
   Tag,
   RefreshCw,
-  Database
+  Database,
+  Copy,
+  FileCode
 } from "lucide-react";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import LiquidCarveButton from "./LiquidCarveButton";
@@ -70,6 +72,75 @@ export default function OwnerArtifactSpecimenStudio({
     setTimeout(() => setNotification(null), 3500);
   };
 
+  const copySpecimenJson = (spec: Partial<Specimen>) => {
+    const jsonToCopy = {
+      id: spec.id || `spec_${Date.now()}`,
+      medium: spec.medium || "Hoodie",
+      mediumCategory: spec.mediumCategory || "wear",
+      type: spec.type || spec.garmentType || "Heavyweight 450 GSM",
+      sku: spec.sku || "SYM-01-HOD",
+      price: spec.price || 7500,
+      inventory: spec.inventory ?? 50,
+      availability: spec.availability ?? true,
+      status: spec.status || "available",
+      color: spec.color || "Charcoal Black",
+      colorHex: spec.colorHex || "#1C1C1C",
+      availableColors: spec.availableColors || [
+        { id: "charcoal", name: spec.color || "Charcoal Black", hex: spec.colorHex || "#1C1C1C" }
+      ],
+      availableSizes: spec.availableSizes || ["S", "M", "L", "XL"],
+      material: spec.material || "Combed Cotton",
+      weight: spec.weight || "450 GSM",
+      fabricGsm: spec.fabricGsm || "450",
+      fit: spec.fit || "Boxy Drop Shoulder",
+      printMethod: spec.printMethod || "High-Density Puff & Screen Print",
+      edition: spec.edition || "050 SPECIMENS // SERIES 01",
+      editionDetails: spec.editionDetails || "Archival Studio Allocation",
+      careInstructions: spec.careInstructions || "Machine wash cold inside out // Air dry",
+      finish: spec.finish || "",
+      dimensions: spec.dimensions || "",
+      capacity: spec.capacity || "",
+      previewImage: "preview.png",
+      images: ["preview.png"]
+    };
+    try {
+      navigator.clipboard.writeText(JSON.stringify(jsonToCopy, null, 2));
+      soundManager.playSuccess(0.12);
+      showNotification("success", "COPIED SPECIMEN.JSON TO CLIPBOARD // PASTE INTO /src/Artifacts/[artifact]/[specimen]/");
+    } catch {
+      showNotification("error", "Could not write to clipboard.");
+    }
+  };
+
+  const copyArtifactJson = (art: Partial<Artifact>) => {
+    const jsonToCopy = {
+      id: art.id || `art_${Date.now()}`,
+      artifactId: art.artifactId || "SYM-01",
+      name: art.name || "ARTIFACT",
+      shortDescription: art.shortDescription || "",
+      description: art.description || "",
+      concept: art.concept || "",
+      inscription: art.inscription || "",
+      pillar1Represents: art.pillar1Represents || "",
+      pillar2WhyChosen: art.pillar2WhyChosen || "",
+      pillar3Communicates: art.pillar3Communicates || "",
+      pillar4WearerCarries: art.pillar4WearerCarries || "",
+      symbolicTagline: art.symbolicTagline || "",
+      collectionName: art.collectionName || "Be Palestine",
+      tags: art.tags || ["Series 01"],
+      status: art.status || "published",
+      order: art.order || 1,
+      setDiscountPercentage: art.setDiscountPercentage || 10
+    };
+    try {
+      navigator.clipboard.writeText(JSON.stringify(jsonToCopy, null, 2));
+      soundManager.playSuccess(0.12);
+      showNotification("success", "COPIED ARTIFACT.JSON TO CLIPBOARD // PASTE INTO /src/Artifacts/[artifact]/");
+    } catch {
+      showNotification("error", "Could not write to clipboard.");
+    }
+  };
+
   const loadData = async (forceServer: boolean = false) => {
     setLoading(true);
     if (forceServer) {
@@ -83,7 +154,7 @@ export default function OwnerArtifactSpecimenStudio({
       }
       if (forceServer) {
         soundManager.playSuccess(0.12);
-        showNotification("success", `SYNCED // ${data.length} ARTIFACTS RETRIEVED FROM FIRESTORE DATABASE`);
+        showNotification("success", `SYNCED // ${data.length} ARTIFACTS LOADED FROM /src/Artifacts/ CODE REPOSITORY`);
       }
     } catch (err: any) {
       console.error("Failed to load artifacts and specimens:", err);
@@ -488,6 +559,15 @@ export default function OwnerArtifactSpecimenStudio({
                             <div className="flex items-center justify-end gap-2 pt-2 border-t border-brand-text/10">
                               <button
                                 type="button"
+                                onClick={() => copySpecimenJson(spec)}
+                                className="px-2 py-1 border border-brand-text/50 text-[9px] font-mono font-bold uppercase hover:bg-brand-accent hover:text-white hover:border-brand-accent transition-colors cursor-pointer flex items-center gap-1"
+                                title="Copy universal specimen.json format"
+                              >
+                                <Copy size={11} />
+                                <span>JSON</span>
+                              </button>
+                              <button
+                                type="button"
                                 onClick={() => {
                                   soundManager.playClick(0.12);
                                   setEditingSpecimen({ parentArtifact: artifact, specimen: spec });
@@ -685,22 +765,33 @@ export default function OwnerArtifactSpecimenStudio({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t-2 border-brand-text pt-4">
+            <div className="flex items-center justify-between border-t-2 border-brand-text pt-4">
               <button
                 type="button"
-                onClick={() => setEditingArtifact(null)}
-                className="px-4 py-2 border border-brand-text font-mono text-xs uppercase cursor-pointer"
+                onClick={() => editingArtifact && copyArtifactJson(editingArtifact)}
+                className="px-3 py-2 border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white font-mono text-xs uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Copy universal artifact.json format"
               >
-                Cancel
+                <Copy size={13} />
+                <span>COPY ARTIFACT.JSON</span>
               </button>
-              <button
-                type="button"
-                onClick={handleSaveArtifact}
-                disabled={saving}
-                className="px-5 py-2 bg-brand-accent text-white font-mono text-xs font-black uppercase border border-brand-text cursor-pointer disabled:opacity-50"
-              >
-                {saving ? "SAVING..." : "SAVE ARTIFACT"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingArtifact(null)}
+                  className="px-4 py-2 border border-brand-text font-mono text-xs uppercase cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveArtifact}
+                  disabled={saving}
+                  className="px-5 py-2 bg-brand-accent text-white font-mono text-xs font-black uppercase border border-brand-text cursor-pointer disabled:opacity-50"
+                >
+                  {saving ? "SAVING..." : "SAVE ARTIFACT"}
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -853,22 +944,33 @@ export default function OwnerArtifactSpecimenStudio({
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-3 border-t-2 border-brand-text pt-4">
+            <div className="flex items-center justify-between border-t-2 border-brand-text pt-4">
               <button
                 type="button"
-                onClick={() => setEditingSpecimen(null)}
-                className="px-4 py-2 border border-brand-text font-mono text-xs uppercase cursor-pointer"
+                onClick={() => editingSpecimen && copySpecimenJson(editingSpecimen.specimen)}
+                className="px-3 py-2 border border-brand-accent text-brand-accent hover:bg-brand-accent hover:text-white font-mono text-xs uppercase flex items-center gap-1.5 transition-colors cursor-pointer"
+                title="Copy universal specimen.json format"
               >
-                Cancel
+                <Copy size={13} />
+                <span>COPY SPECIMEN.JSON</span>
               </button>
-              <button
-                type="button"
-                onClick={handleSaveSpecimen}
-                disabled={saving}
-                className="px-5 py-2 bg-brand-accent text-white font-mono text-xs font-black uppercase border border-brand-text cursor-pointer disabled:opacity-50"
-              >
-                {saving ? "SAVING..." : "SAVE SPECIMEN"}
-              </button>
+              <div className="flex items-center gap-3">
+                <button
+                  type="button"
+                  onClick={() => setEditingSpecimen(null)}
+                  className="px-4 py-2 border border-brand-text font-mono text-xs uppercase cursor-pointer"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  onClick={handleSaveSpecimen}
+                  disabled={saving}
+                  className="px-5 py-2 bg-brand-accent text-white font-mono text-xs font-black uppercase border border-brand-text cursor-pointer disabled:opacity-50"
+                >
+                  {saving ? "SAVING..." : "SAVE SPECIMEN"}
+                </button>
+              </div>
             </div>
           </div>
         </div>

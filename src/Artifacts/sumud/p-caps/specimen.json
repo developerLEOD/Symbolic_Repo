@@ -1,0 +1,31 @@
+{
+  "id": "spec_sumud_pcap",
+  "medium": "P-Cap",
+  "mediumCategory": "headwear",
+  "type": "Structured 6-Panel",
+  "sku": "SYM-SUM-CAP",
+  "price": 2500,
+  "inventory": 40,
+  "availability": true,
+  "status": "available",
+  "color": "Matte Black",
+  "colorHex": "#111111",
+  "availableColors": [
+    { "id": "black", "name": "Matte Black", "hex": "#111111" },
+    { "id": "sand", "name": "Desert Khaki", "hex": "#C2B280" }
+  ],
+  "availableSizes": ["One Size // Adjustable Brass Clasp"],
+  "material": "100% Heavy Brushed Cotton Twill",
+  "weight": "280 GSM Structured Crown",
+  "fabricGsm": "280",
+  "fit": "Structured 6-Panel Crown",
+  "printMethod": "Tonal 3D Raised Embroidery",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Archival Studio Allocation",
+  "careInstructions": "Spot clean only with damp cloth",
+  "finish": "Washed Twill // Custom Antique Brass Clasp",
+  "dimensions": "",
+  "capacity": "",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}

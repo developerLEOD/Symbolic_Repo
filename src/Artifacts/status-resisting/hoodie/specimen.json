@@ -1,0 +1,31 @@
+{
+  "id": "spec_resisting_hoodie",
+  "medium": "Hoodie",
+  "mediumCategory": "wear",
+  "type": "Heavyweight 450 GSM",
+  "sku": "SYM-RES-HOD",
+  "price": 7500,
+  "inventory": 30,
+  "availability": true,
+  "status": "available",
+  "color": "Carbon Gray",
+  "colorHex": "#2C2C2C",
+  "availableColors": [
+    { "id": "gray", "name": "Carbon Gray", "hex": "#2C2C2C" },
+    { "id": "black", "name": "Pitch Black", "hex": "#111111" }
+  ],
+  "availableSizes": ["S", "M", "L", "XL"],
+  "material": "450 GSM Double-Faced Fleece",
+  "weight": "450 GSM Heavyweight Fleece",
+  "fabricGsm": "450",
+  "fit": "Boxy Drop-Shoulder Relaxed Fit",
+  "printMethod": "Tonal High-Density Puff & Screen Print",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Archival Studio Allocation",
+  "careInstructions": "Dry clean or gentle machine wash cold",
+  "finish": "Brushed Carbon Surface",
+  "dimensions": "",
+  "capacity": "",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}

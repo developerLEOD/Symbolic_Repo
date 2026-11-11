@@ -1,0 +1,31 @@
+{
+  "id": "spec_sumud_hoodie",
+  "medium": "Hoodie",
+  "mediumCategory": "wear",
+  "type": "Heavyweight 450 GSM",
+  "sku": "SYM-SUM-HOD",
+  "price": 7500,
+  "inventory": 35,
+  "availability": true,
+  "status": "available",
+  "color": "Washed Carbon Black",
+  "colorHex": "#151515",
+  "availableColors": [
+    { "id": "carbon", "name": "Washed Carbon Black", "hex": "#151515" },
+    { "id": "ecru", "name": "Raw Ecru", "hex": "#F4F1EA" }
+  ],
+  "availableSizes": ["S", "M", "L", "XL"],
+  "material": "450 GSM Double-Faced French Terry",
+  "weight": "450 GSM Heavyweight Fleece",
+  "fabricGsm": "450",
+  "fit": "Relaxed Boxy Hood",
+  "printMethod": "Direct Tonal Embroidery & HD Print",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Limited Archival Studio Allocation",
+  "careInstructions": "Dry clean or gentle hand wash // line dry",
+  "finish": "Enzyme Washed Double-Faced Fleece",
+  "dimensions": "",
+  "capacity": "",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}

@@ -1,0 +1,31 @@
+{
+  "id": "spec_resisting_tshirt",
+  "medium": "T-Shirt",
+  "mediumCategory": "wear",
+  "type": "Oversized Fit",
+  "sku": "SYM-RES-TSH",
+  "price": 4200,
+  "inventory": 45,
+  "availability": true,
+  "status": "available",
+  "color": "Raw Black",
+  "colorHex": "#1A1A1A",
+  "availableColors": [
+    { "id": "rawblack", "name": "Raw Black", "hex": "#1A1A1A" },
+    { "id": "olive", "name": "Military Olive", "hex": "#4B5320" }
+  ],
+  "availableSizes": ["S", "M", "L", "XL"],
+  "material": "400 GSM Combed Cotton",
+  "weight": "400 GSM Heavyweight Cotton",
+  "fabricGsm": "400",
+  "fit": "Oversized Fit",
+  "printMethod": "High-Density Screen Print Matrix",
+  "edition": "050 SPECIMENS // SERIES 01",
+  "editionDetails": "Archival Studio Allocation",
+  "careInstructions": "Machine wash cold inside out, line dry",
+  "finish": "Enzyme Treated Dense Knit",
+  "dimensions": "",
+  "capacity": "",
+  "previewImage": "preview.png",
+  "images": ["preview.png"]
+}
