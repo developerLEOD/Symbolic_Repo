@@ -4,15 +4,14 @@
   "mediumCategory": "wear",
   "type": "Heavyweight 450 GSM",
   "sku": "SYM-RES-HOD",
-  "price": 7500,
+  "price": 3000,
   "inventory": 30,
   "availability": true,
   "status": "available",
-  "color": "Carbon Gray",
-  "colorHex": "#2C2C2C",
+  "color": "Raw Black",
+  "colorHex": "#1A1A1A",
   "availableColors": [
-    { "id": "gray", "name": "Carbon Gray", "hex": "#2C2C2C" },
-    { "id": "black", "name": "Pitch Black", "hex": "#111111" }
+    { "id": "gray", "name": "Carbon Gray", "hex": "#2C2C2C" }
   ],
   "availableSizes": ["S", "M", "L", "XL"],
   "material": "450 GSM Double-Faced Fleece",
@@ -26,6 +25,6 @@
   "finish": "Brushed Carbon Surface",
   "dimensions": "",
   "capacity": "",
-  "previewImage": "preview.png",
-  "images": ["preview.png"]
+  "previewImage": "IMG_3150.png", "IMG_3151", "IMG_3152",
+  "images": ["IMG_3150.png"]
 }
