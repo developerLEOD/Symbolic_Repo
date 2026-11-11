@@ -684,6 +684,101 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
     };
   }, [config, isMobile]);
 
+  // Single scroll-down from Hero section to the Collection section with smooth animation
+  useEffect(() => {
+    let isTransitioning = false;
+    let lockTimer: any = null;
+    let touchStartY = 0;
+
+    const getCollectionTarget = () => {
+      return (
+        document.getElementById("collection-section") ||
+        document.getElementById("catalog-section") ||
+        document.querySelector("[data-collection-section='true']")
+      );
+    };
+
+    const scrollToCollection = () => {
+      const target = getCollectionTarget();
+      if (target) {
+        const headerOffset = 45; // Accounts for collapsed ribbon header
+        const elementPosition = target.getBoundingClientRect().top;
+        const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+
+        window.scrollTo({
+          top: Math.max(0, offsetPosition),
+          behavior: "smooth"
+        });
+      }
+    };
+
+    const handleWheel = (e: WheelEvent) => {
+      const heroEl = heroStageRef.current;
+      if (!heroEl) return;
+      const heroRect = heroEl.getBoundingClientRect();
+
+      // Check if user is currently viewing the hero section (near top of viewport)
+      const isViewingHero = window.scrollY < 120 && heroRect.bottom > 200;
+
+      if (isViewingHero && e.deltaY > 12) {
+        if (!isTransitioning) {
+          isTransitioning = true;
+          if (e.cancelable) {
+            e.preventDefault();
+          }
+          scrollToCollection();
+          clearTimeout(lockTimer);
+          lockTimer = setTimeout(() => {
+            isTransitioning = false;
+          }, 1100);
+        } else if (e.cancelable) {
+          e.preventDefault();
+        }
+      } else if (window.scrollY >= 150) {
+        // Unrestricted scrolling once user has navigated into the archive/collection
+        isTransitioning = false;
+      }
+    };
+
+    const handleTouchStart = (e: TouchEvent) => {
+      touchStartY = e.touches[0].clientY;
+    };
+
+    const handleTouchMove = (e: TouchEvent) => {
+      const heroEl = heroStageRef.current;
+      if (!heroEl) return;
+      const heroRect = heroEl.getBoundingClientRect();
+      const isViewingHero = window.scrollY < 80 && heroRect.bottom > 200;
+
+      const currentY = e.touches[0].clientY;
+      const deltaY = touchStartY - currentY; // swiping up = scrolling down
+
+      if (isViewingHero && deltaY > 35) {
+        if (!isTransitioning) {
+          isTransitioning = true;
+          scrollToCollection();
+          clearTimeout(lockTimer);
+          lockTimer = setTimeout(() => {
+            isTransitioning = false;
+          }, 1100);
+        }
+      } else if (window.scrollY >= 150) {
+        isTransitioning = false;
+      }
+    };
+
+    window.addEventListener("wheel", handleWheel, { passive: false });
+    window.addEventListener("touchstart", handleTouchStart, { passive: true });
+    window.addEventListener("touchmove", handleTouchMove, { passive: true });
+
+    return () => {
+      window.removeEventListener("wheel", handleWheel);
+      window.removeEventListener("touchstart", handleTouchStart);
+      window.removeEventListener("touchmove", handleTouchMove);
+      clearTimeout(lockTimer);
+    };
+  }, []);
+
   // Calculated adaptive stage height from formula (with mobile-awareness)
   const calculatedHeight = calculateAdaptiveStageHeight(config, isMobile);
   
@@ -851,7 +946,29 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
       })()}
 
         {/* Scroll Indicator */}
-        <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-20 pointer-events-none opacity-60">
+        <div 
+          onClick={() => {
+            soundManager.playClick(0.08);
+            const target =
+              document.getElementById("collection-section") ||
+              document.getElementById("catalog-section") ||
+              document.querySelector("[data-collection-section='true']");
+            if (target) {
+              const headerOffset = 45;
+              const elementPosition = target.getBoundingClientRect().top;
+              const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
+              window.scrollTo({
+                top: Math.max(0, offsetPosition),
+                behavior: "smooth"
+              });
+            }
+          }}
+          className="absolute bottom-2 left-1/2 -translate-x-1/2 flex flex-col items-center gap-0.5 z-20 cursor-pointer pointer-events-auto opacity-60 hover:opacity-100 transition-opacity"
+          title="Scroll to The Collection"
+          role="button"
+          tabIndex={0}
+          aria-label="Scroll to The Collection"
+        >
           <motion.div
             animate={{ y: [0, 6, 0] }}
             transition={{ repeat: Infinity, duration: 1.5, ease: "easeInOut" }}

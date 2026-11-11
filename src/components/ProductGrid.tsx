@@ -222,6 +222,8 @@ export default function ProductGrid({
       data-collection-section="true" 
       className="w-full max-w-none mt-0 mb-8 sm:mb-14 relative bg-brand-surface/25 border-x-0 border-b-2 border-brand-text shadow-none"
     >
+      {/* Anchor for Collection Section smooth scrolling */}
+      <div id="collection-section" className="absolute -top-16 left-0 w-full pointer-events-none" aria-hidden="true" />
       {/* TOP ORANGE TRIANGLE BOUNDARY STRIP */}
       <OrangeTriangleBoundary 
         position="top" 
