@@ -4,7 +4,7 @@
   "mediumCategory": "wear",
   "type": "Oversized Fit",
   "sku": "SYM-RES-TSH",
-  "price": 4200,
+  "price": 1500,
   "inventory": 45,
   "availability": true,
   "status": "available",
@@ -26,6 +26,6 @@
   "finish": "Enzyme Treated Dense Knit",
   "dimensions": "",
   "capacity": "",
-  "previewImage": "preview.png",
-  "images": ["preview.png"]
+  "previewImage": "IMG_3156.png", "IMG_3157", "IMG_3158",
+  "images": ["IMG_3156.png"]
 }
