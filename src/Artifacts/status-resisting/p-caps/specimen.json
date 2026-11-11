@@ -25,6 +25,6 @@
   "finish": "Washed Twill // Custom Antique Brass Clasp",
   "dimensions": "",
   "capacity": "",
-  "previewImage": "preview.png",
-  "images": ["preview.png"]
+  "previewImage": "Front.png",
+  "images": ["Front.png", "Right Side.png", "Left Side.png"]
 }
