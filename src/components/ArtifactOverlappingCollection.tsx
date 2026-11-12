@@ -350,9 +350,9 @@ export default function ArtifactOverlappingCollection({
 
   // Revert back to default layout immediately with zero delay (no forced container re-centering)
   const revertToDefault = useCallback(() => {
-    if (activeIdxRef.current === null) return;
     setActiveIdx(null);
     setScatterVisibleIdx(null);
+    setSelectedSpecimenMap({});
   }, []);
 
   // Initial mount & resize centering for default state
