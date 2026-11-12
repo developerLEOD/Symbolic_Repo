@@ -56,6 +56,18 @@ export default function ProductCard({
     };
   }, [isHovered, images.length]);
 
+  // Pre-fetch all angle images on hover so perspective cycling is completely seamless
+  useEffect(() => {
+    if (isHovered && images.length > 1) {
+      images.forEach(img => {
+        if (img) {
+          const pre = new Image();
+          pre.src = img;
+        }
+      });
+    }
+  }, [isHovered, images]);
+
   const isComingSoon = Boolean(product.isComingSoon || product.comingSoon || product.status === "coming-soon");
   const isSoldOut = !isComingSoon && product.inventory !== undefined && product.inventory <= 0;
   const artifactNum = typeof index === 'number' ? String(index + 1).padStart(3, '0') : null;
@@ -188,6 +200,8 @@ export default function ProductCard({
           src={images[activeImageIndex] || product.thumbnailImage || images[0] || STUDIO_FALLBACK_IMAGE} 
           alt={product.name}
           referrerPolicy="no-referrer"
+          loading={typeof index === 'number' && index < 2 ? "eager" : "lazy"}
+          decoding="async"
           onError={(e) => {
             const target = e.currentTarget;
             if (target.src !== STUDIO_FALLBACK_IMAGE) {
@@ -351,7 +365,14 @@ export default function ProductCard({
                 title={`Angle 0${i + 1}`}
               >
                 <div className="relative w-full h-full overflow-hidden border border-brand-text/30 bg-brand-bg">
-                  <img src={img || STUDIO_FALLBACK_IMAGE} alt="" referrerPolicy="no-referrer" className="w-full h-full object-cover" />
+                  <img 
+                    src={img || STUDIO_FALLBACK_IMAGE} 
+                    alt="" 
+                    referrerPolicy="no-referrer" 
+                    loading="lazy"
+                    decoding="async"
+                    className="w-full h-full object-cover" 
+                  />
                   <span className={`absolute bottom-0 inset-x-0 text-[7.5px] font-black text-center uppercase py-0.5 tracking-wider ${isSelected ? "bg-[#ff4500] text-white" : "bg-brand-text text-brand-bg"}`}>
                     VIEW 0{i + 1}
                   </span>

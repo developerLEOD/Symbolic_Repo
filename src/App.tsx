@@ -39,6 +39,7 @@ import { trackReferralVisit, subscribeReferralSettings } from "./lib/referralSer
 import { soundManager } from "./lib/soundEffects";
 import ReferralNotification from "./components/ReferralNotification";
 import ArtifactDatabaseDiagnosticPanel from "./components/ArtifactDatabaseDiagnosticPanel";
+import { preloadCodeArtifactMedia } from "./lib/codeArtifactLoader";
 import firebaseConfig from "../firebase-applet-config.json";
 import { ReferralSettings } from "./types";
 
@@ -365,6 +366,8 @@ function StorefrontApp() {
         console.error("Initialization failed:", err);
       } finally {
         setIsLoading(false);
+        // Non-blocking prefetch of artifact & specimen preview graphics
+        preloadCodeArtifactMedia();
       }
     };
     init();

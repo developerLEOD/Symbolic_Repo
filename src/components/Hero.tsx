@@ -121,6 +121,9 @@ function renderBackdrop(backdrop?: CustomHeroConfig["backdrop"]) {
         alt="Hero Backdrop" 
         className="w-full h-full object-cover select-none"
         referrerPolicy="no-referrer"
+        loading="eager"
+        fetchPriority="high"
+        decoding="async"
       />
     </div>
   );
@@ -284,6 +287,9 @@ function LayerGraphicItem({
             src={item.avatarUrl} 
             alt={item.avatarAlt || "SYMBOLIC Hero Graphic"} 
             referrerPolicy="no-referrer"
+            loading="eager"
+            fetchPriority="high"
+            decoding="async"
             style={{
               width: `clamp(30px, ${finalSize}px, 92vw)`,
               height: "auto",
@@ -461,6 +467,18 @@ function SingleLayerRenderer({
     }, intervalSeconds * 1000);
     return () => clearInterval(timer);
   }, [isSlideshowActive, intervalSeconds]);
+
+  // Pre-fetch all layer graphics for zero-latency, instant slideshow transitions
+  useEffect(() => {
+    if (visibleGraphics.length > 0) {
+      visibleGraphics.forEach((g) => {
+        if (g.avatarUrl) {
+          const img = new Image();
+          img.src = g.avatarUrl;
+        }
+      });
+    }
+  }, [visibleGraphics]);
 
   // Keep slideIndex within bounds
   const safeSlideIndex = slideIndex % (visibleGraphics.length || 1);

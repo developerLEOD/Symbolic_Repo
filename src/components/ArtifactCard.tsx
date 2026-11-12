@@ -79,6 +79,18 @@ export default function ArtifactCard({
     return () => clearInterval(interval);
   }, [isHovered, angleSequence.length, selectedSpecimenId]);
 
+  // Pre-fetch all angle images on hover so perspective cycling is completely seamless
+  useEffect(() => {
+    if (isHovered && angleSequence.length > 0) {
+      angleSequence.forEach(item => {
+        if (item.image) {
+          const img = new Image();
+          img.src = item.image;
+        }
+      });
+    }
+  }, [isHovered, angleSequence]);
+
   // Determine active display item
   const isAutoCycling = isHovered && angleSequence.length > 0 && selectedSpecimenId === null;
   const currentAngleItem: SpecimenAngleSequenceItem | null = isAutoCycling
@@ -161,6 +173,7 @@ export default function ArtifactCard({
           hoverTimerRef.current = null;
         }
         setIsHovered(false);
+        setSelectedSpecimenId(null);
       }}
     >
       {/* Corner Crosshairs */}
@@ -193,6 +206,8 @@ export default function ArtifactCard({
           src={displayImage} 
           alt={activeSpecimen ? `${artifact.name} — ${activeSpecimen.medium}` : artifact.name}
           referrerPolicy="no-referrer"
+          loading={index < 3 ? "eager" : "lazy"}
+          decoding="async"
           initial={{ scale: 0.92, y: 5 }}
           animate={{ 
             scale: 1, 
@@ -363,6 +378,7 @@ export default function ArtifactCard({
                         referrerPolicy="no-referrer"
                         className="w-full h-full object-contain p-0.5 select-none pointer-events-none"
                         loading="lazy"
+                        decoding="async"
                       />
                       {isSelected ? (
                         <div className="absolute top-0.5 right-0.5 px-1 py-0.2 bg-brand-accent text-white text-[6.5px] font-black uppercase tracking-wider leading-none shadow-[1px_1px_0px_#050505]">

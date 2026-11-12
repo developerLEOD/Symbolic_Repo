@@ -21,6 +21,18 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
   const [activeImageIndex, setActiveImageIndex] = useState(0);
   const [added, setAdded] = useState(false);
 
+  // Pre-fetch all focal specimen angles so toggling perspectives is instant
+  React.useEffect(() => {
+    if (images && images.length > 0) {
+      images.forEach((src) => {
+        if (src) {
+          const img = new Image();
+          img.src = src;
+        }
+      });
+    }
+  }, [images]);
+
   const handlePrevImage = (e: React.MouseEvent) => {
     e.stopPropagation();
     soundManager.playClick(0.06);
@@ -91,6 +103,9 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                 src={images[activeImageIndex] || images[0] || STUDIO_FALLBACK_IMAGE} 
                 alt={product.name}
                 referrerPolicy="no-referrer"
+                loading="eager"
+                fetchPriority="high"
+                decoding="async"
                 onError={(e) => {
                   const target = e.currentTarget;
                   if (target.src !== STUDIO_FALLBACK_IMAGE) {
@@ -165,6 +180,8 @@ export default function FeaturedObject({ product, onViewProduct, onAddToCart }: 
                     src={img || STUDIO_FALLBACK_IMAGE} 
                     alt="" 
                     referrerPolicy="no-referrer"
+                    loading="lazy"
+                    decoding="async"
                     onError={(e) => {
                       const target = e.currentTarget;
                       if (target.src !== STUDIO_FALLBACK_IMAGE) {

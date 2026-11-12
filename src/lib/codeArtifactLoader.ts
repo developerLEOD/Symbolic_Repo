@@ -317,3 +317,46 @@ export function refreshCodeCatalog(): { artifacts: Artifact[]; specimens: Specim
   console.log(`🏛️ [CODE ARTIFACTS ENGINE] Loaded ${cachedCodeCatalog.artifacts.length} artifacts and ${cachedCodeCatalog.specimens.length} specimens directly from /src/Artifacts/`);
   return cachedCodeCatalog;
 }
+
+/**
+ * Automatically prefetches critical preview graphics into the browser's HTTP cache
+ * during browser idle time or shortly after startup.
+ */
+export function preloadCodeArtifactMedia(): void {
+  if (typeof window === "undefined") return;
+
+  const run = () => {
+    try {
+      const { artifacts, specimens } = parseArtifactsDirectory();
+      const urlsToPreload: string[] = [];
+
+      // Collect primary graphics
+      artifacts.forEach(a => {
+        if (a.graphic && !urlsToPreload.includes(a.graphic)) urlsToPreload.push(a.graphic);
+        if (a.thumbnailImage && !urlsToPreload.includes(a.thumbnailImage)) urlsToPreload.push(a.thumbnailImage);
+      });
+
+      // Collect first specimen image for each specimen
+      specimens.forEach(s => {
+        const firstImg = s.images?.[0] || s.thumbnailImage;
+        if (firstImg && !urlsToPreload.includes(firstImg)) urlsToPreload.push(firstImg);
+      });
+
+      // Preload staggered to avoid blocking higher priority network traffic
+      urlsToPreload.forEach((url, i) => {
+        setTimeout(() => {
+          const img = new Image();
+          img.src = url;
+        }, i * 50);
+      });
+    } catch {
+      // Non-blocking preloader
+    }
+  };
+
+  if ('requestIdleCallback' in window) {
+    (window as any).requestIdleCallback(run, { timeout: 2500 });
+  } else {
+    setTimeout(run, 600);
+  }
+}
