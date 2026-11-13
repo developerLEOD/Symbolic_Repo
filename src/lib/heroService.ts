@@ -533,14 +533,12 @@ export async function summonRepoGraphics(
     const targetLayer = item.layer || "mid";
 
     if (targetLayer === "backdrop") {
-      if (!nextBackdrop.imageUrl || nextBackdrop.imageUrl !== targetUrl) {
-        nextBackdrop = {
-          isEnabled: true,
-          imageUrl: targetUrl,
-          opacity: nextBackdrop.opacity ?? 1,
-        };
-        addedCount++;
-      }
+      nextBackdrop = {
+        isEnabled: true,
+        imageUrl: targetUrl,
+        opacity: nextBackdrop.opacity ?? 1,
+      };
+      addedCount++;
     } else if (targetLayer === "bg") {
       const existsInBg = nextBgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       if (!existsInBg) {
@@ -566,8 +564,8 @@ export async function summonRepoGraphics(
           border: false,
         };
         nextBgGraphics.push(graphicObj);
-        addedCount++;
       }
+      addedCount++;
     } else if (targetLayer === "fg") {
       const existsInFg = nextFgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       if (!existsInFg) {
@@ -593,8 +591,8 @@ export async function summonRepoGraphics(
           border: false,
         };
         nextFgGraphics.push(graphicObj);
-        addedCount++;
       }
+      addedCount++;
     } else {
       // mid / avatar layer
       const existsInMid = nextMidGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
@@ -622,8 +620,8 @@ export async function summonRepoGraphics(
           border: false,
         };
         nextMidGraphics.push(graphicObj);
-        addedCount++;
       }
+      addedCount++;
     }
   });
 
@@ -676,7 +674,7 @@ export async function summonSingleLayerGraphics(
   const layerLabel = targetLayerId === "backdrop" ? "BACKDROP" : targetLayerId === "bg" ? "BACKGROUND" : targetLayerId === "fg" ? "FOREGROUND" : "AVATAR";
 
   let nextConfig = { ...currentConfig };
-  let addedCount = 0;
+  let addedCount = layerItems.length;
 
   if (targetLayerId === "backdrop") {
     let nextBackdrop = { ...(currentConfig.backdrop || DEFAULT_BACKDROP) };
