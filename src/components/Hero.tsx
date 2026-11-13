@@ -1,12 +1,15 @@
 import React, { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { Sliders, Sparkles, Move, Compass, ChevronDown, ArrowRight, BookOpen } from "lucide-react";
+import { Sliders, Sparkles, Move, Compass, ChevronDown, ArrowRight, BookOpen, X } from "lucide-react";
 import HeroArchived, { HeroProps as ArchivedHeroProps, CountUpNumber } from "./HeroArchived";
 import { CustomHeroConfig, HeroLayerConfig, HeroTransitionDirection, HeroTransitionSpeed, HeroHoverEffect } from "../types";
 import { DEFAULT_HERO_CONFIG, getHeroConfig, getCachedHeroConfig, calculateAdaptiveStageHeight } from "../lib/heroService";
 import { useAuth } from "../lib/AuthContext";
 import { soundManager } from "../lib/soundEffects";
+
+// Tracks whether hero action tooltips have already run on this page load/reload
+let heroActionTooltipsShownThisReload = false;
 
 // Re-export all archived items and components for backend preservation
 export { HeroArchived, CountUpNumber };
@@ -643,6 +646,32 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
   const heroStageRef = useRef<HTMLDivElement>(null);
   const mainGraphicRef = useRef<HTMLDivElement>(null);
   const [measuredLowestHeight, setMeasuredLowestHeight] = useState<number | null>(null);
+  const [showActionTooltips, setShowActionTooltips] = useState(false);
+
+  // Show explanatory tooltips attached to the two action buttons 2.5s after a page reload
+  useEffect(() => {
+    if (config.heroButtons?.showButtons === false || heroActionTooltipsShownThisReload) {
+      return;
+    }
+
+    const showTimer = setTimeout(() => {
+      heroActionTooltipsShownThisReload = true;
+      setShowActionTooltips(true);
+    }, 2500);
+
+    return () => clearTimeout(showTimer);
+  }, [config.heroButtons?.showButtons]);
+
+  // Vanish automatically after 7 seconds
+  useEffect(() => {
+    if (!showActionTooltips) return;
+
+    const hideTimer = setTimeout(() => {
+      setShowActionTooltips(false);
+    }, 7000);
+
+    return () => clearTimeout(hideTimer);
+  }, [showActionTooltips]);
 
   // Load hero metadata once on mount from the canonical JSON configuration file
   // and listen for manual studio update events without polling or Firestore leakage
@@ -714,7 +743,7 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
     <section 
       id="hero-canvas" 
       aria-label="Symbolic Adaptive Hero Section"
-      className={`relative pt-0 px-0 w-full max-w-none border-b-2 border-brand-text select-none ${
+      className={`relative z-20 pt-0 px-0 w-full max-w-none border-b-2 border-brand-text select-none ${
         config.canvasOverflowVisible !== false ? "overflow-visible" : "overflow-hidden"
       }`}
     >
@@ -831,41 +860,123 @@ export default function Hero({ onExplore, onAbout, onWhy, onProductClick, onOpen
                 transform: "translate(-50%, -50%)"
               }}
             >
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                soundManager.playClick(0.14);
-                if (onAbout) {
-                  onAbout();
-                } else {
-                  navigate(config.heroButtons?.button1Link || "/about");
-                }
-              }}
-              className="px-6 sm:px-8 py-3 bg-brand-accent hover:bg-brand-text text-white font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center gap-2.5 cursor-pointer group whitespace-nowrap"
-            >
-              <span>{config.heroButtons?.button1Label || "ABOUT THE MARK"}</span>
-              <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
-            </motion.button>
+            <div className="relative flex flex-col items-center">
+              <AnimatePresence>
+                {showActionTooltips && (
+                  <motion.div
+                    role="tooltip"
+                    initial={{ opacity: 0, y: 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: 6, scale: 0.96 }}
+                    transition={{ type: "spring", stiffness: 360, damping: 26 }}
+                    className="absolute bottom-full mb-3 left-1/2 -translate-x-1/2 sm:left-auto sm:right-0 sm:translate-x-0 z-50 w-56 sm:w-64 bg-brand-surface text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] px-3 py-2.5 text-left pointer-events-auto"
+                  >
+                    <div className="flex items-center justify-between gap-2 mb-1 border-b border-brand-text/20 pb-1">
+                      <span className="inline-flex items-center gap-1.5 font-mono text-[9px] font-black uppercase tracking-widest text-brand-accent">
+                        <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
+                        WHO WE ARE
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowActionTooltips(false);
+                        }}
+                        aria-label="Dismiss tooltip"
+                        className="text-brand-text/50 hover:text-brand-text transition-colors cursor-pointer p-0.5"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                    <p className="font-mono text-[10px] sm:text-[11px] font-bold leading-snug text-brand-text/90">
+                      Touch to explore the studio&apos;s mission, identity, and the meaning behind our mark.
+                    </p>
+                    <span
+                      aria-hidden="true"
+                      className="absolute -bottom-[7px] left-1/2 -translate-x-1/2 sm:left-auto sm:right-14 sm:translate-x-0 w-3 h-3 bg-brand-surface border-r-2 border-b-2 border-brand-text rotate-45"
+                    />
+                  </motion.div>
+                )}
+              </AnimatePresence>
 
-            <motion.button
-              type="button"
-              whileHover={{ scale: 1.03 }}
-              whileTap={{ scale: 0.98 }}
-              onClick={() => {
-                soundManager.playClick(0.12);
-                if (onWhy) {
-                  onWhy();
-                } else {
-                  navigate(config.heroButtons?.button2Link || "/manifesto");
-                }
-              }}
-              className="px-6 sm:px-8 py-3 bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center gap-2.5 cursor-pointer group whitespace-nowrap"
-            >
-              <BookOpen size={16} className="text-brand-accent group-hover:text-brand-bg transition-colors" />
-              <span>{config.heroButtons?.button2Label || "MANIFESTO"}</span>
-            </motion.button>
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  soundManager.playClick(0.14);
+                  setShowActionTooltips(false);
+                  if (onAbout) {
+                    onAbout();
+                  } else {
+                    navigate(config.heroButtons?.button1Link || "/about");
+                  }
+                }}
+                className="px-6 sm:px-8 py-3 bg-brand-accent hover:bg-brand-text text-white font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center gap-2.5 cursor-pointer group whitespace-nowrap"
+              >
+                <span>{config.heroButtons?.button1Label || "ABOUT THE MARK"}</span>
+                <ArrowRight size={16} className="group-hover:translate-x-1 transition-transform" />
+              </motion.button>
+            </div>
+
+            <div className="relative flex flex-col items-center">
+              <AnimatePresence>
+                {showActionTooltips && (
+                  <motion.div
+                    role="tooltip"
+                    initial={{ opacity: 0, y: isMobile ? -8 : 8, scale: 0.95 }}
+                    animate={{ opacity: 1, y: 0, scale: 1 }}
+                    exit={{ opacity: 0, y: isMobile ? -6 : 6, scale: 0.96 }}
+                    transition={{ type: "spring", stiffness: 360, damping: 26, delay: 0.08 }}
+                    className="absolute top-full mt-3 left-1/2 -translate-x-1/2 sm:top-auto sm:mt-0 sm:bottom-full sm:mb-3 sm:left-0 sm:translate-x-0 z-50 w-56 sm:w-64 bg-brand-surface text-brand-text border-2 border-brand-text shadow-[4px_4px_0px_#050505] px-3 py-2.5 text-left pointer-events-auto"
+                  >
+                    <span
+                      aria-hidden="true"
+                      className="absolute -top-[7px] left-1/2 -translate-x-1/2 sm:top-auto sm:-bottom-[7px] sm:left-12 sm:translate-x-0 w-3 h-3 bg-brand-surface border-l-2 border-t-2 sm:border-l-0 sm:border-t-0 sm:border-r-2 sm:border-b-2 border-brand-text rotate-45"
+                    />
+                    <div className="flex items-center justify-between gap-2 mb-1 border-b border-brand-text/20 pb-1">
+                      <span className="inline-flex items-center gap-1.5 font-mono text-[9px] font-black uppercase tracking-widest text-brand-accent">
+                        <span className="w-1.5 h-1.5 bg-brand-accent inline-block" />
+                        WHAT WE STAND FOR
+                      </span>
+                      <button
+                        type="button"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setShowActionTooltips(false);
+                        }}
+                        aria-label="Dismiss tooltip"
+                        className="text-brand-text/50 hover:text-brand-text transition-colors cursor-pointer p-0.5"
+                      >
+                        <X size={11} />
+                      </button>
+                    </div>
+                    <p className="font-mono text-[10px] sm:text-[11px] font-bold leading-snug text-brand-text/90">
+                      Touch to read our doctrine—conviction garments built for identity, never corporate logos.
+                    </p>
+                  </motion.div>
+                )}
+              </AnimatePresence>
+
+              <motion.button
+                type="button"
+                whileHover={{ scale: 1.03 }}
+                whileTap={{ scale: 0.98 }}
+                onClick={() => {
+                  soundManager.playClick(0.12);
+                  setShowActionTooltips(false);
+                  if (onWhy) {
+                    onWhy();
+                  } else {
+                    navigate(config.heroButtons?.button2Link || "/manifesto");
+                  }
+                }}
+                className="px-6 sm:px-8 py-3 bg-brand-surface text-brand-text hover:bg-brand-text hover:text-brand-bg font-mono text-xs sm:text-sm font-black uppercase tracking-wider border-2 border-brand-text shadow-[4px_4px_0px_#050505] hover:shadow-[6px_6px_0px_#050505] active:translate-x-[2px] active:translate-y-[2px] transition-all flex items-center gap-2.5 cursor-pointer group whitespace-nowrap"
+              >
+                <BookOpen size={16} className="text-brand-accent group-hover:text-brand-bg transition-colors" />
+                <span>{config.heroButtons?.button2Label || "MANIFESTO"}</span>
+              </motion.button>
+            </div>
           </div>
         );
       })()}
