@@ -3,8 +3,17 @@
   "count": 12,
   "graphics": [
     {
-      "id": "gfx_av_1_avatar0",
+      "id": "gfx_av_1_2",
       "serialNumber": "SYM-AV-00",
+      "name": "2",
+      "assetPath": "/assets/hero/avatar/2.png",
+      "avatarUrl": "/assets/hero/avatar/2.png",
+      "avatarAlt": "2",
+      "layer": "mid"
+    },
+    {
+      "id": "gfx_av_2_avatar0",
+      "serialNumber": "SYM-AV-01",
       "name": "Avatar0",
       "assetPath": "/assets/hero/avatar/Avatar0.png",
       "avatarUrl": "/assets/hero/avatar/Avatar0.png",
@@ -12,21 +21,12 @@
       "layer": "mid"
     },
     {
-      "id": "gfx_av_2_avatar1",
-      "serialNumber": "SYM-AV-01",
+      "id": "gfx_av_3_avatar1",
+      "serialNumber": "SYM-AV-02",
       "name": "Avatar1",
       "assetPath": "/assets/hero/avatar/Avatar1.png",
       "avatarUrl": "/assets/hero/avatar/Avatar1.png",
       "avatarAlt": "Avatar1",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_av_3_avatar10",
-      "serialNumber": "SYM-AV-02",
-      "name": "Avatar10",
-      "assetPath": "/assets/hero/avatar/Avatar10.png",
-      "avatarUrl": "/assets/hero/avatar/Avatar10.png",
-      "avatarAlt": "Avatar10",
       "layer": "mid"
     },
     {
@@ -57,39 +57,21 @@
       "layer": "mid"
     },
     {
-      "id": "gfx_av_7_avatar6",
+      "id": "gfx_av_7_avatar5",
       "serialNumber": "SYM-AV-06",
+      "name": "Avatar5",
+      "assetPath": "/assets/hero/avatar/Avatar5.png",
+      "avatarUrl": "/assets/hero/avatar/Avatar5.png",
+      "avatarAlt": "Avatar5",
+      "layer": "mid"
+    },
+    {
+      "id": "gfx_av_8_avatar6",
+      "serialNumber": "SYM-AV-07",
       "name": "Avatar6",
       "assetPath": "/assets/hero/avatar/Avatar6.png",
       "avatarUrl": "/assets/hero/avatar/Avatar6.png",
       "avatarAlt": "Avatar6",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_av_8_avatar7",
-      "serialNumber": "SYM-AV-07",
-      "name": "Avatar7",
-      "assetPath": "/assets/hero/avatar/Avatar7.png",
-      "avatarUrl": "/assets/hero/avatar/Avatar7.png",
-      "avatarAlt": "Avatar7",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_av_9_avatar8",
-      "serialNumber": "SYM-AV-08",
-      "name": "Avatar8",
-      "assetPath": "/assets/hero/avatar/Avatar8.png",
-      "avatarUrl": "/assets/hero/avatar/Avatar8.png",
-      "avatarAlt": "Avatar8",
-      "layer": "mid"
-    },
-    {
-      "id": "gfx_av_10_avatar9",
-      "serialNumber": "SYM-AV-09",
-      "name": "Avatar9",
-      "assetPath": "/assets/hero/avatar/Avatar9.png",
-      "avatarUrl": "/assets/hero/avatar/Avatar9.png",
-      "avatarAlt": "Avatar9",
       "layer": "mid"
     },
     {
@@ -108,6 +90,24 @@
       "assetPath": "/assets/hero/background/circle.png",
       "avatarUrl": "/assets/hero/background/circle.png",
       "avatarAlt": "circle",
+      "layer": "bg"
+    },
+    {
+      "id": "gfx_bg_2_layer4",
+      "serialNumber": "SYM-BG-01",
+      "name": "Layer 4",
+      "assetPath": "/assets/hero/background/Layer 4.png",
+      "avatarUrl": "/assets/hero/background/Layer 4.png",
+      "avatarAlt": "Layer 4",
+      "layer": "bg"
+    },
+    {
+      "id": "gfx_bg_3_layer5",
+      "serialNumber": "SYM-BG-02",
+      "name": "Layer 5",
+      "assetPath": "/assets/hero/background/Layer 5.png",
+      "avatarUrl": "/assets/hero/background/Layer 5.png",
+      "avatarAlt": "Layer 5",
       "layer": "bg"
     }
   ]

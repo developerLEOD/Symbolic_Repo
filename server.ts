@@ -92,59 +92,104 @@ app.post("/api/upload-hero-graphic", (req, res) => {
   }
 });
 
-// Scan all repository hero graphics (code assets)
+// Scan all repository hero graphics (code assets) live from public/assets/hero
 app.get("/api/scan-hero-graphics", (_req, res) => {
   try {
+    res.setHeader("Cache-Control", "no-store, no-cache, must-revalidate, proxy-revalidate");
+    res.setHeader("Pragma", "no-cache");
+    res.setHeader("Expires", "0");
+
+    const publicHeroDir = path.resolve(__dirname, "public", "assets", "hero");
+
+    if (fs.existsSync(publicHeroDir)) {
+      const graphics: any[] = [];
+      const imageRegex = /\.(png|jpe?g|webp|svg)$/i;
+      const scanDirectory = (
+        dirPath: string,
+        relativePrefix: string,
+        layer: "mid" | "bg" | "fg" | "backdrop" | "auto",
+        categoryPrefix: string
+      ) => {
+        if (!fs.existsSync(dirPath)) return;
+        const entries = fs
+          .readdirSync(dirPath, { withFileTypes: true })
+          .sort((a, b) =>
+            a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" })
+          );
+        let counter = 0;
+        for (const entry of entries) {
+          if (entry.isDirectory()) {
+            const subLayer =
+              entry.name === "avatar"
+                ? "mid"
+                : entry.name === "background"
+                ? "bg"
+                : entry.name === "foreground"
+                ? "fg"
+                : entry.name === "backdrop"
+                ? "backdrop"
+                : layer;
+            const prefix =
+              entry.name === "avatar"
+                ? "AV"
+                : entry.name === "background"
+                ? "BG"
+                : entry.name === "foreground"
+                ? "FG"
+                : entry.name === "backdrop"
+                ? "BD"
+                : categoryPrefix;
+            scanDirectory(
+              path.join(dirPath, entry.name),
+              `${relativePrefix}/${entry.name}`,
+              subLayer,
+              prefix
+            );
+          } else if (imageRegex.test(entry.name)) {
+            // Only add files inside a known hero layer subfolder
+            if (layer === "auto") continue;
+
+            const ext = path.extname(entry.name);
+            const rawName = path.basename(entry.name, ext);
+            const cleanName = rawName.replace(/[^a-zA-Z0-9_-]/g, " ").trim() || rawName;
+            const serialNum = `SYM-${categoryPrefix}-${String(counter).padStart(2, "0")}`;
+            counter++;
+
+            const assetPath = `${relativePrefix}/${entry.name}`;
+            const safeSlug = rawName.toLowerCase().replace(/[^a-z0-9]/g, "") || `item${counter}`;
+
+            graphics.push({
+              id: `gfx_${categoryPrefix.toLowerCase()}_${counter}_${safeSlug}`,
+              serialNumber: serialNum,
+              name: cleanName,
+              assetPath,
+              avatarUrl: assetPath,
+              avatarAlt: cleanName,
+              layer,
+            });
+          }
+        }
+      };
+
+      scanDirectory(publicHeroDir, "/assets/hero", "auto", "HERO");
+      return res.json({ success: true, count: graphics.length, graphics });
+    }
+
+    // Fallback to pre-built manifest if public/assets/hero directory does not exist
     const manifestPath = path.resolve(__dirname, "public", "assets-manifest.json");
-    if (fs.existsSync(manifestPath)) {
-      const manifest = fs.readFileSync(manifestPath, "utf-8");
+    const distManifestPath = path.resolve(__dirname, "dist", "assets-manifest.json");
+    const fallbackPath = fs.existsSync(manifestPath)
+      ? manifestPath
+      : fs.existsSync(distManifestPath)
+      ? distManifestPath
+      : null;
+
+    if (fallbackPath) {
+      const manifest = fs.readFileSync(fallbackPath, "utf-8");
       return res.setHeader("Content-Type", "application/json").send(manifest);
     }
 
-    // Fallback to scanning for dev environment
-    const graphics: any[] = [];
-    const imageRegex = /\.(png|jpe?g|webp|svg)$/i;
-    const scanDirectory = (dirPath: string, relativePrefix: string, layer: "mid" | "bg" | "fg" | "backdrop" | "auto", categoryPrefix: string) => {
-      if (!fs.existsSync(dirPath)) return;
-      const entries = fs.readdirSync(dirPath, { withFileTypes: true });
-      let counter = 0;
-      for (const entry of entries) {
-        if (entry.isDirectory()) {
-          const subLayer = entry.name === "avatar" ? "mid" : entry.name === "background" ? "bg" : entry.name === "foreground" ? "fg" : entry.name === "backdrop" ? "backdrop" : layer;
-          const prefix = entry.name === "avatar" ? "AV" : entry.name === "background" ? "BG" : entry.name === "foreground" ? "FG" : entry.name === "backdrop" ? "BD" : categoryPrefix;
-          scanDirectory(path.join(dirPath, entry.name), `${relativePrefix}/${entry.name}`, subLayer, prefix);
-        } else if (imageRegex.test(entry.name)) {
-          // STRICT RULE: Only add files if they are in a known subfolder (layer !== "auto")
-          // This prevents loose root images from being added as "fake" avatars.
-          if (layer === "auto") continue;
-
-          const ext = path.extname(entry.name);
-          const rawName = path.basename(entry.name, ext);
-          const cleanName = rawName.replace(/[^a-zA-Z0-9_-]/g, " ");
-          const serialNum = `SYM-${categoryPrefix}-${String(counter).padStart(2, "0")}`;
-          counter++;
-          
-          let targetLayer: "mid" | "bg" | "fg" | "backdrop" = layer;
-          const assetPath = `${relativePrefix}/${entry.name}`;
-          
-          graphics.push({
-            id: `gfx_${categoryPrefix.toLowerCase()}_${counter}_${rawName.toLowerCase().replace(/[^a-z0-9]/g, "")}`,
-            serialNumber: serialNum,
-            name: cleanName,
-            assetPath,
-            avatarUrl: assetPath,
-            avatarAlt: cleanName,
-            layer: targetLayer,
-          });
-        }
-      }
-    };
-
-    const publicHeroDir = path.resolve(__dirname, "public", "assets", "hero");
-    // Pass "auto" as initial layer to force subfolder scanning
-    scanDirectory(publicHeroDir, "/assets/hero", "auto", "HERO");
-
-    return res.json({ success: true, count: graphics.length, graphics });
+    return res.json({ success: true, count: 0, graphics: [] });
   } catch (err: any) {
     console.error("Scan graphics error:", err);
     return res.status(500).json({ error: err?.message || "Failed to scan graphics" });

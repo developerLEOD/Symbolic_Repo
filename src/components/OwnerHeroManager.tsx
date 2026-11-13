@@ -43,8 +43,7 @@ import {
   GraphicObject,
   BackdropConfig,
   HeroButtonsConfig,
-  DeviceTarget,
-  AvatarGraphic
+  DeviceTarget
 } from "../types";
 import { 
   DEFAULT_HERO_CONFIG, 
@@ -63,11 +62,6 @@ import {
 } from "../lib/heroService";
 import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
-import { 
-  subscribeAvatarGraphics, 
-  addAvatarGraphicToDatabase, 
-  deleteAvatarGraphicFromDatabase 
-} from "../lib/avatarGraphicsService";
 import LiquidCarveButton from "./LiquidCarveButton";
 import HeroSidePanel from "./HeroSidePanel";
 
@@ -87,20 +81,9 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
   const [isLoading, setIsLoading] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [saveSuccess, setSaveSuccess] = useState(false);
+  const [summonStatus, setSummonStatus] = useState<string>("");
   const [isSidePanelOpen, setIsSidePanelOpen] = useState(false);
-  
-  // Database Avatar Graphics catalog state & handlers
-  const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
-  const [newGraphicName, setNewGraphicName] = useState("");
   const jsonFileInputRef = useRef<HTMLInputElement>(null);
-
-  // Subscribe to live Avatar Graphics database collection
-  useEffect(() => {
-    const unsub = subscribeAvatarGraphics((list) => {
-      setDbAvatarGraphics(list);
-    });
-    return () => unsub();
-  }, []);
 
   // Debounced auto-save: automatically writes to hero-config.json and local storage 400ms after last adjustment
   const isFirstMountRef = useRef(true);
@@ -388,17 +371,21 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
       setConfig(saved);
       setPreviewKey((k) => k + 1);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-      alert("Hero JSON successfully uploaded to database & applied to Main Hero!");
+      setSummonStatus("Imported JSON and applied to Main Hero.");
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setSummonStatus("");
+      }, 3500);
     } catch (err: any) {
-      alert("Failed to import JSON file: " + (err?.message || "Invalid JSON format"));
+      setSummonStatus("Failed to import JSON: " + (err?.message || "Invalid JSON format"));
+      setTimeout(() => setSummonStatus(""), 4000);
     } finally {
       setIsSaving(false);
       if (e.target) e.target.value = "";
     }
   };
 
-  // Summon all repo graphics from code/directory
+  // Summon all repo graphics from code/directory (zero Firestore)
   const handleSummonGraphics = async () => {
     setIsSaving(true);
     soundManager.playClick(0.16);
@@ -407,10 +394,14 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
       setConfig(updatedConfig);
       setPreviewKey((k) => k + 1);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-      alert(`Summoned ${count} repo graphics! Set parameters for each graphic and click EXPORT to save JSON.`);
+      setSummonStatus(`Summoned ${count} code graphics from /assets/hero!`);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setSummonStatus("");
+      }, 4000);
     } catch (err: any) {
-      alert("Failed to summon repo graphics: " + (err?.message || "Unknown error"));
+      setSummonStatus("Summon failed: " + (err?.message || "Unknown error"));
+      setTimeout(() => setSummonStatus(""), 4000);
     } finally {
       setIsSaving(false);
     }
@@ -1109,6 +1100,11 @@ export default function OwnerHeroManager({ onViewStorefront, userEmail, onTabCha
             </button>
           )}
         </div>
+        {summonStatus && (
+          <div className="w-full sm:w-auto px-2 py-0.5 bg-brand-text text-brand-bg border border-[#FF4500] text-[8.5px] font-black uppercase tracking-wider">
+            {summonStatus}
+          </div>
+        )}
       </div>
 
       {/* Thin Orange Strip Docked on Right Edge (#FF4500) */}

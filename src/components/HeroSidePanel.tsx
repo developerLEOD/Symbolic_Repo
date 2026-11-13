@@ -47,9 +47,7 @@ import {
   TextObject,
   GraphicObject,
   BackdropConfig,
-  HeroButtonsConfig,
-  DeviceTarget,
-  AvatarGraphic
+  DeviceTarget
 } from "../types";
 import { 
   DEFAULT_HERO_CONFIG, 
@@ -64,15 +62,11 @@ import {
   downloadHeroConfigJson,
   summonRepoGraphics,
   summonSingleLayerGraphics,
-  summonRepoGraphicsStepByStep
+  summonRepoGraphicsStepByStep,
+  scanCodeHeroGraphics,
+  ScannedHeroGraphic
 } from "../lib/heroService";
-import { processFileToCompressedDataUrl } from "../lib/imageOptimization";
 import { soundManager } from "../lib/soundEffects";
-import { 
-  subscribeAvatarGraphics, 
-  addAvatarGraphicToDatabase, 
-  deleteAvatarGraphicFromDatabase 
-} from "../lib/avatarGraphicsService";
 
 interface HeroSidePanelProps {
   config: CustomHeroConfig;
@@ -170,19 +164,24 @@ export default function HeroSidePanel({
     }
   };
 
-  // Database Avatar Graphics catalog state
-  const [dbAvatarGraphics, setDbAvatarGraphics] = useState<AvatarGraphic[]>([]);
-  const [newGraphicName, setNewGraphicName] = useState("");
-  const [isAddingGraphicToDb, setIsAddingGraphicToDb] = useState(false);
+  // Code repository graphics catalog state (zero Firestore)
+  const [codeGraphics, setCodeGraphics] = useState<ScannedHeroGraphic[]>([]);
+  const [isScanningCode, setIsScanningCode] = useState(false);
 
   const hoverTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
-  // Subscribe to live Avatar Graphics database collection
+  const refreshCodeGraphics = async () => {
+    setIsScanningCode(true);
+    try {
+      const scanned = await scanCodeHeroGraphics();
+      setCodeGraphics(scanned);
+    } finally {
+      setIsScanningCode(false);
+    }
+  };
+
   useEffect(() => {
-    const unsub = subscribeAvatarGraphics((list) => {
-      setDbAvatarGraphics(list);
-    });
-    return () => unsub();
+    refreshCodeGraphics();
   }, []);
 
   // Sync activeLayerId if parent config changes
@@ -340,14 +339,17 @@ export default function HeroSidePanel({
       const parsed = JSON.parse(text);
       const normalized = normalizeHeroConfig(parsed);
       
-      // Save directly to server JSON and Firestore database /settings/hero
       const saved = await saveHeroConfig(normalized, userEmail, true);
       onUpdateConfig(saved);
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-      alert("Hero JSON successfully imported, saved to database, and applied to Main Hero!");
+      setStepProgressStatus("Imported hero-config.json and applied to Main Hero.");
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setStepProgressStatus("");
+      }, 3500);
     } catch (err: any) {
-      alert("Failed to import JSON file: " + (err?.message || "Invalid JSON format"));
+      setStepProgressStatus("Failed to import JSON: " + (err?.message || "Invalid JSON format"));
+      setTimeout(() => setStepProgressStatus(""), 4000);
     } finally {
       setIsSaving(false);
       if (e.target) e.target.value = "";
@@ -359,23 +361,26 @@ export default function HeroSidePanel({
     setIsSaving(true);
     soundManager.playClick(0.16);
     try {
-      setStepProgressStatus("Step 1/4: Scanning Backdrop layer...");
+      setStepProgressStatus("Scanning code folders (/assets/hero/*)...");
       const { config: updatedConfig, totalCount, summary } = await summonRepoGraphicsStepByStep(
         config,
         (stepName, count) => {
-          setStepProgressStatus(`Step: ${stepName} (${count} added)...`);
+          setStepProgressStatus(`Summoning ${stepName} (${count} from code)...`);
         }
       );
       onUpdateConfig(updatedConfig);
+      await refreshCodeGraphics();
       setSaveSuccess(true);
+      setStepProgressStatus(
+        `Summoned ${totalCount} graphics (BD:${summary["BACKDROP"] || 0} BG:${summary["BACKGROUND"] || 0} AV:${summary["AVATAR"] || 0} FG:${summary["FOREGROUND"] || 0})`
+      );
       setTimeout(() => {
         setSaveSuccess(false);
         setStepProgressStatus("");
-      }, 4000);
-      alert(`Step-by-step layer summoning complete!\nTotal Graphics Summoned: ${totalCount}\n\nBreakdown by Layer:\n• BACKDROP: ${summary["BACKDROP"] || 0}\n• BACKGROUND: ${summary["BACKGROUND"] || 0}\n• AVATAR: ${summary["AVATAR"] || 0}\n• FOREGROUND: ${summary["FOREGROUND"] || 0}`);
+      }, 5000);
     } catch (err: any) {
-      alert("Failed step-by-step layer summoning: " + (err?.message || "Unknown error"));
-      setStepProgressStatus("");
+      setStepProgressStatus("Step-by-step summon failed: " + (err?.message || "Unknown error"));
+      setTimeout(() => setStepProgressStatus(""), 4000);
     } finally {
       setIsSaving(false);
     }
@@ -388,28 +393,38 @@ export default function HeroSidePanel({
     try {
       const { config: updatedConfig, count, layerLabel } = await summonSingleLayerGraphics(config, targetLayerId);
       onUpdateConfig(updatedConfig);
+      await refreshCodeGraphics();
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-      alert(`Summoned ${count} graphics into ${layerLabel} layer!`);
+      setStepProgressStatus(`Summoned ${count} code graphics into ${layerLabel} layer.`);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setStepProgressStatus("");
+      }, 4000);
     } catch (err: any) {
-      alert(`Failed to summon ${targetLayerId} layer graphics: ` + (err?.message || "Unknown error"));
+      setStepProgressStatus(`Failed to summon ${targetLayerId}: ` + (err?.message || "Unknown error"));
+      setTimeout(() => setStepProgressStatus(""), 4000);
     } finally {
       setIsSaving(false);
     }
   };
 
-  // Summon all repo graphics from code/directory
+  // Summon all repo graphics from code/directory (zero Firestore)
   const handleSummonGraphics = async () => {
     setIsSaving(true);
     soundManager.playClick(0.16);
     try {
       const { config: updatedConfig, count } = await summonRepoGraphics(config);
       onUpdateConfig(updatedConfig);
+      await refreshCodeGraphics();
       setSaveSuccess(true);
-      setTimeout(() => setSaveSuccess(false), 3000);
-      alert(`Summoned ${count} repo graphics! Set parameters for each graphic and click EXPORT to save JSON.`);
+      setStepProgressStatus(`Summoned ${count} graphics from /assets/hero/*!`);
+      setTimeout(() => {
+        setSaveSuccess(false);
+        setStepProgressStatus("");
+      }, 4000);
     } catch (err: any) {
-      alert("Failed to summon repo graphics: " + (err?.message || "Unknown error"));
+      setStepProgressStatus("Failed to summon repo graphics: " + (err?.message || "Unknown error"));
+      setTimeout(() => setStepProgressStatus(""), 4000);
     } finally {
       setIsSaving(false);
     }
@@ -1004,7 +1019,7 @@ export default function HeroSidePanel({
                         }`}
                       >
                         <ImageIcon size={11} className={activeObjectId === g.id ? "text-brand-accent" : ""} />
-                        GRAPHIC {idx + 2}
+                        {g.avatarAlt || `GRAPHIC ${idx + 2}`}
                       </button>
                       <button
                         onClick={(e) => {
@@ -1123,131 +1138,144 @@ export default function HeroSidePanel({
                     </div>
                   </div>
                   
-                  {/* Firestore Database Avatar Graphics Catalog Manager & Picker */}
+                  {/* Code Repository Graphics Catalog (Zero Firestore) */}
                   <div className="pt-2 border-t-2 border-brand-text space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between gap-2">
                       <div className="flex items-center gap-1.5">
-                        <Database size={13} className="text-brand-accent animate-pulse" />
+                        <ImageIcon size={13} className="text-brand-accent" />
                         <span className="text-[9.5px] font-black uppercase tracking-wider">
-                          DATABASE AVATARS CATALOG ({dbAvatarGraphics.length})
+                          CODE GRAPHICS CATALOG ({codeGraphics.length})
                         </span>
                       </div>
-                      <span className="text-[7px] font-mono font-bold bg-brand-accent text-white px-1.5 py-0.2 border border-brand-text">
-                        FIRESTORE LIVE
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          soundManager.playClick(0.08);
+                          refreshCodeGraphics();
+                        }}
+                        disabled={isScanningCode}
+                        className="text-[7px] font-mono font-bold bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white px-1.5 py-0.5 border border-brand-text flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        title="Rescan /public/assets/hero/* directory"
+                      >
+                        <RefreshCw size={9} className={isScanningCode ? "animate-spin" : ""} />
+                        <span>{isScanningCode ? "SCANNING" : "RESCAN CODE"}</span>
+                      </button>
                     </div>
 
-                    {/* Manual Add Graphic to Database Controls */}
-                    <div className="p-2 bg-brand-surface border border-brand-text space-y-1.5">
-                      <label className="text-[7.5px] font-black uppercase tracking-wider text-brand-text/70 block">
-                        + REGISTER CURRENT GRAPHIC URL IN CATALOG
-                      </label>
+                    <p className="text-[7px] font-mono text-brand-text/60 leading-tight">
+                      // Loaded strictly from /public/assets/hero/ subfolders (Zero Firestore)
+                    </p>
 
-                      <div className="flex items-center gap-1.5">
-                        <input
-                          type="text"
-                          value={newGraphicName}
-                          onChange={(e) => setNewGraphicName(e.target.value)}
-                          placeholder="AVATAR GRAPHIC TITLE..."
-                          className="flex-1 bg-brand-bg border border-brand-text px-2 py-1 text-[8.5px] font-mono font-bold focus:outline-none focus:border-brand-accent"
-                        />
-
-                        <button
-                          type="button"
-                          onClick={async () => {
-                            const url = currentGraphicEntity?.avatarUrl;
-                            if (!url) {
-                              alert("Please enter or select a graphic URL first");
-                              return;
-                            }
-                            setIsAddingGraphicToDb(true);
-                            try {
-                              const name = newGraphicName.trim() || "REPO GRAPHIC";
-                              await addAvatarGraphicToDatabase({
-                                name,
-                                imageInput: url,
-                                createdByEmail: userEmail,
-                              });
-                              setNewGraphicName("");
-                              soundManager.playClick(0.16);
-                            } catch (err: any) {
-                              alert("Failed to save to database: " + err.message);
-                            } finally {
-                              setIsAddingGraphicToDb(false);
-                            }
-                          }}
-                          disabled={isAddingGraphicToDb}
-                          className="py-1 px-2 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text text-[8px] font-black uppercase tracking-wider cursor-pointer disabled:opacity-50"
-                        >
-                          <span>SAVE URL</span>
-                        </button>
+                    {codeGraphics.length === 0 ? (
+                      <div className="p-2 border border-dashed border-brand-text/40 text-center text-[7.5px] font-mono opacity-60">
+                        No code graphics found in /public/assets/hero/*
                       </div>
-                    </div>
-
-                    {/* Database Avatar Cards Grid */}
-                    <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-brand-text">
-                      {dbAvatarGraphics.map((item) => {
-                        const isSelected = currentGraphicEntity?.avatarUrl === item.url;
-                        return (
-                          <div
-                            key={item.id}
-                            className={`p-1.5 border border-brand-text relative group flex flex-col gap-1 transition-all ${
-                              isSelected
-                                ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#ff4500]"
-                                : "bg-brand-surface hover:bg-brand-bg text-brand-text"
-                            }`}
-                          >
-                            <div className="flex items-center gap-1.5 cursor-pointer" onClick={() => {
-                              soundManager.playClick(0.08);
-                              updateActiveObjectProps({
-                                avatarUrl: item.url,
-                                avatarAlt: item.name,
-                              });
-                            }}>
-                              <img src={item.url} alt={item.name} className="w-8 h-8 object-contain border border-current bg-black/10 shrink-0 p-0.5" />
-                              <div className="overflow-hidden flex-1">
-                                <p className="text-[7.5px] font-black uppercase truncate leading-tight">{item.name}</p>
-                                <span className="text-[6.5px] opacity-70 uppercase font-mono block">
-                                  {item.category || "custom"}
-                                </span>
-                              </div>
-                            </div>
-
-                            <div className="flex items-center justify-between border-t border-current/20 pt-1 mt-0.5">
-                              <button
-                                type="button"
+                    ) : (
+                      <div className="grid grid-cols-2 gap-1.5 max-h-[220px] overflow-y-auto pr-1 scrollbar-thin scrollbar-thumb-brand-text">
+                        {codeGraphics.map((item) => {
+                          const targetUrl = item.avatarUrl || item.assetPath;
+                          const isSelected = currentGraphicEntity?.avatarUrl === targetUrl;
+                          const isInCurrentLayer =
+                            currentLayer.avatarUrl === targetUrl ||
+                            (currentLayer.graphicObjects || []).some((g: GraphicObject) => g.avatarUrl === targetUrl);
+                          return (
+                            <div
+                              key={item.id}
+                              className={`p-1.5 border border-brand-text relative group flex flex-col gap-1 transition-all ${
+                                isSelected
+                                  ? "bg-brand-text text-brand-bg shadow-[2px_2px_0px_#ff4500]"
+                                  : "bg-brand-surface hover:bg-brand-bg text-brand-text"
+                              }`}
+                            >
+                              <div
+                                className="flex items-center gap-1.5 cursor-pointer"
                                 onClick={() => {
                                   soundManager.playClick(0.08);
                                   updateActiveObjectProps({
-                                    avatarUrl: item.url,
+                                    avatarUrl: targetUrl,
                                     avatarAlt: item.name,
+                                    assetPath: item.assetPath,
+                                    serialNumber: item.serialNumber,
                                   });
                                 }}
-                                className={`text-[6.5px] font-black uppercase px-1 py-0.2 border ${
-                                  isSelected ? "bg-brand-accent text-white border-brand-accent" : "bg-brand-text text-brand-bg border-brand-text"
-                                }`}
                               >
-                                {isSelected ? "ACTIVE" : "SELECT"}
-                              </button>
+                                <img
+                                  src={targetUrl}
+                                  alt={item.name}
+                                  className="w-8 h-8 object-contain border border-current bg-black/10 shrink-0 p-0.5"
+                                />
+                                <div className="overflow-hidden flex-1">
+                                  <p className="text-[7.5px] font-black uppercase truncate leading-tight">{item.name}</p>
+                                  <span className="text-[6.5px] opacity-70 uppercase font-mono block">
+                                    {item.layer.toUpperCase()} • {item.serialNumber}
+                                  </span>
+                                </div>
+                              </div>
 
-                              <button
-                                type="button"
-                                onClick={async (e) => {
-                                  e.stopPropagation();
-                                  if (!window.confirm(`Delete "${item.name}" permanently from the database?`)) return;
-                                  soundManager.playClick(0.12);
-                                  await deleteAvatarGraphicFromDatabase(item.id);
-                                }}
-                                className="p-0.5 text-red-600 hover:bg-red-600 hover:text-white border border-transparent hover:border-black rounded-[1px] transition-colors"
-                                title="Delete from Database"
-                              >
-                                <Trash2 size={10} />
-                              </button>
+                              <div className="flex items-center justify-between border-t border-current/20 pt-1 mt-0.5 gap-1">
+                                <button
+                                  type="button"
+                                  onClick={() => {
+                                    soundManager.playClick(0.08);
+                                    updateActiveObjectProps({
+                                      avatarUrl: targetUrl,
+                                      avatarAlt: item.name,
+                                      assetPath: item.assetPath,
+                                      serialNumber: item.serialNumber,
+                                    });
+                                  }}
+                                  className={`text-[6.5px] font-black uppercase px-1.5 py-0.5 border cursor-pointer ${
+                                    isSelected
+                                      ? "bg-brand-accent text-white border-brand-accent"
+                                      : "bg-brand-text text-brand-bg border-brand-text hover:bg-brand-accent hover:text-white"
+                                  }`}
+                                >
+                                  {isSelected ? "ACTIVE" : "SELECT"}
+                                </button>
+
+                                {activeLayerId !== "backdrop" && !isInCurrentLayer && (
+                                  <button
+                                    type="button"
+                                    onClick={() => {
+                                      soundManager.playClick(0.1);
+                                      const existingGraphics = currentLayer.graphicObjects || [];
+                                      const newGraphic: GraphicObject = {
+                                        id: `${item.id}_${Date.now()}`,
+                                        serialNumber: item.serialNumber,
+                                        assetPath: item.assetPath,
+                                        avatarUrl: targetUrl,
+                                        avatarAlt: item.name,
+                                        posX: 35,
+                                        posY: 5,
+                                        size: 460,
+                                        rotation: 0,
+                                        opacity: 1,
+                                        transitionDirection: "bottom",
+                                        transitionSpeed: "spring",
+                                        hoverEffect: "none",
+                                        shadow: false,
+                                        border: false,
+                                        stickToBottom: activeLayerId === "mid",
+                                        deviceTarget: "both",
+                                      };
+                                      updateLayerProps({
+                                        isEnabled: true,
+                                        graphicObjects: [...existingGraphics, newGraphic],
+                                      });
+                                      onActiveObjectChange(newGraphic.id);
+                                    }}
+                                    className="text-[6.5px] font-black uppercase px-1.5 py-0.5 border border-current hover:bg-brand-accent hover:text-white cursor-pointer"
+                                    title="Add to current layer graphics"
+                                  >
+                                    + ADD
+                                  </button>
+                                )}
+                              </div>
                             </div>
-                          </div>
-                        );
-                      })}
-                    </div>
+                          );
+                        })}
+                      </div>
+                    )}
                   </div>
                 </div>
               )}

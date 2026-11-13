@@ -19,8 +19,16 @@
 
 import { CustomHeroConfig, HeroLayerConfig, BackdropConfig, HeroButtonsConfig, GraphicObject } from "../types";
 import bundledDefaultConfig from "../data/heroConfig.json";
-import { doc, getDoc, setDoc } from "firebase/firestore";
-import { db } from "./firebase";
+
+export interface ScannedHeroGraphic {
+  id: string;
+  serialNumber: string;
+  name: string;
+  assetPath: string;
+  avatarUrl: string;
+  avatarAlt: string;
+  layer: "mid" | "bg" | "fg" | "backdrop";
+}
 
 export const HERO_STORAGE_KEY = "sym_hero_json_metadata_v1";
 
@@ -496,37 +504,167 @@ export function downloadHeroConfigJson(config?: CustomHeroConfig): void {
 }
 
 /**
- * Scans all graphics/images in the repository code folders (/public/assets/hero/..., etc.)
- * and populates them into the hero layers (midLayer, bgLayer, fgLayer) with unique serial numbers
+ * Scans all hero graphics strictly from code folders (/public/assets/hero/*)
+ * via /api/scan-hero-graphics with /assets-manifest.json fallback (zero Firestore).
+ */
+export async function scanCodeHeroGraphics(): Promise<ScannedHeroGraphic[]> {
+  // 1. Live server directory scan (dev & Node server)
+  try {
+    const res = await fetch("/api/scan-hero-graphics", {
+      headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+      cache: "no-store",
+    });
+    const contentType = res.headers.get("content-type") || "";
+    if (res.ok && contentType.includes("application/json")) {
+      const data = await res.json();
+      if (data.success && Array.isArray(data.graphics)) {
+        return data.graphics;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch /api/scan-hero-graphics:", err);
+  }
+
+  // 2. Static manifest fallback (Vercel / static hosting)
+  try {
+    const manifestRes = await fetch("/assets-manifest.json", {
+      headers: { "Cache-Control": "no-cache", "Pragma": "no-cache" },
+      cache: "no-store",
+    });
+    const contentType = manifestRes.headers.get("content-type") || "";
+    if (manifestRes.ok && contentType.includes("application/json")) {
+      const data = await manifestRes.json();
+      if (data.success && Array.isArray(data.graphics)) {
+        return data.graphics;
+      }
+    }
+  } catch (err) {
+    console.warn("Could not fetch /assets-manifest.json:", err);
+  }
+
+  return [];
+}
+
+function buildGraphicObjectFromScan(
+  item: ScannedHeroGraphic,
+  targetLayer: "bg" | "fg" | "mid",
+  index: number
+): GraphicObject {
+  const targetUrl = item.avatarUrl || item.assetPath;
+  const gridX = 25 + ((index % 4) * 16);
+  const gridY = 30 + (Math.floor(index / 4) * 18);
+  const cleanLabel = item.name || item.avatarAlt || `Graphic ${index + 1}`;
+
+  if (targetLayer === "bg") {
+    return {
+      id: item.id || `gfx_bg_${Date.now()}_${index}`,
+      serialNumber: item.serialNumber || `SYM-BG-${String(index).padStart(2, "0")}`,
+      assetPath: item.assetPath || targetUrl,
+      avatarUrl: targetUrl,
+      avatarAlt: cleanLabel,
+      posX: Math.min(85, Math.max(15, gridX)),
+      posY: Math.min(85, Math.max(20, gridY)),
+      size: 320,
+      rotation: 0,
+      opacity: 0.25,
+      transitionDirection: "fade",
+      transitionSpeed: "smooth",
+      transitionDelay: 0.1 + index * 0.05,
+      hoverEffect: "none",
+      disableIdleAnimation: false,
+      shadow: false,
+      border: false,
+    };
+  }
+
+  if (targetLayer === "fg") {
+    return {
+      id: item.id || `gfx_fg_${Date.now()}_${index}`,
+      serialNumber: item.serialNumber || `SYM-FG-${String(index).padStart(2, "0")}`,
+      assetPath: item.assetPath || targetUrl,
+      avatarUrl: targetUrl,
+      avatarAlt: cleanLabel,
+      posX: Math.min(85, Math.max(15, gridX)),
+      posY: Math.min(85, Math.max(20, gridY)),
+      size: 140,
+      rotation: 0,
+      opacity: 1,
+      transitionDirection: "top",
+      transitionSpeed: "snappy",
+      transitionDelay: 0.1 + index * 0.05,
+      hoverEffect: "none",
+      disableIdleAnimation: false,
+      shadow: false,
+      border: false,
+    };
+  }
+
+  // mid / avatar layer
+  return {
+    id: item.id || `gfx_mid_${Date.now()}_${index}`,
+    serialNumber: item.serialNumber || `SYM-AV-${String(index).padStart(2, "0")}`,
+    assetPath: item.assetPath || targetUrl,
+    avatarUrl: targetUrl,
+    avatarAlt: cleanLabel,
+    posX: 35,
+    posY: 5,
+    size: 460,
+    rotation: 0,
+    opacity: 1,
+    transitionDirection: "bottom",
+    transitionSpeed: "spring",
+    transitionDelay: 0.15,
+    hoverEffect: "none",
+    disableIdleAnimation: false,
+    shadow: false,
+    border: false,
+    stickToBottom: true,
+    deviceTarget: "both",
+  };
+}
+
+function pruneStaleCodeGraphics(
+  existing: GraphicObject[],
+  validLayerUrls: Set<string>
+): GraphicObject[] {
+  if (validLayerUrls.size === 0) return existing;
+  return existing.filter((g) => {
+    const url = g.avatarUrl || g.assetPath || "";
+    // Preserve uploaded/custom assets outside /assets/hero/, prune deleted /assets/hero/ files
+    if (!url.startsWith("/assets/hero/")) return true;
+    return validLayerUrls.has(url);
+  });
+}
+
+/**
+ * Scans all graphics/images in the repository code folders (/public/assets/hero/...)
+ * and populates them into the hero layers (midLayer, bgLayer, fgLayer, backdrop) with unique serial numbers
  * so they can be visually positioned in Studio Hero and exported to JSON.
  */
 export async function summonRepoGraphics(
   currentConfig: CustomHeroConfig
 ): Promise<{ config: CustomHeroConfig; count: number }> {
-  let scannedItems: any[] = [];
-  try {
-    const res = await fetch("/api/scan-hero-graphics");
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.graphics)) {
-        scannedItems = data.graphics;
-      }
-    }
-  } catch (err) {
-    console.warn("Could not fetch /api/scan-hero-graphics, using fallback list:", err);
-  }
+  const scannedItems = await scanCodeHeroGraphics();
 
-  // No hardcoded fallback list — strictly use scanned repo graphics
-  if (scannedItems.length === 0) {
-    scannedItems = [];
-  }
+  const validBgUrls = new Set(scannedItems.filter((i) => i.layer === "bg").map((i) => i.avatarUrl || i.assetPath));
+  const validFgUrls = new Set(scannedItems.filter((i) => i.layer === "fg").map((i) => i.avatarUrl || i.assetPath));
+  const validMidUrls = new Set(scannedItems.filter((i) => (i.layer || "mid") === "mid").map((i) => i.avatarUrl || i.assetPath));
 
-  const nextMidGraphics: GraphicObject[] = [...(currentConfig.midLayer?.graphicObjects || [])];
-  const nextBgGraphics: GraphicObject[] = [...(currentConfig.bgLayer?.graphicObjects || [])];
-  const nextFgGraphics: GraphicObject[] = [...(currentConfig.fgLayer?.graphicObjects || [])];
+  const nextMidGraphics: GraphicObject[] = pruneStaleCodeGraphics(
+    [...(currentConfig.midLayer?.graphicObjects || [])],
+    validMidUrls
+  );
+  const nextBgGraphics: GraphicObject[] = pruneStaleCodeGraphics(
+    [...(currentConfig.bgLayer?.graphicObjects || [])],
+    validBgUrls
+  );
+  const nextFgGraphics: GraphicObject[] = pruneStaleCodeGraphics(
+    [...(currentConfig.fgLayer?.graphicObjects || [])],
+    validFgUrls
+  );
   let nextBackdrop: BackdropConfig = { ...(currentConfig.backdrop || DEFAULT_BACKDROP) };
 
-  let addedCount = 0;
+  let summonedCount = 0;
 
   scannedItems.forEach((item) => {
     const targetUrl = item.avatarUrl || item.assetPath;
@@ -538,90 +676,27 @@ export async function summonRepoGraphics(
         imageUrl: targetUrl,
         opacity: nextBackdrop.opacity ?? 1,
       };
-      addedCount++;
+      summonedCount++;
     } else if (targetLayer === "bg") {
-      const existsInBg = nextBgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const existsInBg = nextBgGraphics.some((g) => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       if (!existsInBg) {
-        const gridX = 25 + ((nextBgGraphics.length % 4) * 16);
-        const gridY = 30 + (Math.floor(nextBgGraphics.length / 4) * 18);
-        const graphicObj: GraphicObject = {
-          id: item.id || `gfx_bg_${Date.now()}_${nextBgGraphics.length}`,
-          serialNumber: item.serialNumber || `SYM-BG-${String(nextBgGraphics.length).padStart(2, "0")}`,
-          assetPath: item.assetPath || targetUrl,
-          avatarUrl: targetUrl,
-          avatarAlt: item.name || item.avatarAlt || `Background Graphic ${nextBgGraphics.length + 1}`,
-          posX: Math.min(85, Math.max(15, gridX)),
-          posY: Math.min(85, Math.max(20, gridY)),
-          size: 320,
-          rotation: 0,
-          opacity: 0.25,
-          transitionDirection: "fade",
-          transitionSpeed: "smooth",
-          transitionDelay: 0.1 + (nextBgGraphics.length * 0.05),
-          hoverEffect: "none",
-          disableIdleAnimation: false,
-          shadow: false,
-          border: false,
-        };
-        nextBgGraphics.push(graphicObj);
+        nextBgGraphics.push(buildGraphicObjectFromScan(item, "bg", nextBgGraphics.length));
       }
-      addedCount++;
+      summonedCount++;
     } else if (targetLayer === "fg") {
-      const existsInFg = nextFgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const existsInFg = nextFgGraphics.some((g) => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       if (!existsInFg) {
-        const gridX = 25 + ((nextFgGraphics.length % 4) * 16);
-        const gridY = 30 + (Math.floor(nextFgGraphics.length / 4) * 18);
-        const graphicObj: GraphicObject = {
-          id: item.id || `gfx_fg_${Date.now()}_${nextFgGraphics.length}`,
-          serialNumber: item.serialNumber || `SYM-FG-${String(nextFgGraphics.length).padStart(2, "0")}`,
-          assetPath: item.assetPath || targetUrl,
-          avatarUrl: targetUrl,
-          avatarAlt: item.name || item.avatarAlt || `Foreground Graphic ${nextFgGraphics.length + 1}`,
-          posX: Math.min(85, Math.max(15, gridX)),
-          posY: Math.min(85, Math.max(20, gridY)),
-          size: 140,
-          rotation: 0,
-          opacity: 1,
-          transitionDirection: "top",
-          transitionSpeed: "snappy",
-          transitionDelay: 0.1 + (nextFgGraphics.length * 0.05),
-          hoverEffect: "none",
-          disableIdleAnimation: false,
-          shadow: false,
-          border: false,
-        };
-        nextFgGraphics.push(graphicObj);
+        nextFgGraphics.push(buildGraphicObjectFromScan(item, "fg", nextFgGraphics.length));
       }
-      addedCount++;
+      summonedCount++;
     } else {
       // mid / avatar layer
-      const existsInMid = nextMidGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const existsInMid = nextMidGraphics.some((g) => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       const isMainAvatar = currentConfig.midLayer?.avatarUrl === targetUrl;
       if (!existsInMid && !isMainAvatar) {
-        const gridX = 25 + ((nextMidGraphics.length % 4) * 16);
-        const gridY = 30 + (Math.floor(nextMidGraphics.length / 4) * 18);
-        const graphicObj: GraphicObject = {
-          id: item.id || `gfx_mid_${Date.now()}_${nextMidGraphics.length}`,
-          serialNumber: item.serialNumber || `SYM-AV-${String(nextMidGraphics.length).padStart(2, "0")}`,
-          assetPath: item.assetPath || targetUrl,
-          avatarUrl: targetUrl,
-          avatarAlt: item.name || item.avatarAlt || `Avatar Graphic ${nextMidGraphics.length + 1}`,
-          posX: Math.min(85, Math.max(15, gridX)),
-          posY: Math.min(85, Math.max(20, gridY)),
-          size: 260,
-          rotation: 0,
-          opacity: 1,
-          transitionDirection: "bottom",
-          transitionSpeed: "spring",
-          transitionDelay: 0.1 + (nextMidGraphics.length * 0.05),
-          hoverEffect: "none",
-          disableIdleAnimation: false,
-          shadow: false,
-          border: false,
-        };
-        nextMidGraphics.push(graphicObj);
+        nextMidGraphics.push(buildGraphicObjectFromScan(item, "mid", nextMidGraphics.length));
       }
-      addedCount++;
+      summonedCount++;
     }
   });
 
@@ -647,77 +722,53 @@ export async function summonRepoGraphics(
   };
 
   await saveHeroConfig(nextConfig);
-  return { config: nextConfig, count: addedCount };
+  return { config: nextConfig, count: summonedCount };
 }
 
 /**
- * Summons graphics for a single specified layer step-by-step
+ * Summons graphics for a single specified layer step-by-step strictly from code
  */
 export async function summonSingleLayerGraphics(
   currentConfig: CustomHeroConfig,
   targetLayerId: "backdrop" | "bg" | "mid" | "fg"
 ): Promise<{ config: CustomHeroConfig; count: number; layerLabel: string }> {
-  let scannedItems: any[] = [];
-  try {
-    const res = await fetch("/api/scan-hero-graphics");
-    if (res.ok) {
-      const data = await res.json();
-      if (data.success && Array.isArray(data.graphics)) {
-        scannedItems = data.graphics;
-      }
-    }
-  } catch (err) {
-    console.warn("Could not fetch /api/scan-hero-graphics:", err);
-  }
+  const scannedItems = await scanCodeHeroGraphics();
 
-  const layerItems = scannedItems.filter(item => (item.layer || "mid") === targetLayerId);
-  const layerLabel = targetLayerId === "backdrop" ? "BACKDROP" : targetLayerId === "bg" ? "BACKGROUND" : targetLayerId === "fg" ? "FOREGROUND" : "AVATAR";
+  const layerItems = scannedItems.filter((item) => (item.layer || "mid") === targetLayerId);
+  const validLayerUrls = new Set(layerItems.map((i) => i.avatarUrl || i.assetPath));
+  const layerLabel =
+    targetLayerId === "backdrop"
+      ? "BACKDROP"
+      : targetLayerId === "bg"
+      ? "BACKGROUND"
+      : targetLayerId === "fg"
+      ? "FOREGROUND"
+      : "AVATAR";
 
-  let nextConfig = { ...currentConfig };
-  let addedCount = layerItems.length;
+  const nextConfig = { ...currentConfig };
+  const summonedCount = layerItems.length;
 
   if (targetLayerId === "backdrop") {
     let nextBackdrop = { ...(currentConfig.backdrop || DEFAULT_BACKDROP) };
     layerItems.forEach((item) => {
       const targetUrl = item.avatarUrl || item.assetPath;
-      if (!nextBackdrop.imageUrl || nextBackdrop.imageUrl !== targetUrl) {
-        nextBackdrop = {
-          isEnabled: true,
-          imageUrl: targetUrl,
-          opacity: nextBackdrop.opacity ?? 1,
-        };
-        addedCount++;
-      }
+      nextBackdrop = {
+        isEnabled: true,
+        imageUrl: targetUrl,
+        opacity: nextBackdrop.opacity ?? 1,
+      };
     });
     nextConfig.backdrop = nextBackdrop;
   } else if (targetLayerId === "bg") {
-    const nextBgGraphics = [...(currentConfig.bgLayer?.graphicObjects || [])];
+    const nextBgGraphics = pruneStaleCodeGraphics(
+      [...(currentConfig.bgLayer?.graphicObjects || [])],
+      validLayerUrls
+    );
     layerItems.forEach((item) => {
       const targetUrl = item.avatarUrl || item.assetPath;
-      const exists = nextBgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const exists = nextBgGraphics.some((g) => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       if (!exists) {
-        const gridX = 25 + ((nextBgGraphics.length % 4) * 16);
-        const gridY = 30 + (Math.floor(nextBgGraphics.length / 4) * 18);
-        nextBgGraphics.push({
-          id: item.id || `gfx_bg_${Date.now()}_${nextBgGraphics.length}`,
-          serialNumber: item.serialNumber || `SYM-BG-${String(nextBgGraphics.length).padStart(2, "0")}`,
-          assetPath: item.assetPath || targetUrl,
-          avatarUrl: targetUrl,
-          avatarAlt: item.name || `Background Graphic ${nextBgGraphics.length + 1}`,
-          posX: Math.min(85, Math.max(15, gridX)),
-          posY: Math.min(85, Math.max(20, gridY)),
-          size: 320,
-          rotation: 0,
-          opacity: 0.25,
-          transitionDirection: "fade",
-          transitionSpeed: "smooth",
-          transitionDelay: 0.1 + (nextBgGraphics.length * 0.05),
-          hoverEffect: "none",
-          disableIdleAnimation: false,
-          shadow: false,
-          border: false,
-        });
-        addedCount++;
+        nextBgGraphics.push(buildGraphicObjectFromScan(item, "bg", nextBgGraphics.length));
       }
     });
     nextConfig.bgLayer = {
@@ -726,33 +777,15 @@ export async function summonSingleLayerGraphics(
       graphicObjects: nextBgGraphics,
     };
   } else if (targetLayerId === "fg") {
-    const nextFgGraphics = [...(currentConfig.fgLayer?.graphicObjects || [])];
+    const nextFgGraphics = pruneStaleCodeGraphics(
+      [...(currentConfig.fgLayer?.graphicObjects || [])],
+      validLayerUrls
+    );
     layerItems.forEach((item) => {
       const targetUrl = item.avatarUrl || item.assetPath;
-      const exists = nextFgGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const exists = nextFgGraphics.some((g) => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       if (!exists) {
-        const gridX = 25 + ((nextFgGraphics.length % 4) * 16);
-        const gridY = 30 + (Math.floor(nextFgGraphics.length / 4) * 18);
-        nextFgGraphics.push({
-          id: item.id || `gfx_fg_${Date.now()}_${nextFgGraphics.length}`,
-          serialNumber: item.serialNumber || `SYM-FG-${String(nextFgGraphics.length).padStart(2, "0")}`,
-          assetPath: item.assetPath || targetUrl,
-          avatarUrl: targetUrl,
-          avatarAlt: item.name || `Foreground Graphic ${nextFgGraphics.length + 1}`,
-          posX: Math.min(85, Math.max(15, gridX)),
-          posY: Math.min(85, Math.max(20, gridY)),
-          size: 140,
-          rotation: 0,
-          opacity: 1,
-          transitionDirection: "top",
-          transitionSpeed: "snappy",
-          transitionDelay: 0.1 + (nextFgGraphics.length * 0.05),
-          hoverEffect: "none",
-          disableIdleAnimation: false,
-          shadow: false,
-          border: false,
-        });
-        addedCount++;
+        nextFgGraphics.push(buildGraphicObjectFromScan(item, "fg", nextFgGraphics.length));
       }
     });
     nextConfig.fgLayer = {
@@ -762,34 +795,16 @@ export async function summonSingleLayerGraphics(
     };
   } else {
     // mid / avatar
-    const nextMidGraphics = [...(currentConfig.midLayer?.graphicObjects || [])];
+    const nextMidGraphics = pruneStaleCodeGraphics(
+      [...(currentConfig.midLayer?.graphicObjects || [])],
+      validLayerUrls
+    );
     layerItems.forEach((item) => {
       const targetUrl = item.avatarUrl || item.assetPath;
-      const exists = nextMidGraphics.some(g => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
+      const exists = nextMidGraphics.some((g) => g.avatarUrl === targetUrl || g.assetPath === targetUrl);
       const isMain = currentConfig.midLayer?.avatarUrl === targetUrl;
       if (!exists && !isMain) {
-        const gridX = 25 + ((nextMidGraphics.length % 4) * 16);
-        const gridY = 30 + (Math.floor(nextMidGraphics.length / 4) * 18);
-        nextMidGraphics.push({
-          id: item.id || `gfx_mid_${Date.now()}_${nextMidGraphics.length}`,
-          serialNumber: item.serialNumber || `SYM-AV-${String(nextMidGraphics.length).padStart(2, "0")}`,
-          assetPath: item.assetPath || targetUrl,
-          avatarUrl: targetUrl,
-          avatarAlt: item.name || `Avatar Graphic ${nextMidGraphics.length + 1}`,
-          posX: Math.min(85, Math.max(15, gridX)),
-          posY: Math.min(85, Math.max(20, gridY)),
-          size: 260,
-          rotation: 0,
-          opacity: 1,
-          transitionDirection: "bottom",
-          transitionSpeed: "spring",
-          transitionDelay: 0.1 + (nextMidGraphics.length * 0.05),
-          hoverEffect: "none",
-          disableIdleAnimation: false,
-          shadow: false,
-          border: false,
-        });
-        addedCount++;
+        nextMidGraphics.push(buildGraphicObjectFromScan(item, "mid", nextMidGraphics.length));
       }
     });
     nextConfig.midLayer = {
@@ -801,7 +816,7 @@ export async function summonSingleLayerGraphics(
   }
 
   await saveHeroConfig(nextConfig);
-  return { config: nextConfig, count: addedCount, layerLabel };
+  return { config: nextConfig, count: summonedCount, layerLabel };
 }
 
 /**
