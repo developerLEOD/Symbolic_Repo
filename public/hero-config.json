@@ -226,7 +226,7 @@
     "border": false,
     "captionTitle": "",
     "captionSubtitle": "",
-    "slideshowEnabled": false,
+    "slideshowEnabled": true,
     "slideshowInterval": 10,
     "slideshowTransition": "fade",
     "stickToBottom": true,
@@ -697,7 +697,7 @@
       "deviceTarget": "both"
     }
   ],
-  "slideshowEnabled": false,
+  "slideshowEnabled": true,
   "deviceTarget": "desktop",
   "opacity": 1,
   "disableIdleAnimation": false,
