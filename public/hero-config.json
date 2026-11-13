@@ -277,12 +277,12 @@
         "shadow": false,
         "border": false,
         "mobileEnabled": true,
-        "mobilePosX": -46,
+        "mobilePosX": 0,
         "mobilePosY": 16,
         "mobileRotation": 0,
-        "mobileSize": 585,
+        "mobileSize": 400,
         "mobileStickToBottom": true,
-        "deviceTarget": "desktop",
+        "deviceTarget": "both",
         "stickToBottom": true
       },
       {
@@ -387,7 +387,13 @@
         "shadow": false,
         "border": false,
         "stickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "both",
+        "mobileEnabled": true,
+        "mobilePosX": 2,
+        "mobilePosY": 70,
+        "mobileRotation": 0,
+        "mobileSize": 600,
+        "mobileStickToBottom": true
       },
       {
         "id": "gfx_av_8_avatar5",
@@ -408,7 +414,13 @@
         "shadow": false,
         "border": false,
         "stickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "both",
+        "mobileEnabled": true,
+        "mobilePosX": 4,
+        "mobilePosY": 5,
+        "mobileRotation": 0,
+        "mobileSize": 515,
+        "mobileStickToBottom": true
       },
       {
         "id": "gfx_av_9_avatar6",
@@ -429,7 +441,13 @@
         "shadow": false,
         "border": false,
         "stickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "both",
+        "mobileEnabled": true,
+        "mobilePosX": -2,
+        "mobilePosY": 5,
+        "mobileRotation": 0,
+        "mobileSize": 530,
+        "mobileStickToBottom": true
       }
     ],
     "textObjects": [],
@@ -542,12 +560,12 @@
       "shadow": false,
       "border": false,
       "mobileEnabled": true,
-      "mobilePosX": -46,
+      "mobilePosX": 0,
       "mobilePosY": 16,
       "mobileRotation": 0,
-      "mobileSize": 585,
+      "mobileSize": 400,
       "mobileStickToBottom": true,
-      "deviceTarget": "desktop",
+      "deviceTarget": "both",
       "stickToBottom": true
     },
     {
@@ -652,7 +670,13 @@
       "shadow": false,
       "border": false,
       "stickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "both",
+      "mobileEnabled": true,
+      "mobilePosX": 2,
+      "mobilePosY": 70,
+      "mobileRotation": 0,
+      "mobileSize": 600,
+      "mobileStickToBottom": true
     },
     {
       "id": "gfx_av_8_avatar5",
@@ -673,7 +697,13 @@
       "shadow": false,
       "border": false,
       "stickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "both",
+      "mobileEnabled": true,
+      "mobilePosX": 4,
+      "mobilePosY": 5,
+      "mobileRotation": 0,
+      "mobileSize": 515,
+      "mobileStickToBottom": true
     },
     {
       "id": "gfx_av_9_avatar6",
@@ -694,7 +724,13 @@
       "shadow": false,
       "border": false,
       "stickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "both",
+      "mobileEnabled": true,
+      "mobilePosX": -2,
+      "mobilePosY": 5,
+      "mobileRotation": 0,
+      "mobileSize": 530,
+      "mobileStickToBottom": true
     }
   ],
   "slideshowEnabled": true,
