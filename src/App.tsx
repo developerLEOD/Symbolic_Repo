@@ -46,6 +46,7 @@ import { ReferralSettings } from "./types";
 // Wrapper for /artifacts and /artifacts/:category views
 function ArtifactsDirectoryView({
   onProductClick,
+  onAcquireClick,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -54,6 +55,7 @@ function ArtifactsDirectoryView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
+  onAcquireClick: (p: Product, specimenId?: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -100,6 +102,7 @@ function ArtifactsDirectoryView({
           else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
+        onAcquireClick={onAcquireClick}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -125,6 +128,7 @@ function ArtifactsDirectoryView({
 // Wrapper for /collection/:collectionId views
 function CollectionDirectoryView({
   onProductClick,
+  onAcquireClick,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -133,6 +137,7 @@ function CollectionDirectoryView({
   onNavigateAbout,
 }: {
   onProductClick: (p: Product) => void;
+  onAcquireClick: (p: Product, specimenId?: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -179,6 +184,7 @@ function CollectionDirectoryView({
           else navigate(`/artifacts/${catId}`);
         }}
         onProductClick={onProductClick} 
+        onAcquireClick={onAcquireClick}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -204,6 +210,7 @@ function CollectionDirectoryView({
 // Home page view
 function HomeView({
   onProductClick,
+  onAcquireClick,
   refreshKey,
   onCategoriesLoaded,
   flagshipProduct,
@@ -213,6 +220,7 @@ function HomeView({
   onOpenOwnerManager,
 }: {
   onProductClick: (p: Product) => void;
+  onAcquireClick: (p: Product, specimenId?: string) => void;
   refreshKey: number;
   onCategoriesLoaded: (cats: Category[]) => void;
   flagshipProduct: Product | null;
@@ -243,6 +251,7 @@ function HomeView({
           else navigate("/artifacts");
         }}
         onProductClick={onProductClick} 
+        onAcquireClick={onAcquireClick}
         refreshKey={refreshKey}
         onCategoriesLoaded={onCategoriesLoaded}
       />
@@ -547,6 +556,15 @@ function StorefrontApp() {
     }
   };
 
+  const handleAcquireSelect = (productOrArtifact: any, specimenId?: string) => {
+    const identifier = productOrArtifact.artifactId || productOrArtifact.productId || productOrArtifact.sku || productOrArtifact.id;
+    if (specimenId) {
+      navigate(`/acquisitions/${identifier}?specimen=${specimenId}`);
+    } else {
+      navigate(`/acquisitions/${identifier}`);
+    }
+  };
+
   const handleOpenReferral = () => {
     if (user) {
       setProfileInitialTab("referral");
@@ -665,6 +683,7 @@ function StorefrontApp() {
               element={
                 <HomeView
                   onProductClick={handleProductSelect}
+                  onAcquireClick={handleAcquireSelect}
                   refreshKey={refreshKey}
                   onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                   flagshipProduct={flagshipProduct}
@@ -682,6 +701,7 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
+                onAcquireClick={handleAcquireSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -698,6 +718,7 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
+                onAcquireClick={handleAcquireSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -714,6 +735,7 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
+                onAcquireClick={handleAcquireSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -728,6 +750,7 @@ function StorefrontApp() {
             element={
               <ArtifactsDirectoryView
                 onProductClick={handleProductSelect}
+                onAcquireClick={handleAcquireSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -742,6 +765,7 @@ function StorefrontApp() {
             element={
               <CollectionDirectoryView
                 onProductClick={handleProductSelect}
+                onAcquireClick={handleAcquireSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}
@@ -831,6 +855,7 @@ function StorefrontApp() {
             element={
               <HomeView
                 onProductClick={handleProductSelect}
+                onAcquireClick={handleAcquireSelect}
                 refreshKey={refreshKey}
                 onCategoriesLoaded={cats => { if (cats.length > 0) setCategories(cats); }}
                 flagshipProduct={flagshipProduct}

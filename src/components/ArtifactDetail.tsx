@@ -244,9 +244,9 @@ export default function ArtifactDetail({
           </p>
         </div>
 
-        {/* ─── 2. SPECIMEN SELECTION TABS & MEDIUM MATRIX (SCATTERED STYLE PREVIEWS) ─── */}
+        {/* ─── 2. SPECIMEN SELECTION TABS & MEDIUM MATRIX (HORIZONTAL PREVIEWS) ─── */}
         <div className="mb-8">
-          <div className="flex items-center justify-between mb-3">
+          <div className="flex flex-wrap items-center justify-between gap-2 mb-3">
             <div className="flex items-center gap-2">
               <Layers size={16} className="text-brand-accent" />
               <h2 className="text-sm sm:text-base font-mono font-black uppercase tracking-tight text-brand-text">
@@ -254,12 +254,12 @@ export default function ArtifactDetail({
               </h2>
             </div>
             <span className="text-[10px] font-mono font-bold uppercase text-brand-text/60">
-              Select a physical manifestation to view archival specifications
+              Select a physical manifestation to view archival specifications {childSpecimens.length > 3 ? "// SCROLL HORIZONTALLY →" : ""}
             </span>
           </div>
 
-          {/* Scattered Specimen Preview Cards */}
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3 sm:gap-4 pt-1 pb-2">
+          {/* Horizontal Specimen Preview Cards */}
+          <div className="flex flex-nowrap items-stretch gap-3 sm:gap-4 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory">
             {/* 00 // Canonical Artwork Graphic Card */}
             {artifact.graphic && (
               <button
@@ -269,7 +269,7 @@ export default function ArtifactDetail({
                   setActiveSpecimenId("central_artwork");
                 }}
                 onMouseEnter={() => soundManager.playHover(0.02)}
-                className={`p-2.5 text-left border-2 font-mono transition-colors flex flex-col justify-between relative cursor-pointer group ${
+                className={`shrink-0 w-[165px] sm:w-[190px] md:w-[205px] snap-start p-2.5 text-left border-2 font-mono transition-colors flex flex-col justify-between relative cursor-pointer group ${
                   isViewingArtwork 
                     ? "border-brand-accent bg-brand-surface ring-2 ring-brand-accent shadow-[5px_5px_0px_#ff4500] z-10" 
                     : "border-brand-text bg-brand-surface hover:border-brand-accent shadow-[3px_3px_0px_#050505] hover:shadow-[5px_5px_0px_#050505]"
@@ -336,7 +336,7 @@ export default function ArtifactDetail({
                     setActiveSpecimenId(spec.id);
                   }}
                   onMouseEnter={() => soundManager.playHover(0.02)}
-                  className={`p-2.5 text-left border-2 font-mono transition-colors flex flex-col justify-between relative cursor-pointer group ${
+                  className={`shrink-0 w-[165px] sm:w-[190px] md:w-[205px] snap-start p-2.5 text-left border-2 font-mono transition-colors flex flex-col justify-between relative cursor-pointer group ${
                     isSelected 
                       ? "border-brand-accent bg-brand-surface ring-2 ring-brand-accent shadow-[5px_5px_0px_#ff4500] z-10" 
                       : "border-brand-text bg-brand-surface hover:border-brand-accent shadow-[3px_3px_0px_#050505] hover:shadow-[5px_5px_0px_#050505]"

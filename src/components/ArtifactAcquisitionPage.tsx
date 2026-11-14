@@ -471,7 +471,7 @@ export default function ArtifactAcquisitionPage({
           <div>
             {/* Step 1: Choose What Specimens to Buy */}
             <div className="mb-8">
-              <div className="flex items-center justify-between mb-3 border-b-2 border-brand-text pb-2">
+              <div className="flex flex-wrap items-center justify-between gap-2 mb-3 border-b-2 border-brand-text pb-2">
                 <div className="flex items-center gap-2">
                   <span className="w-2.5 h-2.5 bg-brand-accent" />
                   <h2 className="text-sm sm:text-base font-mono font-black uppercase tracking-tight text-brand-text">
@@ -479,12 +479,12 @@ export default function ArtifactAcquisitionPage({
                   </h2>
                 </div>
                 <span className="text-[10px] font-mono font-bold uppercase text-brand-text/60">
-                  Tap a specimen plate to view valuation and configure specifications
+                  Tap a specimen plate to view valuation and configure specifications {childSpecimens.length > 3 ? "// SCROLL HORIZONTALLY →" : ""}
                 </span>
               </div>
 
-              {/* Specimen Plates Grid */}
-              <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+              {/* Horizontal Specimen Plates Strip */}
+              <div className="flex flex-nowrap items-stretch gap-3 overflow-x-auto pt-1 pb-3 snap-x snap-mandatory">
                 {childSpecimens.map((spec, idx) => {
                   const isSelected = spec.id === selectedSpecimenId;
                   const isSold = !spec.availability || spec.status === "sold_out" || spec.inventory <= 0;
@@ -498,7 +498,7 @@ export default function ArtifactAcquisitionPage({
                         soundManager.playClick();
                         setSelectedSpecimenId(spec.id);
                       }}
-                      className={`p-3 text-left border-2 font-mono transition-all flex flex-col justify-between cursor-pointer relative ${
+                      className={`shrink-0 w-[170px] sm:w-[195px] md:w-[215px] snap-start p-3 text-left border-2 font-mono transition-all flex flex-col justify-between cursor-pointer relative ${
                         isSelected
                           ? "bg-brand-surface border-brand-accent ring-2 ring-brand-accent shadow-[4px_4px_0px_#ff4500] z-10"
                           : "bg-brand-surface border-brand-text shadow-[3px_3px_0px_#050505] hover:border-brand-accent hover:shadow-[4px_4px_0px_#050505]"
@@ -885,11 +885,40 @@ export default function ArtifactAcquisitionPage({
                 </div>
               </div>
 
-              {/* Included Specimens Detailed Manifest */}
-              <div className="space-y-2 mb-6">
+              {/* Included Specimens Horizontal Preview & Detailed Manifest */}
+              <div className="space-y-3 mb-6">
                 <span className="text-[10px] font-black uppercase text-brand-text block">
                   ALL MANIFESTED SPECIMENS INCLUDED IN THIS ARCHIVAL SET:
                 </span>
+
+                <div className="flex flex-nowrap items-stretch gap-3 overflow-x-auto pt-1 pb-2 snap-x snap-mandatory">
+                  {setCalculation.availableSpecimens.map((spec, idx) => {
+                    const specImg = spec.images?.[0] || spec.thumbnailImage || artifact.graphic;
+                    return (
+                      <div
+                        key={`set-preview-${spec.id}`}
+                        className="shrink-0 w-[155px] sm:w-[175px] snap-start p-2.5 border-2 border-brand-text bg-brand-bg flex flex-col justify-between shadow-[3px_3px_0px_#050505]"
+                      >
+                        <div className="w-full h-24 bg-brand-surface border border-brand-text/30 overflow-hidden flex items-center justify-center relative mb-2">
+                          <img
+                            src={specImg}
+                            alt={spec.medium}
+                            referrerPolicy="no-referrer"
+                            className="w-full h-full object-contain p-1 select-none pointer-events-none"
+                          />
+                          <span className="absolute top-1 right-1 px-1 py-0.5 bg-brand-surface text-brand-text text-[7px] font-black border border-brand-text/40">
+                            0{idx + 1}
+                          </span>
+                        </div>
+                        <div className="space-y-0.5">
+                          <div className="text-[10px] font-black uppercase text-brand-text truncate">{spec.medium}</div>
+                          <div className="text-[8.5px] font-black text-brand-accent">PKR {spec.price.toLocaleString()}</div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
                 <div className="bg-brand-bg border-2 border-brand-text p-4 space-y-2">
                   {setCalculation.availableSpecimens.map((spec, idx) => (
                     <div key={spec.id} className="flex items-center justify-between border-b border-brand-text/15 pb-2 text-xs">

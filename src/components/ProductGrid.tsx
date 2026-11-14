@@ -27,6 +27,7 @@ interface ProductGridProps {
   activeCategoryId: string | null;
   onCategoryChange?: (id: string | null) => void;
   onProductClick: (productOrArtifact: any, specimenId?: string) => void;
+  onAcquireClick?: (productOrArtifact: any, specimenId?: string) => void;
   onTryOnClick?: (entity: any, specimenId?: string) => void;
   refreshKey?: number;
   onCategoriesLoaded?: (categories: Category[]) => void;
@@ -36,6 +37,7 @@ export default function ProductGrid({
   activeCategoryId, 
   onCategoryChange, 
   onProductClick, 
+  onAcquireClick,
   refreshKey = 0, 
   onCategoriesLoaded 
 }: ProductGridProps) {
@@ -53,6 +55,15 @@ export default function ProductGrid({
 
   const location = useLocation();
   const navigate = useNavigate();
+
+  const handleAcquireEntity = useCallback((entity: any, specimenId?: string) => {
+    if (onAcquireClick) {
+      onAcquireClick(entity, specimenId);
+    } else {
+      const identifier = entity.artifactId || entity.productId || entity.sku || entity.id;
+      navigate(specimenId ? `/acquisitions/${identifier}?specimen=${specimenId}` : `/acquisitions/${identifier}`);
+    }
+  }, [onAcquireClick, navigate]);
 
   const handleBackToHome = useCallback(() => {
     soundManager.playClick(0.08);
@@ -548,18 +559,31 @@ export default function ProductGrid({
                         </div>
                       </td>
                       <td className="p-3.5 text-right">
-                        <button
-                          type="button"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            soundManager.playClick(0.12);
-                            onProductClick(art);
-                          }}
-                          className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg hover:bg-brand-accent hover:text-white border border-brand-text transition-all shadow-[1px_1px_0px_#050505]"
-                        >
-                          <span>EXPLORE</span>
-                          <ArrowUpRight size={10} />
-                        </button>
+                        <div className="inline-flex items-center justify-end gap-1.5">
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundManager.playClick(0.12);
+                              onProductClick(art);
+                            }}
+                            className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-text text-brand-bg hover:bg-brand-bg hover:text-brand-text border border-brand-text transition-all shadow-[1px_1px_0px_#050505] cursor-pointer whitespace-nowrap"
+                          >
+                            <span>EXPLORE</span>
+                            <ArrowUpRight size={10} />
+                          </button>
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundManager.playClick(0.14);
+                              handleAcquireEntity(art);
+                            }}
+                            className="inline-flex items-center gap-1 text-[9px] font-black uppercase px-2.5 py-1 bg-brand-accent text-white hover:bg-brand-text border border-brand-text transition-all shadow-[1px_1px_0px_#050505] cursor-pointer whitespace-nowrap"
+                          >
+                            <span>ACQUIRE</span>
+                          </button>
+                        </div>
                       </td>
                     </tr>
 
@@ -636,6 +660,7 @@ export default function ProductGrid({
               artifact={art}
               specimens={specimens}
               onClick={(specimenId) => onProductClick(art, specimenId)}
+              onAcquireClick={(specimenId) => handleAcquireEntity(art, specimenId)}
               index={idx}
             />
           ))}
@@ -654,6 +679,7 @@ export default function ProductGrid({
             specimens={specimens}
             categories={categories} 
             onProductClick={(entity, specimenId) => onProductClick(entity, specimenId)} 
+            onAcquireClick={(entity, specimenId) => handleAcquireEntity(entity, specimenId)}
           />
         </motion.div>
       )}

@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { motion, AnimatePresence } from "motion/react";
-import { ChevronLeft, ChevronRight, MoveRight, Layers, Box, Check, Sparkles, Camera, Eye } from "lucide-react";
+import { ChevronLeft, ChevronRight, MoveRight, Layers, Box, Check, Sparkles, Camera, Eye, ShoppingBag } from "lucide-react";
 import { Artifact, Specimen, Product, Category } from "../types";
 import { resolveProductImages, normalizeProductCategory, STUDIO_FALLBACK_IMAGE } from "../lib/productService";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
@@ -14,6 +15,7 @@ interface ArtifactOverlappingCollectionProps {
   products?: Product[];
   categories?: Category[];
   onProductClick: (entity: Artifact | Product, specimenId?: string) => void;
+  onAcquireClick?: (entity: Artifact | Product, specimenId?: string) => void;
 }
 
 interface DisplayArtifact {
@@ -66,7 +68,18 @@ export default function ArtifactOverlappingCollection({
   products,
   categories = [],
   onProductClick,
+  onAcquireClick,
 }: ArtifactOverlappingCollectionProps) {
+  const navigate = useNavigate();
+  const triggerAcquire = useCallback((entity: Artifact | Product, specimenId?: string) => {
+    if (onAcquireClick) {
+      onAcquireClick(entity, specimenId);
+    } else {
+      const ent: any = entity;
+      const identifier = ent.artifactId || ent.productId || ent.sku || ent.id;
+      navigate(specimenId ? `/acquisitions/${identifier}?specimen=${specimenId}` : `/acquisitions/${identifier}`);
+    }
+  }, [onAcquireClick, navigate]);
   // Viewport detection
   const [isMobile, setIsMobile] = useState<boolean>(() => {
     if (typeof window !== "undefined") {
@@ -803,22 +816,36 @@ export default function ArtifactOverlappingCollection({
               </div>
             </div>
 
-            {/* Direct Open Artifact & Specimens Button */}
-            <button
-              type="button"
-              onClick={() => {
-                soundManager.playClick(0.14);
-                onProductClick(activeMobileItem.rawEntity, mobileSelectedSpecId || undefined);
-              }}
-              className="w-full py-3 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-xs font-black uppercase tracking-widest border border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2 mt-2"
-            >
-              <span>
-                {activeMobileSpecimen
-                  ? `OPEN ${activeMobileSpecimen.medium.toUpperCase()} DOSSIER`
-                  : "EXPLORE ARTIFACT & SPECIMENS"}
-              </span>
-              <MoveRight size={14} />
-            </button>
+            {/* Direct Explore Artifact & Specimens + Acquire Buttons */}
+            <div className="flex flex-wrap sm:flex-nowrap items-stretch gap-2 mt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick(0.14);
+                  onProductClick(activeMobileItem.rawEntity, mobileSelectedSpecId || undefined);
+                }}
+                className="flex-1 min-w-[180px] py-3 px-3 bg-brand-text hover:bg-brand-bg text-brand-bg hover:text-brand-text text-[10.5px] sm:text-xs font-black uppercase tracking-wider border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap shrink-0"
+              >
+                <span>
+                  {activeMobileSpecimen
+                    ? `OPEN ${activeMobileSpecimen.medium.toUpperCase()} DOSSIER`
+                    : "EXPLORE ARTIFACT & SPECIMENS"}
+                </span>
+                <MoveRight size={13} className="shrink-0" />
+              </button>
+
+              <button
+                type="button"
+                onClick={() => {
+                  soundManager.playClick(0.14);
+                  triggerAcquire(activeMobileItem.rawEntity, mobileSelectedSpecId || undefined);
+                }}
+                className="shrink-0 py-3 px-4 bg-brand-accent hover:bg-brand-text text-white text-[10.5px] sm:text-xs font-black uppercase tracking-wider border-2 border-brand-text shadow-[3px_3px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+              >
+                <ShoppingBag size={13} className="shrink-0" />
+                <span>ACQUIRE</span>
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -1177,18 +1204,36 @@ export default function ArtifactOverlappingCollection({
                         </div>
                       )}
 
-                      {/* Primary Action Button */}
-                      <div className="pt-1">
+                      {/* Primary Action Buttons: Explore & Acquire */}
+                      <div className="pt-1 flex items-stretch gap-2">
                           <button
                             type="button"
-                            onClick={() => {
+                            onClick={(e) => {
+                              e.stopPropagation();
                               soundManager.playClick(0.14);
                               onProductClick(item.rawEntity, selectedSpecId || undefined);
                             }}
-                            className="w-full py-2 bg-brand-text hover:bg-brand-accent text-brand-bg hover:text-white text-[9.5px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-2"
+                            className="flex-1 py-2 px-2.5 bg-brand-text hover:bg-brand-bg text-brand-bg hover:text-brand-text text-[9px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
                           >
-                            <span>Inspect And Aquire</span>
-                            <MoveRight size={12} />
+                            <span>
+                              {activeSpecimen
+                                ? `EXPLORE ${activeSpecimen.medium.toUpperCase()}`
+                                : "EXPLORE ARTIFACT & SPECIMENS"}
+                            </span>
+                            <MoveRight size={11} className="shrink-0" />
+                          </button>
+
+                          <button
+                            type="button"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              soundManager.playClick(0.14);
+                              triggerAcquire(item.rawEntity, selectedSpecId || undefined);
+                            }}
+                            className="shrink-0 py-2 px-3 bg-brand-accent hover:bg-brand-text text-white text-[9px] font-black uppercase tracking-wider border border-brand-text shadow-[2px_2px_0px_#050505] active:translate-x-[1px] active:translate-y-[1px] transition-all cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+                          >
+                            <ShoppingBag size={11} className="shrink-0" />
+                            <span>ACQUIRE</span>
                           </button>
                       </div>
                     </motion.div>

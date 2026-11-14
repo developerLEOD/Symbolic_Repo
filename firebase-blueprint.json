@@ -208,6 +208,7 @@
         "createdAt": { "type": "number" }
       },
       "required": ["referrerCode", "refereeEmail", "discountApplied", "createdAt"]
+    },
     "avatarGraphic": {
       "title": "AvatarGraphic",
       "description": "Custom Avatar graphic assets stored in the database for hero section display and slideshows",

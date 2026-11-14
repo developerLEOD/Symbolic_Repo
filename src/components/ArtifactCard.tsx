@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useRef, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import { Artifact, Specimen } from "../types";
-import { ArrowUpRight, Layers, Box, Check, Sparkles, Camera, Eye } from "lucide-react";
+import { ArrowUpRight, Layers, Box, Check, Sparkles, Camera, Eye, ShoppingBag } from "lucide-react";
 import { calculateArtifactSetPrice } from "../lib/artifactService";
 import { buildSpecimenAngleSequence, SpecimenAngleSequenceItem } from "../lib/specimenAngles";
 import { soundManager } from "../lib/soundEffects";
@@ -12,6 +13,7 @@ interface ArtifactCardProps {
   artifact: Artifact;
   specimens: Specimen[];
   onClick: (specimenId?: string) => void;
+  onAcquireClick?: (specimenId?: string) => void;
   index?: number;
 }
 
@@ -19,8 +21,10 @@ export default function ArtifactCard({
   artifact, 
   specimens, 
   onClick,
+  onAcquireClick,
   index = 0 
 }: ArtifactCardProps) {
+  const navigate = useNavigate();
   const [isHovered, setIsHovered] = useState(false);
   const [hoverCycleIndex, setHoverCycleIndex] = useState(0);
   const [selectedSpecimenId, setSelectedSpecimenId] = useState<string | null>(null);
@@ -421,20 +425,43 @@ export default function ArtifactCard({
           </div>
         )}
 
-        {/* Action Button */}
-        <div className="border-t-2 border-brand-text pt-2">
-          <div 
-            role="button"
+        {/* Action Buttons */}
+        <div className="border-t-2 border-brand-text pt-2 flex items-stretch gap-2">
+          <button
+            type="button"
             data-action="true"
-            className="w-full flex items-center justify-between py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[9px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505] cursor-pointer"
+            onClick={(e) => {
+              e.stopPropagation();
+              soundManager.playClick();
+              onClick(selectedSpecimenId || activeSpecimen?.id || undefined);
+            }}
+            className="flex-1 flex items-center justify-between gap-1 py-1.5 px-2.5 bg-brand-surface group-hover:bg-brand-text text-brand-text group-hover:text-brand-bg border border-brand-text transition-colors font-mono text-[8.5px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505] cursor-pointer whitespace-nowrap overflow-hidden"
           >
-            <span>
-              {activeSpecimen ? `EXPLORE ${activeSpecimen.medium.toUpperCase()} & ARCHIVE` : "EXPLORE ARTIFACT & SPECIMENS"}
+            <span className="truncate">
+              {activeSpecimen ? `EXPLORE ${activeSpecimen.medium.toUpperCase()}` : "EXPLORE ARTIFACT & SPECIMENS"}
             </span>
-            <div>
-              <ArrowUpRight size={12} className="group-hover:text-brand-accent transition-colors" />
-            </div>
-          </div>
+            <ArrowUpRight size={11} className="shrink-0 group-hover:text-brand-accent transition-colors" />
+          </button>
+
+          <button
+            type="button"
+            data-action="true"
+            onClick={(e) => {
+              e.stopPropagation();
+              soundManager.playClick(0.14);
+              const specId = selectedSpecimenId || activeSpecimen?.id || undefined;
+              if (onAcquireClick) {
+                onAcquireClick(specId);
+              } else {
+                const identifier = artifact.artifactId || artifact.id;
+                navigate(specId ? `/acquisitions/${identifier}?specimen=${specId}` : `/acquisitions/${identifier}`);
+              }
+            }}
+            className="shrink-0 flex items-center justify-center gap-1 py-1.5 px-2.5 bg-brand-accent hover:bg-brand-text text-white border border-brand-text transition-colors font-mono text-[8.5px] font-black uppercase tracking-wider shadow-[1.5px_1.5px_0px_#050505] cursor-pointer whitespace-nowrap"
+          >
+            <ShoppingBag size={11} className="shrink-0" />
+            <span>ACQUIRE</span>
+          </button>
         </div>
       </div>
     </motion.div>
