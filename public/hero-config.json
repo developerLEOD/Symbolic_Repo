@@ -282,7 +282,7 @@
         "mobileRotation": 0,
         "mobileSize": 475,
         "mobileStickToBottom": true,
-        "deviceTarget": "both",
+        "deviceTarget": "desktop",
         "stickToBottom": true
       },
       {
@@ -565,7 +565,7 @@
       "mobileRotation": 0,
       "mobileSize": 475,
       "mobileStickToBottom": true,
-      "deviceTarget": "both",
+      "deviceTarget": "desktop",
       "stickToBottom": true
     },
     {
