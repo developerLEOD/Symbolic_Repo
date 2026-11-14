@@ -280,7 +280,7 @@
         "mobilePosX": 0,
         "mobilePosY": 16,
         "mobileRotation": 0,
-        "mobileSize": 400,
+        "mobileSize": 475,
         "mobileStickToBottom": true,
         "deviceTarget": "both",
         "stickToBottom": true
@@ -563,7 +563,7 @@
       "mobilePosX": 0,
       "mobilePosY": 16,
       "mobileRotation": 0,
-      "mobileSize": 400,
+      "mobileSize": 475,
       "mobileStickToBottom": true,
       "deviceTarget": "both",
       "stickToBottom": true
