@@ -201,9 +201,9 @@
         "deviceTarget": "mobile"
       }
     ],
-    "slideshowEnabled": false,
-    "slideshowInterval": 4,
-    "slideshowTransition": "fade",
+    "slideshowEnabled": true,
+    "slideshowInterval": 5,
+    "slideshowTransition": "spring",
     "deviceTarget": "both",
     "mobileEnabled": false
   },
