@@ -201,7 +201,7 @@
         "deviceTarget": "mobile"
       }
     ],
-    "slideshowEnabled": true,
+    "slideshowEnabled": false,
     "slideshowInterval": 5,
     "slideshowTransition": "spring",
     "deviceTarget": "both",
@@ -226,9 +226,9 @@
     "border": false,
     "captionTitle": "",
     "captionSubtitle": "",
-    "slideshowEnabled": false,
+    "slideshowEnabled": true,
     "slideshowInterval": 10,
-    "slideshowTransition": "fade",
+    "slideshowTransition": "spring",
     "stickToBottom": true,
     "graphicObjects": [
       {
