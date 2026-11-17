@@ -477,7 +477,7 @@
         "shadow": false,
         "border": false,
         "stickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_12_p2",
@@ -498,7 +498,7 @@
         "shadow": false,
         "border": false,
         "stickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "desktop"
       }
     ],
     "textObjects": [],
@@ -811,7 +811,7 @@
       "shadow": false,
       "border": false,
       "stickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_12_p2",
@@ -832,7 +832,7 @@
       "shadow": false,
       "border": false,
       "stickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "desktop"
     }
   ],
   "slideshowEnabled": true,
