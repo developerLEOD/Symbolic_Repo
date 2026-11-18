@@ -282,7 +282,7 @@
         "mobileRotation": 0,
         "mobileSize": 475,
         "mobileStickToBottom": true,
-        "deviceTarget": "desktop",
+        "deviceTarget": "both",
         "stickToBottom": true
       },
       {
@@ -389,10 +389,10 @@
         "stickToBottom": true,
         "deviceTarget": "both",
         "mobileEnabled": true,
-        "mobilePosX": -2,
+        "mobilePosX": 1,
         "mobilePosY": 5,
         "mobileRotation": 0,
-        "mobileSize": 530,
+        "mobileSize": 370,
         "mobileStickToBottom": true
       },
       {
@@ -456,7 +456,11 @@
         "shadow": false,
         "border": false,
         "stickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "both",
+        "mobileEnabled": true,
+        "mobileSize": 515,
+        "mobilePosX": 2,
+        "mobilePosY": 31
       },
       {
         "id": "gfx_av_11_p1",
@@ -616,7 +620,7 @@
       "mobileRotation": 0,
       "mobileSize": 475,
       "mobileStickToBottom": true,
-      "deviceTarget": "desktop",
+      "deviceTarget": "both",
       "stickToBottom": true
     },
     {
@@ -723,10 +727,10 @@
       "stickToBottom": true,
       "deviceTarget": "both",
       "mobileEnabled": true,
-      "mobilePosX": -2,
+      "mobilePosX": 1,
       "mobilePosY": 5,
       "mobileRotation": 0,
-      "mobileSize": 530,
+      "mobileSize": 370,
       "mobileStickToBottom": true
     },
     {
@@ -790,7 +794,11 @@
       "shadow": false,
       "border": false,
       "stickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "both",
+      "mobileEnabled": true,
+      "mobileSize": 515,
+      "mobilePosX": 2,
+      "mobilePosY": 31
     },
     {
       "id": "gfx_av_11_p1",
