@@ -435,7 +435,7 @@
         "shadow": false,
         "border": false,
         "stickToBottom": true,
-        "deviceTarget": "both"
+        "deviceTarget": "desktop"
       },
       {
         "id": "gfx_av_10_h2",
@@ -769,7 +769,7 @@
       "shadow": false,
       "border": false,
       "stickToBottom": true,
-      "deviceTarget": "both"
+      "deviceTarget": "desktop"
     },
     {
       "id": "gfx_av_10_h2",
